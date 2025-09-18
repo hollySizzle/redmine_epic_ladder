@@ -1,0 +1,225 @@
+#!/usr/bin/env ruby
+
+# Rails ログキャプチャツール（標準出力版）
+# 
+# 【概要】
+# docker-entrypoint.sh経由で起動したRailsサーバーの標準出力ログをキャプチャ
+# タイムスタンプマーカーを使用してログの特定範囲を抽出
+# 
+# 【使用方法】
+# scripts/log_capture                # 対話モード
+# scripts/log_capture start          # キャプチャ開始のみ
+# scripts/log_capture show           # ログ表示のみ
+# scripts/log_capture reset          # キャプチャリセット
+# 
+# 【前提】
+# Railsサーバーが標準出力にログを出力するよう設定されていること
+# （production.rb: config.logger = ActiveSupport::TaggedLogging.new(logger)）
+
+require 'time'
+require 'fileutils'
+require 'open3'
+
+class LogCapture
+  MARKER_FILE = '/tmp/rails_log_start_marker'
+  LOG_BUFFER_FILE = '/tmp/rails_server_logs.buffer'
+  
+  def self.run(mode = nil)
+    new.run(mode)
+  end
+
+  def run(mode)
+    case mode
+    when 'start'
+      start_capture
+    when 'show'
+      show_logs
+    when 'reset'
+      reset_capture
+    else
+      interactive_mode
+    end
+  end
+
+  private
+
+  def interactive_mode
+    loop do
+      show_menu
+      choice = gets.chomp
+
+      case choice
+      when '1'
+        start_capture
+      when '2'
+        show_logs
+      when '3'
+        reset_capture
+      when '4'
+        puts "終了します"
+        break
+      else
+        puts "✗ 無効な選択です"
+      end
+      puts
+    end
+  end
+
+  def show_menu
+    puts
+    puts "=== Rails ログキャプチャツール（標準出力版）==="
+    puts "1) ログキャプチャ開始"
+    puts "2) ログ表示（画面リセット）"
+    puts "3) キャプチャリセット"
+    puts "4) 終了"
+    print "選択してください [1-4]: "
+  end
+
+  def start_capture
+    timestamp = Time.now.to_i
+    File.write(MARKER_FILE, timestamp.to_s)
+    puts "ログキャプチャ開始: #{Time.now}"
+    puts "✓ マーカー設定完了"
+    puts "  画面操作を実行後、オプション2でログを表示してください"
+    
+    # ログバッファに現在時刻のマーカーを記録
+    File.open(LOG_BUFFER_FILE, 'a') do |f|
+      f.puts "--- CAPTURE START MARKER: #{Time.now} ---"
+    end
+  end
+
+  def show_logs
+    unless File.exist?(MARKER_FILE)
+      puts "✗ エラー: 先にオプション1でキャプチャを開始してください"
+      return
+    end
+
+    start_time = File.read(MARKER_FILE).to_i
+    start_date = Time.at(start_time).strftime('%Y-%m-%d %H:%M:%S')
+
+    # 画面クリア
+    system('clear')
+    
+    puts "=== ログ表示（#{start_date} 以降）==="
+    puts
+
+    # Railsプロセスを探して標準出力を取得
+    display_rails_logs(start_time)
+
+    puts
+    puts "=== ログ表示完了 ==="
+  end
+
+  def display_rails_logs(start_time)
+    # Railsサーバープロセスを探す
+    rails_pid = find_rails_process_pid
+    
+    if rails_pid.nil?
+      puts "✗ エラー: Railsサーバープロセスが見つかりません"
+      puts "  /docker-entrypoint.sh rails server が実行中か確認してください"
+      return
+    end
+
+    puts "Railsプロセス検出: PID #{rails_pid}"
+    
+    # journalctlまたはdockerログから取得を試みる
+    if system_has_journalctl?
+      display_from_journalctl(rails_pid, start_time)
+    elsif File.exist?(LOG_BUFFER_FILE)
+      display_from_buffer(start_time)
+    else
+      puts "✗ ログの取得方法が見つかりません"
+      puts "  標準出力ログをファイルにリダイレクトして実行してください:"
+      puts "  例: /docker-entrypoint.sh rails server -b 0.0.0.0 -p 3000 2>&1 | tee -a #{LOG_BUFFER_FILE}"
+    end
+  end
+
+  def find_rails_process_pid
+    # pumaプロセスを探す（Railsサーバーの実体）
+    output = `ps aux | grep -E 'puma.*3000' | grep -v grep`
+    if output && !output.empty?
+      return output.split[1] # PID列を取得
+    end
+
+    # 直接railsプロセスを探す
+    output = `ps aux | grep -E 'rails server' | grep -v grep`
+    if output && !output.empty?
+      return output.split[1]
+    end
+    
+    nil
+  end
+
+  def system_has_journalctl?
+    system('which journalctl > /dev/null 2>&1')
+  end
+
+  def display_from_journalctl(pid, start_time)
+    since = Time.at(start_time).strftime('%Y-%m-%d %H:%M:%S')
+    cmd = "journalctl _PID=#{pid} --since='#{since}' --no-pager"
+    
+    puts "journalctlからログ取得中..."
+    output = `#{cmd} 2>&1`
+    
+    if $?.success? && !output.empty?
+      puts output
+    else
+      puts "✗ journalctlからログを取得できませんでした"
+    end
+  end
+
+  def display_from_buffer(start_time)
+    puts "バッファファイルからログ取得中..."
+    
+    in_range = false
+    marker_found = false
+    
+    File.foreach(LOG_BUFFER_FILE) do |line|
+      # マーカー行を検出
+      if line.include?("--- CAPTURE START MARKER:")
+        marker_time = line.match(/MARKER: (.+) ---/)
+        if marker_time && Time.parse(marker_time[1]).to_i >= start_time
+          in_range = true
+          marker_found = true
+          next # マーカー行自体は表示しない
+        end
+      end
+      
+      # タイムスタンプを含む行を検出（Railsログ形式）
+      if !marker_found && line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/)
+        log_time = Time.parse($1).to_i
+        in_range = (log_time >= start_time)
+      end
+      
+      puts line if in_range
+    end
+    
+    unless marker_found || in_range
+      puts "✗ 指定時刻以降のログが見つかりません"
+      puts "  ログバッファファイル: #{LOG_BUFFER_FILE}"
+    end
+  end
+
+  def reset_capture
+    # 画面クリア
+    system('clear')
+    
+    if File.exist?(MARKER_FILE)
+      File.delete(MARKER_FILE)
+      puts "✓ キャプチャをリセットしました"
+    else
+      puts "○ キャプチャは設定されていません"
+    end
+    
+    # バッファファイルもクリア
+    if File.exist?(LOG_BUFFER_FILE) && File.size(LOG_BUFFER_FILE) > 10_000_000 # 10MB以上
+      File.truncate(LOG_BUFFER_FILE, 0)
+      puts "✓ ログバッファファイルをクリアしました"
+    end
+  end
+end
+
+# 実行部分
+if __FILE__ == $0
+  LogCapture.run(ARGV[0])
+end

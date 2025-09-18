@@ -1,0 +1,170 @@
+# ファイル編集規約定義
+# 特定のファイルパターンに対して適用される規約ドキュメントを定義します
+# ClaudeCodeがこれらのファイルを編集する際に、規約確認を促します
+
+rules:
+  - name: "Vibesドキュメント規約"
+    patterns:
+      - "**/docs/**/*.md"
+      - "**/vibes/docs/**/*.md"
+      - "vibes/docs/**/*.md"
+      - "**/*.md" # 全mdファイル対応（最も包括的）
+      - "docs/**/*.md"
+    severity: "block" # block: 完全ブロック, warn: 警告のみ
+    token_threshold: 15000 # 重要なドキュメント規約は低い閾値
+    # 基本メッセージ（簡潔版）
+    message: |
+      このファイルを変更する場合は､  @vibes/docs/rules/vibes_documentation_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  # 実装設計書関連
+  - name: "実装設計書編集規約"
+    patterns:
+      - "**/実装設計書.pu"
+      - "**/実装設計.pu"
+      - "**/実装設計書*.pu"
+    severity: "block" # block: 完全ブロック, warn: 警告のみ
+    token_threshold: 18000
+    # 基本メッセージ（簡潔版）
+    message: |
+      このファイルを変更する場合は､  @vibes/docs/rules/detailed_spec_docs/implementation_design_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  - name: "機能設計書規約"
+    patterns:
+      - "**/機能設計書.pu"
+      - "**/機能設計書.pu"
+      - "**/機能設計書*.pu"
+    severity: "block" # block: 完全ブロック, warn: 警告のみ
+    token_threshold: 18000
+    # 基本メッセージ（簡潔版）
+    message: |
+      このファイルを変更する場合は､  @/myapp/Source/rails/vibes/docs/rules/detailed_spec_docs/functional_design_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  # 外部設計書関連
+  - name: "外部設計書編集規約"
+    patterns:
+      - "Doc/100_外部設計/**/*"
+      - "**/機能リスト.json"
+      - "**/_機能リスト.json"
+      - "**/画面定義書.json"
+    severity: "block"
+    token_threshold: 10000 # 最重要規約は最低閾値
+    # 基本メッセージ（簡潔版）
+    message: |
+      🚫 外部設計書はプロジェクトオーナー管轄
+      📋 参照: @vibes/docs/rules/ai_collaboration_standards.md
+
+  # テスト仕様書関連
+  - name: "E2Eテスト編集規約"
+    patterns:
+      - "spec/system/**/*.rb"
+      - "spec/system/workflow/**/*.rb"
+    severity: "block"
+    token_threshold: 35000
+    message: |
+      E2Eテストは実行可能なドキュメントです
+      BDD原則に従い、日本語DSLで記述してください
+
+  # DB設計関連
+  - name: "DB設計編集規約"
+    patterns:
+      - "db/migrate/**/*.rb"
+      - "db/schema.rb"
+      - "Doc/500_DB設計/**/*.pu"
+    severity: "block"
+    token_threshold: 10000
+    message: |
+      このファイルを変更する場合は､ @vibes/docs/rules/migration_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+      
+
+  - name: "routes編集規約"
+    patterns:
+      - "config/routes.rb"
+    severity: "block"
+    token_threshold: 10000
+    message: |
+      このファイルを変更する場合は､ @/myapp/Doc/400_画面設計/_機能リスト.json に準拠すること
+  # Rails設定関連
+  - name: "Rails設定編集規約"
+    patterns:
+      - "config/**/*.yml"
+      - "config/**/*.yaml"
+      - "config/initializers/**/*.rb"
+    severity: "block"
+    token_threshold: 10000
+    message: |
+      Rails設定YAMLはプロジェクトオーナー管轄です
+      微調整レベルの変更のみ許可されています
+
+  # View層関連
+  - name: "View層編集規約"
+    patterns:
+      - "**/app/views/**.erb"
+      - "app/views/**.erb"
+      - "app/views/**/*.erb"
+      - "**/app/views/**.html.erb"
+      - "app/views/**.html.erb"
+    severity: "block"
+    token_threshold: 35000
+    message: |
+      このファイルを変更する場合は､ @vibes/docs/rules/view_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  # Controller層関連
+  - name: "Controller層編集規約"
+    patterns:
+      - "**/app/controllers/**.rb"
+      - "app/controllers/**.rb"
+      - "app/controllers/**/*.rb"
+    severity: "block"
+    token_threshold: 35000
+    message: |
+      このファイルを変更する場合は､ @vibes/docs/rules/controller_standards.mdをよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  # Presenter層関連
+  - name: "Presenter層編集規約"
+    patterns:
+      - "**/app/presenters/**.rb"
+      - "app/presenters/**.rb"
+      - "app/presenters/**/**.rb"
+      - "app/presenters/concerns/**/**.rb"
+    severity: "stop"
+    token_threshold: 35000
+    message: |
+      このファイルを変更する場合は､@vibes/docs/rules/presenter_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  - name: "seed編集規約"
+    patterns:
+      - "**/db/**.rb"
+      - "**/db/**/**.rb"
+      - "/db/**.rb"
+      - "/db/**/**.rb"
+    severity: "block"
+    token_threshold: 35000
+    message: |
+      このファイルを変更する場合は､ @vibes/docs/rules/seeds_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  # 環境変数関連
+  - name: "環境変数編集規約"
+    patterns:
+      - "**/.env"
+      - "**/.env.*"
+      - ".env"
+      - ".env.*"
+    severity: "block"
+    token_threshold: 35000
+    message: |
+      このファイルを変更する場合は､ @vibes/docs/rules/docker_environment_management_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+# メタ情報
+meta:
+  version: "1.0.0"
+  updated_at: "2025-01-21"
+  description: "ファイルパターンと編集規約の紐付け定義"
