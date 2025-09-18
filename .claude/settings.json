@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "node /myapp/Source/rails/vibes/scripts/others/statusline.js"
+    "command": "node /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/others/statusline.js"
   },
   "hooks": {
     "PreToolUse": [
@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /myapp/Source/rails/vibes/scripts/src/domain/hooks/session_startup_hook.py"
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/domain/hooks/session_startup_hook.py"
           }
         ]
       },
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /myapp/Source/rails/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
           }
         ]
       },
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /myapp/Source/rails/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
           }
         ]
       }
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /myapp/Source/rails/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"📢 Claude Code から通知があります\\\""
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"📢 Claude Code から通知があります\\\""
           }
         ]
       }
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /myapp/Source/rails/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"🛑 Claude Code セッションが停止されました\\\""
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"🛑 Claude Code セッションが停止されました\\\""
           }
         ]
       }
