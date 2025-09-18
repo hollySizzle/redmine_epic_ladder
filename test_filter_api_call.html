@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>フィルターAPIテスト</title>
+</head>
+<body>
+    <h1>フィルターAPIテスト</h1>
+    <button onclick="testFilterAPI()">フィルターAPI呼び出し</button>
+    <div id="result"></div>
+
+    <script>
+    async function testFilterAPI() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = 'テスト開始...';
+        
+        try {
+            // プロジェクトIDを取得（現在のURLから）
+            const pathSegments = window.location.pathname.split("/");
+            let projectId = 'space-mine'; // デフォルト
+            
+            // 実際のプロジェクトIDがあれば使用
+            if (pathSegments.length > 2 && pathSegments[1] === 'projects') {
+                projectId = pathSegments[2];
+            }
+            
+            console.log('Testing with projectId:', projectId);
+            
+            const url = `/projects/${projectId}/react_gantt_chart/filters`;
+            console.log('Request URL:', url);
+            
+            const response = await fetch(url);
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            // データの分析
+            let analysisHtml = '<h2>APIレスポンス分析</h2>';
+            analysisHtml += `<p><strong>Status:</strong> ${response.status}</p>`;
+            analysisHtml += `<p><strong>availableFilters keys:</strong> ${Object.keys(data.availableFilters || {}).length}個</p>`;
+            
+            if (data.availableFilters) {
+                analysisHtml += '<h3>重要なフィルター:</h3>';
+                const importantFilters = ['tracker_id', 'status_id', 'assigned_to_id'];
+                
+                importantFilters.forEach(filterName => {
+                    if (data.availableFilters[filterName]) {
+                        const filter = data.availableFilters[filterName];
+                        analysisHtml += `<div>
+                            <strong>${filterName}:</strong><br>
+                            &nbsp;&nbsp;名前: ${filter.name}<br>
+                            &nbsp;&nbsp;タイプ: ${filter.type}<br>
+                            &nbsp;&nbsp;値の数: ${filter.values ? filter.values.length : 0}<br>
+                            &nbsp;&nbsp;値のサンプル: ${filter.values && filter.values.length > 0 ? JSON.stringify(filter.values.slice(0, 2)) : 'なし'}
+                        </div><br>`;
+                    } else {
+                        analysisHtml += `<div><strong>${filterName}:</strong> 見つかりません</div><br>`;
+                    }
+                });
+            }
+            
+            analysisHtml += '<h3>完全なレスポンス:</h3>';
+            analysisHtml += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            
+            resultDiv.innerHTML = analysisHtml;
+            
+        } catch (error) {
+            console.error('API Test Error:', error);
+            resultDiv.innerHTML = `<div style="color: red;">
+                <h2>エラー</h2>
+                <p>${error.message}</p>
+                <pre>${error.stack}</pre>
+            </div>`;
+        }
+    }
+    
+    // ページロード時に自動実行
+    window.onload = function() {
+        console.log('ページロード完了、APIテストを開始...');
+        testFilterAPI();
+    };
+    </script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+# プロジェクト規約
+
+## 1. プロジェクトの目的
+本プロジェクトは **Redmine** のプラグインとして、React を用いた **ガントチャート表示機能**（SVAR Gantt / wx-react-gantt）を組み込み、チケット管理をより直感的に行えるようにすることを目的としています。
+- Redmine の既存チケットを **Rails** サイドでフィルタリングし、React + SVAR Gantt で可視化する  
+- バージョンごとのサマリタスクや、親子タスクの階層構造をインタラクティブに扱える UI を提供する
+- その他基本的な機能はRedmine標準のGanttチャートに準拠する
+
+## 2. 技術スタック
+  - **Ruby 3.3+**
+  - **Redmine 6+**
+  - **Ruby on Rails**（6系）  
+    - プラグインとして Rails コントローラ/サービスクラスを実装し、Redmine と連携
+  - **React + SVAR Gantt**  
+    - `wx-react-gantt` ライブラリを採用し、タスクの可視化やドラッグ操作を行う
+  - **Webpack / Babel**  
+    - プラグインアセットをビルドし、`/plugin_assets/redmine_react_gantt_chart/bundle.js` にまとめる
+  - **Tailwind (任意)**  
+    - 必要に応じて UI を整える（ただし purge/safelist 設定に注意）｢
+
+### 2.1 ドキュメント
+  - 必読: SVAR Gantt**  `wx-react-gantt`のドキュメントは以下に配置している｡
+    - ./_dev/DocumentOfSVARGantt.md
+  - [Redmine Plugin Development Guide](https://www.redmine.org/projects/redmine/wiki/Plugin_Development_Guide)
+
+## 3. プロジェクトのディレクトリ構成
+
+```plaintext
+redmine/
+  └─ plugins/
+      └─ redmine_react_gantt_chart/ ← root of workspace
+          ├─ _dev/
+          │   ├─ DocumentOfSVARGantt.md
+          ├─ app/
+          │   ├─ controllers/
+          │   │   └─ react_gantt_chart_controller.rb
+          │   ├─ services/
+          │   │   └─ redmine_react_gantt_chart/
+          │   │       └─ gantt_data_builder.rb
+          │   └─ views/
+          │       └─ react_gantt_chart/
+          ├─ assets/
+          │   └─ javascripts/react_gantt_chart/
+          │       ├─ components/
+          │       │   ├─ **CustomBar.jsx**        ← タスクバー描画のみ
+          │       │   └─ **GanttChart.jsx**      ← メイン UI & ロジック
+          │       ├─ hooks/
+          │       │   └─ **useZoomConfig.js**    ← ズームレベル定義/状態
+          │       ├─ utils/
+          │       │   ├─ **columns.js**          ← 列定義 & カスタム列生成
+          │       │   ├─ columnStorage.js        ← 既存
+          │       │   └─ resizerStorage.js       ← 既存
+          │       ├─ App.jsx                     ← ルート (FilterPanel + GanttChart)
+          │       ├─ FilterPanel.jsx
+          │       ├─ index.jsx
+          │       └─ styles.css
+          ├─ config/
+          │   └─ routes.rb
+          ├─ node_modules/ ...
+          ├─ package.json
+          ├─ lib/ ...
+          └─ package.json (Webpack/Babel 設定など)
+
+
+  - app/controllers/react_gantt_chart_controller.rb
+  - フィルタリングやデータ取得のエンドポイントを定義
+  - app/services/redmine_react_gantt_chart/gantt_data_builder.rb
+  - ビジネスロジックおよびタスク/リンクの組み立て処理
+  - assets/javascripts/react_gantt_chart/
+  - React コンポーネント群
+  - Webpack により bundle.js を生成
+
+### 3.1 react_gantt_chart_controller.rb から取得するjsonの例
+#### `/projects/${projectId}/react_gantt_chart/data?${qs}` へのアクセス
+```
+{
+  "tasks": [
+    {
+      "id": "version-28",
+      "text": "バージョン: HP/LP開発",
+      "parent": 0,
+      "start": null,
+      "end": null,
+      "type": "summary",
+      "open": true,
+      "duration": 1,
+      "progress": 0,
+      "assigned_to_name": "",
+      "status_name": "",
+      "css": "",
+      "details": "HP/LP開発"
+    },
+    {
+      "id": 656,
+      "text": "ek-law.jp",
+      "parent": "version-28",
+      "start": "2025-03-31",
+      "end": "2025-04-01",
+      "type": "summary",
+      "open": true,
+      "duration": 1,
+      "progress": 10,
+      "assigned_to_id": null,
+      "assigned_to_name": "",
+      "author_id": 5,
+      "author_name": "しずる 高堀",
+      "category_id": null,
+      "category_name": "",
+      "closed_on": null,
+      "created_on": "2025-03-31T05:11:21.639Z",
+      "css": "overdue-task",
+      "custom_fields": {
+        "cf_3": {
+          "id": 3,
+          "name": "review_user",
+          "field_format": "user",
+          "details": "レビューを依頼する担当者を記載してください",
+          "is_filter": true,
+          "is_required": false,
+          "multiple": false,
+          "raw_value": "",
+          "searchable": false,
+          "value": ""
+        }
+      },
+      "details": "",
+      "done_ratio": 10,
+      "estimated_hours": null,
+      "fixed_version_id": 28,
+      "fixed_version_name": "HP/LP開発",
+      "is_private": false,
+      "priority_id": 8,
+      "priority_name": "中",
+      "status_name": "要検討",
+      "tracker_id": 1,
+      "tracker_name": "開発",
+      "updated_on": "2025-04-14T11:29:16.699Z"
+    },
+    {
+      "id": 651,
+      "text": "ek-tax コラム非表示",
+      "parent": 658,
+      "start": "2025-04-03",
+      "end": "2025-04-08",
+      "type": "task",
+      "open": false,
+      "duration": 5,
+      "progress": 60,
+      "assigned_name": "ひろむ 村田",
+      "assigned_to_id": 6,
+      "assigned_to_name": "ひろむ 村田",
+      "author_id": 5,
+      "author_name": "しずる 高堀",
+      "category_id": null,
+      "category_name": "",
+      "closed_on": null,
+      "created_on": "2025-03-31T05:04:48.910Z",
+      "css": "overdue-task",
+      "custom_fields": {
+        "cf_3": {
+          "id": 3,
+          "name": "review_user",
+          "field_format": "user",
+          "details": "レビューを依頼する担当者を記載してください",
+          "is_filter": true,
+          "is_required": false,
+          "multiple": false,
+          "raw_value": "5",
+          "searchable": false,
+          "value": "しずる 高堀"
+        }
+      },
+      "details": "コラムは非表示にする\r\n機能としては削除しない",
+      "done_ratio": 60,
+      "estimated_hours": 0,
+      "fixed_version_id": 28,
+      "fixed_version_name": "HP/LP開発",
+      "is_private": false,
+      "priority_id": 8,
+      "priority_name": "中",
+      "status_name": "レビュー待機",
+      "tracker_id": 1,
+      "tracker_name": "開発",
+      "updated_on": "2025-04-14T11:29:19.197Z"
+    }
+  ],
+  "links": [
+    {
+      "id": 104,
+      "source": 656,
+      "target": 651,
+      "type": "e2e"
+    }
+  ],
+  "additional_issues": {
+    "default": {
+      "100": {},
+    },
+    "overdue-task": {
+      "656": {},
+      "651": {}
+    },
+    "closed-task": {
+      "200": {},
+    },
+  }
+}
+```
+
+### `/projects/${projectId}/react_gantt_chart/filters` へのアクセス
+```
+{
+  "operatorLabels": {
+    "=": "イコール",
+    "!": "不一致",
+    "o": "オープンのみ",
+    "~": "部分一致",
+    "!~": "部分不一致",
+    ">*": "日付が指定日より後",
+    "<*": "日付が指定日より前",
+    ">": "より大きい",
+    "<": "より小さい",
+    "!*": "空白",
+    "*": "空白でない",
+    "t": "今日",
+    "w": "今週",
+    "y": "昨日",
+    "m": "先月",
+    "ld": "過去X日"
+  },
+  "operatorByType": {
+    "list": ["=", "!"],
+    "status": ["=", "!", "o"],
+    "string": ["=", "!", "~", "!*", "*"],
+    "text": ["~", "!~", "!*", "*"],
+    "date": ["=", "!", ">*", "<*", "t", "w", "y", "m", "ld", "!*", "*"],
+    "int": [">", "<", "=", "!", "!*", "*"],
+    "bool": ["="],
+    "user": ["=", "!", "!*", "*"],
+    "version": ["=", "!", "!*", "*"],
+    "float": [">", "<", "=", "!", "!*", "*"]
+  },
+  "availableFilters": {
+    "tracker_id": {
+      "name": "トラッカー",
+      "type": "list",
+      "values": [
+        ["開発", "1"],
+        ["バグ", "2"],
+        ["運用", "3"],
+        ["保守", "4"],
+        ["要望", "5"]
+      ]
+    },
+    "status_id": {
+      "name": "ステータス",
+      "type": "status",
+      "values": [
+        ["未着手", "1"],
+        ["着手中", "2"],
+        ["要検討", "3"],
+        ["レビュー待機", "5"],
+        ["フィードバック", "10"],
+        ["クローズ", "4"]
+      ]
+    },
+    "priority_id": {
+      "name": "優先度",
+      "type": "list",
+      "values": [
+        ["中", "8"]
+      ]
+    },
+    "assigned_to_id": {
+      "name": "担当者",
+      "type": "list",
+      "values": [
+        ["ひろむ 村田", "6"],
+        ["しずる 高堀", "5"],
+        ["ゆうき 吉村", "9"]
+      ]
+    },
+    "author_id": {
+      "name": "作成者",
+      "type": "list",
+      "values": [
+        ["しずる 高堀", "5"]
+      ]
+    },
+    "category_id": {
+      "name": "カテゴリ",
+      "type": "list",
+      "values": [
+        ["デザイン", "1"],
+        ["サーバー", "2"],
+        ["フロント", "3"]
+      ]
+    },
+    "fixed_version_id": {
+      "name": "バージョン",
+      "type": "list",
+      "values": [
+        ["HP/LP開発", "28"],
+        ["LP運用", "27"],
+        ["運用フェーズ", "30"]
+      ]
+    },
+    "subject": {
+      "name": "題名",
+      "type": "string",
+      "values": []
+    },
+    "details": {
+      "name": "説明",
+      "type": "text",
+      "values": []
+    },
+    "done_ratio": {
+      "name": "進捗率",
+      "type": "int",
+      "values": []
+    },
+    "start_date": {
+      "name": "開始日",
+      "type": "date",
+      "values": []
+    },
+    "due_date": {
+      "name": "期限日",
+      "type": "date",
+      "values": []
+    },
+    "created_on": {
+      "name": "作成日",
+      "type": "date",
+      "values": []
+    },
+    "updated_on": {
+      "name": "更新日",
+      "type": "date",
+      "values": []
+    },
+    "closed_on": {
+      "name": "終了日",
+      "type": "date",
+      "values": []
+    },
+    "is_private": {
+      "name": "プライベート",
+      "type": "bool",
+      "values": [
+        ["はい", "1"],
+        ["いいえ", "0"]
+      ]
+    },
+    "estimated_hours": {
+      "name": "予定工数",
+      "type": "float",
+      "values": []
+    },
+    "cf_3": {
+      "name": "review_user",
+      "type": "user",
+      "custom_field": true,
+      "field_format": "user",
+      "details": "レビューを依頼する担当者を記載してください",
+      "values": [
+        ["田中 タロウ", "6"],
+        ["Sizzle Holly", "5"],
+        ["ゆうき 吉村", "9"]
+      ]
+    }
+  }
+}
+```
+
+### `/projects/${projectId}/react_gantt_chart/bulk_update` へのPOSTリクエスト
+```
+{
+  "issues": [
+    {
+      "id": 651,
+      "subject": "ek-tax コラム非表示（更新後）",
+      "details": "コラムは非表示にする\r\n機能としては削除しない\r\n追加説明あり",
+      "assigned_to_id": 6,
+      "tracker_id": 1,
+      "status_id": 5,
+      "category_id": 3,
+      "fixed_version_id": 28,
+      "priority_id": 8,
+      "done_ratio": 70,
+      "estimated_hours": 5,
+      "is_private": false,
+      "start_date": "2025-04-05",
+      "due_date": "2025-04-12",
+      "custom_fields": {
+        "cf_3": "5"
+      }
+    },
+    {
+      "id": 656, 
+      "subject": "ek-law.jp（タイトル更新）",
+      "tracker_id": 1,
+      "status_id": 2,
+      "done_ratio": 50,
+      "start_date": "2025-04-03",
+      "due_date": "2025-04-10"
+    }
+  ]
+}
+```
+
+## 4. アーキテクチャで意識するべき点
+  ### フロントエンド(React)
+  - 関数型コンポーネント + カスタムフックで副作用を分離。
+  - 親 (App.jsx) と子 (GanttChart.jsx) の state 境界を明確に：
+  - App … フィルター＆列表示設定を保持。
+  - GanttChart … 編集中の変更点を一時的に保持 (modified state)。
+  - ライブラリ API を直接 mutate しない – 描画は tasks/links Props の更新で行う。
+  - ドラッグ操作 → move-task/drag-task イベントを購読し、
+  - setTasks で配列を並べ替え → 変更点を modified に格納 → 一括保存時に bulk_update へ送信。
+  ### バックエンド(rails)
+  - サービス層 (Service/Builder)
+  - コントローラ内を肥大化させず、ビジネスロジックやデータ変換は GanttDataBuilder のような サービスクラス で行う
+  - 親子タスクの階層構造
+  - Redmine のチケット（Issue.parent_id）をサマリタスクや通常タスクに分けて表現
+  - バージョン情報をサマリタスクとして扱い、その配下にチケットを割り当てる
+  - React 側の職責
+  - 受け取った tasks / links を SVAR Gantt で描画
+  - 独自のバー描画 (taskTemplate) やクラス付与 (css) が必要な場合は自前コンポーネントを検討
+  - フィルタリング
+  - IssueQuery + 独自フィルタを適用し、最大 1000 件を取得
+  4.2 クライアントサイド (React)
+
+
+
+## 5. コーディングガイドライン
+	1.	ファイル命名・クラス命名
+  - Rails 側で module RedmineReactGanttChart を使う場合は、ディレクトリ構造を一致させる
+  - React 側は CamelCase のファイル名 (例: GanttChart.js) とし、コンポーネント名と合わせる
+  2. コードの修正後は､git commti を行うこと
+    - ただし､pushは行わないこと
+##	2.	サービスクラス利用
+  - Fat Controller を避けるため、複雑な処理は app/services/redmine_react_gantt_chart/ にまとめる
+##	3.	React 側
+  - 関数型コンポーネントを推奨
+  - カスタムフック（useEffect, useMemo, etc.）を活用し、サイドエフェクトとメモ化を整理
+##	4.	CSS / スタイル
+  - 基本的には tailwindを使用する 
+  - 必要に応じて styles.css を編集
+  - SVAR Gantt にクラスを付与する場合は css プロパティなどを活用。合致しない場合は taskTemplate を使う

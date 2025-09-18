@@ -1,0 +1,15 @@
+node_modules/**
+!.gitkeep
+.DS_Store
+vibes/scripts/.env
+vibes/scripts/hooks/.env
+vibes/scripts/hooks/lib/discord_users.json
+vibes/scripts/hooks/log
+node_modules
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
