@@ -1,0 +1,59 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node /myapp/Source/rails/vibes/scripts/others/statusline.js"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /myapp/Source/rails/vibes/scripts/src/domain/hooks/session_startup_hook.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|mcp__.*__write.*|mcp__.*replace.*|mcp__.*insert.*|mcp__.*create.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /myapp/Source/rails/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|mcp__serena__execute_shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /myapp/Source/rails/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /myapp/Source/rails/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"📢 Claude Code から通知があります\\\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /myapp/Source/rails/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"🛑 Claude Code セッションが停止されました\\\""
+          }
+        ]
+      }
+    ]
+  }
+}

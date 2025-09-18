@@ -1,0 +1,162 @@
+/* 固定操作カラム用CSS（複数グリッドビュー方式） */
+
+/* 操作カラム専用グリッドのスタイル */
+#actionsGrid {
+  border-left: 2px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+/* 操作カラムのヘッダー */
+#actionsGrid .gantt_grid_head_cell {
+  background: #e9ecef;
+  font-weight: 600;
+  text-align: center;
+  border-right: none;
+}
+
+/* 操作カラムのセル */
+#actionsGrid .gantt_cell {
+  background: #f8f9fa;
+  border-right: none;
+  text-align: center;
+}
+
+/* 操作カラム内のボタンスタイル */
+#actionsGrid .gantt-task-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 2px;
+}
+
+#actionsGrid .gantt-add-subtask-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+#actionsGrid .gantt-add-subtask-btn:hover {
+  background: #0056b3;
+  transform: scale(1.05);
+}
+
+#actionsGrid .gantt-add-subtask-btn:active {
+  transform: scale(0.95);
+}
+
+#actionsGrid .gantt-add-subtask-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ホバー効果 */
+#actionsGrid .gantt_row:hover .gantt_cell {
+  background: #e3f2fd;
+}
+
+/* フォーカス状態 */
+#actionsGrid .gantt_selected .gantt_cell {
+  background: #bbdefb;
+}
+
+/* スクロール可能グリッドのスタイル調整 */
+.gantt_grid_scale .gantt_grid_head_cell,
+.gantt_grid_data .gantt_cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* グリッドスクロールバーのスタイル */
+.gantt_hor_scroll {
+  height: 18px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  #actionsGrid {
+    width: 60px !important;
+  }
+  
+  #actionsGrid .gantt-add-subtask-btn {
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+  
+  #actionsGrid .gantt-add-subtask-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* グリッド間の境界線 */
+.gantt_layout_cell {
+  border-right: 1px solid #ddd;
+}
+
+/* 最後のグリッドセル（操作カラム）の境界線を調整 */
+.gantt_layout_cell:last-of-type {
+  border-right: none;
+}
+
+/* 操作カラムの固定幅を確保 */
+.gantt_layout_cell[data-column-name="actions"] {
+  min-width: 75px;
+  max-width: 75px;
+  flex-shrink: 0;
+}
+
+/* 親タスク（計算された値）のスタイル */
+.gantt_task_line.parent-task-computed {
+  opacity: 0.85;
+  cursor: not-allowed !important;
+}
+
+.gantt_task_line.parent-task-computed .gantt_task_content {
+  background: repeating-linear-gradient(
+    45deg,
+    #e0e0e0,
+    #e0e0e0 10px,
+    #f0f0f0 10px,
+    #f0f0f0 20px
+  );
+  opacity: 0.9;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* 親タスクのプログレスバー */
+.gantt_task_line.parent-task-computed .gantt_task_progress {
+  background: rgba(33, 150, 243, 0.5);
+}
+
+/* 親タスクホバー時のスタイル */
+.gantt_task_line.parent-task-computed:hover {
+  cursor: not-allowed !important;
+  opacity: 0.9;
+}
+
+/* 親タスクのドラッグハンドルを非表示 */
+.gantt_task_line.parent-task-computed .gantt_task_drag,
+.gantt_task_line.parent-task-computed .gantt_task_resize {
+  display: none !important;
+}
+
+/* 親タスクのテキストスタイル */
+.gantt_grid_data .gantt_row.parent-task-computed .gantt_cell {
+  font-weight: 600;
+  color: #666;
+}
+
+/* 親タスクのグリッド背景 */
+.gantt_grid_data .gantt_row.parent-task-computed {
+  background-color: rgba(224, 224, 224, 0.2);
+}
