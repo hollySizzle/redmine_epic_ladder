@@ -449,11 +449,24 @@ def main():
     """メインエントリーポイント"""
     # ログをファイルのみに出力（stderrには出力しない）
     import logging
+    import os
+
+    # スクリプトが存在するディレクトリを動的に検知
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    scripts_root = os.path.join(script_dir, '..', '..', '..')  # src/domain/hooks -> scripts
+    scripts_root = os.path.normpath(scripts_root)
+    log_dir = os.path.join(scripts_root, 'log')
+
+    # logディレクトリが存在しない場合は作成
+    os.makedirs(log_dir, exist_ok=True)
+
+    log_file_path = os.path.join(log_dir, 'hook_debug.log')
+
     logging.basicConfig(
         level=logging.ERROR,  # ERRORレベル以上のみ
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler('/myapp/Source/rails/log/hook_debug.log')
+            logging.FileHandler(log_file_path)
             # StreamHandlerを削除してstderr出力を抑制
         ]
     )
