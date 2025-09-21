@@ -13,3 +13,4 @@ node_modules
 .env.development
 .env.test
 .env.production
+vibes/scripts/secrets.sample.json5
