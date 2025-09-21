@@ -1,12 +1,13 @@
 {
   "folders": [
     {
-      "path": "."
+      "path": "/usr/src/redmine/plugins/redmine_release_kanban/"
     },
     {
       "path": "../../"
     }
   ],
+  "terminal.integrated.cwd": "/myapp/Source/rails/",
   "settings": {
     "files.watcherExclude": {
       "**/node_modules/**": true,
