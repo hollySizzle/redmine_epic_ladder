@@ -1,13 +1,13 @@
-// plugins/redmine_react_gantt_chart/webpack.config.js
+// plugins/redmine_release_kanban/webpack.config.js
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: "development", // or 'production'
-  entry: "./assets/javascripts/react_gantt_chart/index.jsx",
+  entry: "./assets/javascripts/kanban/index.jsx",
   output: {
-    filename: "bundle.js",
-    path: path.resolve(__dirname, "assets/javascripts/react_gantt_chart/dist"),
+    filename: "kanban_bundle.js",
+    path: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
   },
   module: {
     rules: [
@@ -65,8 +65,8 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: path.resolve(__dirname, "assets/javascripts/react_gantt_chart/dist/bundle.js"),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_react_gantt_chart/bundle.js",
+          from: path.resolve(__dirname, "assets/javascripts/kanban/dist/kanban_bundle.js"),
+          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban_bundle.js",
         },
       ],
     }),

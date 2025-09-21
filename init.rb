@@ -1,24 +1,33 @@
-# plugins/redmine_react_gantt_chart/init.rb
-Redmine::Plugin.register :redmine_react_gantt_chart do
-  name 'Redmine React Gantt Chart plugin'
-  author 'HollySizzle'
-  description 'React-based Gantt chart plugin using SVAR Gantt'
+# plugins/redmine_release_kanban/init.rb
+Redmine::Plugin.register :redmine_release_kanban do
+  name 'Redmine Release Kanban Plugin'
+  author 'Development Team'
+  description 'Epic→Feature→UserStory→Task/Test階層制約とバージョン管理を統合したRelease Kanbanシステム'
   version '1.0.0'
-  url 'http://example.com/path'
-  author_url 'http://example.com/about'
+  url 'https://github.com/your-repo/redmine_release_kanban'
+  author_url 'https://github.com/your-team'
 
-  project_module :react_gantt_chart do
-    permission :view_react_gantt_chart, {
-      react_gantt_chart: [:index, :data, :filters, :bulk_update, :create_subtask]
+  # プロジェクトモジュール定義
+  project_module :release_kanban do
+    permission :view_kanban, {
+      kanban: [:index],
+      'kanban/cards' => [:index],
+      'kanban/hierarchy' => [:hierarchy_tree],
+      'kanban/validations' => [:release_validation, :bulk_validation]
     }, require: :member
-    permission :manage_react_gantt_chart, {
-      react_gantt_chart: [:bulk_update, :create_subtask]
+
+    permission :manage_kanban, {
+      'kanban/state_transitions' => [:move_card, :bulk_move_cards],
+      'kanban/versions' => [:assign_version, :bulk_assign_version, :create_version],
+      'kanban/auto_generation' => [:generate_test, :batch_generate_tests]
     }, require: :member
   end
 
+  # プロジェクトメニューに追加
   menu :project_menu,
-       :react_gantt_chart,
-       { controller: 'react_gantt_chart', action: 'index' },
-       caption: 'ReactGantt',
-       param: :project_id
+       :release_kanban,
+       { controller: 'kanban', action: 'index' },
+       caption: 'Release Kanban',
+       param: :project_id,
+       if: Proc.new { |p| User.current.allowed_to?(:view_kanban, p) }
 end

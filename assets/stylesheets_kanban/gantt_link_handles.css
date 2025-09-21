@@ -1,0 +1,75 @@
+/* ガントチャート依存関係リンク作成ハンドルのスタイル調整 */
+
+/* リンクポイント（ドラッグハンドル）のスタイル強化 */
+.gantt_link_point {
+  z-index: 1500 !important; /* タスクバーより前面に表示 */
+  width: 16px !important;   /* クリック領域を大きく */
+  height: 16px !important;
+  margin-top: -8px !important;
+  cursor: crosshair !important;
+  background-color: #fff !important;
+  border: 2px solid #2196F3 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* ホバー時の強調表示 */
+.gantt_link_point:hover {
+  transform: scale(1.3) !important;
+  background-color: #2196F3 !important;
+  border-color: #1976D2 !important;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3) !important;
+}
+
+/* 左側のリンクポイント（開始点） */
+.gantt_link_point.task_left {
+  left: -9px !important;
+}
+
+/* 右側のリンクポイント（終了点） */
+.gantt_link_point.task_right {
+  right: -9px !important;
+}
+
+/* リンク作成中の線のスタイル */
+.gantt_link_direction {
+  z-index: 1400 !important;
+  stroke: #2196F3 !important;
+  stroke-width: 2px !important;
+}
+
+/* タスクバーのz-indexを調整（リンクポイントより後ろに） */
+.gantt_task_line {
+  z-index: 1000 !important;
+}
+
+/* リンク作成時のカーソル */
+.gantt_task_line.gantt_drag_move {
+  cursor: move !important;
+}
+
+/* リンクポイントのアクティブ状態 */
+.gantt_link_point.link_start_active,
+.gantt_link_point.link_finish_active {
+  background-color: #FF5722 !important;
+  border-color: #E64A19 !important;
+  transform: scale(1.4) !important;
+}
+
+/* タッチデバイス用の調整 */
+@media (pointer: coarse) {
+  .gantt_link_point {
+    width: 24px !important;
+    height: 24px !important;
+    margin-top: -12px !important;
+  }
+  
+  .gantt_link_point.task_left {
+    left: -13px !important;
+  }
+  
+  .gantt_link_point.task_right {
+    right: -13px !important;
+  }
+}

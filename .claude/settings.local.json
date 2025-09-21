@@ -184,7 +184,9 @@
       "Bash(service cron:*)",
       "Bash(crontab:*)",
       "Bash(RAILS_ENV=development bundle exec rails generate migration AddWarningJobIdToPickupRequests warning_job_id:string)",
-      "Bash(RAILS_ENV=development bundle exec rails db:schema:dump)"
+      "Bash(RAILS_ENV=development bundle exec rails db:schema:dump)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": [],

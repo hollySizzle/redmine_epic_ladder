@@ -1,0 +1,21 @@
+<%# app/views/kanban/index.html.erb %>
+<% content_for :header_tags do %>
+  <%= javascript_include_tag 'kanban_bundle', plugin: 'redmine_release_kanban' %>
+  <%= stylesheet_link_tag 'kanban', plugin: 'redmine_release_kanban' %>
+<% end %>
+
+<div class="contextual">
+  <%= link_to '設定', '#', class: 'icon icon-settings', title: 'カンバン設定' %>
+</div>
+
+<h2>Release Kanban - <%= @project.name %></h2>
+
+<div id="kanban-root"
+     data-project-id="<%= @project.id %>"
+     data-current-user='<%= User.current.to_json.html_safe %>'
+     data-api-base-url="<%= url_for(controller: 'kanban/cards', action: 'index', project_id: @project.id, only_path: true).sub('/cards', '') %>">
+  <!-- React Kanban アプリがここにマウントされます -->
+  <div class="loading-spinner">
+    <p>カンバンを読み込み中...</p>
+  </div>
+</div>
