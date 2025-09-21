@@ -194,7 +194,11 @@
       "Bash(rake:*)",
       "Bash(chmod:*)",
       "Bash(/usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/testing/test_runner.sh:*)",
-      "Bash(RAILS_ENV=test rake redmine:plugins:test:units PLUGIN=redmine_release_kanban TEST=test/unit/kanban_tracker_hierarchy_test.rb)"
+      "Bash(RAILS_ENV=test rake redmine:plugins:test:units PLUGIN=redmine_release_kanban TEST=test/unit/kanban_tracker_hierarchy_test.rb)",
+      "Bash(RAILS_ENV=test rake redmine:plugins:test:units PLUGIN=redmine_release_kanban)",
+      "Bash(RAILS_ENV=test rake redmine:plugins:test PLUGIN=redmine_release_kanban)",
+      "Bash(npm test)",
+      "Bash(DISABLE_FACTORY_GIRL=1 ruby -I test plugins/redmine_release_kanban/test/integration/kanban_api_integration_test.rb)"
     ],
     "deny": [],
     "ask": [],

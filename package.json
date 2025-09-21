@@ -13,9 +13,9 @@
     "build": "webpack",
     "build-production": "webpack --config webpack.production.config.js",
     "watch": "webpack --watch",
-    "deploy": "./_dev/auto_deploy.sh build",
-    "deploy:prod": "./_dev/auto_deploy.sh production",
-    "deploy:watch": "./_dev/auto_deploy.sh watch",
+    "deploy": "npm run build && cp assets/javascripts/kanban/dist/kanban_bundle.js /usr/src/redmine/public/plugin_assets/redmine_release_kanban/",
+    "deploy:prod": "npm run build-production && cp assets/javascripts/kanban/dist/kanban_bundle.js /usr/src/redmine/public/plugin_assets/redmine_release_kanban/",
+    "deploy:watch": "npm run watch & while inotifywait -e modify assets/javascripts/kanban/dist/kanban_bundle.js; do cp assets/javascripts/kanban/dist/kanban_bundle.js /usr/src/redmine/public/plugin_assets/redmine_release_kanban/; done",
     "dev": "npm run deploy:watch",
     "build:release": "./scripts/build_for_release.sh",
     "package:release": "./scripts/build_for_release.sh --package"
