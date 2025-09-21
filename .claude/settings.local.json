@@ -186,7 +186,10 @@
       "Bash(RAILS_ENV=development bundle exec rails generate migration AddWarningJobIdToPickupRequests warning_job_id:string)",
       "Bash(RAILS_ENV=development bundle exec rails db:schema:dump)",
       "Bash(npm install)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Read(//usr/src/redmine/public/plugin_assets/redmine_release_kanban/**)",
+      "Read(//usr/src/redmine/public/assets/**)",
+      "Read(//usr/src/redmine/app/assets/**)"
     ],
     "deny": [],
     "ask": [],
