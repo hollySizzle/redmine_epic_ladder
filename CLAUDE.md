@@ -75,19 +75,16 @@ npm run test:coverage                   # カバレッジ計測モード
 ./_dev/test_runner.sh limited           # テスト実行スクリプト（CPU制限）
 ./_dev/test_runner.sh full              # テスト実行スクリプト（フルパワー）
 
-# ビルド
-npm run build                           # 開発ビルド
-npm run build-production                # 本番ビルド
-npm run watch                           # 開発モード（ファイル監視）
-
-# 自動配置（推奨）
+# ビルド & デプロイ（推奨）
 npm run deploy                          # 開発ビルド & Redmineに自動配置
 npm run deploy:prod                     # 本番ビルド & Redmineに自動配置
 npm run deploy:watch                    # ファイル監視 & 自動ビルド & 自動配置
 npm run dev                             # 開発モード（deploy:watchのエイリアス）
 
-# 手動デプロイ（非推奨）
-cp ./assets/javascripts/react_gantt_chart/dist/bundle.js /usr/src/redmine/public/plugin_assets/redmine_react_gantt_chart/
+# ビルドのみ（手動デプロイ時）
+npm run build                           # 開発ビルド
+npm run build-production                # 本番ビルド
+npm run watch                           # 開発モード（ファイル監視）
 
 # 開発用スクリプト（_dev/ディレクトリ）
 ./_dev/setup.sh                         # Node.js 18インストール & 初回ビルド

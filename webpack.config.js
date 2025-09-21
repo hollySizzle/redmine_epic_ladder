@@ -69,6 +69,9 @@ module.exports = {
           to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban_bundle.js",
         },
       ],
+      options: {
+        concurrency: 100,
+      },
     }),
   ],
 };

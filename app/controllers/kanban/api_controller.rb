@@ -23,7 +23,7 @@ module Kanban
       issue = Issue.find(params[:issue_id])
       target_column = params[:target_column]
 
-      result = StateTransitionService.transition_to_column(issue, target_column)
+      result = Kanban::StateTransitionService.transition_to_column(issue, target_column)
 
       if result[:error]
         render json: { error: result[:error] }, status: :unprocessable_entity
@@ -44,7 +44,7 @@ module Kanban
       version_id = params[:version_id]
       version = version_id.present? ? Version.find(version_id) : nil
 
-      result = VersionPropagationService.propagate_to_children(issue, version)
+      result = Kanban::VersionPropagationService.propagate_to_children(issue, version)
 
       if result[:error]
         render json: { error: result[:error] }, status: :unprocessable_entity
@@ -64,7 +64,7 @@ module Kanban
       user_story = Issue.find(params[:user_story_id])
       force = params[:force] == true
 
-      result = TestGenerationService.generate_test_for_user_story(user_story, force_recreate: force)
+      result = Kanban::TestGenerationService.generate_test_for_user_story(user_story, force_recreate: force)
 
       if result[:error]
         render json: { error: result[:error] }, status: :unprocessable_entity
@@ -83,7 +83,7 @@ module Kanban
     def validate_release
       user_story = Issue.find(params[:user_story_id])
 
-      result = ValidationGuardService.validate_release_readiness(user_story)
+      result = Kanban::ValidationGuardService.validate_release_readiness(user_story)
 
       render json: result
     rescue ActiveRecord::RecordNotFound
@@ -155,7 +155,7 @@ module Kanban
         assigned_to: issue.assigned_to&.name,
         fixed_version: issue.fixed_version&.name,
         parent_id: issue.parent_id,
-        hierarchy_level: TrackerHierarchy.level(issue.tracker.name),
+        hierarchy_level: Kanban::TrackerHierarchy.level(issue.tracker.name),
         created_on: issue.created_on.iso8601,
         updated_on: issue.updated_on.iso8601,
         column: determine_column_for_issue(issue)

@@ -1,159 +1,116 @@
-# 🎯 Release Kanban テスト戦略
+# 🚨 Release Kanban アンチモック テスト戦略
 
-## 📋 概要
+## 🎯 **基本原則：実際の動作のみテスト**
 
-Release Kanbanプラグインの7つのコアコンポーネントに対する包括的テスト戦略とテストピラミッド実装規約
+**モック禁止・実装必須の現実的テスト規約**
 
-### 🎯 テスト対象コンポーネント
-
-| コンポーネント | 重要度 | 説明 |
-|---|---|---|
-| 📊 TrackerHierarchy | 🔴 Critical | Epic→Feature→UserStory→Task/Test の4段階階層制約 |
-| 🔄 VersionManagement | 🟡 High | UserStoryから子要素への自動バージョン伝播ロジック |
-| 🤖 AutoGeneration | 🟡 High | UserStory作成時のTest自動生成 + blocks関係作成 |
-| 🚦 StateTransition | 🟡 High | カンバンカラム移動時の状態遷移制御 |
-| 🛡️ ValidationGuard | 🔴 Critical | 3層ガード検証（Task完了・Test合格・重大Bug解決） |
-| 🎨 KanbanUI | 🟢 Medium | ドラッグ&ドロップ、Epic Swimlane表示 |
-| 🔌 APIIntegration | 🔴 Critical | React-Rails間データ交換の正確性 |
-
-## 🏗️ テストピラミッド構造
-
-```
-       /\
-      /  \     Phase 4: System/E2E Tests
-     /____\    - ユーザージャーニー
-    /      \   - ブラウザ統合テスト
-   /        \  - パフォーマンステスト
-  /__________\
- /            \ Phase 3: Integration Tests
-/              \- API統合テスト
-\              /- サービス間連携テスト
- \____________/ - コントローラーテスト
-/              \
-\              / Phase 2: Service Tests
- \____________/  - ビジネスロジックテスト
-/              \ - 状態遷移テスト
-\              / - 検証ガードテスト
- \____________/
-/              \
-\    Phase 1   / Unit Tests
- \____________/  - モデル単体テスト
-                 - バリデーションテスト
-                 - ヘルパーテスト
-```
-
-## 📊 Phase 1: 単体テスト（Unit Tests）
-
-### 目的
-- 個別クラス・メソッドの動作保証
-- ビジネスルールの厳密な検証
-- 高速フィードバックループの構築
-
-### 対象
-- `app/models/kanban/tracker_hierarchy.rb`
-- `app/services/kanban/*_service.rb`
-- `lib/kanban/helpers/*`
-
-### テスト観点
+### ❌ **絶対禁止事項**
 ```ruby
-# 正常系
-- 期待される入力に対する正しい出力
-- ビジネスルールの遵守
+# ❌ 外部依存モック化（APIエンドポイント存在不明）
+jest.mock('dhtmlx-gantt');
+allow(ApiController).to receive(:kanban_data).and_return({success: true})
 
-# 境界値
-- 最大・最小・空値での動作
-- edge caseの処理
+# ❌ プレースホルダーテスト（無意味）
+assert true, 'Card movement test placeholder'
 
-# 異常系
-- 不正入力の拒否
-- 適切なエラーメッセージ
-
-# パフォーマンス
-- 大量データでの性能維持
-- メモリリーク防止
+# ❌ 未実装機能テスト
+expect(Kanban::NonExistentController).to respond_to(:some_method)
 ```
 
-### 実装例
+### ✅ **必須実装原則**
 ```ruby
-RSpec.describe Kanban::TrackerHierarchy do
-  describe '.valid_parent?' do
-    it '正常な親子関係を許可する' do
-      expect(described_class.valid_parent?(task_tracker, user_story_tracker)).to be true
-    end
+# ✅ 実際のHTTPリクエスト
+get "/kanban/projects/#{project.id}/cards"
+assert_response :success
 
-    it '不正な関係を拒否する' do
-      expect(described_class.valid_parent?(task_tracker, feature_tracker)).to be false
-    end
+# ✅ 実際のDB操作
+issue = Issue.create!(tracker: test_tracker)
+assert issue.persisted?
 
-    it 'nil安全性を保証する' do
-      expect(described_class.valid_parent?(nil, user_story_tracker)).to be false
-    end
+# ✅ 実際のサービス呼び出し
+result = Kanban::TestGenerationService.generate_test_for_user_story(user_story)
+assert result[:test_issue].is_a?(Issue)
+```
+
+## 🔥 **段階的実装戦略**
+
+### **フェーズ1: 基盤修復（最優先）**
+1. **APIコントローラー最低限実装** → 404エラー根絶
+2. **実際のHTTPテスト** → モック依存脱却
+3. **データベーステスト** → 実際のCRUD確認
+
+### **フェーズ2: 統合確認（高優先）**
+1. **フロント-バック通信** → 実際のJSON確認
+2. **サービス間連携** → 実際のトランザクション確認
+3. **権限システム** → 実際のアクセス制御確認
+
+## 📋 **実装必須テストケース**
+
+### **1. HTTPエンドポイントテスト（最優先）**
+```ruby
+# test/integration/kanban_api_integration_test.rb
+class KanbanApiIntegrationTest < ActionDispatch::IntegrationTest
+  test "GET /kanban/projects/:id/cards returns 200" do
+    project = projects(:projects_001)
+    get "/kanban/projects/#{project.id}/cards"
+    assert_response :success
+    json = JSON.parse(response.body)
+    assert json.key?('cards') || json.key?('message')
   end
 end
 ```
 
-## 🤖 Phase 2: サービステスト（Service Tests）
-
-### 目的
-- ビジネスロジックの統合動作確認
-- サービス間の連携検証
-- トランザクション制御の確認
-
-### 対象
-- `app/services/kanban/test_generation_service.rb`
-- `app/services/kanban/version_propagation_service.rb`
-- `app/services/kanban/state_transition_service.rb`
-- `app/services/kanban/validation_guard_service.rb`
-
-### テスト観点
+### **2. サービス実動テスト**
 ```ruby
-# サービス連携
-- 複数サービスの協調動作
-- データ整合性の維持
+# test/unit/kanban_tracker_hierarchy_test.rb
+class KanbanTrackerHierarchyTest < ActiveSupport::TestCase
+  test "valid_parent validates actual tracker relationships" do
+    task_tracker = Tracker.find_by(name: 'Task') || Tracker.create!(name: 'Task')
+    user_story_tracker = Tracker.find_by(name: 'UserStory') || Tracker.create!(name: 'UserStory')
 
-# トランザクション
-- 成功時のコミット
-- 失敗時のロールバック
-
-# 状態変化
-- 前状態と後状態の確認
-- 副作用の検証
-
-# エラーハンドリング
-- 適切なエラー情報返却
-- ログ出力の確認
-```
-
-### 実装例
-```ruby
-RSpec.describe Kanban::TestGenerationService do
-  describe '.generate_test_for_user_story' do
-    it 'Testを生成しblocks関係を作成する' do
-      result = described_class.generate_test_for_user_story(user_story)
-
-      expect(result[:test_issue]).to be_a(Issue)
-      expect(result[:relation_created]).to be true
-
-      # blocks関係の確認
-      relation = IssueRelation.find_by(
-        issue_from: result[:test_issue],
-        issue_to: user_story,
-        relation_type: 'blocks'
-      )
-      expect(relation).to be_present
-    end
-
-    it 'エラー時はロールバックされる' do
-      allow(IssueRelation).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
-
-      initial_count = Issue.count
-      result = described_class.generate_test_for_user_story(user_story)
-
-      expect(result[:error]).to be_present
-      expect(Issue.count).to eq(initial_count)
-    end
+    assert Kanban::TrackerHierarchy.valid_parent?(task_tracker, user_story_tracker)
+    refute Kanban::TrackerHierarchy.valid_parent?(user_story_tracker, task_tracker)
   end
 end
+```
+
+### **3. データベース永続化テスト**
+```ruby
+# test/unit/kanban_test_generation_service_test.rb
+class KanbanTestGenerationServiceTest < ActiveSupport::TestCase
+  test "generate_test_for_user_story creates actual database records" do
+    user_story = issues(:issues_001)
+    user_story.update!(tracker: trackers(:tracker_002)) # UserStory tracker
+
+    result = Kanban::TestGenerationService.generate_test_for_user_story(user_story)
+
+    assert result[:test_issue].persisted?
+    assert_equal 'Test', result[:test_issue].tracker.name
+    assert_equal user_story, result[:test_issue].parent
+  end
+end
+```
+
+## 🚨 **実装順序（厳守）**
+
+### **ステップ1: APIコントローラー作成**
+```bash
+# 必須ファイル（404エラー解決）
+app/controllers/kanban/api_controller.rb
+app/controllers/kanban/hierarchy_controller.rb
+# 他5つのコントローラー
+```
+
+### **ステップ2: HTTPテスト実行**
+```bash
+# 統合テストで404を検出
+cd /usr/src/redmine && ruby -I test plugins/redmine_release_kanban/test/integration/kanban_api_integration_test.rb
+```
+
+### **ステップ3: 単体テスト修正**
+```bash
+# プレースホルダー削除、実際のテストに変更
+cd /usr/src/redmine && ruby -I test plugins/redmine_release_kanban/test/unit/kanban_tracker_hierarchy_test.rb
 ```
 
 ## 🔌 Phase 3: 統合テスト（Integration Tests）

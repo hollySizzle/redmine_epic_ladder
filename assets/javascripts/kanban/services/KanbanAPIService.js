@@ -2,13 +2,12 @@
 export class KanbanAPIService {
   constructor(projectId, apiBaseUrl) {
     this.projectId = projectId;
-    this.baseUrl = apiBaseUrl || `/projects/${projectId}/kanban`;
+    this.baseUrl = apiBaseUrl || `/kanban/projects/${projectId}`;
   }
 
   async getKanbanData(filters = {}) {
     const queryString = new URLSearchParams(filters).toString();
-    const url = `${this.baseUrl}/cards${queryString ? `?${queryString}` : ''}`;
-    const response = await this.fetch(url);
+    const response = await this.fetch(`cards${queryString ? `?${queryString}` : ''}`);
     return await response.json();
   }
 
