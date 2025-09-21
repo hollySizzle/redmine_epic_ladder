@@ -19,8 +19,12 @@ class TocGenerator:
         """単一ファイルの目次更新"""
         try:
             document = Document(file_path)
-            # INDEX.mdも通常ファイルと同様に処理
-            return self._update_regular_file(document)
+            # INDEX.mdファイルは特別処理で完全再生成
+            if file_path.name == 'INDEX.md':
+                return self._update_index_file(document)
+            else:
+                # 通常ファイルはTOCセクションのみ更新
+                return self._update_regular_file(document)
 
         except Exception as e:
             return {'success': False, 'error': str(e)}
@@ -28,6 +32,24 @@ class TocGenerator:
     def update_all(self, directory: Path) -> Dict:
         """全ファイル一括更新"""
         results = []
+
+        # INDEX.mdファイルが存在しない場合は自動生成
+        index_path = directory / 'INDEX.md'
+        if not index_path.exists():
+            try:
+                from ..entities.document_entity import Document
+                document = Document(index_path)
+                index_result = self._update_index_file(document)
+                results.append({
+                    'file': str(index_path),
+                    'success': index_result.get('success', False)
+                })
+            except Exception as e:
+                results.append({
+                    'file': str(index_path),
+                    'success': False,
+                    'error': str(e)
+                })
 
         for md_file in directory.rglob("*.md"):
             if md_file.name.startswith("_template"):
@@ -244,6 +266,8 @@ class TocGenerator:
 {timestamp}
 
 このドキュメントは階層的に整理されています。各カテゴリのINDEXから詳細なドキュメントにアクセスしてください。
+
+## TOC
 
 """
         
