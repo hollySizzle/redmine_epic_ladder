@@ -1,7 +1,7 @@
 #!/bin/bash
 # frozen_string_literal: true
 
-# Release Kanban テスト実行スクリプト
+# Release Kanban テスト実行スクリプト (Redmine標準mocha版)
 # 各フェーズのテストを段階的に実行し、結果をレポート
 
 set -e
@@ -42,35 +42,94 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 SKIPPED_TESTS=0
 
-# テスト実行関数
+# Redmineルートディレクトリに移動
+REDMINE_ROOT="/usr/src/redmine"
+cd "$REDMINE_ROOT"
+
+# テスト実行関数（Redmine標準形式）
 run_test_suite() {
     local suite_name="$1"
-    local test_pattern="$2"
-    local description="$3"
+    local test_type="$2"
+    local test_pattern="$3"
+    local description="$4"
 
     log_phase "🚀 $suite_name テスト実行中..."
     echo "説明: $description"
+    echo "タイプ: $test_type"
     echo "パターン: $test_pattern"
     echo "----------------------------------------"
 
-    if [ -f "Gemfile" ]; then
-        # Bundler環境
-        if bundle exec rspec "$test_pattern" --format documentation --color; then
-            log_success "✅ $suite_name テスト完了"
-        else
-            log_error "❌ $suite_name テスト失敗"
+    case $test_type in
+        "units")
+            if [ -n "$test_pattern" ]; then
+                if rake redmine:plugins:test:units PLUGIN=redmine_release_kanban TEST="$test_pattern"; then
+                    log_success "✅ $suite_name テスト完了"
+                    PASSED_TESTS=$((PASSED_TESTS + 1))
+                else
+                    log_error "❌ $suite_name テスト失敗"
+                    FAILED_TESTS=$((FAILED_TESTS + 1))
+                    return 1
+                fi
+            else
+                if rake redmine:plugins:test:units PLUGIN=redmine_release_kanban; then
+                    log_success "✅ $suite_name テスト完了"
+                    PASSED_TESTS=$((PASSED_TESTS + 1))
+                else
+                    log_error "❌ $suite_name テスト失敗"
+                    FAILED_TESTS=$((FAILED_TESTS + 1))
+                    return 1
+                fi
+            fi
+            ;;
+        "functionals")
+            if [ -n "$test_pattern" ]; then
+                if rake redmine:plugins:test:functionals PLUGIN=redmine_release_kanban TEST="$test_pattern"; then
+                    log_success "✅ $suite_name テスト完了"
+                    PASSED_TESTS=$((PASSED_TESTS + 1))
+                else
+                    log_error "❌ $suite_name テスト失敗"
+                    FAILED_TESTS=$((FAILED_TESTS + 1))
+                    return 1
+                fi
+            else
+                if rake redmine:plugins:test:functionals PLUGIN=redmine_release_kanban; then
+                    log_success "✅ $suite_name テスト完了"
+                    PASSED_TESTS=$((PASSED_TESTS + 1))
+                else
+                    log_error "❌ $suite_name テスト失敗"
+                    FAILED_TESTS=$((FAILED_TESTS + 1))
+                    return 1
+                fi
+            fi
+            ;;
+        "integration")
+            if rake redmine:plugins:test:integration PLUGIN=redmine_release_kanban; then
+                log_success "✅ $suite_name テスト完了"
+                PASSED_TESTS=$((PASSED_TESTS + 1))
+            else
+                log_error "❌ $suite_name テスト失敗"
+                FAILED_TESTS=$((FAILED_TESTS + 1))
+                return 1
+            fi
+            ;;
+        "system")
+            if rake redmine:plugins:test:system PLUGIN=redmine_release_kanban; then
+                log_success "✅ $suite_name テスト完了"
+                PASSED_TESTS=$((PASSED_TESTS + 1))
+            else
+                log_error "❌ $suite_name テスト失敗"
+                FAILED_TESTS=$((FAILED_TESTS + 1))
+                return 1
+            fi
+            ;;
+        *)
+            log_error "未対応のテストタイプ: $test_type"
+            FAILED_TESTS=$((FAILED_TESTS + 1))
             return 1
-        fi
-    else
-        # Redmine標準環境
-        if rake redmine:plugins:test:units PLUGIN=redmine_release_kanban TEST="$test_pattern"; then
-            log_success "✅ $suite_name テスト完了"
-        else
-            log_error "❌ $suite_name テスト失敗"
-            return 1
-        fi
-    fi
+            ;;
+    esac
 
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
     echo ""
 }
 
@@ -123,11 +182,12 @@ esac
 
 # メイン実行
 echo "=========================================="
-echo "🎯 Release Kanban テスト実行スイート"
+echo "🎯 Release Kanban テスト実行スイート (Redmine標準)"
 echo "=========================================="
 echo "モード: $MODE"
 echo "実行フェーズ: ${PHASES[*]}"
 echo "日時: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Redmineディレクトリ: $REDMINE_ROOT"
 echo "=========================================="
 echo ""
 
@@ -142,13 +202,9 @@ if [[ " ${PHASES[@]} " =~ " 1 " ]]; then
 
     run_test_suite \
         "TrackerHierarchy" \
-        "spec/models/kanban/tracker_hierarchy_spec.rb" \
+        "units" \
+        "test/unit/kanban_tracker_hierarchy_test.rb" \
         "Epic→Feature→UserStory→Task/Test の4段階階層制約検証"
-
-    run_test_suite \
-        "VersionPropagation" \
-        "spec/services/kanban/version_propagation_service_spec.rb" \
-        "UserStoryから子要素への自動バージョン伝播ロジック検証"
 fi
 
 # Phase 2: サービス層テスト（自動生成・状態遷移・検証）
@@ -158,20 +214,12 @@ if [[ " ${PHASES[@]} " =~ " 2 " ]]; then
     echo "🎯 重要度: 🟡 High（開発効率・ワークフロー整合性・品質ゲート）"
     echo ""
 
+    # 全てのunitテストを実行（個別ファイルがまだ作られていない場合）
     run_test_suite \
-        "TestGeneration" \
-        "spec/services/kanban/test_generation_service_spec.rb" \
-        "UserStory作成時のTest自動生成 + blocks関係作成"
-
-    run_test_suite \
-        "StateTransition" \
-        "spec/services/kanban/state_transition_service_spec.rb" \
-        "カンバンカラム移動時の状態遷移制御とブロック条件チェック"
-
-    run_test_suite \
-        "ValidationGuard" \
-        "spec/services/kanban/validation_guard_service_spec.rb" \
-        "3層ガード検証（Task完了・Test合格・重大Bug解決）"
+        "AllUnits" \
+        "units" \
+        "" \
+        "全ユニットテスト実行"
 fi
 
 # Phase 3: API統合テスト
@@ -183,18 +231,9 @@ if [[ " ${PHASES[@]} " =~ " 3 " ]]; then
 
     run_test_suite \
         "KanbanController" \
-        "spec/controllers/kanban_controller_spec.rb" \
+        "functionals" \
+        "test/functional/kanban_controller_test.rb" \
         "カンバンページ表示とメインコントローラー機能"
-
-    run_test_suite \
-        "APIController" \
-        "spec/requests/kanban/api_controller_spec.rb" \
-        "React-バックエンド間データ交換API検証"
-
-    run_test_suite \
-        "WorkflowIntegration" \
-        "spec/integration/kanban/workflow_integration_spec.rb" \
-        "複数サービス間連携とデータ整合性検証"
 fi
 
 # Phase 4: System/E2Eテスト
@@ -208,7 +247,8 @@ if [[ " ${PHASES[@]} " =~ " 4 " ]]; then
     if command -v chromedriver &> /dev/null || [ -f "/usr/bin/chromedriver" ]; then
         run_test_suite \
             "ReleaseKanban" \
-            "spec/system/kanban/release_kanban_spec.rb" \
+            "system" \
+            "" \
             "ドラッグ&ドロップ、Epic Swimlane表示、ユーザージャーニー検証"
     else
         log_warning "⚠️  ChromeDriverが見つかりません。System/E2Eテストをスキップします。"
@@ -228,6 +268,10 @@ echo "=========================================="
 echo "実行時間: ${EXECUTION_TIME}秒"
 echo "実行モード: $MODE"
 echo "実行フェーズ: ${PHASES[*]}"
+echo "総テスト数: $TOTAL_TESTS"
+echo "成功: $PASSED_TESTS"
+echo "失敗: $FAILED_TESTS"
+echo "スキップ: $SKIPPED_TESTS"
 
 if [ $FAILED_TESTS -eq 0 ]; then
     log_success "🎉 全てのテストが成功しました！"

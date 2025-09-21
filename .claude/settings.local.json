@@ -189,7 +189,12 @@
       "Bash(npm run build:*)",
       "Read(//usr/src/redmine/public/plugin_assets/redmine_release_kanban/**)",
       "Read(//usr/src/redmine/public/assets/**)",
-      "Read(//usr/src/redmine/app/assets/**)"
+      "Read(//usr/src/redmine/app/assets/**)",
+      "Read(//usr/src/redmine/**)",
+      "Bash(rake:*)",
+      "Bash(chmod:*)",
+      "Bash(/usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/testing/test_runner.sh:*)",
+      "Bash(RAILS_ENV=test rake redmine:plugins:test:units PLUGIN=redmine_release_kanban TEST=test/unit/kanban_tracker_hierarchy_test.rb)"
     ],
     "deny": [],
     "ask": [],
