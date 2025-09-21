@@ -156,13 +156,17 @@ rules:
       - "**/spec/models/kanban/**/*.rb"
       - "**/spec/controllers/kanban/**/*.rb"
       - "**/spec/requests/kanban/**/*.rb"
+      - "**/spec/integration/kanban/**/*.rb"
+      - "**/spec/system/kanban/**/*.rb"
       - "**/spec/javascript/kanban/**/*.test.js"
       - "**/spec/javascript/kanban/**/*.test.jsx"
+      - "**/vibes/scripts/testing/**/*.sh"
+      - "**/bin/test_runner.sh"
     severity: "block"
     token_threshold: 15000
     message: |
       📋 KanbanTest実装前に対応する技術仕様書とテスト戦略を確認してください
-      必読: @vibes/docs/rules/testing/kanban_test_strategy.md
+      必読: @vibes/docs/rules/kanban_test_strategy.md
       必読: 対応する@vibes/logics/*_implementation.mdファイル
       追加確認: @vibes/docs/rules/controller_standards.md (Controller層テスト時)
       追加確認: @vibes/docs/rules/service_standards.md (Service層テスト時)
@@ -193,8 +197,23 @@ rules:
       必読: 対応する機能の@vibes/logics/*_implementation.mdファイル
       単一責任原則・戻り値統一・エラーハンドリング規約を理解してから作業を続けてください
 
+  # Kanban テスト戦略規約
+  - name: "Kanbanテスト戦略規約"
+    patterns:
+      - "**/vibes/docs/rules/kanban_test_strategy.md"
+      - "**/vibes/docs/rules/*test*.md"
+      - "**/TESTING_GUIDE.md"
+      - "**/TESTING.md"
+    severity: "block"
+    token_threshold: 12000
+    message: |
+      📋 Kanbanテスト戦略ドキュメント編集前に既存規約を確認してください
+      必読: @vibes/docs/rules/vibes_documentation_standards.md
+      必読: @vibes/docs/rules/kanban_test_strategy.md
+      テストピラミッド構造・4フェーズ戦略・品質基準の整合性を保ってから作業を続けてください
+
 # メタ情報
 meta:
-  version: "1.0.0"
+  version: "1.1.0"
   updated_at: "2025-01-21"
-  description: "ファイルパターンと編集規約の紐付け定義"
+  description: "ファイルパターンと編集規約の紐付け定義（テスト戦略規約追加）"
