@@ -44,14 +44,12 @@ export const KanbanBoard = ({ projectId, kanbanData, selectedCards, onCardSelect
     }
   };
 
-  // モックデータの生成
+  // モックデータの生成（技術仕様書準拠）
   const getMockColumns = () => [
-    { id: 'backlog', title: 'バックログ', statuses: ['New', 'Open'], color: '#f1f1f1' },
-    { id: 'ready', title: '準備完了', statuses: ['Ready'], color: '#fff3cd' },
-    { id: 'in_progress', title: '進行中', statuses: ['In Progress', 'Assigned'], color: '#d1ecf1' },
-    { id: 'review', title: 'レビュー', statuses: ['Review', 'Ready for Test'], color: '#d4edda' },
-    { id: 'testing', title: 'テスト中', statuses: ['Testing', 'QA'], color: '#e2e3e5' },
-    { id: 'done', title: '完了', statuses: ['Resolved', 'Closed'], color: '#d4edda' }
+    { id: 'todo', name: 'ToDo', color: '#f1f1f1' },
+    { id: 'in_progress', name: 'In Progress', color: '#fff3cd' },
+    { id: 'ready_for_test', name: 'Ready for Test', color: '#d1ecf1' },
+    { id: 'released', name: 'Released', color: '#d4edda' }
   ];
 
   const getMockIssues = () => [
@@ -62,7 +60,7 @@ export const KanbanBoard = ({ projectId, kanbanData, selectedCards, onCardSelect
       status: 'New',
       assigned_to: 'ユーザー1',
       epic: 'Epic例',
-      column: 'backlog',
+      column: 'todo',
       hierarchy_level: 3
     },
     {
@@ -154,7 +152,7 @@ export const KanbanBoard = ({ projectId, kanbanData, selectedCards, onCardSelect
           <div className="epic-header">Epic</div>
           {columns.map(column => (
             <div key={column.id} className="column-header" style={{ backgroundColor: column.color }}>
-              <span>{column.title}</span>
+              <span>{column.name}</span>
               <span className="issue-count">({getIssuesForColumn(column.id).length})</span>
             </div>
           ))}

@@ -64,14 +64,24 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
+        // JavaScriptファイルのコピー
         {
-          from: path.resolve(__dirname, "assets/javascripts/kanban/dist/kanban_bundle.js"),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban_bundle.js",
+          from: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
+          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/",
+          filter: (resourcePath) => {
+            return resourcePath.endsWith('.js');
+          },
+          noErrorOnMissing: true,
+          force: true
+        },
+        // CSSファイルのコピー
+        {
+          from: path.resolve(__dirname, "assets/stylesheets/kanban/kanban.css"),
+          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban.css",
+          noErrorOnMissing: false,
+          force: true
         },
       ],
-      options: {
-        concurrency: 100,
-      },
     }),
   ],
 };
