@@ -198,7 +198,9 @@
       "Bash(RAILS_ENV=test rake redmine:plugins:test:units PLUGIN=redmine_release_kanban)",
       "Bash(RAILS_ENV=test rake redmine:plugins:test PLUGIN=redmine_release_kanban)",
       "Bash(npm test)",
-      "Bash(DISABLE_FACTORY_GIRL=1 ruby -I test plugins/redmine_release_kanban/test/integration/kanban_api_integration_test.rb)"
+      "Bash(DISABLE_FACTORY_GIRL=1 ruby -I test plugins/redmine_release_kanban/test/integration/kanban_api_integration_test.rb)",
+      "Bash(npm run test:*)",
+      "Bash(timeout 10s npm run dev)"
     ],
     "deny": [],
     "ask": [],

@@ -84,12 +84,10 @@ class KanbanController < ApplicationController
       {
         project: @project_data,
         columns: [
-          { id: 'backlog', title: 'バックログ', statuses: ['New', 'Open'] },
-          { id: 'ready', title: '準備完了', statuses: ['Ready'] },
-          { id: 'in_progress', title: '進行中', statuses: ['In Progress', 'Assigned'] },
-          { id: 'review', title: 'レビュー', statuses: ['Review', 'Ready for Test'] },
-          { id: 'testing', title: 'テスト中', statuses: ['Testing', 'QA'] },
-          { id: 'done', title: '完了', statuses: ['Resolved', 'Closed'] }
+          { id: 'todo', title: 'ToDo', statuses: ['New', 'Open'] },
+          { id: 'in_progress', title: 'In Progress', statuses: ['In Progress', 'Assigned'] },
+          { id: 'ready_for_test', title: 'Ready for Test', statuses: ['Review', 'Ready for Test'] },
+          { id: 'released', title: 'Released', statuses: ['Resolved', 'Closed'] }
         ],
         issues: issues.limit(100).map { |issue| build_issue_json(issue) },
         statistics: build_statistics(issues),
@@ -128,19 +126,17 @@ class KanbanController < ApplicationController
 
   def determine_column_for_status(status_name)
     column_mapping = {
-      ['New', 'Open'] => 'backlog',
-      ['Ready'] => 'ready',
+      ['New', 'Open'] => 'todo',
       ['In Progress', 'Assigned'] => 'in_progress',
-      ['Review', 'Ready for Test'] => 'review',
-      ['Testing', 'QA'] => 'testing',
-      ['Resolved', 'Closed'] => 'done'
+      ['Review', 'Ready for Test'] => 'ready_for_test',
+      ['Resolved', 'Closed'] => 'released'
     }
 
     column_mapping.each do |statuses, column|
       return column if statuses.include?(status_name)
     end
 
-    'backlog'
+    'todo'
   end
 
   def find_epic_name(issue)
