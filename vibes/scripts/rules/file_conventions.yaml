@@ -149,8 +149,29 @@ rules:
       必読: @vibes/logics/auto_generation_implementation.md
       Redmine Hookシステムでの自動化実装要件を理解してから作業を続けてください
 
-  # Kanban Plugin テスト規約
-  - name: "KanbanTest実装規約"
+  # Kanban Plugin テスト規約（Redmine標準test/ディレクトリ）
+  - name: "KanbanTest実装規約（Redmine標準）"
+    patterns:
+      - "**/test/**/*.rb"
+      - "**/test/unit/**/*.rb"
+      - "**/test/functional/**/*.rb"
+      - "**/test/integration/**/*.rb"
+      - "**/test/system/**/*.rb"
+      - "**/test/fixtures/**/*.yml"
+      - "**/test/test_helper.rb"
+      - "**/plugins/redmine_release_kanban/test/**/*"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      Redmine Release Kanban テストファイル編集前に必ずテスト規約を確認してください
+      必読ドキュメント:
+      - @vibes/docs/rules/testing/kanban_test_strategy.md (全体戦略)
+      - @vibes/docs/rules/testing/redmine_test_implementation_guide.md (実装ガイド)
+      - @vibes/docs/rules/testing/test_automation_strategy.md (自動化戦略)
+      Redmine標準テスト手法と品質基準を理解してから作業を続けてください
+
+  # Kanban Plugin テスト規約（RSpec系は参考用）
+  - name: "KanbanTest実装規約（RSpec系参考）"
     patterns:
       - "**/spec/services/kanban/**/*.rb"
       - "**/spec/models/kanban/**/*.rb"
@@ -162,15 +183,13 @@ rules:
       - "**/spec/javascript/kanban/**/*.test.jsx"
       - "**/vibes/scripts/testing/**/*.sh"
       - "**/bin/test_runner.sh"
-    severity: "block"
+    severity: "warn"
     token_threshold: 15000
     message: |
-      📋 KanbanTest実装前に対応する技術仕様書とテスト戦略を確認してください
-      必読: @vibes/docs/rules/kanban_test_strategy.md
-      必読: 対応する@vibes/logics/*_implementation.mdファイル
-      追加確認: @vibes/docs/rules/controller_standards.md (Controller層テスト時)
-      追加確認: @vibes/docs/rules/service_standards.md (Service層テスト時)
-      テストピラミッド原則と品質基準を理解してから作業を続けてください
+      ⚠️ 注意: このプロジェクトではRedmine標準Test::Unitを使用します
+      RSpec系のテストではなく、test/ディレクトリでRedmine標準テストを実装してください
+      参考: @vibes/docs/rules/testing/kanban_test_strategy.md
+      参考: @vibes/docs/rules/testing/redmine_test_implementation_guide.md
 
   # Kanban専用Controller規約
   - name: "KanbanController実装規約"

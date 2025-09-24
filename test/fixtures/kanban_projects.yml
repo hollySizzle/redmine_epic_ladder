@@ -1,0 +1,53 @@
+# 日本のソフトウェア開発プロジェクト用フィクスチャ
+
+# メインプロジェクト: ECサイト開発
+ec_website_project:
+  id: 201
+  name: "桜商店ECサイト開発"
+  identifier: "sakura-ec"
+  description: "伝統的な和菓子店のオンライン販売システム開発プロジェクト"
+  homepage: "https://sakura-shop.jp"
+  is_public: true
+  parent_id:
+  created_on: <%= 3.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 1.week.ago.to_formatted_s(:db) %>
+  status: 1
+
+# サブプロジェクト: モバイルアプリ
+mobile_app_project:
+  id: 202
+  name: "桜商店モバイルアプリ"
+  identifier: "sakura-mobile"
+  description: "iOS/Android対応の和菓子注文アプリ"
+  homepage: "https://sakura-shop.jp/mobile"
+  is_public: true
+  parent_id: 201
+  created_on: <%= 2.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 3.days.ago.to_formatted_s(:db) %>
+  status: 1
+
+# 社内システム開発
+internal_system_project:
+  id: 203
+  name: "社内業務システム"
+  identifier: "naisys"
+  description: "在庫管理・売上分析システム開発"
+  homepage: ""
+  is_public: false
+  parent_id:
+  created_on: <%= 4.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 2.days.ago.to_formatted_s(:db) %>
+  status: 1
+
+# AI機能追加プロジェクト
+ai_recommendation_project:
+  id: 204
+  name: "AIレコメンド機能開発"
+  identifier: "ai-recommend"
+  description: "機械学習を活用した商品推薦システム"
+  homepage: "https://sakura-shop.jp/ai"
+  is_public: false
+  parent_id: 201
+  created_on: <%= 1.month.ago.to_formatted_s(:db) %>
+  updated_on: <%= 1.day.ago.to_formatted_s(:db) %>
+  status: 1

@@ -1,0 +1,91 @@
+# 日本のソフトウェア開発チーム用ユーザーフィクスチャ
+
+# プロジェクトマネージャー
+project_manager_tanaka:
+  id: 301
+  login: "tanaka"
+  firstname: "太郎"
+  lastname: "田中"
+  mail: "tanaka@sakura-shop.jp"
+  status: 1
+  language: "ja"
+  salt: "salt_tanaka"
+  hashed_password: "hashed_password_tanaka"
+  admin: false
+  created_on: <%= 6.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 1.week.ago.to_formatted_s(:db) %>
+
+# チームリーダー
+team_leader_suzuki:
+  id: 302
+  login: "suzuki"
+  firstname: "花子"
+  lastname: "鈴木"
+  mail: "suzuki@sakura-shop.jp"
+  status: 1
+  language: "ja"
+  salt: "salt_suzuki"
+  hashed_password: "hashed_password_suzuki"
+  admin: false
+  created_on: <%= 5.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 2.days.ago.to_formatted_s(:db) %>
+
+# シニアデベロッパー
+senior_dev_sato:
+  id: 303
+  login: "sato"
+  firstname: "一郎"
+  lastname: "佐藤"
+  mail: "sato@sakura-shop.jp"
+  status: 1
+  language: "ja"
+  salt: "salt_sato"
+  hashed_password: "hashed_password_sato"
+  admin: false
+  created_on: <%= 4.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 1.day.ago.to_formatted_s(:db) %>
+
+# ジュニアデベロッパー
+junior_dev_watanabe:
+  id: 304
+  login: "watanabe"
+  firstname: "美咲"
+  lastname: "渡辺"
+  mail: "watanabe@sakura-shop.jp"
+  status: 1
+  language: "ja"
+  salt: "salt_watanabe"
+  hashed_password: "hashed_password_watanabe"
+  admin: false
+  created_on: <%= 2.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 3.hours.ago.to_formatted_s(:db) %>
+
+# QAエンジニア
+qa_engineer_yamada:
+  id: 305
+  login: "yamada"
+  firstname: "次郎"
+  lastname: "山田"
+  mail: "yamada@sakura-shop.jp"
+  status: 1
+  language: "ja"
+  salt: "salt_yamada"
+  hashed_password: "hashed_password_yamada"
+  admin: false
+  created_on: <%= 3.months.ago.to_formatted_s(:db) %>
+  updated_on: <%= 1.hour.ago.to_formatted_s(:db) %>
+
+# システム管理者
+admin_kanban:
+  id: 306
+  login: "admin_kanban"
+  firstname: "管理"
+  lastname: "かんばん"
+  mail: "admin@sakura-shop.jp"
+  status: 1
+  language: "ja"
+  salt: "salt_admin"
+  hashed_password: "hashed_password_admin"
+  admin: true
+  created_on: <%= 1.year.ago.to_formatted_s(:db) %>
+  updated_on: <%= 1.day.ago.to_formatted_s(:db) %>

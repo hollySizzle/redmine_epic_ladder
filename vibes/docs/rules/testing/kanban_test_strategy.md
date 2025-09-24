@@ -72,12 +72,12 @@
 
 ### 5.1 フェーズ別
 ```bash
-./vibes/scripts/testing/test_runner.sh phase1  # Critical
-./vibes/scripts/testing/test_runner.sh phase2  # High
-./vibes/scripts/testing/test_runner.sh phase3  # Integration
-./vibes/scripts/testing/test_runner.sh phase4  # System
-./vibes/scripts/testing/test_runner.sh quick   # 開発用
-./vibes/scripts/testing/test_runner.sh full    # 全体
+./bin/test_runner.sh phase1  # Critical
+./bin/test_runner.sh phase2  # High
+./bin/test_runner.sh phase3  # Integration
+./bin/test_runner.sh phase4  # System
+./bin/test_runner.sh quick   # 開発用
+./bin/test_runner.sh full    # 全体
 ```
 
 ### 5.2 開発ワークフロー

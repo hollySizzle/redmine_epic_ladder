@@ -222,7 +222,7 @@ const KanbanColumn = ({ column, issues, onCardSelect, selectedCards }) => {
             key={issue.id}
             issue={issue}
             onSelect={onCardSelect}
-            isSelected={selectedCards?.includes(issue.id)}
+            isSelected={selectedCards?.has(issue.id)}
           />
         ))}
       </div>

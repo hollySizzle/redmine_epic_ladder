@@ -42,9 +42,19 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 SKIPPED_TESTS=0
 
+# テスト環境設定
+export RAILS_ENV=test
+export DISABLE_FACTORY_GIRL=1
+export KANBAN_TEST_DEBUG=0  # デバッグ情報を非表示（CI/CD環境向け）
+
 # Redmineルートディレクトリに移動
 REDMINE_ROOT="/usr/src/redmine"
 cd "$REDMINE_ROOT"
+
+log_info "🔧 テスト環境設定完了"
+log_info "   RAILS_ENV: $RAILS_ENV"
+log_info "   DISABLE_FACTORY_GIRL: $DISABLE_FACTORY_GIRL"
+log_info "   作業ディレクトリ: $(pwd)"
 
 # テスト実行関数（Redmine標準形式）
 run_test_suite() {
