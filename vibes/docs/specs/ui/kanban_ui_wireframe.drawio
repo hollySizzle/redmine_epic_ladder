@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="EpicKanbanUI" id="epic-wireframe">
-        <mxGraphModel dx="2251" dy="1004" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+        <mxGraphModel dx="2894" dy="1291" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -13,8 +13,8 @@
                 <mxCell id="versionCol" value="Version" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=12;align=center;" parent="1" vertex="1">
                     <mxGeometry x="240" y="80" width="1140" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="newVersionBtn" value="+ New Version" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f8f8;strokeColor=#9673a6;fontStyle=1;fontSize=11;align=center;" parent="1" vertex="1">
-                    <mxGeometry x="1400" y="140" width="30" height="430" as="geometry"/>
+                <mxCell id="newVersionBtn" value="+ New Version" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f8f8;strokeColor=#9673a6;fontStyle=1;fontSize=11;align=center;rotation=-90;" parent="1" vertex="1">
+                    <mxGeometry x="1171.25" y="313.75" width="497.5" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="backlog1Col" value="Version-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=12;align=center;" parent="1" vertex="1">
                     <mxGeometry x="240" y="140" width="280" height="40" as="geometry"/>
