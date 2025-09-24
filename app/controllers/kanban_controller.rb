@@ -79,7 +79,7 @@ class KanbanController < ApplicationController
   def build_initial_data
     begin
       # 簡易版の初期データ構築
-      issues = @project.issues.includes(:tracker, :status, :assigned_to, :fixed_version, :parent, :children)
+      issues = @project.issues.includes(:tracker, :status, :assigned_to, :fixed_version, :parent)
 
       {
         project: @project_data,

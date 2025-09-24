@@ -1,7 +1,7 @@
 # plugins/redmine_release_kanban/init.rb
 Redmine::Plugin.register :redmine_release_kanban do
   name 'Redmine Release Kanban Plugin'
-  author 'Development Team'
+  author 'holly'
   description 'Epic→Feature→UserStory→Task/Test階層制約とバージョン管理を統合したRelease Kanbanシステム'
   version '1.0.0'
   url 'https://github.com/your-repo/redmine_release_kanban'
@@ -30,4 +30,14 @@ Redmine::Plugin.register :redmine_release_kanban do
        caption: 'Release Kanban',
        param: :project_id,
        if: Proc.new { |p| User.current.allowed_to?(:view_kanban, p) }
+
+  # プラグイン設定画面
+  settings default: {
+    'epic_tracker' => 'Epic',
+    'feature_tracker' => 'Feature',
+    'user_story_tracker' => 'UserStory',
+    'task_tracker' => 'Task',
+    'test_tracker' => 'Test',
+    'bug_tracker' => 'Bug'
+  }, partial: 'settings/kanban_tracker_settings'
 end

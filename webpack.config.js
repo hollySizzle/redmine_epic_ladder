@@ -62,19 +62,10 @@ module.exports = {
     },
   },
   plugins: [
+    // Webpack出力完了後にコピーを実行
     new CopyWebpackPlugin({
       patterns: [
-        // JavaScriptファイルのコピー
-        {
-          from: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/",
-          filter: (resourcePath) => {
-            return resourcePath.endsWith('.js');
-          },
-          noErrorOnMissing: true,
-          force: true
-        },
-        // CSSファイルのコピー
+        // CSSファイルのコピー（ビルド処理と関係ない）
         {
           from: path.resolve(__dirname, "assets/stylesheets/kanban/kanban.css"),
           to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban.css",
@@ -83,5 +74,27 @@ module.exports = {
         },
       ],
     }),
+    // カスタムプラグイン: ビルド完了後にJSファイルをコピー
+    {
+      apply: (compiler) => {
+        compiler.hooks.afterEmit.tap('CopyJSAfterEmit', (compilation) => {
+          const fs = require('fs');
+          const srcPath = path.resolve(__dirname, "assets/javascripts/kanban/dist/kanban_bundle.js");
+          const destPath = "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban_bundle.js";
+
+          // ディレクトリが存在しない場合は作成
+          const destDir = path.dirname(destPath);
+          if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+          }
+
+          // ファイルをコピー
+          if (fs.existsSync(srcPath)) {
+            fs.copyFileSync(srcPath, destPath);
+            console.log(`✓ Copied ${srcPath} to ${destPath}`);
+          }
+        });
+      }
+    }
   ],
 };

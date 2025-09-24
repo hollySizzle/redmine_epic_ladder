@@ -1,0 +1,141 @@
+<div class="box tabular settings">
+  <h3>トラッカー設定</h3>
+  <p class="description">
+    各階層レベルに対応するトラッカー名を設定してください。<br>
+    ここで設定したトラッカー名と一致するトラッカーがRedmineに存在する必要があります。
+  </p>
+
+  <div class="splitcontent">
+    <div class="splitcontentleft">
+      <fieldset class="box">
+        <legend>階層トラッカー設定</legend>
+
+        <p>
+          <label for="settings_epic_tracker">Epic (レベル1)</label>
+          <%= select_tag 'settings[epic_tracker]',
+              options_from_collection_for_select(Tracker.sorted, :name, :name,
+                                                 @settings['epic_tracker']),
+              { include_blank: '-- 選択してください --', class: 'tracker-select' } %>
+          <em class="info">最上位の大きな機能単位</em>
+        </p>
+
+        <p>
+          <label for="settings_feature_tracker">Feature (レベル2)</label>
+          <%= select_tag 'settings[feature_tracker]',
+              options_from_collection_for_select(Tracker.sorted, :name, :name,
+                                                 @settings['feature_tracker']),
+              { include_blank: '-- 選択してください --', class: 'tracker-select' } %>
+          <em class="info">機能単位（Epicの子要素）</em>
+        </p>
+
+        <p>
+          <label for="settings_user_story_tracker">UserStory (レベル3)</label>
+          <%= select_tag 'settings[user_story_tracker]',
+              options_from_collection_for_select(Tracker.sorted, :name, :name,
+                                                 @settings['user_story_tracker']),
+              { include_blank: '-- 選択してください --', class: 'tracker-select' } %>
+          <em class="info">ユーザー視点の要件（Featureの子要素）</em>
+        </p>
+      </fieldset>
+    </div>
+
+    <div class="splitcontentright">
+      <fieldset class="box">
+        <legend>実装トラッカー設定</legend>
+
+        <p>
+          <label for="settings_task_tracker">Task (レベル4)</label>
+          <%= select_tag 'settings[task_tracker]',
+              options_from_collection_for_select(Tracker.sorted, :name, :name,
+                                                 @settings['task_tracker']),
+              { include_blank: '-- 選択してください --', class: 'tracker-select' } %>
+          <em class="info">実装タスク（UserStoryの子要素）</em>
+        </p>
+
+        <p>
+          <label for="settings_test_tracker">Test (レベル4)</label>
+          <%= select_tag 'settings[test_tracker]',
+              options_from_collection_for_select(Tracker.sorted, :name, :name,
+                                                 @settings['test_tracker']),
+              { include_blank: '-- 選択してください --', class: 'tracker-select' } %>
+          <em class="info">テストタスク（UserStoryの子要素）</em>
+        </p>
+
+        <p>
+          <label for="settings_bug_tracker">Bug (レベル4)</label>
+          <%= select_tag 'settings[bug_tracker]',
+              options_from_collection_for_select(Tracker.sorted, :name, :name,
+                                                 @settings['bug_tracker']),
+              { include_blank: '-- 選択してください --', class: 'tracker-select' } %>
+          <em class="info">バグ管理（UserStory/Featureの子要素）</em>
+        </p>
+      </fieldset>
+    </div>
+  </div>
+
+  <fieldset class="box">
+    <legend>階層構造プレビュー</legend>
+    <div class="hierarchy-preview">
+      <div class="hierarchy-level level-1">
+        <strong id="epic-preview"><%= @settings['epic_tracker'] || 'Epic' %></strong>
+        <div class="hierarchy-level level-2">
+          └─ <strong id="feature-preview"><%= @settings['feature_tracker'] || 'Feature' %></strong>
+          <div class="hierarchy-level level-3">
+            └─ <strong id="user-story-preview"><%= @settings['user_story_tracker'] || 'UserStory' %></strong>
+            <div class="hierarchy-level level-4">
+              ├─ <span id="task-preview"><%= @settings['task_tracker'] || 'Task' %></span><br>
+              ├─ <span id="test-preview"><%= @settings['test_tracker'] || 'Test' %></span><br>
+              └─ <span id="bug-preview"><%= @settings['bug_tracker'] || 'Bug' %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+</div>
+
+<script>
+// 設定変更時にプレビューを更新
+document.addEventListener('DOMContentLoaded', function() {
+  const selects = document.querySelectorAll('.tracker-select');
+
+  selects.forEach(function(select) {
+    select.addEventListener('change', function() {
+      const trackerType = this.name.replace('settings[', '').replace(']', '').replace('_tracker', '');
+      const previewId = trackerType.replace('_', '-') + '-preview';
+      const previewElement = document.getElementById(previewId);
+
+      if (previewElement) {
+        previewElement.textContent = this.value || this.name.split('[')[1].split('_')[0];
+      }
+    });
+  });
+});
+</script>
+
+<style>
+.hierarchy-preview {
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  padding: 15px;
+  font-family: monospace;
+  margin-top: 10px;
+}
+
+.hierarchy-level {
+  margin-left: 20px;
+  margin-top: 5px;
+}
+
+.hierarchy-level.level-1 {
+  margin-left: 0;
+}
+
+.info {
+  font-style: italic;
+  color: #666;
+  display: block;
+  font-size: 0.9em;
+  margin-top: 3px;
+}
+</style>

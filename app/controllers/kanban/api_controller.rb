@@ -103,7 +103,7 @@ module Kanban
     private
 
     def build_kanban_response
-      issues = @project.issues.includes(:tracker, :status, :assigned_to, :fixed_version, :parent, :children)
+      issues = @project.issues.includes(:tracker, :status, :assigned_to, :fixed_version, :parent)
 
       {
         project: project_json(@project),
