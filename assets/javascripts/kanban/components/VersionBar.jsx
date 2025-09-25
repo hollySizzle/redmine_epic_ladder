@@ -1,22 +1,51 @@
-// assets/javascripts/kanban/components/VersionBar.jsx
-import React from 'react';
+import React, { useState, useCallback } from 'react';
+import './VersionBar.scss';
 
-export const VersionBar = ({ projectId, apiService, onVersionChange }) => {
+/**
+ * Version Bar Component
+ * ワイヤーフレーム: VERSION_BAR準拠
+ */
+const VersionBar = ({
+  versions = [],
+  selectedVersions = new Set(),
+  onVersionSelect,
+  onVersionCreate,
+  permissions = {},
+  ...props
+}) => {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const handleVersionSelect = useCallback((versionId, event) => {
+    event.preventDefault();
+    const isSelected = selectedVersions.has(versionId);
+    onVersionSelect?.(versionId, !isSelected);
+  }, [selectedVersions, onVersionSelect]);
+
   return (
-    <div className="version-bar">
-      <div className="version-tabs">
-        <div className="version-tab">
-          <span className="version-name">Backlog-1</span>
-          <span className="version-due-date">2024-03-31</span>
-        </div>
-        <div className="version-tab">
-          <span className="version-name">Backlog-2</span>
-          <span className="version-due-date">2024-06-30</span>
-        </div>
-        <button className="create-version-btn">
-          + 新規
-        </button>
+    <div className="version_bar" {...props}>
+      <div className="version_bar_header">
+        <h3>Versions</h3>
+        {permissions.can_manage_versions && (
+          <button onClick={() => setShowCreateForm(!showCreateForm)}>
+            New Version
+          </button>
+        )}
+      </div>
+
+      <div className="version_list">
+        {versions.map(version => (
+          <div
+            key={version.id}
+            className={`version_item ${selectedVersions.has(version.id) ? 'selected' : ''}`}
+            onClick={(e) => handleVersionSelect(version.id, e)}
+          >
+            <span>{version.name}</span>
+            <span>{version.status}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
 };
+
+export default VersionBar;
