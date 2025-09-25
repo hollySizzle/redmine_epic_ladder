@@ -231,8 +231,105 @@ rules:
       必読: @vibes/docs/rules/kanban_test_strategy.md
       テストピラミッド構造・4フェーズ戦略・品質基準の整合性を保ってから作業を続けてください
 
+  # Feature Card関連
+  - name: "Feature Card関連スケルトンコード規約"
+    patterns:
+      - "**/assets/javascripts/kanban/components/FeatureCard.jsx"
+      - "**/assets/javascripts/kanban/components/FeatureCard.scss"
+      - "**/assets/javascripts/kanban/components/UserStoryItem.jsx"
+      - "**/assets/javascripts/kanban/components/BaseItemCard.jsx"
+      - "**/assets/javascripts/kanban/components/BaseItemCard.scss"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 Feature Card関連スケルトンコード編集前に仕様書を確認してください
+
+      必読: @vibes/docs/logics/ui_components/feature_card/feature_card_component_specification.md
+      必読: @vibes/docs/logics/ui_components/feature_card/feature_card_server_specification.md
+
+      Feature Cardコンポーネント・UserStoryアイテム・BaseItemCardのワイヤーフレーム準拠実装です
+
+  # Kanban Grid関連
+  - name: "Kanban Grid関連スケルトンコード規約"
+    patterns:
+      - "**/assets/javascripts/kanban/components/KanbanGridLayout.jsx"
+      - "**/assets/javascripts/kanban/components/KanbanGridLayout.scss"
+      - "**/assets/javascripts/kanban/components/GridCell.jsx"
+      - "**/assets/javascripts/kanban/components/VersionBar.jsx"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 Kanban Grid関連スケルトンコード編集前に仕様書を確認してください
+
+      必読: @vibes/docs/logics/ui_components/kanban_grid/kanban_grid_layout_specification.md
+      必読: @vibes/docs/logics/ui_components/kanban_grid/kanban_grid_server_specification.md
+
+      Epic×Versionの2次元グリッドレイアウト・ドラッグ&ドロップのワイヤーフレーム準拠実装です
+
+  # 共通コンポーネント関連
+  - name: "共通コンポーネント関連スケルトンコード規約"
+    patterns:
+      - "**/assets/javascripts/kanban/components/shared/Modal.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Modal.scss"
+      - "**/assets/javascripts/kanban/components/shared/Tooltip.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Button.jsx"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 共通コンポーネント関連スケルトンコード編集前に仕様書を確認してください
+
+      必読: @vibes/docs/logics/ui_components/shared_components/shared_components_specification.md
+      必読: @vibes/docs/logics/ui_components/shared_components/shared_services_server_specification.md
+
+      Modal・Tooltip・Button等の共通コンポーネントのワイヤーフレーム準拠実装です
+
+  # API・サービス関連
+  - name: "API・サービス関連スケルトンコード規約"
+    patterns:
+      - "**/assets/javascripts/kanban/services/KanbanAPI.js"
+      - "**/assets/javascripts/kanban/hooks/useKanbanAPI.js"
+      - "**/assets/javascripts/kanban/hooks/useKanbanData.js"
+      - "**/assets/javascripts/kanban/hooks/useModal.js"
+      - "**/assets/javascripts/kanban/hooks/useRealtimeUpdates.js"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 API・サービス関連スケルトンコード編集前に仕様書を確認してください
+
+      必読: @vibes/docs/logics/ui_components/api_integration/api_integration_specification.md
+      必読: @vibes/docs/logics/ui_components/api_integration/api_controller_server_specification.md
+
+      KanbanAPIサービス・Reactフック類のワイヤーフレーム準拠実装です
+
+      ワイヤーフレーム準拠（GROUP_*構造）とコンポーネント仕様を理解してから作業を続けてください
+
+  # Wireframe実装ドキュメント規約
+  - name: "Wireframe実装ドキュメント規約"
+    patterns:
+      # Feature Card仕様書
+      - "**/vibes/docs/logics/ui_components/feature_card/**/*.md"
+      # Kanban Grid仕様書
+      - "**/vibes/docs/logics/ui_components/kanban_grid/**/*.md"
+      # 共通コンポーネント仕様書
+      - "**/vibes/docs/logics/ui_components/shared_components/**/*.md"
+      # API統合仕様書
+      - "**/vibes/docs/logics/ui_components/api_integration/**/*.md"
+      # データ構造仕様書
+      - "**/vibes/docs/logics/ui_components/data_structures/**/*.md"
+      # 自動化仕様書
+      - "**/vibes/docs/logics/ui_components/automation/**/*.md"
+    severity: "block"
+    token_threshold: 12000
+    message: |
+      📋 Wireframe実装仕様書編集前に関連ドキュメントを確認してください
+      必読: @vibes/docs/rules/vibes_documentation_standards.md
+      必読: @vibes/docs/specs/ui/kanban_ui_feature_card_component.drawio (ワイヤーフレーム)
+      必読: @vibes/docs/specs/ui/kanban_ui_grid_layout.drawio (グリッドレイアウト)
+
+      ワイヤーフレーム準拠のコンポーネント分解設計とサーバー連携仕様の整合性を保ってから作業を続けてください
+
 # メタ情報
 meta:
-  version: "1.1.0"
-  updated_at: "2025-01-21"
-  description: "ファイルパターンと編集規約の紐付け定義（テスト戦略規約追加）"
+  version: "1.2.0"
+  updated_at: "2025-01-25"
+  description: "ファイルパターンと編集規約の紐付け定義（Wireframe実装スケルトンコード・ドキュメント規約追加）"
