@@ -1,341 +1,239 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-} from '@dnd-kit/sortable';
-import GridCell from './GridCell';
-import FeatureCard from './FeatureCard';
-import VersionBar from './VersionBar';
-import './KanbanGridLayout.scss';
+import { useState, useEffect, useMemo } from 'react';
+import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
+import { GridHeader } from './GridHeader';
+import { EpicRow } from './EpicRow';
+import { NoEpicRow } from './NoEpicRow';
+import { NewEpicRow } from './NewEpicRow';
+import { FeatureCard } from './FeatureCard';
+import { KanbanAPI } from '../services/KanbanAPI';
 
 /**
- * Kanban Grid Layout Component
- * ワイヤーフレーム: GROUP_KANBAN_GRID準拠 (Epic行 × Version列)
+ * KanbanGridLayout (メインコンポーネント)
+ * ワイヤーフレーム準拠: 2次元グリッドレイアウト（EPIC行 × Version列）
  *
- * @param {Object} props
- * @param {Array} props.epics - Epic データ配列
- * @param {Array} props.versions - Version データ配列
- * @param {Array} props.columns - カラム定義配列
- * @param {Object} props.metadata - メタデータ
- * @param {Function} props.onCardMove - カード移動コールバック
- * @param {Function} props.onVersionAssign - バージョン割り当てコールバック
- * @param {Function} props.onBulkAction - 一括操作コールバック
- * @param {Object} props.permissions - ユーザー権限情報
+ * @param {number} projectId - プロジェクトID
+ * @param {Object} currentUser - 現在のユーザー情報
+ * @param {Object} initialData - 初期データ
+ * @param {Function} onDataUpdate - データ更新コールバック
  */
-const KanbanGridLayout = ({
-  epics = [],
-  versions = [],
-  columns = [],
-  metadata = {},
-  onCardMove,
-  onVersionAssign,
-  onBulkAction,
-  permissions = {},
-  ...props
+export const KanbanGridLayout = ({
+  projectId,
+  currentUser,
+  initialData,
+  onDataUpdate
 }) => {
+  const [gridData, setGridData] = useState(initialData || { epics: [], versions: [] });
   const [activeCard, setActiveCard] = useState(null);
-  const [selectedVersions, setSelectedVersions] = useState(new Set());
-  const [gridFilters, setGridFilters] = useState({
-    showOnlyAssigned: false,
-    hideCompleted: false,
-    versionFilter: null
-  });
+  const [draggedOverCell, setDraggedOverCell] = useState(null);
+  const [loading, setLoading] = useState(!initialData);
 
-  // DnD センサー設定
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  // バージョン列の定義（固定 + 動的）
+  const versionColumns = useMemo(() => {
+    const dynamicVersions = gridData.versions.map(version => ({
+      id: version.id,
+      name: version.name,
+      type: 'version'
+    }));
 
-  // グリッドデータの構築とフィルタリング
-  const gridData = useMemo(() => {
-    const filteredEpics = epics.filter(epic => {
-      if (gridFilters.hideCompleted && epic.issue.status?.is_closed) return false;
-      return true;
-    });
+    return [
+      ...dynamicVersions,
+      { id: 'no-version', name: 'No Version', type: 'no-version' }
+    ];
+  }, [gridData.versions]);
 
-    const filteredVersions = versions.filter(version => {
-      if (gridFilters.versionFilter && version.id !== gridFilters.versionFilter) return false;
-      return true;
-    });
+  // Epic行の定義
+  const epicRows = useMemo(() => {
+    const epics = gridData.epics.map(epic => ({
+      id: epic.issue.id,
+      name: epic.issue.subject,
+      type: 'epic',
+      data: epic
+    }));
 
-    return {
-      epics: filteredEpics,
-      versions: filteredVersions
-    };
-  }, [epics, versions, gridFilters]);
+    return [
+      ...epics,
+      { id: 'no-epic', name: 'No EPIC', type: 'no-epic', data: null }
+    ];
+  }, [gridData.epics]);
 
-  // ドラッグ開始ハンドラー
-  const handleDragStart = useCallback((event) => {
+  useEffect(() => {
+    if (!initialData) {
+      loadGridData();
+    }
+  }, [projectId]);
+
+  const loadGridData = async () => {
+    try {
+      setLoading(true);
+      const data = await KanbanAPI.getGridData(projectId);
+      setGridData(data);
+    } catch (error) {
+      console.error('グリッドデータ読み込みエラー:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDragStart = (event) => {
     const { active } = event;
     setActiveCard(active.data.current);
-  }, []);
+  };
 
-  // ドラッグ終了ハンドラー
-  const handleDragEnd = useCallback((event) => {
+  const handleDragOver = (event) => {
+    const { over } = event;
+    if (over && over.data.current?.type === 'grid-cell') {
+      setDraggedOverCell(over.data.current);
+    } else {
+      setDraggedOverCell(null);
+    }
+  };
+
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
 
-    setActiveCard(null);
+    if (!over || !over.data.current) return;
 
-    if (!over) return;
-
-    const draggedItem = active.data.current;
+    const draggedCard = active.data.current;
     const dropTarget = over.data.current;
 
-    // 移動処理を実行
-    if (draggedItem && dropTarget) {
-      onCardMove?.(draggedItem, dropTarget);
-    }
-  }, [onCardMove]);
-
-  // バージョン選択ハンドラー
-  const handleVersionSelect = useCallback((versionId, selected) => {
-    setSelectedVersions(prev => {
-      const newSet = new Set(prev);
-      if (selected) {
-        newSet.add(versionId);
-      } else {
-        newSet.delete(versionId);
+    try {
+      if (dropTarget.type === 'grid-cell') {
+        await handleFeatureCardMove(draggedCard, dropTarget);
+      } else if (dropTarget.type === 'version-assignment') {
+        await handleVersionAssignment(draggedCard, dropTarget);
       }
-      return newSet;
+    } catch (error) {
+      console.error('ドラッグ操作エラー:', error);
+    } finally {
+      setActiveCard(null);
+      setDraggedOverCell(null);
+      await loadGridData(); // データ再読み込み
+    }
+  };
+
+  const handleFeatureCardMove = async (card, target) => {
+    const { epicId, versionId } = target;
+
+    const result = await KanbanAPI.moveFeatureCard(projectId, {
+      feature_id: card.feature.issue.id,
+      target_epic_id: epicId === 'no-epic' ? null : epicId,
+      target_version_id: versionId === 'no-version' ? null : versionId
     });
-  }, []);
 
-  // フィルター変更ハンドラー
-  const handleFilterChange = useCallback((filterType, value) => {
-    setGridFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
-  }, []);
+    if (result.success) {
+      onDataUpdate?.(result.updated_data);
+    }
+  };
 
-  // セル内のFeatureを検索
-  const getFeaturesForCell = useCallback((epic, version, column) => {
-    if (!epic.features) return [];
+  const handleVersionAssignment = async (card, target) => {
+    await KanbanAPI.assignVersion(projectId, {
+      issue_id: card.feature.issue.id,
+      version_id: target.versionId
+    });
+  };
+
+  const getCellFeatures = (epicId, versionId) => {
+    if (epicId === 'no-epic') {
+      // No Epic行の場合：親が存在しないFeatureを取得
+      return gridData.orphan_features?.filter(feature => {
+        const featureVersionId = feature.issue.fixed_version?.id;
+        if (versionId === 'no-version') {
+          return !featureVersionId;
+        }
+        return featureVersionId === versionId;
+      }) || [];
+    }
+
+    // 通常Epic行の場合
+    const epic = gridData.epics.find(e => e.issue.id === epicId);
+    if (!epic) return [];
 
     return epic.features.filter(feature => {
-      // バージョンマッチング
-      if (version) {
-        const featureMatches = feature.issue.fixed_version?.id === version.id;
-        const userStoryMatches = feature.user_stories?.some(us =>
-          us.issue.fixed_version?.id === version.id
-        );
-        if (!featureMatches && !userStoryMatches) return false;
+      const featureVersionId = feature.issue.fixed_version?.id;
+      if (versionId === 'no-version') {
+        return !featureVersionId;
       }
-
-      // カラムマッチング（ステータスベース）
-      if (column) {
-        const statusMatches = column.statuses?.includes(feature.issue.status?.name);
-        return statusMatches;
-      }
-
-      return true;
+      return featureVersionId === versionId;
     });
-  }, []);
+  };
+
+  const handleNewVersion = async () => {
+    const versionName = prompt('新しいVersionの名前を入力してください:');
+    if (versionName) {
+      try {
+        await KanbanAPI.createVersion(projectId, { name: versionName });
+        await loadGridData();
+      } catch (error) {
+        alert('Version作成に失敗しました: ' + error.message);
+      }
+    }
+  };
+
+  const handleNewEpic = async () => {
+    const epicSubject = prompt('新しいEpicの件名を入力してください:');
+    if (epicSubject) {
+      try {
+        await KanbanAPI.createEpic(projectId, { subject: epicSubject });
+        await loadGridData();
+      } catch (error) {
+        alert('Epic作成に失敗しました: ' + error.message);
+      }
+    }
+  };
+
+  if (loading) {
+    return <div className="kanban-grid-loading">グリッドデータを読み込み中...</div>;
+  }
 
   return (
-    <div className="group_kanban_grid" {...props}>
-      {/* GRID_HEADER */}
-      <div className="grid_header">
-        {/* VERSION_BAR */}
-        <VersionBar
-          versions={gridData.versions}
-          selectedVersions={selectedVersions}
-          onVersionSelect={handleVersionSelect}
-          onVersionCreate={permissions.can_manage_versions ? onVersionAssign : null}
-          permissions={permissions}
-        />
-
-        {/* GRID_FILTERS */}
-        <div className="grid_filters">
-          <label className="filter_option">
-            <input
-              type="checkbox"
-              checked={gridFilters.showOnlyAssigned}
-              onChange={(e) => handleFilterChange('showOnlyAssigned', e.target.checked)}
-            />
-            Show only assigned
-          </label>
-
-          <label className="filter_option">
-            <input
-              type="checkbox"
-              checked={gridFilters.hideCompleted}
-              onChange={(e) => handleFilterChange('hideCompleted', e.target.checked)}
-            />
-            Hide completed
-          </label>
-
-          <select
-            value={gridFilters.versionFilter || ''}
-            onChange={(e) => handleFilterChange('versionFilter', e.target.value || null)}
-            className="version_filter"
-          >
-            <option value="">All versions</option>
-            {versions.map(version => (
-              <option key={version.id} value={version.id}>
-                {version.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* GRID_MAIN */}
+    <div className="kanban-grid-layout">
       <DndContext
-        sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid_main">
-          {/* COLUMN_HEADERS */}
-          <div className="column_headers">
-            <div className="epic_column_header">Epics</div>
-            {columns.map(column => (
-              <div key={column.id} className="grid_column_header" data-column={column.id}>
-                <span className="column_name">{column.name}</span>
-                <span className="column_count">
-                  {/* TODO: Calculate count per column */}
-                </span>
-              </div>
-            ))}
-          </div>
+        <GridHeader
+          projectTitle={`Epic Kanban Board - ${gridData.project?.name || ''}`}
+          versionColumns={versionColumns}
+          onNewVersion={handleNewVersion}
+        />
 
-          {/* GRID_BODY */}
-          <div className="grid_body">
-            {gridData.epics.map((epic, rowIndex) => (
-              <div key={epic.issue.id} className="grid_row" data-epic={epic.issue.id}>
-                {/* EPIC_CELL */}
-                <div className="epic_cell">
-                  <div className="epic_info">
-                    <span className="epic_id">#{epic.issue.id}</span>
-                    <span className="epic_title">{epic.issue.subject}</span>
-                    <span className="epic_status">{epic.issue.status?.name}</span>
-                  </div>
-                  <div className="epic_statistics">
-                    <span className="feature_count">
-                      {epic.features?.length || 0} Features
-                    </span>
-                    <div className="epic_progress">
-                      <div
-                        className="progress_bar"
-                        style={{
-                          width: `${epic.completion_ratio || 0}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
+        <div className="grid-body">
+          {epicRows.map(epicRow => (
+            epicRow.type === 'no-epic' ? (
+              <NoEpicRow
+                key={epicRow.id}
+                versionColumns={versionColumns}
+                getCellFeatures={(versionId) => getCellFeatures(epicRow.id, versionId)}
+                draggedOverCell={draggedOverCell}
+              />
+            ) : (
+              <EpicRow
+                key={epicRow.id}
+                epic={epicRow.data}
+                versionColumns={versionColumns}
+                getCellFeatures={(versionId) => getCellFeatures(epicRow.id, versionId)}
+                draggedOverCell={draggedOverCell}
+              />
+            )
+          ))}
 
-                {/* GRID_CELLS */}
-                {columns.map(column => {
-                  const cellFeatures = getFeaturesForCell(epic, null, column);
-
-                  return (
-                    <GridCell
-                      key={`${epic.issue.id}-${column.id}`}
-                      epic={epic}
-                      column={column}
-                      features={cellFeatures}
-                      permissions={permissions}
-                      onFeatureClick={(feature) => {
-                        // Handle feature click
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {/* VERSION_GRID_OVERLAY - バージョン割り当て時に表示 */}
-          {selectedVersions.size > 0 && (
-            <div className="version_grid_overlay">
-              {gridData.epics.map(epic => (
-                <div key={epic.issue.id} className="version_row">
-                  <div className="epic_cell_overlay">
-                    <span className="epic_title">{epic.issue.subject}</span>
-                  </div>
-                  {gridData.versions.map(version => {
-                    const versionFeatures = getFeaturesForCell(epic, version, null);
-
-                    return (
-                      <div
-                        key={`${epic.issue.id}-${version.id}`}
-                        className={`version_cell ${selectedVersions.has(version.id) ? 'selected' : ''}`}
-                      >
-                        {versionFeatures.map(feature => (
-                          <FeatureCard
-                            key={feature.issue.id}
-                            feature={feature.issue}
-                            userStories={feature.user_stories || []}
-                            statistics={feature.statistics}
-                            permissions={permissions}
-                            isDragDisabled={false}
-                          />
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          )}
+          <NewEpicRow
+            onNewEpic={handleNewEpic}
+          />
         </div>
 
-        {/* DRAG_OVERLAY */}
         <DragOverlay>
-          {activeCard ? (
-            <div className="drag_overlay_item">
-              {activeCard.type === 'feature' && (
-                <FeatureCard
-                  feature={activeCard.feature}
-                  userStories={activeCard.feature.user_stories || []}
-                  isDragDisabled={true}
-                />
-              )}
-              {['task', 'test', 'bug'].includes(activeCard.type) && (
-                <div className={`base_item_drag_overlay ${activeCard.type}`}>
-                  #{activeCard.item.id} {activeCard.item.subject}
-                </div>
-              )}
-            </div>
-          ) : null}
+          {activeCard && (
+            <FeatureCard
+              feature={activeCard.feature}
+              expanded={false}
+              isDragging={true}
+            />
+          )}
         </DragOverlay>
       </DndContext>
-
-      {/* GRID_FOOTER */}
-      <div className="grid_footer">
-        <div className="grid_statistics">
-          <span className="total_epics">{gridData.epics.length} Epics</span>
-          <span className="total_features">
-            {gridData.epics.reduce((sum, epic) => sum + (epic.features?.length || 0), 0)} Features
-          </span>
-          <span className="completion_ratio">
-            {/* TODO: Calculate overall completion */}
-            Overall completion: 0%
-          </span>
-        </div>
-      </div>
     </div>
   );
 };
-
-export default KanbanGridLayout;
