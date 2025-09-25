@@ -1,0 +1,141 @@
+// Modal Component Styles
+
+.modal_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: modalFadeIn 0.2s ease-out;
+
+  .modal_container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn 0.3s ease-out;
+
+    // サイズバリエーション
+    &.small {
+      width: 400px;
+      max-width: 90vw;
+    }
+
+    &.medium {
+      width: 600px;
+      max-width: 90vw;
+    }
+
+    &.large {
+      width: 800px;
+      max-width: 95vw;
+    }
+
+    &.fullscreen {
+      width: 95vw;
+      height: 95vh;
+      max-width: none;
+      max-height: none;
+    }
+
+    .modal_header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+
+      .modal_title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .modal_close_btn {
+        background: none;
+        border: none;
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #666;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #f0f0f0;
+          color: #333;
+        }
+
+        i {
+          font-size: 16px;
+        }
+      }
+    }
+
+    .modal_content {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+  }
+}
+
+// アニメーション
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// body クラスでスクロール制御
+body.modal_open {
+  overflow: hidden;
+}
+
+// レスポンシブ対応
+@media (max-width: 768px) {
+  .modal_overlay {
+    .modal_container {
+      &.small,
+      &.medium,
+      &.large {
+        width: 95vw;
+        margin: 20px;
+      }
+
+      .modal_header {
+        padding: 16px 20px;
+
+        .modal_title {
+          font-size: 16px;
+        }
+      }
+
+      .modal_content {
+        padding: 20px;
+      }
+    }
+  }
+}
