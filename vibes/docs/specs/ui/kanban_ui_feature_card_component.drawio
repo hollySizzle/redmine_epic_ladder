@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Feature Card Component" id="feature-card-component">
-        <mxGraphModel dx="570" dy="325" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="606" dy="439" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -61,32 +61,46 @@
                 <mxCell id="GROUP_TASK_ITEM_1" value="" style="group" parent="GROUP_TASK_CONTAINER_1" vertex="1" connectable="0">
                     <mxGeometry x="5" y="25" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskName1" value="バリデーション実装" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" parent="GROUP_TASK_ITEM_1" vertex="1">
-                    <mxGeometry width="160" height="15" as="geometry"/>
+                <!-- Task Card 1 (Name + Assignee + Delete Container) -->
+                <mxCell id="GROUP_TASK_CARD_1" value="" style="group" parent="GROUP_TASK_ITEM_1" vertex="1" connectable="0">
+                    <mxGeometry width="160" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskAssignee1" value="田中太郎" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=7;align=left;verticalAlign=middle;spacingLeft=5;fontColor=#666666;" parent="GROUP_TASK_ITEM_1" vertex="1">
-                    <mxGeometry y="15" width="160" height="10" as="geometry"/>
+                <mxCell id="taskCardBg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;strokeWidth=1;" parent="GROUP_TASK_CARD_1" vertex="1">
+                    <mxGeometry width="160" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskDelete1" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_TASK_ITEM_1" vertex="1">
-                    <mxGeometry x="165" y="7" width="30" height="8" as="geometry"/>
+                <mxCell id="taskName1" value="バリデーション実装" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;spacingLeft=5;" parent="GROUP_TASK_CARD_1" vertex="1">
+                    <mxGeometry x="5" y="2" width="110" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="taskAssignee1" value="田中太郎" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#666666;spacingLeft=5;" parent="GROUP_TASK_CARD_1" vertex="1">
+                    <mxGeometry x="5" y="14" width="110" height="9" as="geometry"/>
+                </mxCell>
+                <mxCell id="taskDelete1" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=6;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_TASK_CARD_1" vertex="1">
+                    <mxGeometry x="120" y="8" width="35" height="10" as="geometry"/>
                 </mxCell>
                 <mxCell id="taskStatus1" value="進行中" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;" parent="GROUP_TASK_ITEM_1" vertex="1">
-                    <mxGeometry x="200" y="5" width="35" height="16" as="geometry"/>
+                    <mxGeometry x="165" y="5" width="35" height="16" as="geometry"/>
                 </mxCell>
                 <mxCell id="GROUP_TASK_ITEM_2" value="" style="group" parent="GROUP_TASK_CONTAINER_1" vertex="1" connectable="0">
                     <mxGeometry x="5" y="52" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskName2" value="UI設計完了" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#c0c0c0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;fontColor=#666666;" parent="GROUP_TASK_ITEM_2" vertex="1">
-                    <mxGeometry width="160" height="15" as="geometry"/>
+                <!-- Task Card 2 (Name + Assignee + Delete Container) -->
+                <mxCell id="GROUP_TASK_CARD_2" value="" style="group" parent="GROUP_TASK_ITEM_2" vertex="1" connectable="0">
+                    <mxGeometry width="160" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskAssignee2" value="佐藤花子" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#c0c0c0;fontSize=7;align=left;verticalAlign=middle;spacingLeft=5;fontColor=#666666;" parent="GROUP_TASK_ITEM_2" vertex="1">
-                    <mxGeometry y="15" width="160" height="10" as="geometry"/>
+                <mxCell id="taskCardBg2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#c0c0c0;strokeWidth=1;" parent="GROUP_TASK_CARD_2" vertex="1">
+                    <mxGeometry width="160" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskDelete2" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_TASK_ITEM_2" vertex="1">
-                    <mxGeometry x="165" y="7" width="30" height="8" as="geometry"/>
+                <mxCell id="taskName2" value="UI設計完了" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#666666;spacingLeft=5;" parent="GROUP_TASK_CARD_2" vertex="1">
+                    <mxGeometry x="5" y="2" width="110" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="taskAssignee2" value="佐藤花子" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#666666;spacingLeft=5;" parent="GROUP_TASK_CARD_2" vertex="1">
+                    <mxGeometry x="5" y="14" width="110" height="9" as="geometry"/>
+                </mxCell>
+                <mxCell id="taskDelete2" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=6;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_TASK_CARD_2" vertex="1">
+                    <mxGeometry x="120" y="8" width="35" height="10" as="geometry"/>
                 </mxCell>
                 <mxCell id="taskStatus2" value="完了" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;fontColor=#666666;" parent="GROUP_TASK_ITEM_2" vertex="1">
-                    <mxGeometry x="200" y="5" width="35" height="16" as="geometry"/>
+                    <mxGeometry x="165" y="5" width="35" height="16" as="geometry"/>
                 </mxCell>
                 <mxCell id="GROUP_TEST_CONTAINER_1" value="" style="group" parent="GROUP_USER_STORY_1" vertex="1" connectable="0">
                     <mxGeometry x="10" y="120" width="250" height="60" as="geometry"/>
@@ -101,46 +115,60 @@
                     <mxGeometry x="215" y="4" width="30" height="12" as="geometry"/>
                 </mxCell>
                 <mxCell id="GROUP_TEST_ITEM_1" value="" style="group" parent="GROUP_TEST_CONTAINER_1" vertex="1" connectable="0">
-                    <mxGeometry x="5" y="25" width="240" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="testName1" value="単体テスト作成" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" parent="GROUP_TEST_ITEM_1" vertex="1">
-                    <mxGeometry width="160" height="15" as="geometry"/>
-                </mxCell>
-                <mxCell id="testAssignee1" value="（未割当）" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=7;align=left;verticalAlign=middle;spacingLeft=5;fontColor=#666666;" parent="GROUP_TEST_ITEM_1" vertex="1">
-                    <mxGeometry y="15" width="160" height="10" as="geometry"/>
-                </mxCell>
-                <mxCell id="testDelete1" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_TEST_ITEM_1" vertex="1">
-                    <mxGeometry x="165" y="7" width="30" height="12" as="geometry"/>
-                </mxCell>
-                <mxCell id="testStatus1" value="未着手" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;" parent="GROUP_TEST_ITEM_1" vertex="1">
-                    <mxGeometry x="200" y="5" width="35" height="16" as="geometry"/>
-                </mxCell>
-                <mxCell id="2" value="" style="group" vertex="1" connectable="0" parent="GROUP_USER_STORY_1">
-                    <mxGeometry x="10" y="185" width="250" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="bugContainerBg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#d0d0d0;strokeWidth=1;rotation=0;" parent="2" vertex="1">
-                    <mxGeometry width="250" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="bugHeader1" value="Bug" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#d0d0d0;fontSize=9;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=5;" parent="2" vertex="1">
-                    <mxGeometry width="250" height="20" as="geometry"/>
-                </mxCell>
-                <mxCell id="addBugBtn1" value="+ Bug" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="2" vertex="1">
-                    <mxGeometry x="215" y="4" width="30" height="12" as="geometry"/>
-                </mxCell>
-                <mxCell id="GROUP_BUG_ITEM_1" value="" style="group" parent="2" vertex="1" connectable="0">
                     <mxGeometry x="5" y="25" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="bugName1" value="バリデーションエラー修正" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" parent="GROUP_BUG_ITEM_1" vertex="1">
-                    <mxGeometry width="160" height="15" as="geometry"/>
+                <!-- Test Card 1 (Name + Assignee + Delete Container) -->
+                <mxCell id="GROUP_TEST_CARD_1" value="" style="group" parent="GROUP_TEST_ITEM_1" vertex="1" connectable="0">
+                    <mxGeometry width="160" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="bugAssignee1" value="山田一郎" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=7;align=left;verticalAlign=middle;spacingLeft=5;fontColor=#666666;" parent="GROUP_BUG_ITEM_1" vertex="1">
-                    <mxGeometry y="15" width="160" height="10" as="geometry"/>
+                <mxCell id="testCardBg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;strokeWidth=1;" parent="GROUP_TEST_CARD_1" vertex="1">
+                    <mxGeometry width="160" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="bugDelete1" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_BUG_ITEM_1" vertex="1">
-                    <mxGeometry x="165" y="7" width="30" height="8" as="geometry"/>
+                <mxCell id="testName1" value="単体テスト作成" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;spacingLeft=5;" parent="GROUP_TEST_CARD_1" vertex="1">
+                    <mxGeometry x="5" y="2" width="110" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="testAssignee1" value="（未割当）" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#666666;spacingLeft=5;" parent="GROUP_TEST_CARD_1" vertex="1">
+                    <mxGeometry x="5" y="14" width="110" height="9" as="geometry"/>
+                </mxCell>
+                <mxCell id="testDelete1" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=6;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_TEST_CARD_1" vertex="1">
+                    <mxGeometry x="120" y="8" width="35" height="10" as="geometry"/>
+                </mxCell>
+                <mxCell id="testStatus1" value="未着手" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;" parent="GROUP_TEST_ITEM_1" vertex="1">
+                    <mxGeometry x="165" y="5" width="35" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="GROUP_BUG_CONTAINER_1" value="" style="group" parent="GROUP_USER_STORY_1" vertex="1" connectable="0">
+                    <mxGeometry x="10" y="185" width="250" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="bugContainerBg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#d0d0d0;strokeWidth=1;rotation=0;" parent="GROUP_BUG_CONTAINER_1" vertex="1">
+                    <mxGeometry width="250" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="bugHeader1" value="Bug" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#d0d0d0;fontSize=9;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=5;" parent="GROUP_BUG_CONTAINER_1" vertex="1">
+                    <mxGeometry width="250" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="addBugBtn1" value="+ Bug" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_BUG_CONTAINER_1" vertex="1">
+                    <mxGeometry x="215" y="4" width="30" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="GROUP_BUG_ITEM_1" value="" style="group" parent="GROUP_BUG_CONTAINER_1" vertex="1" connectable="0">
+                    <mxGeometry x="5" y="25" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <!-- Bug Card 1 (Name + Assignee + Delete Container) -->
+                <mxCell id="GROUP_BUG_CARD_1" value="" style="group" parent="GROUP_BUG_ITEM_1" vertex="1" connectable="0">
+                    <mxGeometry width="160" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="bugCardBg1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;strokeWidth=1;" parent="GROUP_BUG_CARD_1" vertex="1">
+                    <mxGeometry width="160" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="bugName1" value="バリデーションエラー修正" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;spacingLeft=5;" parent="GROUP_BUG_CARD_1" vertex="1">
+                    <mxGeometry x="5" y="2" width="110" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="bugAssignee1" value="山田一郎" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#666666;spacingLeft=5;" parent="GROUP_BUG_CARD_1" vertex="1">
+                    <mxGeometry x="5" y="14" width="110" height="9" as="geometry"/>
+                </mxCell>
+                <mxCell id="bugDelete1" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=6;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_BUG_CARD_1" vertex="1">
+                    <mxGeometry x="120" y="8" width="35" height="10" as="geometry"/>
                 </mxCell>
                 <mxCell id="bugStatus1" value="対応中" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;" parent="GROUP_BUG_ITEM_1" vertex="1">
-                    <mxGeometry x="200" y="5" width="35" height="16" as="geometry"/>
+                    <mxGeometry x="165" y="5" width="35" height="16" as="geometry"/>
                 </mxCell>
                 <mxCell id="GROUP_USER_STORY_2" value="" style="group" parent="GROUP_USER_STORY_LIST" vertex="1" connectable="0">
                     <mxGeometry x="10" y="270" width="270" height="25" as="geometry"/>
@@ -160,8 +188,8 @@
                 <mxCell id="userStoryDelete2" value="Delete" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="GROUP_USER_STORY_HEADER_2" vertex="1">
                     <mxGeometry x="235" y="6.5" width="30" height="12" as="geometry"/>
                 </mxCell>
-                <mxCell id="annotation1" value="div構造対応グループ説明:&lt;br&gt;&lt;br&gt;GROUP_FEATURE_CARD = .feature-card&lt;br&gt;GROUP_FEATURE_HEADER = .feature-header&lt;br&gt;GROUP_USER_STORY_LIST = .user-story-list&lt;br&gt;GROUP_USER_STORY_1/2 = .user-story&lt;br&gt;GROUP_USER_STORY_HEADER_1/2 = .user-story-header&lt;br&gt;GROUP_TASK_CONTAINER_1 = .task-container&lt;br&gt;GROUP_TEST_CONTAINER_1 = .test-container&lt;br&gt;GROUP_BUG_CONTAINER_1 = .bug-container&lt;br&gt;GROUP_*_ITEM_* = 個別アイテムのdiv" style="text;html=1;strokeColor=#4caf50;fillColor=#e8f5e8;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;spacingTop=5;spacingLeft=8;" parent="1" vertex="1">
-                    <mxGeometry x="360" y="50" width="280" height="160" as="geometry"/>
+                <mxCell id="annotation1" value="div構造対応グループ説明:&lt;br&gt;&lt;br&gt;GROUP_FEATURE_CARD = .feature-card&lt;br&gt;GROUP_FEATURE_HEADER = .feature-header&lt;br&gt;GROUP_USER_STORY_LIST = .user-story-list&lt;br&gt;GROUP_USER_STORY_1/2 = .user-story&lt;br&gt;GROUP_USER_STORY_HEADER_1/2 = .user-story-header&lt;br&gt;GROUP_TASK_CONTAINER_1 = .task-container&lt;br&gt;GROUP_TEST_CONTAINER_1 = .test-container&lt;br&gt;GROUP_BUG_CONTAINER_1 = .bug-container&lt;br&gt;GROUP_*_ITEM_* = 各アイテム全体のdiv&lt;br&gt;GROUP_*_CARD_* = 名前+担当者+Deleteのカードdiv&lt;br&gt;&lt;br&gt;カード構造:&lt;br&gt;• TaskCard = タスク名 + 担当者 + Delete&lt;br&gt;• TestCard = テスト名 + 担当者 + Delete&lt;br&gt;• BugCard = バグ名 + 担当者 + Delete&lt;br&gt;• ステータスは各カード外の右側に配置&lt;br&gt;• Deleteボタンは各カード内右側に配置" style="text;html=1;strokeColor=#4caf50;fillColor=#e8f5e8;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;spacingTop=5;spacingLeft=8;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="50" width="280" height="220" as="geometry"/>
                 </mxCell>
                 <mxCell id="stylingGuide" value="CSS スタイリングガイド:&lt;br&gt;&lt;br&gt;.feature-card {&lt;br&gt;  border: 2px solid #dee2e6;&lt;br&gt;  background: #f8f9fa;&lt;br&gt;  border-radius: 4px;&lt;br&gt;  padding: 8px;&lt;br&gt;}&lt;br&gt;&lt;br&gt;.user-story.expanded {&lt;br&gt;  /* 展開時のスタイル */&lt;br&gt;}&lt;br&gt;&lt;br&gt;.user-story.collapsed {&lt;br&gt;  height: 25px;&lt;br&gt;  overflow: hidden;&lt;br&gt;}&lt;br&gt;&lt;br&gt;.collapse-btn {&lt;br&gt;  width: 15px;&lt;br&gt;  height: 15px;&lt;br&gt;  border: 1px solid #e0e0e0;&lt;br&gt;  background: #ffffff;&lt;br&gt;  font-size: 8px;&lt;br&gt;}&lt;br&gt;&lt;br&gt;.assignee {&lt;br&gt;  font-size: 7px;&lt;br&gt;  color: #666666;&lt;br&gt;  margin-top: 2px;&lt;br&gt;}" style="text;html=1;strokeColor=#ff9800;fillColor=#fff3e0;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;spacingTop=5;spacingLeft=8;fontFamily=Courier New;" parent="1" vertex="1">
                     <mxGeometry x="360" y="220" width="250" height="330" as="geometry"/>
@@ -169,8 +197,8 @@
                 <mxCell id="reactStructure" value="React Component構造:&lt;br&gt;&lt;br&gt;&lt;div className=&quot;feature-card&quot;&gt; {/* GROUP_FEATURE_CARD */}&lt;br&gt;  &lt;div className=&quot;feature-header&quot;&gt; {/* GROUP_FEATURE_HEADER */}&lt;br&gt;    &lt;h3&gt;{feature.title}&lt;/h3&gt;&lt;br&gt;    &lt;span className=&quot;status-badge&quot;&gt;{feature.status}&lt;/span&gt;&lt;br&gt;  &lt;/div&gt;&lt;br&gt;  &lt;div className=&quot;user-story-list&quot;&gt; {/* GROUP_USER_STORY_LIST */}&lt;br&gt;    {userStories.map(story =&gt; (&lt;br&gt;      &lt;div className={story.expanded ? &quot;user-story expanded&quot; : &quot;user-story collapsed&quot;}&gt;&lt;br&gt;        &lt;div className=&quot;user-story-header&quot;&gt; {/* GROUP_USER_STORY_HEADER_* */}&lt;br&gt;          &lt;button onClick={toggleCollapse}&gt;{story.expanded ? &#39;▼&#39; : &#39;▶&#39;}&lt;/button&gt;&lt;br&gt;          &lt;span&gt;{story.title}&lt;/span&gt;&lt;br&gt;          &lt;span className=&quot;status&quot;&gt;{story.status}&lt;/span&gt;&lt;br&gt;          &lt;button className=&quot;delete-btn&quot;&gt;Delete&lt;/button&gt;&lt;br&gt;        &lt;/div&gt;&lt;br&gt;        {story.expanded &amp;&amp; (&lt;br&gt;          &lt;&gt;&lt;br&gt;            &lt;div className=&quot;task-container&quot;&gt; {/* GROUP_TASK_CONTAINER_* */}&lt;br&gt;              {/* Task items */}&lt;br&gt;            &lt;/div&gt;&lt;br&gt;            &lt;div className=&quot;test-container&quot;&gt; {/* GROUP_TEST_CONTAINER_* */}&lt;br&gt;              {/* Test items */}&lt;br&gt;            &lt;/div&gt;&lt;br&gt;            &lt;div className=&quot;bug-container&quot;&gt; {/* GROUP_BUG_CONTAINER_* */}&lt;br&gt;              {/* Bug items */}&lt;br&gt;            &lt;/div&gt;&lt;br&gt;          &lt;/&gt;&lt;br&gt;        )}&lt;br&gt;      &lt;/div&gt;&lt;br&gt;    ))}&lt;br&gt;  &lt;/div&gt;&lt;br&gt;&lt;/div&gt;&lt;br&gt;&lt;br&gt;担当者表示ルール:&lt;br&gt;• 未割当: （未割当）&lt;br&gt;• 単独: フルネーム&lt;br&gt;• 複数: 「姓, 他N名」&lt;br&gt;• 色: #666666、サイズ: 7px" style="text;html=1;strokeColor=#e0e0e0;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=7;spacingTop=5;spacingLeft=8;fontFamily=Courier New;" parent="1" vertex="1">
                     <mxGeometry x="40" y="620" width="400" height="280" as="geometry"/>
                 </mxCell>
-                <mxCell id="implementationNotes" value="実装ガイド:&lt;br&gt;&lt;br&gt;グループ名とCSS classの対応:&lt;br&gt;• 1つのdiv要素 = 1つのDrawIOグループ&lt;br&gt;• GROUP_接頭辞でグループを識別&lt;br&gt;• ネストした構造でdiv階層を表現&lt;br&gt;&lt;br&gt;実装時のポイント:&lt;br&gt;• 各グループのHTML構造をそのまま反映&lt;br&gt;• 折り畳み状態はexpanded/collapsedクラスで制御&lt;br&gt;• Delete ボタンは各アイテムに対応&lt;br&gt;• 担当者は各タスク下に小さく表示&lt;br&gt;&lt;br&gt;パフォーマンス:&lt;br&gt;• React.memo でコンポーネント最適化&lt;br&gt;• グループ単位での再描画制御&lt;br&gt;• 折り畳み時のDOM削除検討" style="text;html=1;strokeColor=#9c27b0;fillColor=#f3e5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;spacingTop=5;spacingLeft=8;" parent="1" vertex="1">
-                    <mxGeometry x="450" y="620" width="230" height="200" as="geometry"/>
+                <mxCell id="implementationNotes" value="実装ガイド:&lt;br&gt;&lt;br&gt;グループ名とCSS classの対応:&lt;br&gt;• 1つのdiv要素 = 1つのDrawIOグループ&lt;br&gt;• GROUP_接頭辞でグループを識別&lt;br&gt;• ネストした構造でdiv階層を表現&lt;br&gt;&lt;br&gt;新しいカード構造:&lt;br&gt;• GROUP_*_CARD_* = アイテムカードのdiv&lt;br&gt;• カード内: タスク名、担当者、Deleteボタン&lt;br&gt;• カード外: ステータスバッジ（右側）&lt;br&gt;• 統一サイズ: width=160px, height=25px&lt;br&gt;&lt;br&gt;実装時のポイント:&lt;br&gt;• 各グループのHTML構造をそのまま反映&lt;br&gt;• 折り畳み状態はexpanded/collapsedクラスで制御&lt;br&gt;• 担当者は各タスク名下に小さく表示&lt;br&gt;&lt;br&gt;Deleteボタン実装ガイド:&lt;br&gt;• UserStoryのDelete → UserStory全体を削除&lt;br&gt;• TaskのDelete → 個別タスクを削除（カード内）&lt;br&gt;• TestのDelete → 個別テストを削除（カード内）&lt;br&gt;• BugのDelete → 個別バグを削除（カード内）&lt;br&gt;• カード内配置で削除対象が明確&lt;br&gt;&lt;br&gt;パフォーマンス:&lt;br&gt;• React.memo でコンポーネント最適化&lt;br&gt;• カード単位での再描画制御&lt;br&gt;• 折り畳み時のDOM削除検討" style="text;html=1;strokeColor=#9c27b0;fillColor=#f3e5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=8;spacingTop=5;spacingLeft=8;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="620" width="230" height="300" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
