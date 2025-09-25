@@ -236,9 +236,15 @@ rules:
     patterns:
       - "**/assets/javascripts/kanban/components/FeatureCard.jsx"
       - "**/assets/javascripts/kanban/components/FeatureCard.scss"
+      - "**/assets/javascripts/kanban/components/FeatureHeader.jsx"
+      - "**/assets/javascripts/kanban/components/UserStoryList.jsx"
       - "**/assets/javascripts/kanban/components/UserStoryItem.jsx"
+      - "**/assets/javascripts/kanban/components/UserStoryItem.scss"
       - "**/assets/javascripts/kanban/components/BaseItemCard.jsx"
       - "**/assets/javascripts/kanban/components/BaseItemCard.scss"
+      - "**/assets/javascripts/kanban/components/TaskContainer.jsx"
+      - "**/assets/javascripts/kanban/components/TestContainer.jsx"
+      - "**/assets/javascripts/kanban/components/BugContainer.jsx"
     severity: "block"
     token_threshold: 15000
     message: |

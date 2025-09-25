@@ -1,0 +1,104 @@
+// UserStoryItem スタイル - 設計仕様書完全準拠
+// @vibes/logics/ui_components/feature_card/feature_card_component_specification.md
+
+.user-story {
+  border: 1px solid #e0e0e0;
+  margin-bottom: 10px;
+
+  &.expanded {
+    // 展開時のスタイル
+  }
+
+  &.collapsed {
+    height: 25px;
+    overflow: hidden;
+
+    .user-story-title {
+      color: #666666;
+      background: #f5f5f5;
+    }
+  }
+
+  .user-story-header {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    cursor: pointer;
+
+    .collapse-btn {
+      width: 15px;
+      height: 15px;
+      border: 1px solid #e0e0e0;
+      background: white;
+      font-size: 8px;
+      margin-right: 5px;
+    }
+
+    .user-story-title {
+      flex: 1;
+      font-size: 10px;
+      padding: 5px;
+    }
+
+    .user-story-status {
+      font-size: 8px;
+      padding: 2px 6px;
+      margin-left: 10px;
+      border-radius: 2px;
+    }
+
+    .user-story-delete-btn {
+      font-size: 7px;
+      color: #f44336;
+      border: 1px dashed #f44336;
+      background: #ffebee;
+      padding: 1px 4px;
+      margin-left: 5px;
+    }
+  }
+}
+
+// コンテナ共通スタイル
+.task-container,
+.test-container,
+.bug-container {
+  margin: 10px 0;
+
+  .task-header,
+  .test-header,
+  .bug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+
+    span {
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .add-task-btn,
+    .add-test-btn,
+    .add-bug-btn {
+      font-size: 10px;
+      padding: 2px 6px;
+      border: 1px solid #ccc;
+      background: white;
+      border-radius: 3px;
+      cursor: pointer;
+
+      &:hover {
+        background: #f0f0f0;
+      }
+    }
+  }
+
+  .task-items,
+  .test-items,
+  .bug-items {
+    padding: 5px;
+    min-height: 30px;
+  }
+}

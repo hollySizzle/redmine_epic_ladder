@@ -1,191 +1,84 @@
-import React, { useCallback, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
-import FeatureCard from './FeatureCard';
-import './GridCell.scss';
+import { FeatureCard } from './FeatureCard';
 
 /**
- * Grid Cell Component
- * ワイヤーフレーム: Epic行 × Column列 の個別セル
+ * GridCell (ドロップゾーン)
+ * ワイヤーフレーム準拠: Epic行 × Version列 の個別セル
  *
- * @param {Object} props
- * @param {Object} props.epic - Epic データ
- * @param {Object} props.column - Column定義
- * @param {Array} props.features - セル内のFeature配列
- * @param {Object} props.permissions - ユーザー権限情報
- * @param {Function} props.onFeatureClick - Feature クリックコールバック
- * @param {Function} props.onFeatureDrop - Feature ドロップコールバック
+ * @param {string} epicId - Epic ID
+ * @param {string} versionId - Version ID
+ * @param {Array} features - セル内のFeature配列
+ * @param {boolean} isDropTarget - ドロップターゲット状態
+ * @param {string} cellType - セルタイプ ('version' | 'no-version')
  */
-const GridCell = ({
-  epic,
-  column,
+export const GridCell = ({
+  epicId,
+  versionId,
   features = [],
-  permissions = {},
-  onFeatureClick,
-  onFeatureDrop,
-  ...props
+  isDropTarget,
+  cellType
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  // ドロップ可能エリア設定
   const { setNodeRef, isOver } = useDroppable({
-    id: `cell-${epic.issue.id}-${column.id}`,
+    id: `cell-${epicId}-${versionId}`,
     data: {
-      type: 'cell',
-      epic: epic,
-      column: column,
-      accepts: ['feature', 'user_story'] // 受け入れ可能なアイテムタイプ
+      type: 'grid-cell',
+      epicId: epicId,
+      versionId: versionId
     }
   });
 
-  // Feature クリックハンドラー
-  const handleFeatureClick = useCallback((feature) => {
-    onFeatureClick?.(feature, epic, column);
-  }, [epic, column, onFeatureClick]);
+  const getCellStyle = () => {
+    if (cellType === 'no-version') {
+      return 'grid-cell no-version-cell';
+    }
+    return 'grid-cell version-cell';
+  };
 
-  // セルの統計情報計算
-  const cellStatistics = React.useMemo(() => {
-    const totalUserStories = features.reduce((sum, feature) =>
-      sum + (feature.user_stories?.length || 0), 0
-    );
-
-    const completedFeatures = features.filter(feature =>
-      feature.issue.status?.is_closed
-    ).length;
-
-    return {
-      featureCount: features.length,
-      totalUserStories,
-      completedFeatures,
-      completionRatio: features.length > 0 ? (completedFeatures / features.length * 100) : 0
-    };
-  }, [features]);
-
-  // セルが空かどうか
-  const isEmpty = features.length === 0;
-
-  // ドラッグオーバー時のスタイル
-  const cellClassName = [
-    'grid_cell',
-    column.id,
-    isEmpty ? 'empty' : 'has_features',
-    isOver ? 'drag_over' : '',
-    isHovered ? 'hovered' : ''
-  ].filter(Boolean).join(' ');
+  const getCellBackgroundColor = () => {
+    if (isOver || isDropTarget) {
+      return cellType === 'no-version' ? '#f0f0f0' : '#f0ebf7';
+    }
+    return cellType === 'no-version' ? '#f9f9f9' : '#ffffff';
+  };
 
   return (
     <div
       ref={setNodeRef}
-      className={cellClassName}
-      data-epic={epic.issue.id}
-      data-column={column.id}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      {...props}
+      className={getCellStyle()}
+      style={{
+        backgroundColor: getCellBackgroundColor(),
+        border: isOver ? '2px dashed #9673a6' : '1px solid #9673a6',
+        minHeight: '120px'
+      }}
     >
-      {/* CELL_HEADER - 統計情報表示 */}
-      <div className="cell_header">
-        <div className="cell_statistics">
-          <span className="feature_count">
-            {cellStatistics.featureCount}
-          </span>
-
-          {cellStatistics.featureCount > 0 && (
-            <>
-              <span className="user_story_count">
-                {cellStatistics.totalUserStories} US
-              </span>
-
-              <div className="completion_indicator">
-                <div
-                  className="completion_bar"
-                  style={{ width: `${cellStatistics.completionRatio}%` }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* CELL_ACTIONS - ホバー時表示 */}
-        {isHovered && permissions.can_edit && (
-          <div className="cell_actions">
-            <button
-              className="cell_action_btn create_feature"
-              title="Create Feature"
-              onClick={() => {
-                // Create feature in this cell
-              }}
-            >
-              <i className="icon-plus" />
-            </button>
-          </div>
-        )}
+      <div className="cell-features">
+        {features.map(feature => (
+          <FeatureCard
+            key={feature.issue.id}
+            feature={feature}
+            expanded={false} // グリッド内では常に折り畳み
+            onToggle={() => handleFeatureExpand(feature)}
+            compact={true} // コンパクト表示モード
+          />
+        ))}
       </div>
 
-      {/* CELL_CONTENT */}
-      <div className="cell_content">
-        {isEmpty ? (
-          /* EMPTY_STATE */
-          <div className="empty_state">
-            <div className="empty_message">
-              {isOver ? 'Drop here' : 'No features'}
-            </div>
-
-            {isOver && (
-              <div className="drop_indicator">
-                <i className="icon-arrow-down" />
-                <span>Drop to move to {column.name}</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* FEATURES_LIST */
-          <SortableContext
-            items={features.map(f => `feature-${f.issue.id}`)}
-            strategy={rectSortingStrategy}
-          >
-            <div className="features_list">
-              {features.map((feature) => (
-                <FeatureCard
-                  key={feature.issue.id}
-                  feature={feature.issue}
-                  userStories={feature.user_stories || []}
-                  statistics={feature.statistics}
-                  permissions={permissions}
-                  onClick={() => handleFeatureClick(feature)}
-                  onUserStoryToggle={(userStoryId, expanded) => {
-                    // Handle user story expansion
-                  }}
-                  onBulkAction={(actionType, userStoryIds) => {
-                    // Handle bulk actions
-                  }}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        )}
-      </div>
-
-      {/* DROP_ZONE_OVERLAY - ドラッグオーバー時の視覚的フィードバック */}
       {isOver && (
-        <div className="drop_zone_overlay">
-          <div className="drop_zone_content">
-            <i className="icon-move" />
-            <span className="drop_zone_text">
-              Move to {column.name}
-            </span>
-          </div>
+        <div className="drop-indicator">
+          ここにFeatureをドロップ
         </div>
       )}
 
-      {/* CELL_CONSTRAINTS_INDICATOR - 制約がある場合の表示 */}
-      {column.workflow_constraints && (
-        <div className="constraints_indicator" title="Workflow constraints apply">
-          <i className="icon-lock" />
+      {features.length === 0 && !isOver && (
+        <div className="empty-cell-message">
+          Feature未割当
         </div>
       )}
     </div>
   );
-};
 
-export default GridCell;
+  function handleFeatureExpand(feature) {
+    // Featureの詳細表示または編集画面を開く
+    window.open(`/issues/${feature.issue.id}`, '_blank');
+  }
+};

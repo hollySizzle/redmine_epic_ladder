@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import './VersionBar.scss';
+import { useState, useCallback } from 'react';
 
 /**
- * Version Bar Component
- * ワイヤーフレーム: VERSION_BAR準拠
+ * VersionBar Component
+ * KanbanGridLayout統合用バージョン管理バー
+ * ワイヤーフレーム準拠: バージョン列ヘッダーとして機能
  */
-const VersionBar = ({
+export const VersionBar = ({
   versions = [],
   selectedVersions = new Set(),
   onVersionSelect,
@@ -21,31 +21,95 @@ const VersionBar = ({
     onVersionSelect?.(versionId, !isSelected);
   }, [selectedVersions, onVersionSelect]);
 
+  const handleNewVersionAction = useCallback(() => {
+    if (onVersionCreate) {
+      onVersionCreate();
+    } else {
+      setShowCreateForm(!showCreateForm);
+    }
+  }, [onVersionCreate, showCreateForm]);
+
   return (
-    <div className="version_bar" {...props}>
-      <div className="version_bar_header">
-        <h3>Versions</h3>
+    <div className="version-bar" {...props}>
+      <div className="version-bar-header">
+        <h3 className="version-bar-title">Versions</h3>
         {permissions.can_manage_versions && (
-          <button onClick={() => setShowCreateForm(!showCreateForm)}>
-            New Version
+          <button
+            className="new-version-btn"
+            onClick={handleNewVersionAction}
+            title="新しいVersionを作成"
+          >
+            + New Version
           </button>
         )}
       </div>
 
-      <div className="version_list">
+      <div className="version-list">
         {versions.map(version => (
           <div
             key={version.id}
-            className={`version_item ${selectedVersions.has(version.id) ? 'selected' : ''}`}
+            className={`version-item ${selectedVersions.has(version.id) ? 'selected' : ''}`}
             onClick={(e) => handleVersionSelect(version.id, e)}
           >
-            <span>{version.name}</span>
-            <span>{version.status}</span>
+            <span className="version-name">{version.name}</span>
+            <span className="version-status">{version.status}</span>
+            {version.issue_count !== undefined && (
+              <span className="version-issue-count">
+                {version.issue_count} issues
+              </span>
+            )}
           </div>
         ))}
       </div>
+
+      {showCreateForm && (
+        <div className="version-create-form">
+          <input
+            type="text"
+            placeholder="Version名を入力"
+            className="version-name-input"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const versionName = e.target.value.trim();
+                if (versionName) {
+                  onVersionCreate?.({ name: versionName });
+                  setShowCreateForm(false);
+                  e.target.value = '';
+                }
+              } else if (e.key === 'Escape') {
+                setShowCreateForm(false);
+                e.target.value = '';
+              }
+            }}
+            autoFocus
+          />
+          <div className="version-create-actions">
+            <button
+              className="btn btn-primary btn-small"
+              onClick={(e) => {
+                const input = e.target.parentElement.previousElementSibling;
+                const versionName = input.value.trim();
+                if (versionName) {
+                  onVersionCreate?.({ name: versionName });
+                  setShowCreateForm(false);
+                  input.value = '';
+                }
+              }}
+            >
+              作成
+            </button>
+            <button
+              className="btn btn-secondary btn-small"
+              onClick={() => setShowCreateForm(false)}
+            >
+              キャンセル
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
+// default export も追加（後方互換性のため）
 export default VersionBar;

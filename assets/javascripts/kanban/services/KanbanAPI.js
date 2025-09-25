@@ -5,13 +5,16 @@
 class KanbanAPI {
   constructor(projectId, options = {}) {
     this.projectId = projectId;
-    this.baseUrl = `/api/kanban/projects/${projectId}`;
+    this.baseUrl = `/kanban`;
     this.options = {
       timeout: 10000,
       retries: 3,
       ...options
     };
     this.csrfToken = this.getCSRFToken();
+
+    // キャッシング機能初期化
+    this.cache = new Map();
   }
 
   /**
@@ -95,25 +98,24 @@ class KanbanAPI {
    * カンバンデータを取得
    */
   async getKanbanData(filters = {}) {
-    return this.get('/data', filters);
+    return this.get('/cards', filters);
   }
 
   /**
    * Issue詳細を取得
    */
   async getIssueDetail(issueId) {
-    return this.get(`/data/${issueId}`);
+    return this.get(`/cards/${issueId}`);
   }
 
   /**
    * カードを移動
    */
   async moveCard(cardId, sourceCell, targetCell) {
-    return this.patch(`/data/${cardId}/move`, {
-      move: {
-        source_cell: sourceCell,
-        target_cell: targetCell
-      }
+    return this.post(`/move_card`, {
+      card_id: cardId,
+      source_cell: sourceCell,
+      target_cell: targetCell
     });
   }
 
@@ -121,12 +123,10 @@ class KanbanAPI {
    * 一括更新
    */
   async bulkUpdate(actionType, issueIds, actionParams = {}) {
-    return this.patch('/data/bulk_update', {
-      bulk_update: {
-        action: actionType,
-        issue_ids: issueIds,
-        action_params: actionParams
-      }
+    return this.post('/batch_update', {
+      action: actionType,
+      issue_ids: issueIds,
+      action_params: actionParams
     });
   }
 
@@ -134,16 +134,28 @@ class KanbanAPI {
    * 統計データを取得
    */
   async getStatistics(params = {}) {
-    return this.get('/data/statistics', params);
+    return this.get('/statistics', params);
   }
 
   // === バージョン管理 API ===
 
   /**
-   * バージョン一覧を取得
+   * バージョン一覧を取得 (キャッシング対応)
    */
-  async getVersions() {
-    return this.get('/versions');
+  async getVersions(useCache = true) {
+    const cacheKey = 'versions_list';
+
+    // キャッシュチェック
+    if (useCache && this.isValidCache(cacheKey)) {
+      return this.getFromCache(cacheKey);
+    }
+
+    const result = await this.get('/versions');
+
+    // キャッシュ保存 (10分)
+    this.setCache(cacheKey, result, 10 * 60 * 1000);
+
+    return result;
   }
 
   /**
@@ -212,6 +224,49 @@ class KanbanAPI {
    */
   async sendHeartbeat() {
     return this.post('/realtime/heartbeat');
+  }
+
+  // === キャッシング機能 ===
+
+  /**
+   * キャッシュにデータを保存
+   */
+  setCache(key, data, ttl = 5 * 60 * 1000) {
+    this.cache.set(key, {
+      data: data,
+      timestamp: Date.now(),
+      ttl: ttl
+    });
+  }
+
+  /**
+   * キャッシュからデータを取得
+   */
+  getFromCache(key) {
+    const cached = this.cache.get(key);
+    return cached ? cached.data : null;
+  }
+
+  /**
+   * キャッシュが有効かチェック
+   */
+  isValidCache(key) {
+    const cached = this.cache.get(key);
+    if (!cached) return false;
+
+    const now = Date.now();
+    return (now - cached.timestamp) < cached.ttl;
+  }
+
+  /**
+   * キャッシュをクリア
+   */
+  clearCache(key = null) {
+    if (key) {
+      this.cache.delete(key);
+    } else {
+      this.cache.clear();
+    }
   }
 
   // === エラーハンドリング ===
