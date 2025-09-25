@@ -1,11 +1,11 @@
 <mxfile host="65bd71144e">
     <diagram name="Feature Card Component" id="feature-card-component">
-        <mxGraphModel dx="718" dy="399" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="449" dy="325" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
                 <mxCell id="featureCardContainer" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8f9fa;strokeColor=#dee2e6;strokeWidth=2;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="40" width="300" height="390" as="geometry"/>
+                    <mxGeometry x="40" y="40" width="300" height="500" as="geometry"/>
                 </mxCell>
                 <mxCell id="featureCardHeader" value="US#101 登録画面" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1f5fe;strokeColor=#01579b;fontStyle=1;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;" parent="1" vertex="1">
                     <mxGeometry x="50" y="50" width="220" height="30" as="geometry"/>
@@ -14,7 +14,7 @@
                     <mxGeometry x="280" y="55" width="40" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="userStoryContainer" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;strokeWidth=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="90" width="280" height="80" as="geometry"/>
+                    <mxGeometry x="50" y="90" width="280" height="350" as="geometry"/>
                 </mxCell>
                 <mxCell id="userStoryHeader" value="UserStory一覧" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;" parent="1" vertex="1">
                     <mxGeometry x="50" y="90" width="280" height="25" as="geometry"/>
@@ -25,62 +25,71 @@
                 <mxCell id="userStory1Status" value="進行中" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=8;align=center;verticalAlign=middle;" parent="1" vertex="1">
                     <mxGeometry x="280" y="123" width="40" height="19" as="geometry"/>
                 </mxCell>
+                <mxCell id="nestedTaskContainer1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#d0d0d0;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="65" y="150" width="250" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="taskHeaderNested1" value="Task一覧" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#d0d0d0;fontSize=9;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=5;" parent="1" vertex="1">
+                    <mxGeometry x="65" y="150" width="250" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="task1Nested" value="バリデーション実装" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=10;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="175" width="200" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="task1StatusNested" value="進行中" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="177" width="30" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="task2Nested" value="UI設計完了" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#c0c0c0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="197" width="200" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="task2StatusNested" value="完了" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="199" width="30" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="addTaskButtonNested1" value="+ Task" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#2196f3;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="154" width="30" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="nestedTestContainer1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#d0d0d0;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="65" y="225" width="250" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="testHeaderNested1" value="Test一覧" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#d0d0d0;fontSize=9;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=5;" parent="1" vertex="1">
+                    <mxGeometry x="65" y="225" width="250" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="test1Nested" value="単体テスト作成" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=10;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="250" width="200" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="test1StatusNested" value="未着手" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="252" width="30" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="addTestButtonNested1" value="+ Test" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#9c27b0;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="229" width="30" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="nestedBugContainer1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#d0d0d0;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="65" y="280" width="250" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="bugHeaderNested1" value="Bug一覧" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#d0d0d0;fontSize=9;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=5;" parent="1" vertex="1">
+                    <mxGeometry x="65" y="280" width="250" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="bug1Nested" value="バリデーションエラー修正" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d0d0d0;fontSize=9;align=left;verticalAlign=middle;spacingLeft=10;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="305" width="200" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="bug1StatusNested" value="対応中" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=7;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="307" width="30" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="addBugButtonNested1" value="+ Bug" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=7;align=center;verticalAlign=middle;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="284" width="30" height="12" as="geometry"/>
+                </mxCell>
                 <mxCell id="userStory2" value="入力バリデーション" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#c0c0c0;fontSize=10;align=left;verticalAlign=middle;spacingLeft=15;fontColor=#666666;" parent="1" vertex="1">
-                    <mxGeometry x="55" y="145" width="215" height="25" as="geometry"/>
+                    <mxGeometry x="55" y="340" width="215" height="25" as="geometry"/>
                 </mxCell>
                 <mxCell id="userStory2Status" value="完了" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#999999;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="148" width="40" height="19" as="geometry"/>
+                    <mxGeometry x="280" y="343" width="40" height="19" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskContainer" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;strokeWidth=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="180" width="280" height="80" as="geometry"/>
+                <mxCell id="userStory3" value="権限管理" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=left;verticalAlign=middle;spacingLeft=15;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="370" width="215" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="taskHeader" value="Task一覧" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="180" width="280" height="25" as="geometry"/>
+                <mxCell id="userStory3Status" value="未着手" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=8;align=center;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="373" width="40" height="19" as="geometry"/>
                 </mxCell>
-                <mxCell id="task1" value="バリデーション実装" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=left;verticalAlign=middle;spacingLeft=15;" parent="1" vertex="1">
-                    <mxGeometry x="55" y="210" width="215" height="25" as="geometry"/>
-                </mxCell>
-                <mxCell id="task1Status" value="進行中" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=8;align=center;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="213" width="40" height="19" as="geometry"/>
-                </mxCell>
-                <mxCell id="task2" value="UI設計完了" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#c0c0c0;fontSize=10;align=left;verticalAlign=middle;spacingLeft=15;fontColor=#666666;" parent="1" vertex="1">
-                    <mxGeometry x="55" y="235" width="215" height="25" as="geometry"/>
-                </mxCell>
-                <mxCell id="task2Status" value="完了" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e0e0e0;strokeColor=#999999;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="238" width="40" height="19" as="geometry"/>
-                </mxCell>
-                <mxCell id="testContainer" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;strokeWidth=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="270" width="280" height="55" as="geometry"/>
-                </mxCell>
-                <mxCell id="testHeader" value="Test一覧" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="270" width="280" height="25" as="geometry"/>
-                </mxCell>
-                <mxCell id="test1" value="単体テスト作成" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=left;verticalAlign=middle;spacingLeft=15;" parent="1" vertex="1">
-                    <mxGeometry x="55" y="300" width="215" height="25" as="geometry"/>
-                </mxCell>
-                <mxCell id="test1Status" value="未着手" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=8;align=center;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="303" width="40" height="19" as="geometry"/>
-                </mxCell>
-                <mxCell id="bugContainer" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;strokeWidth=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="335" width="280" height="55" as="geometry"/>
-                </mxCell>
-                <mxCell id="bugHeader" value="Bug一覧" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#e0e0e0;fontSize=10;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="335" width="280" height="25" as="geometry"/>
-                </mxCell>
-                <mxCell id="bug1" value="バリデーションエラー修正" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#e0e0e0;fontSize=10;align=left;verticalAlign=middle;spacingLeft=15;" parent="1" vertex="1">
-                    <mxGeometry x="55" y="365" width="215" height="25" as="geometry"/>
-                </mxCell>
-                <mxCell id="bug1Status" value="対応中" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#999999;fontSize=8;align=center;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="368" width="40" height="19" as="geometry"/>
-                </mxCell>
-                <mxCell id="addTaskButton" value="+ Task追加" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3f2fd;strokeColor=#2196f3;fontSize=8;align=center;verticalAlign=middle;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="260" y="185" width="60" height="15" as="geometry"/>
-                </mxCell>
-                <mxCell id="addTestButton" value="+ Test追加" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#9c27b0;fontSize=8;align=center;verticalAlign=middle;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="260" y="275" width="60" height="15" as="geometry"/>
-                </mxCell>
-                <mxCell id="addBugButton" value="+ Bug追加" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffebee;strokeColor=#f44336;fontSize=8;align=center;verticalAlign=middle;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="260" y="340" width="60" height="15" as="geometry"/>
+                <mxCell id="addUserStoryButton" value="+ UserStory追加" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e8f5e8;strokeColor=#82b366;fontSize=8;align=center;verticalAlign=middle;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="55" y="405" width="100" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="annotation1" value="Featureカード全体" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#666666;" parent="1" vertex="1">
                     <mxGeometry x="360" y="60" width="100" height="20" as="geometry"/>
@@ -100,8 +109,8 @@
                         <mxPoint x="360" y="210" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="componentNotes" value="コンポーネント仕様:&#xa;• Feature &gt; UserStory &gt; Task/Test/Bug階層構造&#xa;• 各セクション独立表示（UserStory一覧・Task一覧・Test一覧・Bug一覧）&#xa;• ステータス表示（各アイテム個別にステータスバッジ）&#xa;• バージョンラベルで分類表示&#xa;• 進捗状況をビジュアル表示&#xa;• IceboxはGray統一テーマ&#xa;&#xa;チケット階層:&#xa;Epic &gt; Feature &gt; UserStory &gt; {Task|Test|Bug}&#xa;&#xa;レイアウト: [名称] [ステータス]&#xa;※統一デザイン（白背景・グレー枠）" style="text;html=1;strokeColor=#e0e0e0;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=8;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="430" width="280" height="140" as="geometry"/>
+                <mxCell id="componentNotes" value="コンポーネント仕様:&#xa;• Feature &gt; UserStory &gt; Task/Test/Bug入れ子階層構造&#xa;• UserStory内にTask/Test/Bug一覧が入れ子表示&#xa;• ステータス表示（各アイテム個別にステータスバッジ）&#xa;• 進行中のUserStoryは展開、完了は折りたたみ&#xa;• 各入れ子コンテナ内に追加ボタン&#xa;&#xa;入れ子構造:&#xa;Epic &gt; Feature &gt; UserStory&#xa;  ├─ Task一覧&#xa;  ├─ Test一覧&#xa;  └─ Bug一覧&#xa;&#xa;レイアウト: [名称] [ステータス]&#xa;※統一デザイン（白背景・薄グレー枠）" style="text;html=1;strokeColor=#e0e0e0;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=9;spacingTop=5;spacingLeft=8;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="450" width="280" height="150" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
