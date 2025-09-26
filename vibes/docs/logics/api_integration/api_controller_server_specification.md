@@ -1,715 +1,413 @@
-# APIコントローラー サーバーサイド実装仕様
+# API Controller サーバーサイド詳細設計書
 
-## 概要
-Kanban UI用APIコントローラー実装。RESTful設計、エラーハンドリング、認証・認可、レート制限、バリデーション、レスポンス標準化。
+## 🔗 関連ドキュメント
+- @vibes/specs/ui/api_integration_wireframe.drawio
+- @vibes/rules/technical_architecture_standards.md
+- @vibes/logics/api_integration/api_integration_specification.md
 
-## ベースコントローラー
+## 1. 設計概要
 
-### Kanban API共通コントローラー
+### 1.1 設計目的・背景
+**なぜこのAPI Controller実装が必要なのか**
+- ビジネス要件：Kanban UI用の統一されたRESTful API提供、セキュリティ強化、パフォーマンス最適化
+- ユーザー価値：高速レスポンス、エラーハンドリング、リアルタイム同期、信頼性の高いUI操作
+- システム価値：API標準化、認証・認可統合、監査ログ、スケーラビリティ確保
+
+### 1.2 設計方針
+**どのようなアプローチで実現するか**
+- 主要設計思想：RESTful API設計、統一エラーハンドリング、レイヤード・アーキテクチャ
+- 技術選択理由：Rails MVC + API Mode、JSON API仕様準拠、認証・認可統合
+- 制約・前提条件：Redmine権限モデル準拠、後方互換性維持、高可用性要求
+
+## 2. 機能要求仕様
+
+### 2.1 主要機能
+```mermaid
+mindmap
+  root((API Controller))
+    認証・認可
+      ユーザー認証
+      権限チェック
+      セッション管理
+      トークン管理
+    データAPI
+      Kanbanデータ取得
+      Issue詳細表示
+      統計情報配信
+      フィルタ・検索
+    操作API
+      カード移動処理
+      一括更新操作
+      状態遷移処理
+      バリデーション
+    バージョン管理API
+      Version CRUD
+      Issue一括割当
+      タイムライン生成
+      依存関係管理
+    リアルタイム通信
+      WebSocket接続
+      ポーリング代替
+      更新通知配信
+      セッション管理
+    エラーハンドリング
+      統一エラー応答
+      バリデーション
+      監査ログ
+      例外処理
+```
+
+### 2.2 機能詳細
+| 機能ID | 機能名 | 説明 | 優先度 | 受容条件 |
+|--------|--------|------|---------|----------|
+| AC001 | 認証・認可統合 | Redmine権限モデル統合、セキュリティ強化 | High | 権限チェック100%、監査ログ完備 |
+| AC002 | データAPI提供 | Kanbanデータ・Issue詳細の効率的配信 | High | 2秒以内レスポンス、キャッシュ対応 |
+| AC003 | 操作API処理 | D&D・一括更新の安全な実行 | High | トランザクション保証、ロールバック対応 |
+| AC004 | リアルタイム通信 | WebSocket/ポーリング併用の同期機能 | Medium | 5秒以内更新配信、接続復旧対応 |
+| AC005 | エラーハンドリング | 統一エラー応答、詳細ログ、クライアント対応支援 | Medium | 全例外捕捉、構造化エラー応答 |
+
+## 3. UI/UX設計仕様
+
+### 3.1 API処理フロー
+```mermaid
+graph TD
+    A[クライアント要求] --> B[ミドルウェア層]
+    B --> C[レート制限チェック]
+    C --> D[BaseApiController]
+    D --> E[認証・認可検証]
+    E --> F[パラメータバリデーション]
+    F --> G[専用Controller処理]
+    G --> H[Service層実行]
+    H --> I[レスポンス構築]
+    I --> J[JSON配信]
+
+    style A fill:#e1f5fe
+    style D fill:#f3e5f5
+    style H fill:#f3e5f5
+```
+
+### 3.2 エラーハンドリング状態遷移
+```mermaid
+stateDiagram-v2
+    [*] --> 要求受信
+    要求受信 --> 認証チェック: 基本検証
+    認証チェック --> 権限確認: 認証成功
+    認証チェック --> 認証エラー: 認証失敗
+    権限確認 --> 処理実行: 権限OK
+    権限確認 --> 権限エラー: 権限不足
+    処理実行 --> 成功応答: 処理成功
+    処理実行 --> バリデーションエラー: 入力不正
+    処理実行 --> システムエラー: 例外発生
+    成功応答 --> [*]
+    認証エラー --> [*]
+    権限エラー --> [*]
+    バリデーションエラー --> [*]
+    システムエラー --> [*]
+```
+
+### 3.3 リアルタイム通信シーケンス
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant RC as RealtimeController
+    participant WS as WebSocket
+    participant Cache as Redis Cache
+    participant NS as NotificationService
+
+    C->>RC: POST /realtime/subscribe
+    RC->>Cache: store_session_data
+    RC->>C: connection_info + polling_fallback
+
+    Note over C,WS: WebSocket接続確立
+
+    C->>WS: WebSocket Connect
+    WS->>C: Connection Established
+
+    Note over NS,C: 変更通知配信
+
+    NS->>WS: notify_change(project_id, change_data)
+    WS->>C: Real-time Update
+
+    Note over C,RC: ポーリング代替
+
+    C->>RC: GET /realtime/poll_updates?since=timestamp
+    RC->>C: recent_updates + current_timestamp
+```
+
+## 4. データ設計
+
+### 4.1 API応答データ構造
+```mermaid
+erDiagram
+    API_RESPONSES {
+        success boolean
+        data json
+        meta json
+        error json
+    }
+
+    RESPONSE_META {
+        timestamp datetime
+        request_id string
+        api_version string
+        execution_time float
+    }
+
+    ERROR_DETAILS {
+        message string
+        code string
+        details json
+        validation_errors json
+    }
+
+    RATE_LIMIT_CACHE {
+        key string PK
+        count integer
+        expires_at datetime
+    }
+
+    SESSION_CACHE {
+        user_id integer PK
+        project_id integer PK
+        channel string
+        subscribed_at datetime
+        last_heartbeat datetime
+    }
+
+    API_RESPONSES ||--|| RESPONSE_META : "meta"
+    API_RESPONSES ||--o| ERROR_DETAILS : "error"
+    RATE_LIMIT_CACHE }|--|| USERS : "user"
+    SESSION_CACHE }|--|| USERS : "user"
+    SESSION_CACHE }|--|| PROJECTS : "project"
+```
+
+### 4.2 API データフロー
+```mermaid
+flowchart LR
+    A[HTTP Request] --> B[Middleware Processing]
+    B --> C[Controller Routing]
+    C --> D[Authentication/Authorization]
+    D --> E[Parameter Validation]
+    E --> F[Service Layer Execution]
+    F --> G[Data Serialization]
+    G --> H[Response Construction]
+    H --> I[JSON Response]
+
+    I --> J[Client Processing]
+    J --> K[UI State Update]
+    K --> L[User Interaction]
+    L --> M[New API Request]
+    M --> A
+
+    N[Cache Layer] --> F
+    F --> N
+    O[Real-time Notification] --> J
+```
+
+## 5. アーキテクチャ設計
+
+### 5.1 システム構成
+```mermaid
+C4Context
+    Person(user, "ユーザー", "Kanban UI利用者")
+    System(api, "Kanban API System", "RESTful API + リアルタイム通信")
+
+    System_Ext(redmine, "Redmine Core", "認証・権限・Issue管理")
+    SystemDb(db, "Database", "PostgreSQL/MySQL")
+    SystemDb(cache, "Redis Cache", "セッション・レート制限・データキャッシュ")
+    System_Ext(ws, "WebSocket Server", "リアルタイム通信基盤")
+
+    Rel(user, api, "API要求・WebSocket接続")
+    Rel(api, redmine, "認証・権限・データ連携")
+    Rel(api, db, "データ永続化・トランザクション")
+    Rel(api, cache, "高速応答・セッション管理")
+    Rel(api, ws, "リアルタイム配信")
+```
+
+### 5.2 コンポーネント構成
+```mermaid
+C4Component
+    Component(base_ctrl, "BaseApiController", "Rails Controller", "共通認証・エラーハンドリング")
+    Component(data_ctrl, "DataController", "Rails Controller", "Kanbanデータ配信")
+    Component(versions_ctrl, "VersionsController", "Rails Controller", "バージョン管理API")
+    Component(realtime_ctrl, "RealtimeController", "Rails Controller", "リアルタイム通信管理")
+    Component(middleware, "RateLimiter", "Rack Middleware", "レート制限・セキュリティ")
+
+    Rel(data_ctrl, base_ctrl, "継承・共通機能利用")
+    Rel(versions_ctrl, base_ctrl, "継承・共通機能利用")
+    Rel(realtime_ctrl, base_ctrl, "継承・共通機能利用")
+    Rel(middleware, data_ctrl, "前処理・制限チェック")
+```
+
+## 6. インターフェース設計
+
+### 6.1 統一API応答インターフェース
 ```ruby
-# app/controllers/kanban/base_api_controller.rb
-module Kanban
-  class BaseApiController < ApplicationController
-    include KanbanApiConcern
+# API応答形式標準（疑似コード）
+class StandardApiResponse
+  # 成功応答
+  success_format: {
+    success: true,
+    data: {
+      # 実際のデータ内容
+      grid: KanbanGridData,
+      metadata: SystemMetadata,
+      statistics: StatisticsData
+    },
+    meta: {
+      timestamp: "2025-09-26T10:30:00Z",
+      request_id: "req_abc123",
+      api_version: "v1",
+      execution_time: 250.5
+    }
+  }
 
-    before_action :require_login
-    before_action :find_project
-    before_action :authorize_kanban_access
-    before_action :check_rate_limit
-    before_action :set_current_user
-
-    rescue_from StandardError, with: :handle_internal_error
-    rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
-    rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
-    rescue_from Kanban::PermissionDenied, with: :handle_permission_denied
-    rescue_from Kanban::WorkflowViolation, with: :handle_workflow_violation
-
-    protected
-
-    def find_project
-      @project = Project.find(params[:project_id])
-    rescue ActiveRecord::RecordNotFound
-      render_error('プロジェクトが見つかりません', :not_found)
-    end
-
-    def authorize_kanban_access
-      unless User.current.allowed_to?(:view_kanban, @project)
-        raise Kanban::PermissionDenied.new('Kanban表示権限がありません', :view_kanban)
-      end
-    end
-
-    def check_rate_limit
-      key = "kanban_api:#{request.remote_ip}:#{User.current&.id}"
-      current_requests = Rails.cache.read(key) || 0
-
-      if current_requests >= rate_limit_threshold
-        render_error('リクエスト制限に達しました。しばらく待ってから再試行してください。', :too_many_requests)
-        return
-      end
-
-      Rails.cache.write(key, current_requests + 1, expires_in: 1.minute)
-    end
-
-    def set_current_user
-      User.current = current_user
-    end
-
-    def render_success(data = {}, status = :ok)
-      response_data = {
-        success: true,
-        data: data,
-        meta: build_response_meta
-      }
-
-      render json: response_data, status: status
-    end
-
-    def render_error(message, status = :bad_request, details = {})
-      response_data = {
-        success: false,
-        error: {
-          message: message,
-          code: status,
-          details: details,
-          request_id: request.uuid
-        },
-        meta: build_response_meta
-      }
-
-      render json: response_data, status: status
-    end
-
-    def handle_not_found(exception)
-      Kanban::ErrorHandlingService.log_error(exception, controller_context)
-      render_error('リソースが見つかりません', :not_found)
-    end
-
-    def handle_validation_error(exception)
-      Kanban::ErrorHandlingService.log_error(exception, controller_context)
-      render_error(
-        'バリデーションエラー',
-        :unprocessable_entity,
-        { validation_errors: format_validation_errors(exception.record) }
-      )
-    end
-
-    def handle_permission_denied(exception)
-      Kanban::ErrorHandlingService.log_error(exception, controller_context)
-      render_error(exception.message, :forbidden, { required_permission: exception.required_permission })
-    end
-
-    def handle_workflow_violation(exception)
-      Kanban::ErrorHandlingService.log_error(exception, controller_context)
-      render_error(
-        exception.message,
-        :unprocessable_entity,
-        { suggested_actions: exception.suggested_actions }
-      )
-    end
-
-    def handle_internal_error(exception)
-      Kanban::ErrorHandlingService.log_error(exception, controller_context)
-      message = Rails.env.development? ? exception.message : 'サーバーエラーが発生しました'
-      render_error(message, :internal_server_error)
-    end
-
-    private
-
-    def rate_limit_threshold
-      Rails.env.development? ? 1000 : 100 # 1分間のリクエスト制限
-    end
-
-    def build_response_meta
-      {
-        timestamp: Time.zone.now.iso8601,
-        request_id: request.uuid,
-        api_version: 'v1',
-        execution_time: calculate_execution_time
-      }
-    end
-
-    def controller_context
-      {
-        controller: self.class.name,
-        action: action_name,
-        project_id: @project&.id,
-        user_id: User.current&.id,
-        params: params.except(:password, :password_confirmation),
-        request_id: request.uuid
-      }
-    end
-
-    def format_validation_errors(record)
-      record.errors.full_messages.map do |message|
+  # エラー応答
+  error_format: {
+    success: false,
+    error: {
+      message: "リソースが見つかりません",
+      code: "not_found",
+      details: {
+        resource_type: "Issue",
+        resource_id: 123
+      },
+      validation_errors: [
         {
-          field: record.errors.keys.first,
-          message: message,
-          code: determine_error_code(record.errors.keys.first)
+          field: "status_id",
+          message: "無効なステータスです",
+          code: "invalid_status"
         }
-      end
-    end
-
-    def calculate_execution_time
-      return nil unless @start_time
-      ((Time.current - @start_time) * 1000).round(2) # ミリ秒
-    end
-  end
+      ]
+    },
+    meta: {
+      timestamp: "2025-09-26T10:30:00Z",
+      request_id: "req_abc123",
+      api_version: "v1"
+    }
+  }
 end
 ```
 
-## 主要APIコントローラー
+### 6.2 主要API エンドポイント定義
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant DC as DataController
+    participant VC as VersionsController
+    participant RTC as RealtimeController
 
-### Kanban データAPIコントローラー
+    Note over C,RTC: データ取得API
+    C->>DC: GET /api/kanban/projects/:id/data
+    DC->>C: kanban_grid_data + metadata
+
+    Note over C,RTC: 操作API
+    C->>DC: PATCH /api/kanban/projects/:id/data/:issue_id/move
+    DC->>C: updated_issue + affected_issues
+
+    Note over C,RTC: バージョン管理API
+    C->>VC: POST /api/kanban/projects/:id/versions
+    VC->>C: created_version + grid_updates
+
+    Note over C,RTC: リアルタイム通信API
+    C->>RTC: POST /api/kanban/projects/:id/realtime/subscribe
+    RTC->>C: connection_info + channel_details
+    C->>RTC: GET /api/kanban/projects/:id/realtime/poll_updates
+    RTC->>C: recent_updates + timestamp
+```
+
+## 7. 非機能要求
+
+### 7.1 パフォーマンス要求
+| 項目 | 要求値 | 測定方法 |
+|------|---------|----------|
+| API応答時間 | 2秒以内（95%tile） | APM・ログ分析 |
+| 同時接続数 | 100ユーザー対応 | 負荷テスト |
+| リアルタイム配信 | 5秒以内 | WebSocket・ポーリング測定 |
+| エラー率 | 1%以下 | エラー監視・アラート |
+
+### 7.2 セキュリティ要求
+- **認証・認可**: Redmine権限モデル100%準拠、不正アクセス防止
+- **レート制限**: IP・ユーザー別制限、DDoS攻撃対策
+- **監査ログ**: 全API操作記録、トレーサビリティ確保
+
+## 8. 実装指針
+
+### 8.1 技術スタック
+- **フレームワーク**: Ruby on Rails 6.1+ (API Mode)
+- **認証**: Redmine標準認証 + Token認証
+- **キャッシュ**: Redis (セッション・レート制限・データキャッシュ)
+- **リアルタイム**: ActionCable/WebSocket + Server-Sent Events
+- **監視**: Rails Logger + APM統合
+
+### 8.2 実装パターン
 ```ruby
-# app/controllers/kanban/api/data_controller.rb
-module Kanban
-  module Api
-    class DataController < BaseApiController
-      before_action :authorize_view_issues, only: [:index, :show]
-      before_action :authorize_edit_issues, only: [:update, :move, :bulk_update]
+# BaseApiController実装パターン（疑似コード）
+class BaseApiController < ApplicationController
+  # 1. 共通フィルタチェーン
+  before_action :require_login, :find_project, :authorize_kanban_access
+  before_action :set_start_time
 
-      def index
-        cache_key = "kanban_data:#{@project.id}:#{current_user.id}:#{data_params.to_h.hash}"
+  # 2. 統一例外ハンドリング
+  rescue_from StandardError, with: :handle_internal_error
+  rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
+  rescue_from Kanban::PermissionDenied, with: :handle_permission_denied
 
-        data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-          Kanban::KanbanDataBuilder.new(@project, current_user, data_params.to_h).build
-        end
-
-        render_success(data)
-      end
-
-      def show
-        issue = find_issue(params[:id])
-        epic = issue.root
-
-        data = Kanban::IssueDetailBuilder.new(issue, current_user).build
-
-        render_success({
-          issue: data,
-          epic_context: Kanban::SerializerService.serialize_issue(epic, include_hierarchy: true)
-        })
-      end
-
-      def move
-        issue = find_issue(params[:id])
-
-        result = Kanban::CardMoveService.new(
-          current_user,
-          issue.id,
-          move_params[:source_cell],
-          move_params[:target_cell]
-        ).execute
-
-        if result.success?
-          # キャッシュ無効化
-          invalidate_related_cache(issue)
-
-          # リアルタイム通知
-          Kanban::NotificationService.notify_issue_update(issue.reload, current_user, 'moved')
-
-          render_success({
-            updated_issue: Kanban::SerializerService.serialize_issue(result.updated_card, include_relations: true),
-            affected_issues: result.affected_issues.map { |i| Kanban::SerializerService.serialize_issue(i) },
-            statistics_delta: result.statistics_delta
-          })
-        else
-          render_error(result.error_message, :unprocessable_entity, {
-            validation_errors: result.validation_errors
-          })
-        end
-      end
-
-      def bulk_update
-        issues = find_issues(bulk_update_params[:issue_ids])
-
-        result = Kanban::BulkUpdateService.new(
-          current_user,
-          issues,
-          bulk_update_params[:action],
-          bulk_update_params[:action_params]
-        ).execute
-
-        if result.success?
-          # キャッシュ無効化
-          issues.each { |issue| invalidate_related_cache(issue) }
-
-          # リアルタイム通知
-          Kanban::NotificationService.notify_bulk_update(issues, current_user, bulk_update_params[:action], result.statistics)
-
-          render_success({
-            updated_issues: result.updated_issues.map { |i| Kanban::SerializerService.serialize_issue(i) },
-            failed_issues: result.failed_issues,
-            statistics: result.statistics
-          })
-        else
-          render_error(result.error_message, :unprocessable_entity, {
-            failed_issues: result.failed_issues
-          })
-        end
-      end
-
-      def statistics
-        stats = Kanban::StatisticsBuilder.new(@project, current_user, stats_params.to_h).build
-
-        render_success(stats)
-      end
-
-      private
-
-      def authorize_view_issues
-        unless current_user.allowed_to?(:view_issues, @project)
-          raise Kanban::PermissionDenied.new('Issue表示権限がありません', :view_issues)
-        end
-      end
-
-      def authorize_edit_issues
-        unless current_user.allowed_to?(:edit_issues, @project)
-          raise Kanban::PermissionDenied.new('Issue編集権限がありません', :edit_issues)
-        end
-      end
-
-      def find_issue(id)
-        @project.issues.includes(:tracker, :status, :assigned_to, :fixed_version, :children, :parent).find(id)
-      end
-
-      def find_issues(ids)
-        @project.issues.includes(:tracker, :status, :assigned_to, :fixed_version).where(id: ids)
-      end
-
-      def data_params
-        params.permit(:version_filter, :assignee_filter, :status_filter, :tracker_filter, :epic_filter,
-                     :include_closed, :sort_by, :sort_direction)
-      end
-
-      def move_params
-        params.require(:move).permit(
-          source_cell: [:epic_id, :version_id, :column_id],
-          target_cell: [:epic_id, :version_id, :column_id]
-        )
-      end
-
-      def bulk_update_params
-        params.require(:bulk_update).permit(
-          :action,
-          issue_ids: [],
-          action_params: [:version_id, :status_id, :assignee_id, :priority_id]
-        )
-      end
-
-      def stats_params
-        params.permit(:period, :group_by, :include_trends)
-      end
-
-      def invalidate_related_cache(issue)
-        Kanban::CacheService.invalidate_kanban_data(@project, [issue.root.id])
-        Kanban::CacheService.invalidate_issue_data([issue.id])
-      end
-    end
+  # 3. 統一レスポンス形式
+  def render_success(data = {}, status = :ok)
+    render json: build_success_response(data), status: status
   end
+
+  def render_error(message, status, details = {})
+    render json: build_error_response(message, status, details), status: status
+  end
+
+  # 4. パフォーマンス監視
+  after_action :log_performance_metrics
 end
 ```
 
-### バージョン管理APIコントローラー
-```ruby
-# app/controllers/kanban/api/versions_controller.rb
-module Kanban
-  module Api
-    class VersionsController < BaseApiController
-      before_action :authorize_view_versions, only: [:index, :show]
-      before_action :authorize_manage_versions, only: [:create, :update, :destroy, :bulk_assign]
+### 8.3 エラーハンドリング戦略
+```mermaid
+flowchart TD
+    A[例外発生] --> B{例外種別判定}
+    B -->|ActiveRecord::RecordNotFound| C[404 Not Found]
+    B -->|ActiveRecord::RecordInvalid| D[422 Unprocessable Entity]
+    B -->|Kanban::PermissionDenied| E[403 Forbidden]
+    B -->|Kanban::WorkflowViolation| F[422 Workflow Error]
+    B -->|StandardError| G[500 Internal Server Error]
 
-      def index
-        versions = @project.versions
-                          .includes(:issues)
-                          .order(:effective_date, :name)
+    C --> H[構造化エラー応答]
+    D --> I[バリデーション詳細付加]
+    E --> J[権限要求情報付加]
+    F --> K[推奨アクション提示]
+    G --> L[エラーID・ログ参照]
 
-        render_success({
-          versions: versions.map { |v| serialize_version(v) },
-          statistics: calculate_versions_statistics(versions)
-        })
-      end
-
-      def show
-        version = @project.versions.find(params[:id])
-
-        render_success({
-          version: serialize_version(version),
-          issues: serialize_version_issues(version),
-          timeline: build_version_timeline(version)
-        })
-      end
-
-      def create
-        version = @project.versions.build(version_params)
-
-        if version.save
-          # グリッドに新しい列を追加
-          grid_update = {
-            type: 'version_added',
-            version: serialize_version(version),
-            column_data: Kanban::VersionColumnBuilder.new(version).build
-          }
-
-          # リアルタイム通知
-          Kanban::NotificationService.notify_version_creation(version, current_user)
-
-          render_success({
-            version: serialize_version(version),
-            grid_update: grid_update
-          }, :created)
-        else
-          render_error(
-            'バージョン作成に失敗しました',
-            :unprocessable_entity,
-            { validation_errors: format_validation_errors(version) }
-          )
-        end
-      end
-
-      def update
-        version = @project.versions.find(params[:id])
-
-        if version.update(version_params)
-          # 影響するグリッドセルを計算
-          grid_updates = calculate_version_update_impact(version)
-
-          render_success({
-            version: serialize_version(version),
-            grid_updates: grid_updates
-          })
-        else
-          render_error(
-            'バージョン更新に失敗しました',
-            :unprocessable_entity,
-            { validation_errors: format_validation_errors(version) }
-          )
-        end
-      end
-
-      def bulk_assign
-        version = @project.versions.find(params[:id])
-        issues = @project.issues.where(id: bulk_assign_params[:issue_ids])
-
-        result = Kanban::BulkVersionAssignmentService.new(current_user, version, issues).execute
-
-        if result.success?
-          # キャッシュ無効化
-          affected_epic_ids = issues.map(&:root).uniq.pluck(:id)
-          Kanban::CacheService.invalidate_kanban_data(@project, affected_epic_ids)
-
-          # リアルタイム通知
-          Kanban::NotificationService.notify_version_assignment(version, issues, current_user)
-
-          render_success({
-            assigned_issues: result.assigned_issues.map { |i| Kanban::SerializerService.serialize_issue(i) },
-            grid_updates: result.grid_updates,
-            statistics: result.statistics
-          })
-        else
-          render_error(
-            result.error_message,
-            :unprocessable_entity,
-            { failed_assignments: result.failed_assignments }
-          )
-        end
-      end
-
-      def timeline
-        version = @project.versions.find(params[:id])
-        timeline_data = Kanban::VersionTimelineBuilder.new(version, timeline_params).build
-
-        render_success(timeline_data)
-      end
-
-      private
-
-      def authorize_view_versions
-        unless current_user.allowed_to?(:view_versions, @project)
-          raise Kanban::PermissionDenied.new('バージョン表示権限がありません', :view_versions)
-        end
-      end
-
-      def authorize_manage_versions
-        unless current_user.allowed_to?(:manage_versions, @project)
-          raise Kanban::PermissionDenied.new('バージョン管理権限がありません', :manage_versions)
-        end
-      end
-
-      def version_params
-        params.require(:version).permit(:name, :description, :effective_date, :status, :wiki_page_title)
-      end
-
-      def bulk_assign_params
-        params.require(:bulk_assign).permit(issue_ids: [])
-      end
-
-      def timeline_params
-        params.permit(:start_date, :end_date, :granularity)
-      end
-
-      def serialize_version(version)
-        {
-          id: version.id,
-          name: version.name,
-          description: version.description,
-          effective_date: version.effective_date,
-          status: version.status,
-          created_on: version.created_on.iso8601,
-          updated_on: version.updated_on.iso8601,
-          issue_count: version.issues.count,
-          completion_ratio: calculate_version_completion_ratio(version),
-          can_edit: current_user.allowed_to?(:manage_versions, @project)
-        }
-      end
-
-      def serialize_version_issues(version)
-        version.issues
-               .includes(:tracker, :status, :parent)
-               .group_by(&:root)
-               .map do |epic, issues|
-          {
-            epic: Kanban::SerializerService.serialize_issue(epic),
-            issues: issues.map { |i| Kanban::SerializerService.serialize_issue(i) }
-          }
-        end
-      end
-
-      def calculate_versions_statistics(versions)
-        {
-          total: versions.count,
-          open: versions.count(&:open?),
-          closed: versions.count(&:closed?),
-          locked: versions.count(&:locked?),
-          total_issues: versions.sum { |v| v.issues.count },
-          completion_ratio: calculate_overall_completion_ratio(versions)
-        }
-      end
-    end
-  end
-end
+    H --> M[監査ログ記録]
+    I --> M
+    J --> M
+    K --> M
+    L --> M
 ```
 
-### WebSocket リアルタイム通信コントローラー
-```ruby
-# app/controllers/kanban/api/realtime_controller.rb
-module Kanban
-  module Api
-    class RealtimeController < BaseApiController
-      def subscribe
-        channel_name = "kanban_project_#{@project.id}"
+## 9. テスト設計
 
-        # WebSocket接続情報をセッションに保存
-        session_data = {
-          user_id: current_user.id,
-          project_id: @project.id,
-          subscribed_at: Time.zone.now,
-          channel: channel_name
-        }
+テスト戦略・ケース設計・実装については以下を参照：
+- @vibes/rules/testing/server_side_testing_strategy.md
+- @vibes/rules/testing/api_controller_server_test_specification.md
 
-        Rails.cache.write("kanban_session:#{current_user.id}:#{@project.id}", session_data, expires_in: 4.hours)
+## 10. 運用・保守設計
 
-        render_success({
-          channel: channel_name,
-          connection_id: generate_connection_id,
-          polling_fallback: {
-            enabled: true,
-            interval: 30000 # 30秒
-          }
-        })
-      end
+### 10.1 監視・ログ設計
+- **パフォーマンス監視**: API応答時間・スループット・エラー率
+- **セキュリティ監視**: 不正アクセス検知・レート制限発動・権限違反
+- **ビジネス監視**: API利用状況・機能使用頻度・ユーザー行動分析
 
-      def unsubscribe
-        Rails.cache.delete("kanban_session:#{current_user.id}:#{@project.id}")
-
-        render_success({
-          message: '購読を停止しました'
-        })
-      end
-
-      def poll_updates
-        since = Time.zone.parse(params[:since]) if params[:since].present?
-        since ||= 30.seconds.ago
-
-        updates = Kanban::GridUpdateService.get_updates_since(@project, since)
-
-        render_success({
-          updates: updates,
-          current_timestamp: Time.zone.now.iso8601,
-          has_more: updates[:issue_updates].size >= 50 # ページング指標
-        })
-      end
-
-      def heartbeat
-        session = Rails.cache.read("kanban_session:#{current_user.id}:#{@project.id}")
-
-        if session
-          session[:last_heartbeat] = Time.zone.now
-          Rails.cache.write("kanban_session:#{current_user.id}:#{@project.id}", session, expires_in: 4.hours)
-
-          render_success({
-            status: 'connected',
-            server_time: Time.zone.now.iso8601
-          })
-        else
-          render_error('セッションが見つかりません', :not_found)
-        end
-      end
-
-      private
-
-      def generate_connection_id
-        "#{current_user.id}_#{@project.id}_#{Time.current.to_i}"
-      end
-    end
-  end
-end
-```
-
-## ルーティング設定
-
-```ruby
-# config/routes.rb
-scope 'api/kanban/projects/:project_id', module: 'kanban/api' do
-  # データAPI
-  resources :data, only: [:index, :show] do
-    member do
-      patch :move
-      get :statistics
-    end
-    collection do
-      patch :bulk_update
-    end
-  end
-
-  # バージョン管理API
-  resources :versions do
-    member do
-      post :bulk_assign
-      get :timeline
-    end
-  end
-
-  # リアルタイム通信API
-  scope :realtime, controller: :realtime do
-    post :subscribe
-    delete :unsubscribe
-    get :poll_updates
-    post :heartbeat
-  end
-
-  # システム情報API
-  scope :system, controller: :system do
-    get :health
-    get :configuration
-    get :permissions
-  end
-end
-```
-
-## ミドルウェア
-
-### APIレート制限ミドルウェア
-```ruby
-# app/middleware/kanban_rate_limiter.rb
-class KanbanRateLimiter
-  def initialize(app)
-    @app = app
-  end
-
-  def call(env)
-    request = Rack::Request.new(env)
-
-    if kanban_api_request?(request)
-      return rate_limit_exceeded if rate_limit_exceeded?(request)
-    end
-
-    @app.call(env)
-  end
-
-  private
-
-  def kanban_api_request?(request)
-    request.path.start_with?('/api/kanban/')
-  end
-
-  def rate_limit_exceeded?(request)
-    # IP + ユーザーベースのレート制限
-    key = "rate_limit:#{request.ip}:#{extract_user_id(request)}"
-    current_count = Rails.cache.increment(key, 1, expires_in: 1.minute)
-
-    current_count > rate_limit_threshold(request)
-  end
-
-  def rate_limit_threshold(request)
-    # パスによって制限を変える
-    case request.path
-    when %r{/api/kanban/.+/data}
-      20 # データ取得は制限緩め
-    when %r{/api/kanban/.+/(move|bulk_update)}
-      5  # 更新系は制限厳しく
-    else
-      10 # デフォルト
-    end
-  end
-
-  def rate_limit_exceeded
-    [429, { 'Content-Type' => 'application/json' }, [
-      { error: 'Rate limit exceeded', retry_after: 60 }.to_json
-    ]]
-  end
-end
-```
-
-## テスト実装
-
-```ruby
-# spec/requests/kanban/api/data_controller_spec.rb
-RSpec.describe Kanban::Api::DataController, type: :request do
-  let(:project) { create(:project) }
-  let(:user) { create(:user_with_kanban_permissions, project: project) }
-
-  before { sign_in user }
-
-  describe 'GET /api/kanban/projects/:project_id/data' do
-    it 'Kanbanデータを正常に返す' do
-      get "/api/kanban/projects/#{project.id}/data"
-
-      expect(response).to have_http_status(:success)
-      json = JSON.parse(response.body)
-      expect(json['success']).to be true
-      expect(json['data']).to include('grid', 'metadata', 'statistics')
-      expect(json['meta']).to include('timestamp', 'api_version')
-    end
-
-    it 'フィルターパラメータを適用' do
-      version = create(:version, project: project)
-
-      get "/api/kanban/projects/#{project.id}/data", params: { version_filter: version.id }
-
-      expect(response).to have_http_status(:success)
-    end
-  end
-
-  describe 'PATCH /api/kanban/projects/:project_id/data/:id/move' do
-    let(:feature) { create(:feature_issue, project: project) }
-
-    it 'カード移動を正常に処理' do
-      patch "/api/kanban/projects/#{project.id}/data/#{feature.id}/move",
-            params: {
-              move: {
-                source_cell: { epic_id: feature.root.id, column_id: 'todo' },
-                target_cell: { epic_id: feature.root.id, column_id: 'in_progress' }
-              }
-            }
-
-      expect(response).to have_http_status(:success)
-      json = JSON.parse(response.body)
-      expect(json['success']).to be true
-    end
-  end
-end
-```
+### 10.2 運用自動化
+- **ヘルスチェック**: API生存監視・DB接続確認・外部依存性チェック
+- **アラート**: 異常検知・エスカレーション・自動復旧
+- **デプロイ**: Blue-Green デプロイ・ロールバック・設定管理
 
 ---
 
-*Kanban UI用APIコントローラー実装。RESTful設計、認証・認可、エラーハンドリング、リアルタイム通信*
+*API Controller サーバーサイド実装は、Kanban UIに対する統一されたRESTful API基盤を提供し、セキュリティ・パフォーマンス・可用性を重視した設計です。リアルタイム通信機能により、マルチユーザー環境での協調作業を支援します。*

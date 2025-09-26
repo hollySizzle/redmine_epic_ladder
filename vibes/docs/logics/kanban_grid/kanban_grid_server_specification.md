@@ -1,663 +1,385 @@
-# Kanban Grid サーバーサイド実装仕様
+# Kanban Grid サーバーサイド詳細設計書
 
-## 概要
-Kanban Gridレイアウト用サーバーサイド実装。2次元グリッド（Epic行×Version列）データ構築、ドラッグ&ドロップ処理、バージョン管理、リアルタイム更新。
+## 🔗 関連ドキュメント
+- @vibes/specs/ui/kanban_grid_wireframe.drawio
+- @vibes/rules/technical_architecture_standards.md
+- @vibes/logics/ui_components/kanban_grid_layout_specification.md
 
-## コントローラー実装
+## 1. 設計概要
 
-### Grid専用コントローラー
+### 1.1 設計目的・背景
+**なぜこのサーバーサイド実装が必要なのか**
+- ビジネス要件：2次元グリッド（Epic行×Version列）データの効率的な構築・配信、リアルタイム同期
+- ユーザー価値：直感的な D&D操作、バージョン管理統合、複数ユーザー協調作業支援
+- システム価値：データ整合性保持、パフォーマンス最適化、拡張可能なグリッド構造
+
+### 1.2 設計方針
+**どのようなアプローチで実現するか**
+- 主要設計思想：2D マトリクス構造、リアルタイム更新、階層データ整合性重視
+- 技術選択理由：Rails MVC + Service層、JSON API設計、WebSocket/ポーリング併用
+- 制約・前提条件：Redmine版管理統合、Issue階層準拠、マルチユーザー対応
+
+## 2. 機能要求仕様
+
+### 2.1 主要機能
+```mermaid
+mindmap
+  root((Kanban Grid Server))
+    グリッドデータ構築
+      Epic行構築
+      Version列構築
+      セル内データ集約
+      フィルタリング対応
+    D&D操作処理
+      カード移動検証
+      ステータス遷移
+      バージョン割当
+      制約チェック
+    バージョン管理統合
+      Version CRUD
+      Issue一括割当
+      依存関係更新
+      統計計算
+    リアルタイム更新
+      変更検出
+      差分配信
+      衝突解決
+      同期保証
+```
+
+### 2.2 機能詳細
+| 機能ID | 機能名 | 説明 | 優先度 | 受容条件 |
+|--------|--------|------|---------|----------|
+| GS001 | 2Dグリッド構築 | Epic×Versionマトリクス効率的構築 | High | N+1クエリ回避、3秒以内レスポンス |
+| GS002 | カード移動処理 | D&D操作の状態・バージョン更新 | High | 制約検証、ロールバック対応 |
+| GS003 | バージョン管理 | Version作成・更新・Issue割当 | High | 依存関係整合性、一括処理対応 |
+| GS004 | リアルタイム同期 | マルチユーザー間のグリッド状態同期 | Medium | 衝突検出、差分更新配信 |
+| GS005 | フィルタ・検索 | Epic・Version・ステータス・担当者フィルタ | Medium | 動的フィルタ、組み合わせ対応 |
+
+## 3. UI/UX設計仕様
+
+### 3.1 サーバーサイド処理フロー
+```mermaid
+graph TD
+    A[クライアント要求] --> B[GridController]
+    B --> C[権限・パラメータ検証]
+    C --> D[GridDataBuilder]
+    D --> E[Epic階層データ取得]
+    E --> F[Version列データ構築]
+    F --> G[セル内Feature集約]
+    G --> H[統計・メタデータ計算]
+    H --> I[JSON構造化]
+    I --> J[レスポンス配信]
+
+    style A fill:#e1f5fe
+    style D fill:#f3e5f5
+    style G fill:#f3e5f5
+```
+
+### 3.2 状態遷移設計
+```mermaid
+stateDiagram-v2
+    [*] --> グリッド要求
+    グリッド要求 --> データ構築: パラメータ解析
+    データ構築 --> Epic取得: フィルタ適用
+    Epic取得 --> Version取得: Epic階層ロード
+    Version取得 --> セル構築: Version配列生成
+    セル構築 --> 統計計算: Feature配置計算
+    統計計算 --> レスポンス生成: メタデータ付加
+    レスポンス生成 --> [*]
+
+    グリッド要求 --> エラー応答: バリデーション失敗
+    エラー応答 --> [*]
+```
+
+### 3.3 D&D操作シーケンス設計
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant GC as GridController
+    participant CMS as CardMoveService
+    participant DB as Database
+    participant WS as WebSocket/Polling
+
+    C->>GC: POST /grid/move_card
+    GC->>GC: 権限・制約チェック
+    GC->>CMS: execute(card_id, source, target)
+    CMS->>DB: Issue更新処理
+    CMS->>CMS: 関連Issue更新
+    CMS->>GC: MoveResult
+    GC->>C: 更新結果JSON
+
+    Note over CMS,WS: リアルタイム同期
+    CMS->>WS: 変更通知
+    WS->>C: 他ユーザーへ変更配信
+```
+
+## 4. データ設計
+
+### 4.1 データ構造
+```mermaid
+erDiagram
+    ISSUES {
+        id integer PK
+        subject string
+        tracker_id integer FK
+        status_id integer FK
+        parent_id integer FK
+        fixed_version_id integer FK
+        assigned_to_id integer FK
+        updated_on datetime
+    }
+
+    VERSIONS {
+        id integer PK
+        project_id integer FK
+        name string
+        description text
+        effective_date date
+        status string
+    }
+
+    KANBAN_COLUMN_CONFIGS {
+        id integer PK
+        project_id integer FK
+        column_name string
+        column_position integer
+        status_ids text
+    }
+
+    WORKFLOW_TRANSITIONS {
+        id integer PK
+        tracker_id integer FK
+        old_status_id integer FK
+        new_status_id integer FK
+        role_id integer FK
+    }
+
+    ISSUES ||--o{ ISSUES : "parent-child"
+    ISSUES }|--|| VERSIONS : "fixed_version"
+    KANBAN_COLUMN_CONFIGS }|--|| PROJECTS : "project"
+    WORKFLOW_TRANSITIONS }|--|| TRACKERS : "tracker"
+```
+
+### 4.2 データフロー
+```mermaid
+flowchart LR
+    A[Project Issues] --> B[Epic フィルタリング]
+    B --> C[Version 取得]
+    C --> D[2D マトリクス構築]
+    D --> E[Feature 配置計算]
+    E --> F[統計・メタデータ生成]
+    F --> G[JSON レスポンス]
+
+    G --> H[クライアント表示]
+    H --> I[D&D操作]
+    I --> J[移動要求]
+    J --> K[制約検証・更新]
+    K --> L[関連Issue更新]
+    L --> M[リアルタイム配信]
+    M --> A
+```
+
+## 5. アーキテクチャ設計
+
+### 5.1 システム構成
+```mermaid
+C4Context
+    Person(user, "ユーザー", "複数ユーザー協調作業")
+    System(grid, "Kanban Grid System", "2Dグリッドマトリクス管理")
+
+    System_Ext(redmine, "Redmine Core", "Issue・Version管理基盤")
+    SystemDb(db, "Database", "PostgreSQL/MySQL")
+    SystemDb(cache, "Redis Cache", "グリッドデータキャッシュ")
+    System_Ext(ws, "WebSocket/SSE", "リアルタイム通信")
+
+    Rel(user, grid, "グリッド操作・D&D")
+    Rel(grid, redmine, "Issue・Version API")
+    Rel(grid, db, "グリッドデータ永続化")
+    Rel(grid, cache, "構築済みグリッドキャッシュ")
+    Rel(grid, ws, "リアルタイム変更配信")
+```
+
+### 5.2 コンポーネント構成
+```mermaid
+C4Component
+    Component(grid_ctrl, "GridController", "Rails Controller", "グリッドAPI エンドポイント")
+    Component(version_ctrl, "VersionsController", "Rails Controller", "Version管理API")
+    Component(grid_builder, "GridDataBuilder", "Ruby Service", "2Dグリッド構築")
+    Component(move_service, "CardMoveService", "Ruby Service", "D&D移動処理")
+    Component(update_service, "GridUpdateService", "Ruby Service", "リアルタイム更新")
+
+    Rel(grid_ctrl, grid_builder, "グリッド構築依頼")
+    Rel(grid_ctrl, move_service, "カード移動実行")
+    Rel(grid_ctrl, update_service, "差分更新取得")
+    Rel(version_ctrl, grid_builder, "バージョン変更通知")
+```
+
+## 6. インターフェース設計
+
+### 6.1 Grid Controller インターフェース
 ```ruby
-# app/controllers/kanban/grid_controller.rb
-module Kanban
-  class GridController < ApplicationController
-    include KanbanApiConcern
-
-    def index
-      @grid_data = KanbanGridBuilder.new(@project, current_user, grid_params).build
-
-      render json: {
-        grid: @grid_data[:grid],
-        metadata: @grid_data[:metadata],
-        statistics: @grid_data[:statistics]
+# Grid API エンドポイント設計（疑似コード）
+class GridController
+  # GET /kanban/projects/:project_id/grid
+  def index
+    response_format: {
+      grid: {
+        rows: Array<EpicRow>,
+        columns: Array<ColumnConfig>,
+        versions: Array<Version>
+      },
+      metadata: {
+        project: ProjectInfo,
+        user_permissions: Hash,
+        grid_configuration: GridConfig
+      },
+      statistics: {
+        overview: ProjectStats,
+        by_version: VersionStats,
+        by_status: StatusDistribution
       }
-    end
+    }
+  end
 
-    def move_card
-      result = CardMoveService.new(
-        current_user,
-        params[:card_id],
-        params[:source_cell],
-        params[:target_cell]
-      ).execute
+  # POST /grid/move_card
+  def move_card
+    params: {
+      card_id: Integer,
+      source_cell: { epic_id, version_id, column_id },
+      target_cell: { epic_id, version_id, column_id }
+    }
+    response_format: {
+      updated_card: Issue,
+      affected_cells: Array<CellUpdate>,
+      statistics_update: StatsDelta
+    }
+  end
 
-      if result.success?
-        render json: {
-          updated_card: serialize_issue(result.updated_card),
-          affected_cells: result.affected_cells,
-          statistics_update: result.statistics_delta
-        }
-      else
-        render json: {
-          error: result.error_message,
-          validation_errors: result.validation_errors
-        }, status: :unprocessable_entity
-      end
-    end
-
-    def update_version_assignment
-      version = @project.versions.find(params[:version_id])
-      issues = Issue.where(id: params[:issue_ids])
-
-      result = VersionAssignmentService.new(current_user, issues, version).execute
-
-      if result.success?
-        render json: {
-          updated_issues: result.updated_issues.map { |issue| serialize_issue(issue) },
-          grid_updates: calculate_grid_updates(result.updated_issues),
-          statistics: result.statistics
-        }
-      else
-        render json: {
-          error: result.error_message,
-          failed_assignments: result.failed_assignments
-        }, status: :unprocessable_entity
-      end
-    end
-
-    def column_configuration
-      render json: {
-        columns: KanbanColumnConfig.for_project(@project),
-        status_mappings: StatusColumnMapping.for_project(@project),
-        workflow_constraints: WorkflowConstraintChecker.for_project(@project)
-      }
-    end
-
-    def real_time_updates
-      last_update = Time.zone.parse(params[:since]) if params[:since].present?
-      updates = GridUpdateService.get_updates_since(@project, last_update)
-
-      render json: {
-        updates: updates,
-        current_timestamp: Time.zone.now.iso8601
-      }
-    end
-
-    private
-
-    def grid_params
-      params.permit(:version_filter, :assignee_filter, :status_filter, :tracker_filter, :epic_filter)
-    end
-
-    def calculate_grid_updates(updated_issues)
-      updated_issues.map do |issue|
-        epic = issue.root
-        version = issue.fixed_version
-
-        {
-          epic_id: epic.id,
-          version_id: version&.id,
-          cell_position: { row: epic.id, column: version&.id },
-          issue_updates: serialize_issue(issue)
-        }
-      end
-    end
+  # GET /grid/updates?since=timestamp
+  def real_time_updates
+    response_format: {
+      updates: Array<IssueUpdate>,
+      deleted_issues: Array<Integer>,
+      grid_structure_changes: Array<GridChange>
+    }
   end
 end
 ```
 
-### Version管理コントローラー
+### 6.2 Grid構築インターフェース
+```mermaid
+sequenceDiagram
+    participant GC as GridController
+    participant GB as GridDataBuilder
+    participant DB as Database
+    participant Cache as Redis
+
+    GC->>GB: build(project, user, filters)
+    GB->>Cache: check_grid_cache(cache_key)
+    alt Cache Hit
+        Cache->>GB: cached_grid_data
+    else Cache Miss
+        GB->>DB: load_filtered_epics
+        GB->>DB: load_project_versions
+        GB->>GB: build_2d_matrix
+        GB->>Cache: store_grid_cache
+    end
+    GB->>GC: grid_response_data
+```
+
+## 7. 非機能要求
+
+### 7.1 パフォーマンス要求
+| 項目 | 要求値 | 測定方法 |
+|------|---------|----------|
+| グリッド初期表示 | 3秒以内 | Epic×Version マトリクス構築時間 |
+| D&D移動処理 | 1秒以内 | カード移動〜UI更新完了時間 |
+| リアルタイム更新 | 5秒以内 | 変更検出〜配信完了時間 |
+| 大規模グリッド | 100 Epic × 20 Version対応 | メモリ使用量・クエリ性能 |
+
+### 7.2 品質要求
+- **可用性**: マルチユーザー同時操作99.9%成功率
+- **保守性**: Service層テストカバレッジ90%以上、Controller層85%以上
+- **拡張性**: 新Tracker・カスタムフィールド対応可能な抽象化
+
+## 8. 実装指針
+
+### 8.1 技術スタック
+- **バックエンド**: Ruby on Rails 6.1+ (Redmine準拠)
+- **データベース**: PostgreSQL/MySQL (複雑クエリ最適化)
+- **キャッシュ**: Redis (グリッドデータ・統計キャッシュ)
+- **リアルタイム**: ActionCable/Server-Sent Events
+- **テスト**: RSpec + FactoryBot + JSON Schema検証
+
+### 8.2 実装パターン
 ```ruby
-# app/controllers/kanban/versions_controller.rb
-module Kanban
-  class VersionsController < ApplicationController
-    include KanbanApiConcern
-
-    def index
-      @versions = @project.versions
-                          .includes(:issues)
-                          .order(:effective_date, :name)
-
-      render json: {
-        versions: @versions.map { |v| serialize_version(v) },
-        version_statistics: calculate_version_statistics
-      }
+# GridDataBuilder実装パターン（疑似コード）
+class GridDataBuilder
+  # 1. キャッシュ戦略
+  def build
+    Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      build_grid_structure
     end
+  end
 
-    def create
-      @version = @project.versions.build(version_params)
+  # 2. N+1クエリ回避
+  def load_filtered_epics
+    @project.issues
+            .includes(:tracker, :status, :fixed_version,
+                     children: [:tracker, :status, :fixed_version])
+            .joins(:tracker)
+            .where(trackers: { name: 'Epic' })
+  end
 
-      if @version.save
-        render json: {
-          version: serialize_version(@version),
-          grid_column_added: {
-            column_id: @version.id,
-            column_data: build_version_column_data(@version)
-          }
-        }, status: :created
-      else
-        render json: {
-          error: 'バージョン作成に失敗しました',
-          validation_errors: @version.errors
-        }, status: :unprocessable_entity
-      end
-    end
-
-    def update
-      @version = @project.versions.find(params[:id])
-
-      if @version.update(version_params)
-        grid_updates = calculate_version_update_impact(@version)
-
-        render json: {
-          version: serialize_version(@version),
-          grid_updates: grid_updates
-        }
-      else
-        render json: {
-          error: 'バージョン更新に失敗しました',
-          validation_errors: @version.errors
-        }, status: :unprocessable_entity
-      end
-    end
-
-    def bulk_assign_issues
-      @version = @project.versions.find(params[:id])
-      issue_ids = params[:issue_ids]
-
-      result = BulkVersionAssignmentService.new(current_user, @version, issue_ids).execute
-
-      if result.success?
-        render json: {
-          assigned_issues: result.assigned_issues.map { |issue| serialize_issue(issue) },
-          grid_updates: result.grid_updates,
-          statistics: result.statistics
-        }
-      else
-        render json: {
-          error: result.error_message,
-          failed_assignments: result.failed_assignments
-        }, status: :unprocessable_entity
-      end
-    end
-
-    private
-
-    def version_params
-      params.require(:version).permit(:name, :description, :effective_date, :status)
-    end
-
-    def serialize_version(version)
-      {
-        id: version.id,
-        name: version.name,
-        description: version.description,
-        effective_date: version.effective_date,
-        status: version.status,
-        issue_count: version.issues.count,
-        completion_ratio: calculate_version_completion_ratio(version),
-        can_edit: User.current.allowed_to?(:manage_versions, @project)
-      }
-    end
-
-    def calculate_version_update_impact(version)
-      affected_issues = version.issues.includes(:tracker, :status, :parent)
-
-      affected_issues.group_by(&:root).map do |epic, issues|
-        {
-          epic_id: epic.id,
-          version_id: version.id,
-          updated_issues: issues.map { |issue| serialize_issue(issue) }
-        }
-      end
-    end
+  # 3. 2Dマトリクス効率構築
+  def build_epic_row(epic, versions, columns)
+    versions.map { |version| build_grid_cell(epic, version) }
   end
 end
 ```
 
-## サービスクラス実装
+### 8.3 エラーハンドリング戦略
+```mermaid
+flowchart TD
+    A[D&D移動要求] --> B{移動種別判定}
+    B -->|列移動| C[ステータス遷移検証]
+    B -->|バージョン移動| D[Version割当検証]
+    B -->|Epic変更| E[階層変更検証]
 
-### Kanban Grid データビルダー
-```ruby
-# app/services/kanban/grid_data_builder.rb
-module Kanban
-  class GridDataBuilder
-    def initialize(project, user, filters = {})
-      @project = project
-      @user = user
-      @filters = filters
-    end
+    C --> F{Workflow制約}
+    D --> G{Version制約}
+    E --> H{階層制約}
 
-    def build
-      {
-        grid: build_grid_structure,
-        metadata: build_metadata,
-        statistics: build_statistics
-      }
-    end
+    F -->|OK| I[移動実行]
+    F -->|NG| J[制約エラー]
+    G -->|OK| I
+    G -->|NG| J
+    H -->|OK| I
+    H -->|NG| J
 
-    private
-
-    def build_grid_structure
-      epics = load_filtered_epics
-      versions = load_project_versions
-      columns = KanbanColumnConfig.for_project(@project)
-
-      {
-        rows: epics.map { |epic| build_epic_row(epic, versions, columns) },
-        columns: columns,
-        versions: versions.map { |v| serialize_version(v) }
-      }
-    end
-
-    def build_epic_row(epic, versions, columns)
-      {
-        epic: serialize_issue(epic),
-        cells: versions.map { |version| build_grid_cell(epic, version, columns) }
-      }
-    end
-
-    def build_grid_cell(epic, version, columns)
-      # この Epic × Version の組み合わせにある Feature を取得
-      features = epic.children
-                    .select { |child| child.tracker.name == 'Feature' }
-                    .select { |feature| version_matches?(feature, version) }
-
-      {
-        epic_id: epic.id,
-        version_id: version.id,
-        position: { row: epic.id, column: version.id },
-        features: features.map { |feature| build_feature_cell_data(feature, columns) },
-        statistics: calculate_cell_statistics(features),
-        drop_zone_config: {
-          accepts: calculate_accepted_trackers,
-          drop_constraints: calculate_drop_constraints(epic, version)
-        }
-      }
-    end
-
-    def build_feature_cell_data(feature, columns)
-      current_column = determine_feature_column(feature, columns)
-
-      {
-        feature: serialize_issue(feature),
-        current_column: current_column,
-        user_stories_count: feature.children.count { |child| child.tracker.name == 'UserStory' },
-        completion_ratio: calculate_feature_completion_ratio(feature),
-        visual_indicators: {
-          status_color: feature.status.color || current_column[:color],
-          priority_marker: feature.priority&.name,
-          blocking_indicator: feature.relations_to.where(relation_type: 'blocks').exists?
-        },
-        drag_config: {
-          draggable: can_drag_feature?(feature),
-          drag_constraints: calculate_drag_constraints(feature)
-        }
-      }
-    end
-
-    def load_filtered_epics
-      scope = @project.issues
-                     .includes(:tracker, :status, :assigned_to, :fixed_version, :children)
-                     .joins(:tracker)
-                     .where(trackers: { name: 'Epic' })
-
-      scope = apply_epic_filters(scope)
-      scope.order(:id)
-    end
-
-    def apply_epic_filters(scope)
-      if @filters[:epic_filter].present?
-        scope = scope.where(id: @filters[:epic_filter])
-      end
-
-      if @filters[:assignee_filter].present?
-        scope = scope.where(assigned_to_id: @filters[:assignee_filter])
-      end
-
-      scope
-    end
-
-    def load_project_versions
-      @project.versions
-              .where(status: 'open')
-              .order(:effective_date, :name)
-    end
-
-    def version_matches?(feature, version)
-      # Feature またはその UserStory が指定バージョンに割り当てられている
-      return true if feature.fixed_version == version
-
-      # 子の UserStory のいずれかが指定バージョンに割り当てられている
-      feature.children.any? { |child| child.fixed_version == version }
-    end
-
-    def determine_feature_column(feature, columns)
-      status_name = feature.status.name
-      columns.find { |col| col[:statuses].include?(status_name) } || columns.first
-    end
-
-    def calculate_cell_statistics(features)
-      {
-        feature_count: features.size,
-        completed_features: features.count(&:closed?),
-        total_user_stories: features.sum { |f| f.children.count { |c| c.tracker.name == 'UserStory' } },
-        completed_user_stories: features.sum { |f| f.children.count { |c| c.tracker.name == 'UserStory' && c.closed? } }
-      }
-    end
-
-    def build_metadata
-      {
-        project: serialize_project_metadata,
-        user_permissions: calculate_user_permissions,
-        grid_configuration: {
-          column_definitions: KanbanColumnConfig.for_project(@project),
-          tracker_hierarchy: TrackerHierarchy.for_project(@project),
-          workflow_rules: WorkflowRules.for_project(@project)
-        },
-        real_time_config: {
-          polling_interval: 30000, # 30秒
-          last_update: Time.zone.now.iso8601
-        }
-      }
-    end
-
-    def build_statistics
-      all_epics = @project.issues.joins(:tracker).where(trackers: { name: 'Epic' })
-      all_features = @project.issues.joins(:tracker).where(trackers: { name: 'Feature' })
-
-      {
-        overview: {
-          total_epics: all_epics.count,
-          total_features: all_features.count,
-          completion_ratio: calculate_project_completion_ratio
-        },
-        by_version: calculate_version_statistics,
-        by_status: calculate_status_distribution
-      }
-    end
-  end
-end
+    I --> K[関連Issue更新]
+    J --> L[エラー詳細返却]
 ```
 
-### カード移動処理サービス
-```ruby
-# app/services/kanban/card_move_service.rb
-module Kanban
-  class CardMoveService
-    def initialize(user, card_id, source_cell, target_cell)
-      @user = user
-      @card_id = card_id
-      @source_cell = source_cell
-      @target_cell = target_cell
-      @result = MoveResult.new
-    end
+## 9. テスト設計
 
-    def execute
-      validate_move_permissions!
-      @card = find_card
+テスト戦略・ケース設計・実装については以下を参照：
+- @vibes/rules/testing/server_side_testing_strategy.md
+- @vibes/rules/testing/kanban_grid_server_test_specification.md
 
-      perform_move
-      update_related_issues if @result.success?
-      log_move_action if @result.success?
+## 10. 運用・保守設計
 
-      @result
-    end
+### 10.1 監視・ログ設計
+- **パフォーマンス監視**: グリッド構築時間、D&D処理時間、メモリ使用量
+- **エラートラッキング**: 移動制約違反、データ不整合、同時更新衝突
+- **利用状況分析**: グリッドサイズ分布、操作頻度、リアルタイム同期負荷
 
-    private
-
-    def validate_move_permissions!
-      unless @user.allowed_to?(:edit_issues, @card&.project)
-        @result.add_error("移動権限がありません")
-      end
-    end
-
-    def find_card
-      Issue.joins(:tracker)
-           .where(id: @card_id, trackers: { name: %w[Epic Feature UserStory Task Test Bug] })
-           .first!
-    end
-
-    def perform_move
-      case determine_move_type
-      when :column_move
-        perform_column_move
-      when :version_move
-        perform_version_move
-      when :epic_assignment
-        perform_epic_assignment
-      else
-        @result.add_error("不正な移動操作です")
-      end
-    end
-
-    def determine_move_type
-      if @source_cell[:epic_id] == @target_cell[:epic_id] &&
-         @source_cell[:version_id] == @target_cell[:version_id]
-        :column_move
-      elsif @source_cell[:epic_id] == @target_cell[:epic_id]
-        :version_move
-      elsif @source_cell[:version_id] == @target_cell[:version_id]
-        :epic_assignment
-      else
-        :complex_move
-      end
-    end
-
-    def perform_column_move
-      target_column = @target_cell[:column_id]
-      status_mapping = StatusColumnMapping.for_project(@card.project)
-
-      target_statuses = status_mapping.statuses_for_column_and_tracker(target_column, @card.tracker.name)
-
-      if target_statuses.any?
-        new_status = determine_best_status(target_statuses)
-
-        if can_transition_to_status?(@card, new_status)
-          @card.update!(status: new_status)
-          @result.add_success(@card)
-        else
-          @result.add_error("ステータス '#{new_status.name}' への遷移はできません")
-        end
-      else
-        @result.add_error("対象列に移動可能なステータスがありません")
-      end
-    end
-
-    def perform_version_move
-      target_version = Version.find(@target_cell[:version_id])
-
-      if can_assign_version?(@card, target_version)
-        @card.update!(fixed_version: target_version)
-        @result.add_success(@card)
-        @result.affected_cells << {
-          epic_id: @target_cell[:epic_id],
-          version_id: @target_cell[:version_id]
-        }
-      else
-        @result.add_error("バージョン '#{target_version.name}' を割り当てできません")
-      end
-    end
-
-    def update_related_issues
-      # 移動したカードの関連Issue（子、親、関連）を更新
-      propagate_version_to_children if version_changed?
-      update_parent_status_if_needed if status_changed?
-    end
-
-    def propagate_version_to_children
-      @card.children.each do |child|
-        if should_propagate_version_to_child?(child)
-          child.update(fixed_version: @card.fixed_version)
-          @result.add_affected_issue(child)
-        end
-      end
-    end
-  end
-
-  class MoveResult
-    attr_reader :updated_card, :affected_issues, :affected_cells, :error_message
-
-    def initialize
-      @updated_card = nil
-      @affected_issues = []
-      @affected_cells = []
-      @errors = []
-    end
-
-    def add_success(card)
-      @updated_card = card
-    end
-
-    def add_affected_issue(issue)
-      @affected_issues << issue
-    end
-
-    def add_error(message)
-      @errors << message
-    end
-
-    def success?
-      @errors.empty? && @updated_card.present?
-    end
-
-    def error_message
-      @errors.first
-    end
-
-    def statistics_delta
-      {
-        moved_cards: @affected_issues.size + 1,
-        affected_cells: @affected_cells.size
-      }
-    end
-  end
-end
-```
-
-## ルーティング設定
-
-```ruby
-# config/routes.rb
-scope 'kanban/projects/:project_id' do
-  get 'grid', to: 'kanban/grid#index'
-  post 'grid/move_card', to: 'kanban/grid#move_card'
-  patch 'grid/version_assignment', to: 'kanban/grid#update_version_assignment'
-  get 'grid/column_config', to: 'kanban/grid#column_configuration'
-  get 'grid/updates', to: 'kanban/grid#real_time_updates'
-
-  resources :versions, only: [:index, :create, :update], controller: 'kanban/versions' do
-    member do
-      post :bulk_assign_issues
-    end
-  end
-end
-```
-
-## リアルタイム更新機能
-
-```ruby
-# app/services/kanban/grid_update_service.rb
-module Kanban
-  class GridUpdateService
-    def self.get_updates_since(project, since_time)
-      since_time ||= 1.hour.ago
-
-      updated_issues = Issue.where(project: project)
-                           .where('updated_on > ?', since_time)
-                           .includes(:tracker, :status, :fixed_version, :parent)
-
-      {
-        issue_updates: updated_issues.map { |issue| serialize_issue_update(issue) },
-        deleted_issues: find_deleted_issues(project, since_time),
-        grid_structure_changes: detect_grid_structure_changes(project, since_time)
-      }
-    end
-
-    private
-
-    def self.serialize_issue_update(issue)
-      epic = issue.root
-      {
-        issue_id: issue.id,
-        epic_id: epic.id,
-        version_id: issue.fixed_version&.id,
-        cell_position: { row: epic.id, column: issue.fixed_version&.id },
-        updated_data: serialize_issue(issue),
-        update_type: determine_update_type(issue)
-      }
-    end
-
-    def self.determine_update_type(issue)
-      if issue.previous_changes.key?('fixed_version_id')
-        'version_changed'
-      elsif issue.previous_changes.key?('status_id')
-        'status_changed'
-      elsif issue.previous_changes.key?('parent_id')
-        'hierarchy_changed'
-      else
-        'general_update'
-      end
-    end
-  end
-end
-```
-
-## テスト実装
-
-```ruby
-# spec/controllers/kanban/grid_controller_spec.rb
-RSpec.describe Kanban::GridController do
-  let(:project) { create(:project) }
-  let(:user) { create(:user_with_kanban_permissions, project: project) }
-  let(:epic) { create(:epic_issue, project: project) }
-  let(:feature) { create(:feature_issue, project: project, parent: epic) }
-  let(:version) { create(:version, project: project) }
-
-  before { User.current = user }
-
-  describe 'GET index' do
-    it 'Grid構造データを返す' do
-      get :index, params: { project_id: project.id }
-
-      expect(response).to have_http_status(:success)
-      json = JSON.parse(response.body)
-      expect(json['grid']).to include('rows', 'columns', 'versions')
-      expect(json['metadata']).to include('project', 'user_permissions')
-    end
-  end
-
-  describe 'POST move_card' do
-    it 'Feature カードを移動する' do
-      post :move_card, params: {
-        project_id: project.id,
-        card_id: feature.id,
-        source_cell: { epic_id: epic.id, version_id: nil, column_id: 'todo' },
-        target_cell: { epic_id: epic.id, version_id: nil, column_id: 'in_progress' }
-      }
-
-      expect(response).to have_http_status(:success)
-      json = JSON.parse(response.body)
-      expect(json['updated_card']).to be_present
-    end
-  end
-
-  describe 'PATCH update_version_assignment' do
-    it '複数Issueにバージョンを一括割り当て' do
-      patch :update_version_assignment, params: {
-        project_id: project.id,
-        version_id: version.id,
-        issue_ids: [feature.id]
-      }
-
-      expect(response).to have_http_status(:success)
-      json = JSON.parse(response.body)
-      expect(json['updated_issues']).to be_present
-      expect(json['grid_updates']).to be_present
-    end
-  end
-end
-```
+### 10.2 スケーラビリティ対応
+- **水平分割**: プロジェクト単位でのデータ分散
+- **キャッシュ戦略**: Redis Cluster、グリッドデータ段階的キャッシュ
+- **非同期処理**: 大規模一括操作のジョブキュー化
 
 ---
 
-*Kanban Gridレイアウト用サーバーサイド実装。2D グリッド構造、D&D処理、バージョン管理、リアルタイム更新*
+*Kanban Grid サーバーサイド実装は、Epic×Versionの2次元マトリクス構造を効率的に構築・配信し、リアルタイムなD&D操作とマルチユーザー協調作業を支援する基盤設計です。スケーラブルなアーキテクチャにより大規模プロジェクトでも高いパフォーマンスを実現します。*
