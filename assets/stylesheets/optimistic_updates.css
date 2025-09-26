@@ -1,0 +1,537 @@
+/* OptimisticUpdate CSS - 楽観的更新UI スタイル */
+/* 設計書仕様: ユーザーフィードバック、アニメーション、状態表示 */
+
+/* === 楽観的更新インジケーター === */
+.optimistic-update-indicator {
+  position: fixed;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  font-size: 13px;
+  color: #333;
+}
+
+/* コンパクト表示 */
+.optimistic-update-indicator.compact {
+  top: 20px;
+  right: 20px;
+  padding: 8px 12px;
+  min-width: 60px;
+}
+
+.optimistic-update-indicator.compact .indicator-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* フル表示 */
+.optimistic-update-indicator.full {
+  top: 20px;
+  right: 20px;
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.optimistic-update-indicator .indicator-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.optimistic-update-indicator .indicator-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.optimistic-update-indicator .connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.optimistic-update-indicator .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #28a745;
+}
+
+.optimistic-update-indicator .status-dot.updating {
+  background: #ffc107;
+  animation: pulse 1.5s infinite;
+}
+
+.optimistic-update-indicator .status-dot.error {
+  background: #dc3545;
+}
+
+.optimistic-update-indicator .status-text {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.optimistic-update-indicator .indicator-body {
+  padding: 12px 16px;
+}
+
+/* === 更新中表示 === */
+.pending-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pending-indicator .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.pending-indicator .pending-count {
+  font-size: 11px;
+  color: #007bff;
+  font-weight: 600;
+}
+
+/* === 衝突表示 === */
+.conflict-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.conflict-indicator .conflict-icon {
+  font-size: 14px;
+}
+
+.conflict-indicator .conflict-count {
+  font-size: 11px;
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* === 統計情報セクション === */
+.statistics-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.statistics-section .stat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statistics-section .stat-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.statistics-section .stat-label {
+  color: #6c757d;
+}
+
+.statistics-section .stat-value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* === 更新アイテム === */
+.update-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.update-item:last-child {
+  border-bottom: none;
+}
+
+.update-item .update-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.update-item .update-type {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.update-item .update-time {
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.update-item .error-message {
+  font-size: 11px;
+  color: #dc3545;
+}
+
+/* 進行中の更新 */
+.update-item.pending {
+  background: rgba(0, 123, 255, 0.05);
+}
+
+.update-item.pending .update-progress {
+  width: 60px;
+  height: 4px;
+  background: #e9ecef;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.update-item.pending .progress-bar {
+  height: 100%;
+  background: #007bff;
+  border-radius: 2px;
+  animation: loading 1.5s infinite;
+}
+
+/* 衝突した更新 */
+.update-item.conflict {
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.update-item .update-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.update-item .retry-button {
+  background: none;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.update-item .retry-button:hover {
+  background: #dc3545;
+  color: white;
+}
+
+/* 成功した更新 */
+.update-item.success {
+  background: rgba(40, 167, 69, 0.05);
+}
+
+.update-item.success .success-icon {
+  color: #28a745;
+  font-weight: bold;
+}
+
+/* === セクション === */
+.pending-updates-section,
+.conflicts-section,
+.success-updates-section {
+  margin-bottom: 16px;
+}
+
+.pending-updates-section h5,
+.conflicts-section h5,
+.success-updates-section h5 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* === トースト通知 === */
+.optimistic-update-toast {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  z-index: 1100;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 350px;
+  animation: slideInRight 0.3s ease;
+}
+
+.optimistic-update-toast.success {
+  border-left: 4px solid #28a745;
+}
+
+.optimistic-update-toast.error {
+  border-left: 4px solid #dc3545;
+}
+
+.optimistic-update-toast.warning {
+  border-left: 4px solid #ffc107;
+}
+
+.optimistic-update-toast.info {
+  border-left: 4px solid #17a2b8;
+}
+
+.optimistic-update-toast .toast-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.optimistic-update-toast .toast-icon {
+  font-size: 16px;
+}
+
+.optimistic-update-toast .toast-message {
+  font-size: 13px;
+  color: #2c3e50;
+}
+
+.optimistic-update-toast .toast-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.optimistic-update-toast .toast-close:hover {
+  color: #495057;
+}
+
+/* === デバッグパネル === */
+.optimistic-update-debug-panel {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: #2c3e50;
+  color: white;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 12px;
+  max-width: 600px;
+}
+
+.optimistic-update-debug-panel .debug-header {
+  padding: 8px 12px;
+  background: #34495e;
+  border-radius: 6px 6px 0 0;
+}
+
+.optimistic-update-debug-panel .debug-toggle {
+  background: none;
+  border: none;
+  color: white;
+  font-family: monospace;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.optimistic-update-debug-panel .debug-content {
+  padding: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.optimistic-update-debug-panel .debug-section {
+  margin-bottom: 16px;
+}
+
+.optimistic-update-debug-panel .debug-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #ecf0f1;
+}
+
+.optimistic-update-debug-panel pre {
+  background: #1a252f;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.optimistic-update-debug-panel .update-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.optimistic-update-debug-panel .debug-update {
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 3px;
+  background: #1a252f;
+}
+
+.optimistic-update-debug-panel .debug-update.success {
+  border-left: 3px solid #27ae60;
+}
+
+.optimistic-update-debug-panel .debug-update.pending {
+  border-left: 3px solid #f39c12;
+}
+
+.optimistic-update-debug-panel .debug-update.failed {
+  border-left: 3px solid #e74c3c;
+}
+
+.optimistic-update-debug-panel .update-summary {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.optimistic-update-debug-panel .update-id {
+  color: #bdc3c7;
+}
+
+.optimistic-update-debug-panel .update-type {
+  color: #3498db;
+}
+
+.optimistic-update-debug-panel .update-status {
+  color: #2ecc71;
+}
+
+.optimistic-update-debug-panel .update-error {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #e74c3c;
+}
+
+.optimistic-update-debug-panel .debug-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #34495e;
+}
+
+.optimistic-update-debug-panel .debug-actions button {
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.optimistic-update-debug-panel .debug-actions button:hover {
+  background: #2980b9;
+}
+
+/* === アニメーション === */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes slideInRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* === レスポンシブ対応 === */
+@media (max-width: 768px) {
+  .optimistic-update-indicator.full {
+    width: calc(100vw - 40px);
+    max-width: 320px;
+  }
+
+  .optimistic-update-toast {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .optimistic-update-debug-panel {
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+}
+
+/* === ダークモード対応 === */
+@media (prefers-color-scheme: dark) {
+  .optimistic-update-indicator {
+    background: rgba(44, 62, 80, 0.95);
+    border-color: #495057;
+    color: #ecf0f1;
+  }
+
+  .optimistic-update-indicator .indicator-header {
+    background: #34495e;
+    border-color: #495057;
+  }
+
+  .optimistic-update-indicator .indicator-header h4 {
+    color: #ecf0f1;
+  }
+
+  .statistics-section {
+    background: #34495e;
+  }
+
+  .update-item {
+    border-color: #495057;
+  }
+
+  .optimistic-update-toast {
+    background: #2c3e50;
+    border-color: #495057;
+  }
+
+  .optimistic-update-toast .toast-message {
+    color: #ecf0f1;
+  }
+}

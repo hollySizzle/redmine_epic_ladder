@@ -1,0 +1,256 @@
+// Breadcrumb スタイル定義
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #6b7280;
+
+  // サイズバリエーション
+  &_small {
+    font-size: 12px;
+
+    .breadcrumb_icon {
+      font-size: 12px;
+    }
+
+    .breadcrumb_separator i {
+      font-size: 10px;
+    }
+  }
+
+  &_medium {
+    font-size: 14px;
+
+    .breadcrumb_icon {
+      font-size: 14px;
+    }
+
+    .breadcrumb_separator i {
+      font-size: 12px;
+    }
+  }
+
+  &_large {
+    font-size: 16px;
+
+    .breadcrumb_icon {
+      font-size: 16px;
+    }
+
+    .breadcrumb_separator i {
+      font-size: 14px;
+    }
+  }
+}
+
+// パンくずリスト
+.breadcrumb_list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 4px;
+}
+
+// パンくず項目
+.breadcrumb_item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  // クリック可能な項目
+  &_clickable {
+    .breadcrumb_link {
+      color: #3b82f6;
+      text-decoration: none;
+      border-radius: 4px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        color: #1d4ed8;
+        background: #f3f4f6;
+        text-decoration: underline;
+      }
+
+      &:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+      }
+
+      &:active {
+        color: #1e40af;
+      }
+    }
+  }
+
+  // 現在のページ
+  &_current {
+    .breadcrumb_text {
+      color: #111827;
+      font-weight: 600;
+    }
+  }
+
+  // 無効な項目
+  &_disabled {
+    .breadcrumb_text {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// リンクとテキスト
+.breadcrumb_link,
+.breadcrumb_text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  line-height: 1.4;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .breadcrumb_small & {
+    max-width: 150px;
+  }
+
+  .breadcrumb_large & {
+    max-width: 250px;
+  }
+}
+
+// アイコン
+.breadcrumb_icon {
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+// セパレーター
+.breadcrumb_separator {
+  display: flex;
+  align-items: center;
+  color: #9ca3af;
+  margin: 0 4px;
+  user-select: none;
+
+  i {
+    font-size: 12px;
+  }
+
+  .breadcrumb_small & {
+    margin: 0 2px;
+
+    i {
+      font-size: 10px;
+    }
+  }
+
+  .breadcrumb_large & {
+    margin: 0 6px;
+
+    i {
+      font-size: 14px;
+    }
+  }
+}
+
+// 省略記号（ellipsis）
+.breadcrumb_item:has(.breadcrumb_text:contains('...')) {
+  .breadcrumb_text {
+    color: #9ca3af;
+    cursor: default;
+    font-weight: normal;
+  }
+}
+
+// ダークモード対応
+@media (prefers-color-scheme: dark) {
+  .breadcrumb {
+    color: #d1d5db;
+  }
+
+  .breadcrumb_item {
+    &_clickable .breadcrumb_link {
+      color: #60a5fa;
+
+      &:hover {
+        color: #93c5fd;
+        background: #374151;
+      }
+    }
+
+    &_current .breadcrumb_text {
+      color: #f9fafb;
+    }
+  }
+
+  .breadcrumb_separator {
+    color: #6b7280;
+  }
+}
+
+// 高コントラスト対応
+@media (prefers-contrast: high) {
+  .breadcrumb_item_clickable .breadcrumb_link {
+    border: 1px solid transparent;
+
+    &:focus {
+      border-color: currentColor;
+      outline: none;
+    }
+  }
+}
+
+// アニメーション無効時の対応
+@media (prefers-reduced-motion: reduce) {
+  .breadcrumb_link {
+    transition: none;
+  }
+}
+
+// レスポンシブ対応
+@media (max-width: 480px) {
+  .breadcrumb_link,
+  .breadcrumb_text {
+    max-width: 100px;
+  }
+
+  .breadcrumb_separator {
+    margin: 0 2px;
+  }
+}
+
+// 印刷時の対応
+@media print {
+  .breadcrumb {
+    color: #000;
+  }
+
+  .breadcrumb_item_clickable .breadcrumb_link {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  .breadcrumb_separator {
+    color: #666;
+  }
+}
+
+// RTL対応
+[dir="rtl"] {
+  .breadcrumb_list {
+    flex-direction: row-reverse;
+  }
+
+  .breadcrumb_separator {
+    transform: scaleX(-1);
+  }
+}

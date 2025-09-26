@@ -1,0 +1,283 @@
+// Avatar スタイル定義
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: #6b7280;
+  color: white;
+  font-weight: 500;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+
+  // サイズバリエーション
+  &_small {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  &_medium {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  &_large {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  &_xlarge {
+    width: 48px;
+    height: 48px;
+    font-size: 16px;
+  }
+
+  // 形状バリエーション
+  &_circle {
+    border-radius: 50%;
+  }
+
+  &_square {
+    border-radius: 0;
+  }
+
+  &_rounded {
+    border-radius: 8px;
+
+    &.avatar_small {
+      border-radius: 4px;
+    }
+
+    &.avatar_large,
+    &.avatar_xlarge {
+      border-radius: 12px;
+    }
+  }
+
+  // 画像
+  &_image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+  }
+
+  // イニシャル
+  &_initials {
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+  }
+
+  // アイコン
+  &_icon {
+    font-size: 60%;
+    opacity: 0.8;
+  }
+
+  // クリック可能な場合
+  &_clickable {
+    cursor: pointer;
+    border: none;
+    background: inherit;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  }
+
+  // ローディング状態
+  &_loading {
+    background: #f3f4f6;
+    animation: avatar-pulse 1.5s ease-in-out infinite;
+
+    .avatar_initials,
+    .avatar_icon {
+      opacity: 0;
+    }
+  }
+
+  // オンライン状態インジケーター
+  &_online::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 25%;
+    height: 25%;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 50%;
+  }
+
+  &_offline::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 25%;
+    height: 25%;
+    background: #6b7280;
+    border: 2px solid white;
+    border-radius: 50%;
+  }
+
+  &_busy::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 25%;
+    height: 25%;
+    background: #ef4444;
+    border: 2px solid white;
+    border-radius: 50%;
+  }
+}
+
+// Avatar Group
+.avatar_group {
+  display: flex;
+  align-items: center;
+
+  .avatar {
+    border: 2px solid white;
+    margin-left: -8px;
+    z-index: 1;
+
+    &:first-child {
+      margin-left: 0;
+      z-index: 3;
+    }
+
+    &:nth-child(2) {
+      z-index: 2;
+    }
+
+    &:hover {
+      z-index: 10;
+      transform: scale(1.1);
+    }
+  }
+
+  &_small .avatar {
+    border-width: 1px;
+    margin-left: -4px;
+  }
+
+  &_large .avatar,
+  &_xlarge .avatar {
+    border-width: 3px;
+    margin-left: -12px;
+  }
+}
+
+// アニメーション定義
+@keyframes avatar-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// ダークモード対応
+@media (prefers-color-scheme: dark) {
+  .avatar {
+    &_online::after,
+    &_offline::after,
+    &_busy::after {
+      border-color: #1f2937;
+    }
+  }
+
+  .avatar_group .avatar {
+    border-color: #1f2937;
+  }
+}
+
+// 高コントラスト対応
+@media (prefers-contrast: high) {
+  .avatar {
+    border: 2px solid #000;
+
+    &_clickable:focus {
+      outline-width: 3px;
+      outline-color: #000;
+    }
+
+    &_online::after {
+      border-color: #000;
+    }
+
+    &_offline::after {
+      border-color: #000;
+    }
+
+    &_busy::after {
+      border-color: #000;
+    }
+  }
+}
+
+// アニメーション無効時の対応
+@media (prefers-reduced-motion: reduce) {
+  .avatar {
+    transition: none;
+
+    &_clickable {
+      &:hover {
+        transform: none;
+      }
+
+      &:active {
+        transform: none;
+      }
+    }
+
+    &_loading {
+      animation: none;
+    }
+  }
+
+  .avatar_group .avatar {
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// 印刷時の対応
+@media print {
+  .avatar {
+    &_clickable {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    &_loading {
+      animation: none;
+    }
+
+    &::after {
+      display: none;
+    }
+  }
+}

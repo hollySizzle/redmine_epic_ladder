@@ -20,8 +20,13 @@ export const BaseItemCard = ({
   const handleDeleteClick = (e) => {
     e.stopPropagation();
     if (window.confirm(`${type} "${item.subject}" を削除しますか？`)) {
-      onDelete(item.id);
+      onDelete(item.id, type);
     }
+  };
+
+  const handleUpdateClick = (e) => {
+    e.stopPropagation();
+    onUpdate(item, type);
   };
 
   const getStatusColor = (status) => {
@@ -37,17 +42,28 @@ export const BaseItemCard = ({
   return (
     <div className={`base-item-card ${type.toLowerCase()}-card ${className}`}>
       <div className="item-card-content">
-        <div className="item-name">{item.subject}</div>
+        <div className="item-name" onClick={handleUpdateClick} style={{ cursor: 'pointer' }}>
+          {item.subject}
+        </div>
         <div className="item-assignee">
           {getAssigneeDisplay(item.assigned_to)}
         </div>
-        <button
-          className="item-delete-btn"
-          onClick={handleDeleteClick}
-          title={`${type}を削除`}
-        >
-          Delete
-        </button>
+        <div className="item-actions">
+          <button
+            className="item-edit-btn"
+            onClick={handleUpdateClick}
+            title={`${type}を編集`}
+          >
+            Edit
+          </button>
+          <button
+            className="item-delete-btn"
+            onClick={handleDeleteClick}
+            title={`${type}を削除`}
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       <div className="item-status-container">

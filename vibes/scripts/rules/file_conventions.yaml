@@ -35,6 +35,25 @@ rules:
       追加確認: @vibes/docs/rules/service_standards.md (Service実装時)
       Epic→Feature→UserStory→Task/Test階層制約の実装要件を理解してから作業を続けてください
 
+  # データ構造統計システム実装規約
+  - name: "データ構造統計システム実装規約"
+    patterns:
+      - "**/app/services/kanban/statistics_engine.rb"
+      - "**/app/models/kanban/epic_statistics.rb"
+      - "**/app/models/kanban/feature_statistics.rb"
+      - "**/app/models/kanban/version_statistics.rb"
+      - "**/app/services/kanban/data_validator.rb"
+      - "**/app/services/kanban/cache_manager.rb"
+      - "**/app/services/kanban/change_tracker.rb"
+      - "**/app/assets/javascripts/types/kanban-types.ts"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 データ構造統計システム実装前に設計書を確認してください
+      必読: @vibes/docs/logics/data_structures/data_structures_specification.md (データ構造設計)
+      必読: @vibes/docs/rules/service_standards.md (Service実装時)
+      統計計算・キャッシング・型安全性・データ検証の実装要件を理解してから作業を続けてください
+
   # VersionManagement実装規約
   - name: "VersionManagement実装規約"
     patterns:
@@ -275,10 +294,45 @@ rules:
   # 共通コンポーネント関連
   - name: "共通コンポーネント関連実装規約"
     patterns:
+      # 既存コンポーネント
       - "**/assets/javascripts/kanban/components/shared/Modal.jsx"
       - "**/assets/javascripts/kanban/components/shared/Modal.scss"
       - "**/assets/javascripts/kanban/components/shared/Tooltip.jsx"
       - "**/assets/javascripts/kanban/components/shared/Button.jsx"
+      # 新規実装コンポーネント（2025年実装完了）
+      - "**/assets/javascripts/kanban/components/shared/Toast.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Toast.scss"
+      - "**/assets/javascripts/kanban/components/shared/StatusChip.jsx"
+      - "**/assets/javascripts/kanban/components/shared/StatusChip.scss"
+      - "**/assets/javascripts/kanban/components/shared/ConfirmDialog.jsx"
+      - "**/assets/javascripts/kanban/components/shared/ConfirmDialog.scss"
+      - "**/assets/javascripts/kanban/components/shared/LoadingSpinner.jsx"
+      - "**/assets/javascripts/kanban/components/shared/LoadingSpinner.scss"
+      - "**/assets/javascripts/kanban/components/shared/Alert.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Alert.scss"
+      - "**/assets/javascripts/kanban/components/shared/Badge.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Badge.scss"
+      - "**/assets/javascripts/kanban/components/shared/Avatar.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Avatar.scss"
+      - "**/assets/javascripts/kanban/components/shared/Input.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Input.scss"
+      - "**/assets/javascripts/kanban/components/shared/Select.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Select.scss"
+      - "**/assets/javascripts/kanban/components/shared/Tabs.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Tabs.scss"
+      - "**/assets/javascripts/kanban/components/shared/Breadcrumb.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Breadcrumb.scss"
+      - "**/assets/javascripts/kanban/components/shared/Pagination.jsx"
+      - "**/assets/javascripts/kanban/components/shared/Pagination.scss"
+      - "**/assets/javascripts/kanban/components/shared/ProgressBar.jsx"
+      - "**/assets/javascripts/kanban/components/shared/ProgressBar.scss"
+      - "**/assets/javascripts/kanban/components/shared/ThemeProvider.jsx"
+      - "**/assets/javascripts/kanban/components/shared/ThemeProvider.scss"
+      # Context Manager・Provider系
+      - "**/assets/javascripts/kanban/components/shared/ToastManager.jsx"
+      - "**/assets/javascripts/kanban/components/shared/ModalManager.jsx"
+      - "**/assets/javascripts/kanban/components/shared/SharedComponentsProvider.jsx"
+      - "**/assets/javascripts/kanban/components/shared/index.js"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -287,10 +341,36 @@ rules:
       必読: @vibes/docs/logics/shared_components/shared_components_specification.md (UI設計)
       必読: @vibes/docs/logics/shared_components/shared_services_server_specification.md (サーバーサイド設計)
 
-      ハイブリッド設計書に基づくModal・Tooltip・Button等の共通コンポーネントの実装です
+      ハイブリッド設計書に基づく全23共通コンポーネント（100%実装完了）・Context API・ThemeProviderの実装です
 
-  # API・サービス関連
-  - name: "API・サービス関連実装規約"
+  # Feature Card API・サービス関連
+  - name: "Feature Card API・サービス関連実装規約"
+    patterns:
+      - "**/assets/javascripts/kanban/services/FeatureCardAPI.js"
+      - "**/assets/javascripts/kanban/utils/ExpansionStateStorage.js"
+      - "**/app/services/kanban/kanban_data_builder.rb"
+      - "**/app/services/kanban/feature_card_expansion_state.rb"
+      - "**/app/services/kanban/*_creation_service.rb"
+      - "**/app/services/kanban/*_update_service.rb"
+      - "**/app/services/kanban/*_deletion_service.rb"
+      - "**/app/services/kanban/bulk_update_service.rb"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 Feature Card API・サービス関連実装前にハイブリッド詳細設計書を確認してください
+
+      必読: @vibes/docs/logics/feature_card/feature_card_component_specification.md (UI設計)
+      必読: @vibes/docs/logics/feature_card/feature_card_server_specification.md (サーバーサイド設計)
+      必読: @vibes/docs/rules/service_standards.md (Service実装規約)
+
+      ハイブリッド設計書に基づくFeature Card階層CRUD・LocalStorage状態管理・APIクライアントの実装です
+      - KanbanDataBuilder: N+1クエリ回避の階層データ構築
+      - FeatureCardAPI: RESTful API設計・エラーハンドリング統一
+      - ExpansionStateStorage: LocalStorage管理・データ永続化・クリーンアップ
+      - CRUDサービス群: 単一責任原則・トランザクション管理・バリデーション
+
+  # 汎用API・サービス関連
+  - name: "汎用API・サービス関連実装規約"
     patterns:
       - "**/assets/javascripts/kanban/services/KanbanAPI.js"
       - "**/assets/javascripts/kanban/hooks/useKanbanAPI.js"
@@ -300,12 +380,91 @@ rules:
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 API・サービス関連実装前にハイブリッド詳細設計書を確認してください
+      📋 汎用API・サービス関連実装前にハイブリッド詳細設計書を確認してください
 
       必読: @vibes/docs/logics/api_integration/api_integration_specification.md (API統合設計)
       必読: @vibes/docs/logics/api_integration/api_controller_server_specification.md (サーバーサイド設計)
 
       ハイブリッド設計書に基づくKanbanAPIサービス・Reactフック類の実装です
+
+  # Kanban専用Model規約
+  - name: "KanbanModel実装規約"
+    patterns:
+      - "**/app/models/kanban/**/*.rb"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 KanbanModel実装前に技術仕様書と基本規約を確認してください
+      必読: @vibes/docs/rules/model_standards.md (Model実装規約)
+      必読: @vibes/docs/logics/data_structures/data_structures_specification.md (データ構造設計)
+      必読: 対応する機能の@vibes/docs/logics/*_specification.mdファイル
+      ActiveModel準拠・JSON serialization・データ整合性を理解してから作業を続けてください
+
+  # ActionCableチャンネル規約
+  - name: "ActionCableチャンネル実装規約"
+    patterns:
+      - "**/app/channels/kanban/**/*.rb"
+      - "**/app/channels/*kanban*.rb"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 ActionCableチャンネル実装前に設計書を確認してください
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_server_specification.md (サーバーサイド設計)
+      必読: @vibes/docs/rules/service_standards.md (Service実装規約)
+      WebSocket接続管理・認証認可・リアルタイム通信・プレゼンス管理を理解してから作業を続けてください
+
+  # KanbanJavaScriptサービス規約
+  - name: "KanbanJavaScriptサービス実装規約"
+    patterns:
+      - "**/assets/javascripts/kanban/services/**/*.js"
+      - "**/assets/javascripts/kanban/services/**/*.jsx"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 KanbanJavaScriptサービス実装前に設計書を確認してください
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_layout_specification.md (フロントエンド設計)
+      必読: @vibes/docs/logics/api_integration/api_integration_specification.md (API統合設計)
+      WebSocket・楽観的更新・エラーハンドリング・統計監視を理解してから作業を続けてください
+
+  # Kanban Grid V2コンポーネント規約
+  - name: "Kanban Grid V2関連実装規約"
+    patterns:
+      - "**/assets/javascripts/kanban/components/*V2.jsx"
+      - "**/assets/javascripts/kanban/components/grid/**/*.jsx"
+      - "**/assets/javascripts/kanban/components/Optimistic*.jsx"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 Kanban Grid V2関連実装前に設計書を確認してください
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_layout_specification.md (UI設計)
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_server_specification.md (サーバーサイド設計)
+      仮想スクロール・楽観的更新・リアルタイム同期・パフォーマンス最適化を理解してから作業を続けてください
+
+  # Kanban実用ユーティリティ規約
+  - name: "Kanban実用ユーティリティ実装規約"
+    patterns:
+      - "**/assets/javascripts/kanban/utils/**/*.js"
+      - "**/assets/javascripts/kanban/utils/**/*.jsx"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 Kanban実用ユーティリティ実装前に設計書を確認してください
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_layout_specification.md (フロントエンド設計)
+      リアルタイム更新・データマージ・衝突処理・ヘルパー関数の実装要件を理解してから作業を続けてください
+
+  # Kanbanスタイルシート規約
+  - name: "Kanbanスタイルシート実装規約"
+    patterns:
+      - "**/assets/stylesheets/kanban/**/*.css"
+      - "**/assets/stylesheets/*kanban*.css"
+      - "**/assets/stylesheets/*optimistic*.css"
+    severity: "warn"
+    token_threshold: 15000
+    message: |
+      ⚠️ KanbanCSS実装前にデザイン仕様を確認してください
+      参考: @vibes/docs/specs/ui/kanban_ui_grid_layout.drawio (グリッドレイアウト)
+      参考: @vibes/docs/specs/ui/kanban_ui_feature_card_component.drawio (FeatureCardデザイン)
+      レスポンシブ対応・ダークモード・アニメーション・アクセシビリティを考慮してください
 
   # ハイブリッド詳細設計書規約
   - name: "ハイブリッド詳細設計書規約"

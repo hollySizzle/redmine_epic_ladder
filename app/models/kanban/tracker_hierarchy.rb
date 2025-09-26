@@ -79,5 +79,79 @@ module Kanban
     def self.kanban_tracker?(tracker_name)
       configured_tracker_names.include?(tracker_name)
     end
+
+    # ========================================
+    # 設計書準拠の拡張機能（Service層へ移管）
+    # ========================================
+
+    # プロジェクト全体の階層検証（統計情報付き）
+    def self.validate_project_hierarchy(project)
+      HierarchyManager.validate_hierarchy(
+        project.issues
+               .joins(:tracker)
+               .where(trackers: { name: configured_tracker_names })
+               .includes(:tracker, :parent => :tracker, children: :tracker)
+      )
+    end
+
+    # 孤立したIssueの検出
+    def self.find_orphaned_issues(project)
+      project.issues
+             .joins(:tracker)
+             .where(trackers: { name: [tracker_names[:feature], tracker_names[:user_story],
+                                     tracker_names[:task], tracker_names[:test], tracker_names[:bug]] })
+             .where(parent_id: nil)
+             .includes(:tracker)
+    end
+
+    # 不完全な階層構造の検出
+    def self.find_incomplete_hierarchies(project)
+      incomplete = []
+
+      # Feature without UserStories
+      features_without_stories = project.issues
+                                       .joins(:tracker)
+                                       .where(trackers: { name: tracker_names[:feature] })
+                                       .left_joins(:children)
+                                       .where(children_issues: { id: nil })
+                                       .includes(:tracker)
+
+      features_without_stories.each do |feature|
+        incomplete << {
+          issue: feature,
+          type: 'feature_without_user_stories',
+          message: 'UserStoryを持たないFeatureです'
+        }
+      end
+
+      # UserStories without Tasks or Tests
+      user_stories = project.issues
+                            .joins(:tracker)
+                            .where(trackers: { name: tracker_names[:user_story] })
+                            .includes(:tracker, children: :tracker)
+
+      user_stories.each do |story|
+        has_tasks = story.children.any? { |child| child.tracker.name == tracker_names[:task] }
+        has_tests = story.children.any? { |child| child.tracker.name == tracker_names[:test] }
+
+        unless has_tasks
+          incomplete << {
+            issue: story,
+            type: 'user_story_without_tasks',
+            message: 'Taskを持たないUserStoryです'
+          }
+        end
+
+        unless has_tests
+          incomplete << {
+            issue: story,
+            type: 'user_story_without_tests',
+            message: 'Testを持たないUserStoryです'
+          }
+        end
+      end
+
+      incomplete
+    end
   end
 end

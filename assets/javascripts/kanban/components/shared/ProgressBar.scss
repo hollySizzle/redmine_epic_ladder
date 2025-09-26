@@ -1,0 +1,341 @@
+// ProgressBar スタイル定義
+
+.progress_bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  // サイズバリエーション
+  &_small {
+    gap: 2px;
+
+    .progress_bar_track {
+      height: 4px;
+    }
+
+    .progress_bar_label,
+    .progress_bar_bottom_value {
+      font-size: 12px;
+    }
+  }
+
+  &_medium {
+    gap: 4px;
+
+    .progress_bar_track {
+      height: 8px;
+    }
+
+    .progress_bar_label,
+    .progress_bar_bottom_value {
+      font-size: 14px;
+    }
+  }
+
+  &_large {
+    gap: 6px;
+
+    .progress_bar_track {
+      height: 12px;
+    }
+
+    .progress_bar_label,
+    .progress_bar_bottom_value {
+      font-size: 16px;
+    }
+  }
+}
+
+// ラベル
+.progress_bar_label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #374151;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+// 値表示
+.progress_bar_value {
+  color: #6b7280;
+  font-weight: 400;
+  font-size: 0.9em;
+}
+
+// 下部値表示
+.progress_bar_bottom_value {
+  text-align: center;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+// 線形プログレスバー
+.progress_bar_linear {
+  .progress_bar_container {
+    position: relative;
+    width: 100%;
+  }
+
+  .progress_bar_track {
+    width: 100%;
+    background: #f3f4f6;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .progress_bar_fill {
+    height: 100%;
+    background: currentColor;
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+    position: relative;
+
+    // 決定モードでの通常の進捗
+    .progress_bar_determinate & {
+      transform-origin: left;
+    }
+
+    // 不確定モードでのアニメーション
+    .progress_bar_indeterminate & {
+      width: 40% !important;
+      animation: indeterminate-progress 2s ease-in-out infinite;
+    }
+  }
+}
+
+// 円形プログレスバー
+.progress_bar_circular {
+  align-items: center;
+
+  .progress_bar_container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .progress_bar_svg {
+    transform: rotate(-90deg);
+  }
+
+  .progress_bar_track {
+    stroke: #f3f4f6;
+    stroke-linecap: round;
+  }
+
+  .progress_bar_fill {
+    stroke: currentColor;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease;
+
+    // 不確定モードでのアニメーション
+    .progress_bar_indeterminate & {
+      animation: circular-indeterminate 1.4s ease-in-out infinite;
+    }
+  }
+
+  .progress_bar_center_value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.75em;
+    font-weight: 600;
+    color: #374151;
+  }
+}
+
+// カラーバリエーション
+.progress_bar_primary {
+  color: #3b82f6;
+}
+
+.progress_bar_success {
+  color: #10b981;
+}
+
+.progress_bar_warning {
+  color: #f59e0b;
+}
+
+.progress_bar_danger {
+  color: #ef4444;
+}
+
+// ストライプパターン
+.progress_bar_striped {
+  .progress_bar_fill {
+    background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.15) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0.15) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 1rem 1rem;
+  }
+}
+
+// アニメーション
+.progress_bar_animated {
+  &.progress_bar_striped .progress_bar_fill {
+    animation: progress-stripes 1s linear infinite;
+  }
+}
+
+// キーフレームアニメーション
+@keyframes progress-stripes {
+  0% {
+    background-position-x: 1rem;
+  }
+  100% {
+    background-position-x: 0;
+  }
+}
+
+@keyframes indeterminate-progress {
+  0% {
+    left: -40%;
+  }
+  50% {
+    left: 50%;
+    width: 40%;
+  }
+  100% {
+    left: 100%;
+    width: 10%;
+  }
+}
+
+@keyframes circular-indeterminate {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -15;
+  }
+  100% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -125;
+  }
+}
+
+// ダークモード対応
+@media (prefers-color-scheme: dark) {
+  .progress_bar {
+    .progress_bar_label {
+      color: #f9fafb;
+    }
+
+    .progress_bar_value,
+    .progress_bar_bottom_value {
+      color: #d1d5db;
+    }
+
+    .progress_bar_track {
+      background: #374151;
+    }
+
+    .progress_bar_center_value {
+      color: #f9fafb;
+    }
+  }
+
+  .progress_bar_primary {
+    color: #60a5fa;
+  }
+
+  .progress_bar_success {
+    color: #34d399;
+  }
+
+  .progress_bar_warning {
+    color: #fbbf24;
+  }
+
+  .progress_bar_danger {
+    color: #f87171;
+  }
+
+  .progress_bar_circular .progress_bar_track {
+    stroke: #374151;
+  }
+}
+
+// 高コントラスト対応
+@media (prefers-contrast: high) {
+  .progress_bar_track {
+    background: #000;
+    border: 1px solid currentColor;
+  }
+
+  .progress_bar_fill {
+    border: 1px solid currentColor;
+  }
+
+  .progress_bar_circular .progress_bar_track {
+    stroke: #000;
+    stroke-width: 2px;
+  }
+}
+
+// アニメーション無効時の対応
+@media (prefers-reduced-motion: reduce) {
+  .progress_bar_fill {
+    transition: none;
+  }
+
+  .progress_bar_animated,
+  .progress_bar_indeterminate {
+    animation: none;
+  }
+}
+
+// 印刷時の対応
+@media print {
+  .progress_bar {
+    .progress_bar_label,
+    .progress_bar_value,
+    .progress_bar_bottom_value,
+    .progress_bar_center_value {
+      color: #000;
+    }
+
+    .progress_bar_track {
+      background: #fff;
+      border: 1px solid #000;
+    }
+
+    .progress_bar_fill {
+      background: #000 !important;
+      color: #000 !important;
+    }
+  }
+
+  .progress_bar_circular .progress_bar_track {
+    stroke: #000;
+  }
+
+  .progress_bar_circular .progress_bar_fill {
+    stroke: #000 !important;
+  }
+}
+
+// レスポンシブ対応
+@media (max-width: 480px) {
+  .progress_bar_label {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .progress_bar_value {
+    align-self: flex-end;
+  }
+}

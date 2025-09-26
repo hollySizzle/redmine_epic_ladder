@@ -13,7 +13,16 @@ export const UserStoryItem = ({
   expanded,
   onToggle,
   onUpdate,
-  onDelete
+  onDelete,
+  onTaskAdd,
+  onTaskUpdate,
+  onTaskDelete,
+  onTestAdd,
+  onTestUpdate,
+  onTestDelete,
+  onBugAdd,
+  onBugUpdate,
+  onBugDelete
 }) => {
   const getStatusColor = (status) => {
     const colors = {
@@ -65,25 +74,25 @@ export const UserStoryItem = ({
           <TaskContainer
             tasks={userStory.tasks}
             userStoryId={userStory.issue.id}
-            onTaskAdd={() => console.log('Task追加')}
-            onTaskUpdate={() => console.log('Task更新')}
-            onTaskDelete={() => console.log('Task削除')}
+            onTaskAdd={onTaskAdd}
+            onTaskUpdate={onTaskUpdate}
+            onTaskDelete={onTaskDelete}
           />
 
           <TestContainer
             tests={userStory.tests}
             userStoryId={userStory.issue.id}
-            onTestAdd={() => console.log('Test追加')}
-            onTestUpdate={() => console.log('Test更新')}
-            onTestDelete={() => console.log('Test削除')}
+            onTestAdd={onTestAdd}
+            onTestUpdate={onTestUpdate}
+            onTestDelete={onTestDelete}
           />
 
           <BugContainer
             bugs={userStory.bugs}
             userStoryId={userStory.issue.id}
-            onBugAdd={() => console.log('Bug追加')}
-            onBugUpdate={() => console.log('Bug更新')}
-            onBugDelete={() => console.log('Bug削除')}
+            onBugAdd={onBugAdd}
+            onBugUpdate={onBugUpdate}
+            onBugDelete={onBugDelete}
           />
         </>
       )}

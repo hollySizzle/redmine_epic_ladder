@@ -52,7 +52,7 @@ mindmap
 |--------|--------|------|---------|----------|
 | FS001 | 階層データ取得 | Feature配下の全UserStory・子アイテムを効率的に取得 | High | N+1クエリ回避、2秒以内レスポンス |
 | FS002 | Feature状態遷移 | Feature状態変更とUserStory連動更新 | High | 依存関係整合性維持、ロールバック対応 |
-| FS003 | UserStory展開制御 | ユーザー別展開状態の永続化管理 | Medium | セッション跨ぎ状態保持、高速切替 |
+| FS003 | UserStory展開制御 | ユーザー別展開状態のLocalStorage管理 | Medium | ブラウザ内状態保持、瞬時切替 |
 | FS004 | 一括操作処理 | 複数UserStoryの版・状態・担当者一括更新 | Medium | トランザクション保証、部分失敗対応 |
 | FS005 | テスト生成処理 | UserStoryからテンプレート基盤Test自動生成 | Low | テンプレート選択、生成ログ記録 |
 
@@ -129,15 +129,6 @@ erDiagram
         assigned_to_id integer FK
     }
 
-    FEATURE_CARD_EXPANSION_STATES {
-        id integer PK
-        user_id integer FK
-        user_story_id integer FK
-        expanded boolean
-        created_at datetime
-        updated_at datetime
-    }
-
     TRACKERS {
         id integer PK
         name string
@@ -151,10 +142,30 @@ erDiagram
         position integer
     }
 
+    USERS {
+        id integer PK
+        firstname string
+        lastname string
+    }
+
+    PROJECTS {
+        id integer PK
+        name string
+        identifier string
+    }
+
+    LOCALSTORAGE {
+        key string "kanban_expansion_{project_id}_{user_id}"
+        value json "Map<user_story_id, boolean>"
+    }
+
     ISSUES ||--o{ ISSUES : "parent-child"
     ISSUES }|--|| TRACKERS : "tracker"
     ISSUES }|--|| ISSUE_STATUSES : "status"
-    FEATURE_CARD_EXPANSION_STATES }|--|| ISSUES : "user_story"
+    ISSUES }|--|| USERS : "assigned_to"
+    ISSUES }|--|| PROJECTS : "project"
+    LOCALSTORAGE }|--|| PROJECTS : "project_context"
+    LOCALSTORAGE }|--|| USERS : "user_context"
 ```
 
 ### 4.2 データフロー
@@ -165,14 +176,21 @@ flowchart LR
     C --> D[統計計算]
     D --> E[メタデータ生成]
     E --> F[JSON構造化]
-    F --> G[キャッシュ更新]
 
-    G --> H[クライアント配信]
+    F --> G[クライアント配信]
+    G --> H[LocalStorage状態復元]
     H --> I[UI状態更新]
     I --> J[ユーザー操作]
-    J --> K[状態変更要求]
-    K --> L[サーバー処理]
-    L --> B
+
+    J --> K{操作種別}
+    K -->|展開・折畳| L[LocalStorage更新]
+    K -->|CRUD操作| M[サーバー処理]
+
+    L --> I
+    M --> N[API呼び出し]
+    N --> O[DB更新]
+    O --> P[レスポンス返却]
+    P --> I
 ```
 
 ## 5. アーキテクチャ設計

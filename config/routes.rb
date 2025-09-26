@@ -40,6 +40,39 @@ RedmineApp::Application.routes.draw do
     get 'validations/rules', to: 'kanban/validations#validation_rules'
     post 'validations/attempt_bypass', to: 'kanban/validations#attempt_bypass'
 
+    # ===== API統合仕様書準拠の新APIエンドポイント =====
+    scope 'api/v1', defaults: { format: 'json' } do
+      # Grid Data API (API001-004)
+      scope 'grid', controller: 'kanban/grid' do
+        get '',              action: 'show'               # Grid Data取得
+        post 'move_feature', action: 'move_feature'       # Feature移動（楽観的更新）
+        post 'create_epic',  action: 'create_epic'        # Epic作成
+        post 'propagate_version', action: 'propagate_version' # Version自動伝播
+      end
+
+      # Feature Cards API
+      resources 'cards', controller: 'kanban/cards', except: [:destroy]
+
+      # Batch Operations API (API005)
+      scope 'batch', controller: 'kanban/batch_operations' do
+        post 'update',              action: 'update'
+        post 'assign_version',      action: 'assign_version'
+        post 'generate_tests',      action: 'generate_tests'
+        post 'transition_status',   action: 'transition_status'
+        get 'status/:batch_job_id', action: 'status'
+        get 'operation_history',    action: 'operation_history'
+      end
+
+      # Realtime Communication API (API006)
+      scope 'realtime', controller: 'kanban/realtime' do
+        post 'subscribe',      action: 'subscribe'
+        get 'poll_updates',    action: 'poll_updates'
+        post 'heartbeat',      action: 'heartbeat'
+        delete 'unsubscribe',  action: 'unsubscribe'
+        get 'active_sessions', action: 'active_sessions'
+      end
+    end
+
     # ===== 既存互換性ルート =====
     get 'release_validation', to: 'kanban/api#validate_release' # 下位互換
   end
