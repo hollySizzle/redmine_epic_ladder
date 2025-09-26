@@ -53,8 +53,7 @@ module Kanban
 
     def load_filtered_epics
       query = @project.issues
-                     .includes(:tracker, :status, :fixed_version, :assigned_to,
-                              children: [:tracker, :status, :fixed_version, :assigned_to])
+                     .includes(:tracker, :status, :fixed_version, :assigned_to)
                      .joins(:tracker)
                      .where(trackers: { name: 'Epic' })
 
@@ -86,7 +85,12 @@ module Kanban
     end
 
     def build_epic_row(epic)
-      features = epic.children.select { |child| child.tracker.name == 'Feature' }
+      # Load features efficiently using parent_id query
+      features = @project.issues
+                         .includes(:tracker, :status, :fixed_version, :assigned_to)
+                         .joins(:tracker)
+                         .where(trackers: { name: 'Feature' })
+                         .where(parent_id: epic.id)
 
       {
         issue: build_issue_json(epic),
@@ -135,7 +139,7 @@ module Kanban
 
     def load_project_versions
       @project.versions
-              .includes(:issues)
+              .includes(:fixed_issues)
               .order(:effective_date, :name)
     end
 
@@ -146,7 +150,7 @@ module Kanban
         description: version.description,
         effective_date: version.effective_date&.iso8601,
         status: version.status,
-        issue_count: version.issues.count,
+        issue_count: version.fixed_issues.count,
         type: 'version'
       }
     end
@@ -223,7 +227,12 @@ module Kanban
     end
 
     def build_feature_json(feature)
-      user_stories = feature.children.select { |child| child.tracker.name == 'UserStory' }
+      # Load user stories efficiently using parent_id query
+      user_stories = @project.issues
+                             .includes(:tracker, :status, :fixed_version, :assigned_to)
+                             .joins(:tracker)
+                             .where(trackers: { name: 'UserStory' })
+                             .where(parent_id: feature.id)
 
       {
         issue: build_issue_json(feature),
@@ -246,7 +255,18 @@ module Kanban
 
     # 統計計算メソッド
     def build_epic_statistics(epic, features)
-      total_user_stories = features.sum { |f| f.children.count }
+      # Count user stories efficiently using database query
+      feature_ids = features.map(&:id)
+      total_user_stories = if feature_ids.any?
+        @project.issues
+                .joins(:tracker)
+                .where(trackers: { name: 'UserStory' })
+                .where(parent_id: feature_ids)
+                .count
+      else
+        0
+      end
+
       completed_features = features.count { |f| ['Resolved', 'Closed'].include?(f.status.name) }
 
       {
