@@ -32,10 +32,27 @@ export class GridV2API {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.log('[GridV2API] Error response data:', errorData);
+
+        // Redmine Release Kanbanのレスポンス形式に対応
+        const errorMessage = (errorData.error && errorData.error.message) ||
+                           errorData.error ||
+                           errorData.message ||
+                           `HTTP ${response.status}: ${response.statusText}`;
+        console.log('[GridV2API] Extracted error message:', errorMessage);
+
+        // エラーコードも抽出
+        const errorCode = (errorData.error && errorData.error.code) || null;
+        const errorDetails = (errorData.error && errorData.error.details) || errorData.details || {};
+
         throw new APIError(
-          errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+          errorMessage,
           response.status,
-          errorData
+          {
+            ...errorData,
+            error_code: errorCode,
+            ...errorDetails
+          }
         );
       }
 

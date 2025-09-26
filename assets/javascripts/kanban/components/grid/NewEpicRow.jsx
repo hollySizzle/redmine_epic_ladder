@@ -28,6 +28,9 @@ export const NewEpicRow = ({
   // フォーム検証状態
   const [validationErrors, setValidationErrors] = useState({});
 
+  // API エラー表示状態
+  const [apiError, setApiError] = useState(null);
+
   // Epic作成開始
   const startCreating = useCallback(() => {
     setIsCreating(true);
@@ -39,6 +42,7 @@ export const NewEpicRow = ({
       estimated_hours: ''
     });
     setValidationErrors({});
+    setApiError(null);
   }, []);
 
   // Epic作成キャンセル
@@ -52,6 +56,7 @@ export const NewEpicRow = ({
       estimated_hours: ''
     });
     setValidationErrors({});
+    setApiError(null);
   }, []);
 
   // フォーム検証
@@ -109,7 +114,16 @@ export const NewEpicRow = ({
       }
     } catch (error) {
       console.error('[NewEpicRow] Epic作成エラー:', error);
-      alert(`Epic作成に失敗しました: ${error.message}`);
+      console.error('[NewEpicRow] Error message:', error.message);
+      console.error('[NewEpicRow] Error details:', error.details);
+      console.error('[NewEpicRow] Error status:', error.status);
+
+      // APIエラー情報を状態に保存（詳細表示用）
+      setApiError({
+        message: error.message || 'Epic作成に失敗しました',
+        details: error.details || {},
+        status: error.status || 0
+      });
     }
   }, [newEpicData, onNewEpic, validateForm]);
 
@@ -148,6 +162,34 @@ export const NewEpicRow = ({
         <div className="new-epic-form-container">
           <div className="new-epic-form">
             <h5 className="form-title">新Epic作成</h5>
+
+            {/* API エラー表示 */}
+            {apiError && (
+              <div className="api-error-display">
+                <div className="error-message primary">
+                  {apiError.message}
+                </div>
+                {apiError.details.error_code === 'EPIC_TRACKER_NOT_FOUND' && apiError.details.help_url && (
+                  <div className="error-help">
+                    <p>
+                      <strong>解決方法:</strong>
+                      プロジェクトの管理者がEpicトラッカーを有効にする必要があります。
+                    </p>
+                    <a href={apiError.details.help_url} target="_blank" rel="noopener noreferrer">
+                      設定手順を確認 →
+                    </a>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="error-dismiss"
+                  onClick={() => setApiError(null)}
+                  title="エラーメッセージを閉じる"
+                >
+                  ×
+                </button>
+              </div>
+            )}
 
             <div className="form-content">
               {/* 基本情報入力 */}
