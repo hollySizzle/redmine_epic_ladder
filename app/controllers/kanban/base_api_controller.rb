@@ -34,7 +34,7 @@ module Kanban
   # 統一API基底コントローラー
   # API統合仕様書準拠の標準化されたレスポンス・エラーハンドリング提供
   class BaseApiController < ApplicationController
-    before_action :require_login, :find_project, :authorize_kanban_access
+    before_action :api_require_login, :find_project, :authorize_kanban_access
     before_action :set_start_time
 
     # 統一例外ハンドリング
@@ -240,6 +240,64 @@ module Kanban
       if duration > 2000
         Rails.logger.warn "Slow API: #{controller_name}##{action_name} #{duration}ms"
       end
+    end
+
+    # API専用認証処理（設計書準拠）
+    def api_require_login
+      # セッション認証を試行
+      if session_authenticated?
+        return true
+      end
+
+      # API トークン認証を試行
+      if api_token_authenticated?
+        return true
+      end
+
+      # 認証失敗
+      Rails.logger.info "API Authentication failed: session=#{session[:user_id]}, token=#{api_token_from_request}"
+      raise Kanban::PermissionDenied.new('login', nil, '認証が必要です')
+    end
+
+    # セッション認証確認
+    def session_authenticated?
+      return false unless session[:user_id]
+
+      user = User.find_by(id: session[:user_id])
+      return false unless user&.active?
+
+      User.current = user
+      Rails.logger.info "API Session authenticated: user=#{user.login} (id=#{user.id})"
+      true
+    rescue => e
+      Rails.logger.warn "Session authentication error: #{e.message}"
+      false
+    end
+
+    # API トークン認証確認
+    def api_token_authenticated?
+      token = api_token_from_request
+      return false if token.blank?
+
+      user = User.find_by_api_key(token)
+      return false unless user&.active?
+
+      User.current = user
+      Rails.logger.info "API Token authenticated: user=#{user.login} (id=#{user.id})"
+      true
+    rescue => e
+      Rails.logger.warn "API token authentication error: #{e.message}"
+      false
+    end
+
+    # リクエストからAPIトークン取得
+    def api_token_from_request
+      # ヘッダーからトークン取得
+      token = request.headers['X-Redmine-API-Key']
+      return token if token.present?
+
+      # パラメータからトークン取得
+      params[:key]
     end
   end
 end
