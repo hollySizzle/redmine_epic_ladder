@@ -55,8 +55,8 @@ export class GridV2API {
   }
 
   /**
-   * GET /kanban/projects/:project_id/grid_v2
-   * グリッドデータの取得
+   * GET /kanban/projects/:project_id/api/v1/grid
+   * グリッドデータの取得（設計書準拠）
    */
   static async getGridData(projectId, filters = {}) {
     const params = new URLSearchParams();
@@ -79,7 +79,7 @@ export class GridV2API {
     }
 
     const queryString = params.toString();
-    const url = `${this.baseUrl}/${projectId}/grid_v2${queryString ? `?${queryString}` : ''}`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/grid${queryString ? `?${queryString}` : ''}`;
 
     return await this.request(url, {
       method: 'GET'
@@ -87,11 +87,11 @@ export class GridV2API {
   }
 
   /**
-   * POST /kanban/projects/:project_id/grid_v2/move_feature
-   * Feature D&D移動処理
+   * POST /kanban/projects/:project_id/api/v1/grid/move_feature
+   * Feature D&D移動処理（設計書準拠）
    */
   static async moveFeature(projectId, moveData) {
-    const url = `${this.baseUrl}/${projectId}/grid_v2/move_feature`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/grid/move_feature`;
 
     return await this.request(url, {
       method: 'POST',
@@ -105,11 +105,11 @@ export class GridV2API {
   }
 
   /**
-   * POST /kanban/projects/:project_id/grid_v2/assign_version
-   * バージョン割当処理
+   * POST /kanban/projects/:project_id/api/v1/grid/propagate_version
+   * バージョン割当処理（設計書準拠）
    */
   static async assignVersion(projectId, assignData) {
-    const url = `${this.baseUrl}/${projectId}/grid_v2/assign_version`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/grid/propagate_version`;
 
     return await this.request(url, {
       method: 'POST',
@@ -121,11 +121,11 @@ export class GridV2API {
   }
 
   /**
-   * POST /kanban/projects/:project_id/grid_v2/create_epic
-   * Epic作成処理
+   * POST /kanban/projects/:project_id/api/v1/grid/create_epic
+   * Epic作成処理（設計書準拠）
    */
   static async createEpic(projectId, epicData) {
-    const url = `${this.baseUrl}/${projectId}/grid_v2/create_epic`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/grid/create_epic`;
 
     return await this.request(url, {
       method: 'POST',
@@ -141,11 +141,11 @@ export class GridV2API {
   }
 
   /**
-   * POST /kanban/projects/:project_id/grid_v2/create_version
-   * Version作成処理
+   * POST /kanban/projects/:project_id/versions/create
+   * Version作成処理（設計書準拠）
    */
   static async createVersion(projectId, versionData) {
-    const url = `${this.baseUrl}/${projectId}/grid_v2/create_version`;
+    const url = `${this.baseUrl}/${projectId}/versions/create`;
 
     return await this.request(url, {
       method: 'POST',
@@ -161,8 +161,8 @@ export class GridV2API {
   }
 
   /**
-   * GET /kanban/projects/:project_id/grid_v2/updates
-   * リアルタイム更新データ取得
+   * GET /kanban/projects/:project_id/api/v1/realtime/poll_updates
+   * リアルタイム更新データ取得（設計書準拠）
    */
   static async getUpdates(projectId, sinceTimestamp = null) {
     const params = new URLSearchParams();
@@ -172,7 +172,7 @@ export class GridV2API {
     }
 
     const queryString = params.toString();
-    const url = `${this.baseUrl}/${projectId}/grid_v2/updates${queryString ? `?${queryString}` : ''}`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/realtime/poll_updates${queryString ? `?${queryString}` : ''}`;
 
     return await this.request(url, {
       method: 'GET'
@@ -180,11 +180,11 @@ export class GridV2API {
   }
 
   /**
-   * DELETE /kanban/projects/:project_id/grid_v2/epic/:id
-   * Epic削除処理
+   * DELETE /kanban/projects/:project_id/api/v1/cards/:id
+   * Epic削除処理（設計書準拠）
    */
   static async deleteEpic(projectId, epicId) {
-    const url = `${this.baseUrl}/${projectId}/grid_v2/epic/${epicId}`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/cards/${epicId}`;
 
     return await this.request(url, {
       method: 'DELETE'
@@ -221,10 +221,10 @@ export class GridV2API {
   }
 
   /**
-   * バッチ操作API（複数Feature の一括移動）
+   * バッチ操作API（複数Feature の一括移動）（設計書準拠）
    */
   static async batchMoveFeatures(projectId, moves) {
-    const url = `${this.baseUrl}/${projectId}/grid_v2/batch_move`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/batch/update`;
 
     return await this.request(url, {
       method: 'POST',
@@ -235,7 +235,7 @@ export class GridV2API {
   }
 
   /**
-   * グリッド統計情報取得
+   * グリッド統計情報取得（設計書準拠）
    */
   static async getStatistics(projectId, filters = {}) {
     const params = new URLSearchParams();
@@ -247,7 +247,7 @@ export class GridV2API {
     });
 
     const queryString = params.toString();
-    const url = `${this.baseUrl}/${projectId}/grid_v2/statistics${queryString ? `?${queryString}` : ''}`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/grid${queryString ? `?${queryString}` : ''}`;
 
     return await this.request(url, {
       method: 'GET'

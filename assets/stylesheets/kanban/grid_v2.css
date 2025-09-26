@@ -1,0 +1,1218 @@
+/* assets/stylesheets/kanban/grid_v2.css - 設計書準拠のKanban Grid V2スタイル */
+
+/* ========================================
+   Grid V2 Base Layout - 設計書準拠
+========================================== */
+.kanban-grid-layout-v2 {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #fafbfc;
+  overflow: hidden;
+}
+
+.kanban-grid-layout-v2.compact {
+  --grid-spacing: 4px;
+  --cell-padding: 8px;
+  --card-padding: 6px;
+}
+
+.kanban-grid-layout-v2:not(.compact) {
+  --grid-spacing: 8px;
+  --cell-padding: 12px;
+  --card-padding: 10px;
+}
+
+/* ========================================
+   Grid Header - 設計書59-71行目準拠
+========================================== */
+.kanban-grid-header {
+  background: white;
+  border-bottom: 2px solid #e1e4e8;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 10;
+  position: sticky;
+  top: 0;
+}
+
+.grid-header-title-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.project-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #24292e;
+}
+
+.project-statistics {
+  display: flex;
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.stat-label {
+  color: #586069;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #0366d6;
+  font-weight: 600;
+}
+
+/* Grid Header Filters */
+.grid-header-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-input,
+.filter-select {
+  padding: 6px 12px;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #0366d6;
+  box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #586069;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Version Column Headers */
+.grid-header-columns {
+  display: grid;
+  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr)) 120px;
+  gap: 1px;
+  background-color: #e1e4e8;
+  overflow-x: auto;
+}
+
+.version-column-header {
+  background: white;
+  padding: 12px;
+  border-right: 1px solid #e1e4e8;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.version-column-header.no-version {
+  background: #f6f8fa;
+  border-left: 3px solid #6a737d;
+}
+
+.version-header-content {
+  text-align: center;
+}
+
+.version-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #24292e;
+  margin: 0 0 4px 0;
+}
+
+.version-date {
+  font-size: 12px;
+  color: #586069;
+  margin-bottom: 8px;
+}
+
+.version-statistics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.issue-count {
+  font-size: 12px;
+  color: #586069;
+}
+
+.version-status {
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.version-status.open {
+  background: #d1f4d6;
+  color: #28a745;
+}
+
+.version-status.closed {
+  background: #ffeaa7;
+  color: #f39c12;
+}
+
+/* New Version Button */
+.new-version-column {
+  background: #f6f8fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.new-version-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px;
+  border: 2px dashed #d1d5da;
+  border-radius: 8px;
+  background: transparent;
+  color: #586069;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  min-height: 60px;
+}
+
+.new-version-button:hover {
+  border-color: #0366d6;
+  color: #0366d6;
+  background: rgba(3, 102, 214, 0.05);
+}
+
+.plus-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.button-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* New Version Form */
+.new-version-form {
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 280px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.version-name-input,
+.version-date-input,
+.version-description-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.version-description-input {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.create-button,
+.cancel-button {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-button {
+  background: #28a745;
+  color: white;
+  border: 1px solid #28a745;
+}
+
+.create-button:hover:not(:disabled) {
+  background: #218838;
+}
+
+.create-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  background: white;
+  color: #586069;
+  border: 1px solid #d1d5da;
+}
+
+.cancel-button:hover {
+  background: #f6f8fa;
+}
+
+/* ========================================
+   Grid Body - 設計書73-85行目準拠
+========================================== */
+.kanban-grid-body {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  background: #f6f8fa;
+}
+
+.kanban-grid-body.compact {
+  --row-min-height: 60px;
+}
+
+.kanban-grid-body:not(.compact) {
+  --row-min-height: 80px;
+}
+
+/* Grid Debug Info */
+.grid-debug-info {
+  position: fixed;
+  top: 100px;
+  right: 16px;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  z-index: 1000;
+  display: none;
+}
+
+.kanban-grid-layout-v2[data-debug="true"] .grid-debug-info {
+  display: block;
+}
+
+.debug-item {
+  margin: 2px 0;
+}
+
+/* Empty Grid State */
+.empty-grid-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  text-align: center;
+  color: #586069;
+}
+
+.empty-message h3 {
+  color: #24292e;
+  margin-bottom: 8px;
+}
+
+/* Grid Drag Overlay */
+.grid-drag-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.02);
+  z-index: 900;
+  pointer-events: none;
+}
+
+.drag-info {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ========================================
+   Epic Row - 設計書77-83行目準拠
+========================================== */
+.epic-row {
+  display: grid;
+  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background-color: #e1e4e8;
+  min-height: var(--row-min-height);
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.epic-row.compact {
+  min-height: 60px;
+}
+
+.epic-row.collapsed {
+  grid-template-columns: 200px;
+}
+
+.epic-row.expanded {
+  min-height: 120px;
+}
+
+/* Epic Header Cell */
+.epic-header-cell {
+  background: white;
+  padding: var(--cell-padding);
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e1e4e8;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.epic-header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.epic-expand-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #586069;
+}
+
+.epic-expand-toggle:hover {
+  background: #f6f8fa;
+  color: #24292e;
+}
+
+.expand-icon {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(0deg);
+}
+
+.expand-icon:not(.expanded) {
+  transform: rotate(-90deg);
+}
+
+.epic-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.epic-display {
+  width: 100%;
+}
+
+.epic-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #24292e;
+  margin: 0 0 4px 0;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.epic-title:hover {
+  color: #0366d6;
+}
+
+.epic-metadata {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.epic-id {
+  color: #586069;
+}
+
+.epic-status {
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.epic-status.new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.epic-status.in-progress {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.epic-status.resolved {
+  background: #d1f4d6;
+  color: #28a745;
+}
+
+.epic-status.closed {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Epic Statistics */
+.epic-statistics {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  min-width: 60px;
+}
+
+/* Epic Edit Form */
+.epic-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.epic-subject-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.save-button,
+.cancel-button {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.save-button {
+  background: #28a745;
+  color: white;
+}
+
+.cancel-button {
+  background: #f6f8fa;
+  color: #586069;
+  border-color: #d1d5da;
+}
+
+/* Epic Collapsed Summary */
+.epic-collapsed-summary {
+  grid-column: 2 / -1;
+  background: white;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-left: 1px solid #e1e4e8;
+}
+
+.summary-stats {
+  font-size: 14px;
+  color: #586069;
+}
+
+.expand-hint {
+  padding: 6px 12px;
+  background: #f6f8fa;
+  border: 1px solid #d1d5da;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #586069;
+  cursor: pointer;
+}
+
+.expand-hint:hover {
+  background: #e1e4e8;
+}
+
+/* ========================================
+   No Epic Row - 設計書79-83行目準拠
+========================================== */
+.no-epic-row {
+  display: grid;
+  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background-color: #e1e4e8;
+  min-height: var(--row-min-height);
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.no-epic-header-cell {
+  background: #fef9e7;
+  padding: var(--cell-padding);
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e1e4e8;
+  border-left: 3px solid #f59e0b;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.no-epic-header-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.no-epic-info {
+  flex: 1;
+}
+
+.no-epic-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.no-epic-icon {
+  font-size: 16px;
+}
+
+.no-epic-description {
+  font-size: 12px;
+  color: #a16207;
+}
+
+.no-epic-statistics {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  min-width: 60px;
+}
+
+.no-epic-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.bulk-assign-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #92400e;
+}
+
+.bulk-assign-button:hover {
+  background: #fde68a;
+}
+
+.action-icon {
+  font-size: 12px;
+}
+
+.action-text {
+  font-weight: 500;
+}
+
+/* No Epic Empty State */
+.no-epic-empty-state {
+  grid-column: 2 / -1;
+  background: white;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-left: 1px solid #e1e4e8;
+}
+
+.empty-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.no-epic-warning {
+  position: fixed;
+  top: 80px;
+  right: 16px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 300px;
+  z-index: 100;
+}
+
+.warning-icon {
+  font-size: 14px;
+}
+
+/* ========================================
+   New Epic Row - 設計書76-77行目準拠
+========================================== */
+.new-epic-row {
+  display: grid;
+  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background-color: #e1e4e8;
+  min-height: var(--row-min-height);
+  border-bottom: 2px solid #d1d5da;
+}
+
+.new-epic-button-container {
+  background: #f6f8fa;
+  padding: var(--cell-padding);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #e1e4e8;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.new-epic-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  border: 2px dashed #d1d5da;
+  border-radius: 8px;
+  background: transparent;
+  color: #586069;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.new-epic-button:hover {
+  border-color: #0366d6;
+  color: #0366d6;
+  background: rgba(3, 102, 214, 0.05);
+}
+
+.new-epic-hint {
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* New Epic Form */
+.new-epic-form-container {
+  grid-column: 1 / -1;
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  margin: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.new-epic-form {
+  padding: 20px;
+}
+
+.form-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #24292e;
+  margin: 0 0 16px 0;
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.basic-info-section,
+.advanced-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #24292e;
+  margin-bottom: 4px;
+}
+
+.required {
+  color: #d73a49;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.form-input.error,
+.form-textarea.error,
+.form-select.error {
+  border-color: #d73a49;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.error-message {
+  color: #d73a49;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e1e4e8;
+}
+
+.create-button.primary {
+  background: #28a745;
+  color: white;
+  border: 1px solid #28a745;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.create-button.primary:hover:not(:disabled) {
+  background: #218838;
+}
+
+.form-hints {
+  margin-top: 12px;
+  text-align: center;
+  color: #586069;
+}
+
+.form-spacer {
+  display: none; /* Grid layout adjustment handled by CSS Grid */
+}
+
+/* ========================================
+   Grid Cell - 設計書82-86行目準拠
+========================================== */
+.grid-cell {
+  background: white;
+  border: 1px solid #e1e4e8;
+  min-height: var(--row-min-height);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.grid-cell.compact {
+  min-height: 60px;
+}
+
+.grid-cell.has-features {
+  background: #fefefe;
+}
+
+.grid-cell.empty {
+  background: #f9fafb;
+}
+
+.grid-cell.drop-target {
+  background: #e6ffed;
+  border-color: #28a745;
+  box-shadow: inset 0 0 0 2px rgba(40, 167, 69, 0.2);
+}
+
+.grid-cell.invalid-drop {
+  background: #ffebee;
+  border-color: #d73a49;
+  box-shadow: inset 0 0 0 2px rgba(215, 58, 73, 0.2);
+}
+
+.grid-cell.dragged-over {
+  transform: scale(1.02);
+  z-index: 10;
+}
+
+.grid-cell.hovered {
+  border-color: #0366d6;
+  background: #f6f8fa;
+}
+
+.grid-cell.no-epic-cell {
+  border-left: 3px solid #f59e0b;
+}
+
+.grid-cell.no-version-cell {
+  border-top: 3px solid #6a737d;
+}
+
+/* Cell Features */
+.cell-features {
+  padding: var(--cell-padding);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+/* Empty Cell Message */
+.empty-cell-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #586069;
+  text-align: center;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.empty-icon {
+  font-size: 18px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 12px;
+}
+
+/* Cell Overflow Indicator */
+.cell-overflow-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Cell Statistics */
+.cell-statistics {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: rgba(255,255,255,0.9);
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  color: #586069;
+  border: 1px solid #e1e4e8;
+}
+
+.stat-row {
+  display: flex;
+  gap: 8px;
+}
+
+.completion-rate {
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* Cell Interaction Hint */
+.cell-interaction-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.grid-cell:hover .cell-interaction-hint {
+  opacity: 1;
+}
+
+/* Cell Debug Info */
+.cell-debug-info {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 9px;
+  font-family: monospace;
+}
+
+/* ========================================
+   Loading & Error States
+========================================== */
+.kanban-grid-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: #586069;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #0366d6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.kanban-grid-error {
+  background: #ffebee;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 16px;
+  color: #721c24;
+}
+
+.kanban-grid-error h3 {
+  margin: 0 0 8px 0;
+  color: #721c24;
+}
+
+.kanban-grid-error button {
+  background: #d73a49;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+.kanban-grid-error button:hover {
+  background: #c82333;
+}
+
+/* ========================================
+   Grid Statistics Panel
+========================================== */
+.grid-statistics-panel {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: white;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 200px;
+  z-index: 100;
+}
+
+/* ========================================
+   Responsive Design
+========================================== */
+@media (max-width: 1200px) {
+  .grid-header-columns,
+  .epic-row,
+  .no-epic-row,
+  .new-epic-row {
+    grid-template-columns: 180px repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .project-title {
+    font-size: 20px;
+  }
+
+  .grid-header-filters {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-grid-layout-v2 {
+    --grid-spacing: 4px;
+    --cell-padding: 8px;
+    --card-padding: 6px;
+  }
+
+  .grid-header-columns,
+  .epic-row,
+  .no-epic-row,
+  .new-epic-row {
+    grid-template-columns: 160px repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .project-title {
+    font-size: 18px;
+  }
+
+  .grid-header-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .version-column-header {
+    min-height: 60px;
+    padding: 8px;
+  }
+
+  .version-name {
+    font-size: 14px;
+  }
+
+  .epic-title {
+    font-size: 13px;
+  }
+
+  .new-epic-form {
+    padding: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-header-columns,
+  .epic-row,
+  .no-epic-row,
+  .new-epic-row {
+    grid-template-columns: 140px 1fr;
+  }
+
+  .project-statistics {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  .grid-header-filters .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
