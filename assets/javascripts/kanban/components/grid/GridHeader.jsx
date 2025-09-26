@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 /**
  * GridHeader - 設計書準拠のグリッドヘッダーコンポーネント

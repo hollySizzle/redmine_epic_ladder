@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 
 /**
  * NewEpicRow - 設計書準拠の新Epic作成行コンポーネント

@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { EpicRow } from './EpicRow';
 import { NoEpicRow } from './NoEpicRow';
 import { NewEpicRow } from './NewEpicRow';

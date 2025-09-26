@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 /**
  * DragIndicator - 設計書準拠のドラッグインジケーターコンポーネント

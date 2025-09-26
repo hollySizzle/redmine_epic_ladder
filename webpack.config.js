@@ -72,6 +72,13 @@ module.exports = {
           noErrorOnMissing: false,
           force: true
         },
+        // GridStatistics.css のコピー
+        {
+          from: path.resolve(__dirname, "assets/stylesheets/kanban/components/GridStatistics.css"),
+          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/components/GridStatistics.css",
+          noErrorOnMissing: false,
+          force: true
+        },
       ],
     }),
     // カスタムプラグイン: ビルド完了後にJSファイルをコピー

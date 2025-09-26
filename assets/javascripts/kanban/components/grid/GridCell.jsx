@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { FeatureCard } from './FeatureCard';
 import { DragIndicator } from './DragIndicator';
