@@ -1,7 +1,7 @@
 # API Controller サーバーサイド詳細設計書
 
 ## 🔗 関連ドキュメント
-- @vibes/specs/ui/api_integration_wireframe.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_grid_layout.drawio (APIとUI連携の参考)
 - @vibes/rules/technical_architecture_standards.md
 - @vibes/logics/api_integration/api_integration_specification.md
 

@@ -1,10 +1,10 @@
 # Kanban Grid Layout コンポーネント詳細設計書
 
 ## 🔗 関連ドキュメント
-- @vibes/docs/logics/ui_components/wireframe/kanban_ui_grid_layout.drawio
-- @vibes/docs/logics/ui_components/wireframe/kanban_ui_feature_card_component.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_grid_layout.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_feature_card_component.drawio
 - @vibes/rules/technical_architecture_standards.md
-- @vibes/logics/ui_components/feature_card/feature_card_component_specification.md
+- @vibes/logics/feature_card/feature_card_component_specification.md
 
 ## 1. 設計概要
 

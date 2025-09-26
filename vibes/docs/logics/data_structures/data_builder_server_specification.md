@@ -1,7 +1,7 @@
 # データビルダー サーバーサイド詳細設計書
 
 ## 🔗 関連ドキュメント
-- @vibes/specs/ui/data_structures_wireframe.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_grid_layout.drawio (データ構造とUI連携参考)
 - @vibes/rules/technical_architecture_standards.md
 - @vibes/logics/data_structures/data_structures_specification.md
 

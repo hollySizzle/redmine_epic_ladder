@@ -1,9 +1,9 @@
 # Kanban Grid サーバーサイド詳細設計書
 
 ## 🔗 関連ドキュメント
-- @vibes/specs/ui/kanban_grid_wireframe.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_grid_layout.drawio
 - @vibes/rules/technical_architecture_standards.md
-- @vibes/logics/ui_components/kanban_grid_layout_specification.md
+- @vibes/logics/kanban_grid/kanban_grid_layout_specification.md
 
 ## 1. 設計概要
 

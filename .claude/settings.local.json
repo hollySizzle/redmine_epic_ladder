@@ -213,7 +213,11 @@
       "Bash(RAILS_ENV=test DISABLE_FACTORY_GIRL=1 ruby -I test -I plugins/redmine_release_kanban/test plugins/redmine_release_kanban/test/unit/kanban_tracker_hierarchy_test.rb plugins/redmine_release_kanban/test/integration/kanban_settings_test.rb)",
       "Bash(./bin/test_runner.sh:*)",
       "Bash(sed:*)",
-      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/vibes/scripts/rules/**)"
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/vibes/scripts/rules/**)",
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)"
     ],
     "deny": [],
     "ask": [],

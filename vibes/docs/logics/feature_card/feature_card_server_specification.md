@@ -1,9 +1,9 @@
 # Feature Card サーバーサイド詳細設計書
 
 ## 🔗 関連ドキュメント
-- @vibes/specs/ui/feature_card_wireframe.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_feature_card_component.drawio
 - @vibes/rules/technical_architecture_standards.md
-- @vibes/logics/ui_components/feature_card_hybrid_design_specification.md
+- @vibes/logics/feature_card/feature_card_component_specification.md
 
 ## 1. 設計概要
 

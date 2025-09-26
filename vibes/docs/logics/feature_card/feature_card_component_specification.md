@@ -1,8 +1,8 @@
 # Feature Card コンポーネント設計仕様書
 
 ## 🔗 関連ドキュメント
-- @vibes/specs/ui/kanban_ui_feature_card_component.drawio
-- @vibes/specs/ui/kanban_ui_grid_layout.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_feature_card_component.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_grid_layout.drawio
 - @vibes/rules/technical_architecture_standards.md
 - @vibes/logics/kanban_ui_implementation.md
 
@@ -10,854 +10,449 @@
 
 ワイヤーフレーム準拠のFeature Cardコンポーネント設計。折り畳み可能な階層構造（Feature → UserStory → Task/Test/Bug）でカード表示を実現。
 
-## 2. コンポーネント階層構造
+## 2. 機能要求仕様
 
-### 2.1 メインコンポーネント階層
-```
-FeatureCard (GROUP_FEATURE_CARD)
-├── FeatureHeader (GROUP_FEATURE_HEADER)
-│   ├── FeatureTitle
-│   └── FeatureStatusBadge
-├── UserStoryList (GROUP_USER_STORY_LIST)
-│   └── UserStory[] (GROUP_USER_STORY_1/2...)
-│       ├── UserStoryHeader (GROUP_USER_STORY_HEADER_*)
-│       │   ├── CollapseButton
-│       │   ├── UserStoryTitle
-│       │   ├── UserStoryStatus
-│       │   └── UserStoryDeleteButton
-│       ├── TaskContainer (GROUP_TASK_CONTAINER_*)
-│       │   ├── TaskHeader + AddTaskButton
-│       │   └── TaskItem[] (GROUP_TASK_ITEM_*)
-│       │       ├── TaskCard (GROUP_TASK_CARD_*)
-│       │       │   ├── TaskName
-│       │       │   ├── TaskAssignee
-│       │       │   └── TaskDeleteButton
-│       │       └── TaskStatus
-│       ├── TestContainer (GROUP_TEST_CONTAINER_*)
-│       │   ├── TestHeader + AddTestButton
-│       │   └── TestItem[] (GROUP_TEST_ITEM_*)
-│       │       ├── TestCard (GROUP_TEST_CARD_*)
-│       │       │   ├── TestName
-│       │       │   ├── TestAssignee
-│       │       │   └── TestDeleteButton
-│       │       └── TestStatus
-│       └── BugContainer (GROUP_BUG_CONTAINER_*)
-│           ├── BugHeader + AddBugButton
-│           └── BugItem[] (GROUP_BUG_ITEM_*)
-│               ├── BugCard (GROUP_BUG_CARD_*)
-│               │   ├── BugName
-│               │   ├── BugAssignee
-│               │   └── BugDeleteButton
-│               └── BugStatus
+### 2.1 主要機能
+```mermaid
+mindmap
+  root((Feature Card UI))
+    階層表示管理
+      Feature情報表示
+      UserStory一覧管理
+      Task/Test/Bug分類表示
+      展開・折り畳み制御
+    操作性向上
+      ドラッグ&ドロップ対応
+      クリック操作ナビゲーション
+      キーボードアクセシビリティ
+      レスポンシブ対応
+    データ統合
+      Redmine Issue連携
+      リアルタイム状態同期
+      統計情報表示
+      バリデーション機能
+    UI品質
+      ワイヤーフレーム準拠
+      一貫したデザインシステム
+      パフォーマンス最適化
+      エラーハンドリング
 ```
 
-## 3. React コンポーネント分解設計
+### 2.2 機能詳細
+| 機能ID | 機能名 | 説明 | 優先度 | 受容条件 |
+|--------|--------|------|---------|----------|
+| FC001 | Feature情報表示 | Feature名・ステータス・メタデータ表示 | High | ワイヤーフレーム準拠表示完了 |
+| FC002 | UserStory階層管理 | UserStory一覧・展開/折り畳み制御 | High | 階層状態の永続化対応 |
+| FC003 | Task/Test/Bug分類 | 種別ごとのコンテナ・視覚的分類表示 | High | 3種別の明確な識別可能 |
+| FC004 | ドラッグ&ドロップ | Feature Card間・Epic間の移動操作 | Medium | @dnd-kit統合・操作性確保 |
+| FC005 | CRUD操作 | UserStory・Task等の追加・編集・削除 | Medium | 確認ダイアログ・エラー処理 |
+| FC006 | 統計表示 | 進捗率・完了数・統計情報リアルタイム | Low | パフォーマンス配慮した更新 |
 
-### 3.1 FeatureCard (メインコンポーネント)
+## 3. コンポーネント設計
 
-```javascript
-// assets/javascripts/kanban/components/FeatureCard.jsx
-import React, { useState, useCallback } from 'react';
-import { FeatureHeader } from './FeatureHeader';
-import { UserStoryList } from './UserStoryList';
-import { useDraggable } from '@dnd-kit/core';
+### 3.1 階層構造設計
+```mermaid
+graph TD
+    A[FeatureCard] --> B[FeatureHeader]
+    A --> C[UserStoryList]
 
-export const FeatureCard = ({
-  feature,
-  expanded = true,
-  onToggle,
-  onUserStoryAdd,
-  onUserStoryUpdate,
-  onUserStoryDelete
-}) => {
-  const [userStoriesExpanded, setUserStoriesExpanded] = useState(new Map());
+    B --> D[FeatureTitle]
+    B --> E[FeatureStatusBadge]
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `feature-${feature.issue.id}`,
-    data: {
-      type: 'Feature',
-      issue: feature.issue
+    C --> F[UserStoryItem[]]
+    C --> G[AddUserStoryButton]
+
+    F --> H[UserStoryHeader]
+    F --> I[TaskContainer]
+    F --> J[TestContainer]
+    F --> K[BugContainer]
+
+    H --> L[CollapseButton]
+    H --> M[UserStoryTitle]
+    H --> N[UserStoryStatus]
+    H --> O[UserStoryDeleteButton]
+
+    I --> P[BaseItemCard[]]
+    J --> Q[BaseItemCard[]]
+    K --> R[BaseItemCard[]]
+
+    style A fill:#e1f5fe
+    style F fill:#f3e5f5
+    style P fill:#e8f5e8
+    style Q fill:#fff3e0
+    style R fill:#ffebee
+```
+
+### 3.2 責務分離設計
+```mermaid
+classDiagram
+    class FeatureCard {
+        +責務: Feature全体の表示制御
+        +状態: UserStory展開状態管理
+        +操作: ドラッグ&ドロップ処理
     }
-  });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    opacity: isDragging ? 0.5 : 1,
-  } : undefined;
+    class UserStoryItem {
+        +責務: UserStory単体の表示制御
+        +状態: 展開・折り畳み状態
+        +操作: CRUD操作・子要素管理
+    }
 
-  const handleUserStoryToggle = useCallback((userStoryId) => {
-    setUserStoriesExpanded(prev => {
-      const newMap = new Map(prev);
-      newMap.set(userStoryId, !prev.get(userStoryId));
-      return newMap;
-    });
-  }, []);
+    class BaseItemCard {
+        +責務: Task/Test/Bug共通表示
+        +状態: アイテム基本情報
+        +操作: 編集・削除操作
+    }
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className="feature-card"
-      data-feature-id={feature.issue.id}
-    >
-      <FeatureHeader
-        feature={feature}
-        expanded={expanded}
-        onToggle={onToggle}
-      />
+    class ContainerComponents {
+        +責務: 種別ごとの分類表示
+        +状態: アイテム一覧管理
+        +操作: 追加操作・レイアウト制御
+    }
 
-      {expanded && (
-        <UserStoryList
-          userStories={feature.user_stories}
-          userStoriesExpanded={userStoriesExpanded}
-          onUserStoryToggle={handleUserStoryToggle}
-          onUserStoryAdd={onUserStoryAdd}
-          onUserStoryUpdate={onUserStoryUpdate}
-          onUserStoryDelete={onUserStoryDelete}
-        />
-      )}
-    </div>
-  );
-};
+    FeatureCard ||--o{ UserStoryItem
+    UserStoryItem ||--o{ ContainerComponents
+    ContainerComponents ||--o{ BaseItemCard
 ```
 
-### 3.2 FeatureHeader
+## 4. 状態管理設計
 
-```javascript
-// assets/javascripts/kanban/components/FeatureHeader.jsx
-import React from 'react';
+### 4.1 状態フロー設計
+```mermaid
+stateDiagram-v2
+    [*] --> Feature表示
+    Feature表示 --> UserStory展開: クリック展開
+    Feature表示 --> ドラッグ開始: ドラッグ操作
 
-export const FeatureHeader = ({ feature, expanded, onToggle }) => {
-  const getStatusColor = (status) => {
-    const colors = {
-      '進行中': '#fff3e0',
-      '完了': '#e0e0e0',
-      '未着手': '#f5f5f5'
-    };
-    return colors[status] || '#f5f5f5';
+    UserStory展開 --> UserStory表示中: 展開完了
+    UserStory表示中 --> Task表示: Task展開
+    UserStory表示中 --> Test表示: Test展開
+    UserStory表示中 --> Bug表示: Bug展開
+    UserStory表示中 --> UserStory折畳: クリック折畳
+
+    Task表示 --> CRUD操作中: 編集・削除操作
+    Test表示 --> CRUD操作中: 編集・削除操作
+    Bug表示 --> CRUD操作中: 編集・削除操作
+
+    CRUD操作中 --> 確認ダイアログ: 削除操作
+    CRUD操作中 --> API通信中: 保存操作
+    確認ダイアログ --> API通信中: 確認後削除
+    確認ダイアログ --> UserStory表示中: キャンセル
+
+    API通信中 --> UserStory表示中: 操作完了
+    API通信中 --> エラー表示: 操作失敗
+
+    ドラッグ開始 --> ドラッグ中: 移動中
+    ドラッグ中 --> ドロップ処理: ドロップ
+    ドロップ処理 --> Feature表示: 移動完了
+
+    UserStory折畳 --> Feature表示: 折畳完了
+    エラー表示 --> UserStory表示中: エラー解消
+```
+
+### 4.2 コンポーネント状態設計
+```mermaid
+erDiagram
+    FEATURE_CARD_STATE {
+        expanded boolean "Feature展開状態"
+        userStoriesExpanded Map "UserStory展開状態Map"
+        isDragging boolean "ドラッグ状態"
+        isLoading boolean "通信中状態"
+        error string "エラーメッセージ"
+    }
+
+    USER_STORY_STATE {
+        expanded boolean "UserStory展開状態"
+        tasksVisible boolean "Task表示状態"
+        testsVisible boolean "Test表示状態"
+        bugsVisible boolean "Bug表示状態"
+        editingItem object "編集中アイテム"
+    }
+
+    ITEM_CARD_STATE {
+        isEditing boolean "編集状態"
+        showDeleteConfirm boolean "削除確認状態"
+        validationErrors array "バリデーションエラー"
+    }
+
+    FEATURE_CARD_STATE ||--o{ USER_STORY_STATE : contains
+    USER_STORY_STATE ||--o{ ITEM_CARD_STATE : contains
+```
+
+### 4.3 実装パターン
+```typescript
+// コンポーネント状態管理基本パターン（疑似コード）
+interface FeatureCardHooks {
+  // 展開状態管理
+  useExpansionState(initialExpanded: boolean): {
+    expanded: boolean;
+    toggle: () => void;
+    userStoriesExpanded: Map<number, boolean>;
+    toggleUserStory: (id: number) => void;
   };
 
-  return (
-    <div className="feature-header">
-      <h3
-        className="feature-title"
-        onClick={onToggle}
-        style={{ cursor: 'pointer' }}
-      >
-        {feature.issue.subject}
-      </h3>
-
-      <span
-        className="feature-status-badge"
-        style={{ backgroundColor: getStatusColor(feature.issue.status) }}
-      >
-        {feature.issue.status}
-      </span>
-    </div>
-  );
-};
-```
-
-### 3.3 UserStoryList
-
-```javascript
-// assets/javascripts/kanban/components/UserStoryList.jsx
-import React from 'react';
-import { UserStoryItem } from './UserStoryItem';
-
-export const UserStoryList = ({
-  userStories,
-  userStoriesExpanded,
-  onUserStoryToggle,
-  onUserStoryAdd,
-  onUserStoryUpdate,
-  onUserStoryDelete
-}) => {
-  return (
-    <div className="user-story-list">
-      {userStories.map(userStory => (
-        <UserStoryItem
-          key={userStory.issue.id}
-          userStory={userStory}
-          expanded={userStoriesExpanded.get(userStory.issue.id) || false}
-          onToggle={() => onUserStoryToggle(userStory.issue.id)}
-          onUpdate={onUserStoryUpdate}
-          onDelete={onUserStoryDelete}
-        />
-      ))}
-
-      <button
-        className="add-user-story-btn"
-        onClick={onUserStoryAdd}
-      >
-        + UserStory
-      </button>
-    </div>
-  );
-};
-```
-
-### 3.4 UserStoryItem
-
-```javascript
-// assets/javascripts/kanban/components/UserStoryItem.jsx
-import React from 'react';
-import { TaskContainer } from './TaskContainer';
-import { TestContainer } from './TestContainer';
-import { BugContainer } from './BugContainer';
-
-export const UserStoryItem = ({
-  userStory,
-  expanded,
-  onToggle,
-  onUpdate,
-  onDelete
-}) => {
-  const getStatusColor = (status) => {
-    const colors = {
-      '進行中': '#f0f0f0',
-      '完了': '#e0e0e0',
-      '未着手': '#f5f5f5'
-    };
-    return colors[status] || '#f5f5f5';
+  // ドラッグ&ドロップ管理
+  useDragAndDrop(featureId: number): {
+    dragProps: DragProps;
+    isDragging: boolean;
+    dragStyle: CSSProperties;
   };
 
-  const handleDeleteClick = (e) => {
-    e.stopPropagation();
-    if (window.confirm(`UserStory "${userStory.issue.subject}" を削除しますか？`)) {
-      onDelete(userStory.issue.id);
-    }
+  // CRUD操作管理
+  useCRUDOperations(): {
+    createUserStory: (featureId: number, data: UserStoryData) => Promise<void>;
+    updateUserStory: (id: number, data: Partial<UserStoryData>) => Promise<void>;
+    deleteUserStory: (id: number) => Promise<void>;
+    showDeleteConfirm: (id: number) => void;
+    hideDeleteConfirm: () => void;
   };
-
-  return (
-    <div className={`user-story ${expanded ? 'expanded' : 'collapsed'}`}>
-      <div className="user-story-header" onClick={onToggle}>
-        <button className="collapse-btn">
-          {expanded ? '▼' : '▶'}
-        </button>
-
-        <span
-          className={`user-story-title ${expanded ? '' : 'collapsed-title'}`}
-        >
-          {userStory.issue.subject}
-        </span>
-
-        <span
-          className="user-story-status"
-          style={{ backgroundColor: getStatusColor(userStory.issue.status) }}
-        >
-          {userStory.issue.status}
-        </span>
-
-        <button
-          className="user-story-delete-btn"
-          onClick={handleDeleteClick}
-          title="UserStoryを削除"
-        >
-          Delete
-        </button>
-      </div>
-
-      {expanded && (
-        <>
-          <TaskContainer
-            tasks={userStory.tasks}
-            userStoryId={userStory.issue.id}
-            onTaskAdd={() => console.log('Task追加')}
-            onTaskUpdate={() => console.log('Task更新')}
-            onTaskDelete={() => console.log('Task削除')}
-          />
-
-          <TestContainer
-            tests={userStory.tests}
-            userStoryId={userStory.issue.id}
-            onTestAdd={() => console.log('Test追加')}
-            onTestUpdate={() => console.log('Test更新')}
-            onTestDelete={() => console.log('Test削除')}
-          />
-
-          <BugContainer
-            bugs={userStory.bugs}
-            userStoryId={userStory.issue.id}
-            onBugAdd={() => console.log('Bug追加')}
-            onBugUpdate={() => console.log('Bug更新')}
-            onBugDelete={() => console.log('Bug削除')}
-          />
-        </>
-      )}
-    </div>
-  );
-};
-```
-
-## 4. 共通カードコンポーネント
-
-### 4.1 BaseItemCard
-
-```javascript
-// assets/javascripts/kanban/components/BaseItemCard.jsx
-import React from 'react';
-
-export const BaseItemCard = ({
-  item,
-  type, // 'Task' | 'Test' | 'Bug'
-  onUpdate,
-  onDelete,
-  className = ''
-}) => {
-  const getAssigneeDisplay = (assignee) => {
-    if (!assignee) return '（未割当）';
-    return assignee.name || assignee;
-  };
-
-  const handleDeleteClick = (e) => {
-    e.stopPropagation();
-    if (window.confirm(`${type} "${item.subject}" を削除しますか？`)) {
-      onDelete(item.id);
-    }
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      '進行中': '#f0f0f0',
-      '完了': '#e0e0e0',
-      '対応中': '#f0f0f0',
-      '未着手': '#f0f0f0'
-    };
-    return colors[status] || '#f0f0f0';
-  };
-
-  return (
-    <div className={`base-item-card ${type.toLowerCase()}-card ${className}`}>
-      <div className="item-card-content">
-        <div className="item-name">{item.subject}</div>
-        <div className="item-assignee">
-          {getAssigneeDisplay(item.assigned_to)}
-        </div>
-        <button
-          className="item-delete-btn"
-          onClick={handleDeleteClick}
-          title={`${type}を削除`}
-        >
-          Delete
-        </button>
-      </div>
-
-      <div className="item-status-container">
-        <span
-          className="item-status"
-          style={{ backgroundColor: getStatusColor(item.status) }}
-        >
-          {item.status}
-        </span>
-      </div>
-    </div>
-  );
-};
-```
-
-## 5. コンテナコンポーネント
-
-### 5.1 TaskContainer
-
-```javascript
-// assets/javascripts/kanban/components/TaskContainer.jsx
-import React from 'react';
-import { BaseItemCard } from './BaseItemCard';
-
-export const TaskContainer = ({
-  tasks,
-  userStoryId,
-  onTaskAdd,
-  onTaskUpdate,
-  onTaskDelete
-}) => {
-  return (
-    <div className="task-container">
-      <div className="task-header">
-        <span>Task</span>
-        <button
-          className="add-task-btn"
-          onClick={() => onTaskAdd(userStoryId)}
-        >
-          + Task
-        </button>
-      </div>
-
-      <div className="task-items">
-        {tasks.map(task => (
-          <BaseItemCard
-            key={task.id}
-            item={task}
-            type="Task"
-            onUpdate={onTaskUpdate}
-            onDelete={onTaskDelete}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-```
-
-### 5.2 TestContainer & BugContainer
-
-```javascript
-// TestContainer と BugContainer は TaskContainer と同様の構造
-// type プロパティと色設定のみ変更
-```
-
-## 6. Ruby-React データ結合
-
-### 6.1 データ構造定義
-
-```ruby
-# app/services/kanban/feature_card_data_builder.rb
-class Kanban::FeatureCardDataBuilder
-  def initialize(feature_issue)
-    @feature = feature_issue
-  end
-
-  def build
-    {
-      issue: serialize_issue(@feature),
-      user_stories: build_user_stories
-    }
-  end
-
-  private
-
-  def build_user_stories
-    @feature.children.where(tracker: user_story_tracker).map do |user_story|
-      {
-        issue: serialize_issue(user_story),
-        tasks: build_child_items(user_story, 'Task'),
-        tests: build_child_items(user_story, 'Test'),
-        bugs: build_child_items(user_story, 'Bug')
-      }
-    end
-  end
-
-  def build_child_items(parent, tracker_name)
-    parent.children.joins(:tracker)
-          .where(trackers: { name: tracker_name })
-          .map { |item| serialize_issue(item) }
-  end
-
-  def serialize_issue(issue)
-    {
-      id: issue.id,
-      subject: issue.subject,
-      status: issue.status.name,
-      assigned_to: issue.assigned_to&.name,
-      created_on: issue.created_on.iso8601,
-      updated_on: issue.updated_on.iso8601
-    }
-  end
-
-  def user_story_tracker
-    Tracker.find_by(name: 'UserStory')
-  end
-end
-```
-
-### 6.2 API Controller 拡張
-
-```ruby
-# app/controllers/kanban/feature_cards_controller.rb
-class Kanban::FeatureCardsController < ApplicationController
-  include KanbanApiConcern
-
-  # GET /kanban/projects/:project_id/feature_cards
-  def index
-    features = @project.issues.includes(:tracker, :status, :assigned_to)
-                      .where(trackers: { name: 'Feature' })
-                      .order(:created_on)
-
-    feature_cards = features.map do |feature|
-      Kanban::FeatureCardDataBuilder.new(feature).build
-    end
-
-    render json: {
-      feature_cards: feature_cards,
-      metadata: {
-        total_features: features.count,
-        total_user_stories: count_user_stories(features),
-        last_updated: Time.current.iso8601
-      }
-    }
-  end
-
-  # POST /kanban/projects/:project_id/feature_cards/:id/user_stories
-  def create_user_story
-    feature = @project.issues.find(params[:id])
-
-    user_story = Issue.new(user_story_params)
-    user_story.project = @project
-    user_story.parent = feature
-    user_story.tracker = Tracker.find_by(name: 'UserStory')
-    user_story.author = User.current
-
-    if user_story.save
-      render json: {
-        user_story: serialize_issue(user_story),
-        message: 'UserStory作成成功'
-      }
-    else
-      render json: {
-        errors: user_story.errors,
-        message: 'UserStory作成失敗'
-      }, status: :unprocessable_entity
-    end
-  end
-
-  private
-
-  def user_story_params
-    params.require(:user_story).permit(:subject, :description, :assigned_to_id)
-  end
-
-  def count_user_stories(features)
-    Issue.where(parent: features, tracker: Tracker.find_by(name: 'UserStory')).count
-  end
-end
-```
-
-## 7. CSS スタイリング設計
-
-### 7.1 FeatureCard スタイル
-
-```scss
-// assets/stylesheets/kanban/feature_card.scss
-.feature-card {
-  border: 2px solid #dee2e6;
-  background: #f8f9fa;
-  border-radius: 4px;
-  padding: 8px;
-  margin-bottom: 16px;
-
-  .feature-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-
-    .feature-title {
-      flex: 1;
-      font-weight: bold;
-      font-size: 12px;
-      color: #01579b;
-      background: #e1f5fe;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-
-    .feature-status-badge {
-      font-size: 9px;
-      font-weight: bold;
-      color: #ff9800;
-      border: 1px solid #ff9800;
-      padding: 2px 8px;
-      border-radius: 3px;
-      margin-left: 10px;
-    }
-  }
 }
 
-.user-story-list {
-  background: white;
-  border: 1px solid #e0e0e0;
-  padding: 10px;
+## 5. データフロー設計
 
-  .user-story {
-    border: 1px solid #e0e0e0;
-    margin-bottom: 10px;
+### 5.1 システム間データフロー
+```mermaid
+flowchart TD
+    A[Redmine Issues DB] --> B[Issue階層クエリ]
+    C[Redmine Tracker設定] --> B
 
-    &.expanded {
-      // 展開時のスタイル
-    }
+    B --> D[FeatureCardDataBuilder]
+    D --> E[階層構造解析]
+    E --> F[React Props生成]
 
-    &.collapsed {
-      height: 25px;
-      overflow: hidden;
+    F --> G[FeatureCard描画]
+    G --> H[ユーザー操作]
 
-      .user-story-title {
-        color: #666666;
-        background: #f5f5f5;
-      }
-    }
+    H --> I{操作種別}
+    I -->|展開・折畳| J[状態更新のみ]
+    I -->|CRUD操作| K[API呼び出し]
+    I -->|ドラッグ&ドロップ| L[移動API呼び出し]
 
-    .user-story-header {
-      display: flex;
-      align-items: center;
-      padding: 5px;
-      cursor: pointer;
+    K --> M[バリデーション]
+    L --> N[権限チェック]
 
-      .collapse-btn {
-        width: 15px;
-        height: 15px;
-        border: 1px solid #e0e0e0;
-        background: white;
-        font-size: 8px;
-        margin-right: 5px;
-      }
+    M --> O[DB更新]
+    N --> O
 
-      .user-story-title {
-        flex: 1;
-        font-size: 10px;
-        padding: 5px;
-      }
+    O --> P[レスポンス返却]
+    P --> Q[コンポーネント再描画]
 
-      .user-story-status {
-        font-size: 8px;
-        padding: 2px 6px;
-        margin-left: 10px;
-        border-radius: 2px;
-      }
+    J --> R[ローカル状態更新]
+    R --> G
 
-      .user-story-delete-btn {
-        font-size: 7px;
-        color: #f44336;
-        border: 1px dashed #f44336;
-        background: #ffebee;
-        padding: 1px 4px;
-        margin-left: 5px;
-      }
-    }
-  }
-}
+    style G fill:#e1f5fe
+    style H fill:#f3e5f5
+    style O fill:#e8f5e8
 ```
 
-### 7.2 BaseItemCard スタイル
+### 5.2 コンポーネント間通信設計
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant FC as FeatureCard
+    participant USI as UserStoryItem
+    participant BIC as BaseItemCard
+    participant API as KanbanAPI
 
-```scss
-.base-item-card {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 5px;
+    U->>FC: Featureクリック（展開）
+    FC->>FC: 展開状態更新
+    FC->>USI: UserStory表示
 
-  .item-card-content {
-    width: 160px;
-    height: 25px;
-    border: 1px solid #d0d0d0;
-    background: white;
-    padding: 2px 5px;
-    display: flex;
-    flex-direction: column;
+    U->>USI: UserStoryクリック（展開）
+    USI->>USI: UserStory展開状態更新
+    USI->>BIC: Task/Test/Bug表示
 
-    .item-name {
-      font-size: 9px;
-      line-height: 12px;
-      font-weight: normal;
-    }
-
-    .item-assignee {
-      font-size: 7px;
-      color: #666666;
-      line-height: 9px;
-    }
-
-    .item-delete-btn {
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      font-size: 6px;
-      color: #f44336;
-      border: 1px dashed #f44336;
-      background: #ffebee;
-      padding: 1px 3px;
-    }
-  }
-
-  .item-status-container {
-    margin-left: 5px;
-
-    .item-status {
-      font-size: 7px;
-      padding: 2px 4px;
-      border: 1px solid #999999;
-      border-radius: 2px;
-    }
-  }
-}
-
-// Task専用スタイル
-.task-card .item-card-content {
-  .item-delete-btn {
-    color: #2196f3;
-    border-color: #2196f3;
-    background: #e3f2fd;
-  }
-}
-
-// Test専用スタイル
-.test-card .item-card-content {
-  .item-delete-btn {
-    color: #9c27b0;
-    border-color: #9c27b0;
-    background: #f3e5f5;
-  }
-}
+    U->>BIC: 削除ボタンクリック
+    BIC->>BIC: 確認ダイアログ表示
+    U->>BIC: 削除確認
+    BIC->>API: DELETE要求
+    API-->>BIC: 削除結果
+    BIC->>USI: 削除完了通知
+    USI->>FC: 再描画要求
+    FC->>FC: コンポーネント更新
 ```
+
+## 6. アーキテクチャ設計
+
+### 6.1 システム構成
+```mermaid
+C4Context
+    Person(pm, "プロジェクトマネージャー", "Feature管理・進捗確認")
+    Person(dev, "開発者", "Task/Test/Bug管理")
+    Person(qa, "QA担当", "Test管理・品質確認")
+
+    System(feature_card_system, "Feature Card System", "階層UI表示・CRUD操作")
+    System_Ext(redmine_core, "Redmine Core", "Issue・Tracker管理")
+    System_Ext(react_ecosystem, "React Ecosystem", "UI描画・状態管理")
+    System_Ext(dnd_kit, "@dnd-kit", "ドラッグ&ドロップ")
+
+    Rel(pm, feature_card_system, "Feature進捗確認")
+    Rel(dev, feature_card_system, "Task管理・開発状況更新")
+    Rel(qa, feature_card_system, "Test管理・品質確認")
+
+    Rel(feature_card_system, redmine_core, "Issue階層データ取得・更新")
+    Rel(feature_card_system, react_ecosystem, "コンポーネント描画")
+    Rel(feature_card_system, dnd_kit, "ドラッグ&ドロップ操作")
+```
+
+### 6.2 コンポーネントレイヤー構成
+```mermaid
+C4Component
+    Component(feature_card, "FeatureCard", "メインカード", "Feature全体制御・D&D・展開状態")
+    Component(user_story_mgr, "UserStoryManager", "UserStory管理", "一覧表示・CRUD・展開制御")
+    Component(item_containers, "ItemContainers", "Task/Test/Bug分類", "種別管理・レイアウト制御")
+    Component(base_item_card, "BaseItemCard", "共通アイテム", "基本表示・編集・削除")
+    Component(shared_ui, "SharedUIComponents", "共通UI", "Modal・Button・Form等")
+    Component(state_manager, "StateManager", "状態管理", "展開状態・編集状態・エラー")
+
+    Rel(feature_card, user_story_mgr, "UserStory一覧表示")
+    Rel(user_story_mgr, item_containers, "Task/Test/Bug分類表示")
+    Rel(item_containers, base_item_card, "個別アイテム表示")
+    Rel(base_item_card, shared_ui, "共通UI利用")
+    Rel(feature_card, state_manager, "状態管理")
+    Rel(user_story_mgr, state_manager, "展開状態管理")
+
+    style feature_card fill:#e1f5fe
+    style user_story_mgr fill:#f3e5f5
+    style item_containers fill:#e8f5e8
+    style base_item_card fill:#fff3e0
+```
+
+## 7. 実装指針
+
+### 7.1 技術スタック
+- **フロントエンド**: React 18+ Hooks、TypeScript（型安全性）
+- **状態管理**: useState・useReducer（ローカル状態）、Context API（グローバル状態）
+- **UI操作**: @dnd-kit/core（ドラッグ&ドロップ）、React Hook Form（フォーム）
+- **スタイリング**: SCSS Modules（モジュラーCSS）、CSS Custom Properties
+- **バックエンド**: Rails API mode、Kanban::FeatureCardDataBuilder（データ変換）
+
+### 7.2 実装パターン
+```typescript
+// Feature Card基本実装パターン（疑似コード）
+interface FeatureCardImplementation {
+  // コンポーネント構造
+  structure: {
+    main: "FeatureCard（状態管理・D&D）";
+    header: "FeatureHeader（表示・展開制御）";
+    list: "UserStoryList（一覧管理）";
+    item: "UserStoryItem（個別制御）";
+    containers: "TaskContainer/TestContainer/BugContainer（分類表示）";
+    base: "BaseItemCard（共通表示・操作）";
+  };
+
+  // 状態管理パターン
+  stateManagement: {
+    expansion: "Map<id, boolean>（展開状態）";
+    editing: "object | null（編集中アイテム）";
+    loading: "boolean（通信状態）";
+    errors: "string[]（エラー情報）";
+  };
+
+  // 操作パターン
+  operations: {
+    expand: "toggle展開・永続化";
+    crud: "create・update・delete・バリデーション";
+    drag: "@dnd-kit統合・権限チェック";
+    error: "エラーハンドリング・ユーザー通知";
+  };
+}
 
 ## 8. テスト設計
 
-### 8.1 React Component テスト
+### 8.1 テスト戦略
+```mermaid
+pyramid
+    title Feature Card テストピラミッド
 
-```javascript
-// spec/javascript/kanban/components/FeatureCard.test.jsx
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { FeatureCard } from '../../../assets/javascripts/kanban/components/FeatureCard';
-
-const mockFeature = {
-  issue: {
-    id: 1,
-    subject: 'ユーザー登録機能',
-    status: '進行中'
-  },
-  user_stories: [{
-    issue: {
-      id: 2,
-      subject: 'ユーザー登録フォーム',
-      status: '進行中'
-    },
-    tasks: [{
-      id: 3,
-      subject: 'バリデーション実装',
-      status: '進行中',
-      assigned_to: '田中太郎'
-    }],
-    tests: [{
-      id: 4,
-      subject: '単体テスト作成',
-      status: '未着手',
-      assigned_to: null
-    }],
-    bugs: []
-  }]
-};
-
-describe('FeatureCard', () => {
-  it('フィーチャータイトルとステータスが表示される' do
-    render(
-      <FeatureCard
-        feature={mockFeature}
-        expanded={true}
-        onToggle={() => {}}
-      />
-    );
-
-    expect(screen.getByText('ユーザー登録機能')).toBeInTheDocument();
-    expect(screen.getByText('進行中')).toBeInTheDocument();
-  });
-
-  it 'UserStoryの折り畳み/展開ができる' do
-    const mockOnToggle = jest.fn();
-    render(
-      <FeatureCard
-        feature={mockFeature}
-        expanded={true}
-        onToggle={mockOnToggle}
-      />
-    );
-
-    const collapseButton = screen.getByText('▼');
-    fireEvent.click(collapseButton);
-
-    // UserStory内部のonToggleが呼ばれることを確認
-    // （実際のテストでは内部コンポーネントのmockが必要）
-  });
-
-  it 'Task/Test/Bugの情報が正しく表示される' do
-    render(
-      <FeatureCard
-        feature={mockFeature}
-        expanded={true}
-        onToggle={() => {}}
-      />
-    );
-
-    expect(screen.getByText('バリデーション実装')).toBeInTheDocument();
-    expect(screen.getByText('田中太郎')).toBeInTheDocument();
-    expect(screen.getByText('単体テスト作成')).toBeInTheDocument();
-    expect(screen.getByText('（未割当）')).toBeInTheDocument();
-  });
-
-  it 'Deleteボタンクリックで確認ダイアログが表示される' do
-    window.confirm = jest.fn(() => true);
-    const mockOnDelete = jest.fn();
-
-    render(
-      <FeatureCard
-        feature={mockFeature}
-        expanded={true}
-        onToggle={() => {}}
-        onUserStoryDelete={mockOnDelete}
-      />
-    );
-
-    const deleteButton = screen.getByText('Delete');
-    fireEvent.click(deleteButton);
-
-    expect(window.confirm).toHaveBeenCalled();
-  });
-});
+    "E2E（階層操作シナリオ）" : 5
+    "統合テスト（API連携）" : 15
+    "単体テスト（コンポーネント・ロジック）" : 80
 ```
 
-## 9. パフォーマンス最適化
+### 8.2 テストケース設計
+| テストレベル | 対象 | 主要テストケース | カバレッジ目標 |
+|-------------|------|------------------|----------------|
+| 単体テスト | コンポーネント・状態管理 | 表示・展開・削除・D&D | 95%以上 |
+| 統合テスト | API連携・データフロー | CRUD操作・階層更新 | 90%以上 |
+| E2Eテスト | ユーザーシナリオ | Feature→UserStory→Task操作 | 主要フロー100% |
 
-### 9.1 React.memo 活用
+## 9. 運用・保守設計
 
-```javascript
-// コンポーネントのメモ化
-export const FeatureCard = React.memo(({ feature, expanded, onToggle, ...props }) => {
-  // コンポーネント実装
-}, (prevProps, nextProps) => {
-  // カスタム比較関数
-  return prevProps.feature.issue.updated_on === nextProps.feature.issue.updated_on &&
-         prevProps.expanded === nextProps.expanded;
-});
+### 9.1 品質監視
+- **パフォーマンス監視**: コンポーネント描画時間・状態更新パフォーマンス測定
+- **操作品質監視**: 展開・折り畳み応答性・ドラッグ&ドロップ精度確認
+- **データ整合性監視**: 階層構造・状態同期の定期検証
+- **アクセシビリティ監視**: キーボード操作・スクリーンリーダー対応確認
 
-export const BaseItemCard = React.memo(({ item, type, onUpdate, onDelete }) => {
-  // コンポーネント実装
-}, (prevProps, nextProps) => {
-  return prevProps.item.id === nextProps.item.id &&
-         prevProps.item.updated_on === nextProps.item.updated_on;
-});
+### 9.2 保守性向上策
+```mermaid
+flowchart TD
+    A[保守性向上策] --> B[コンポーネント分離]
+    A --> C[状態管理統一]
+    A --> D[テスト自動化]
+    A --> E[ドキュメント更新]
+
+    B --> F[単一責任原則徹底]
+    B --> G[再利用可能設計]
+
+    C --> H[状態フロー明確化]
+    C --> I[副作用管理]
+
+    D --> J[回帰テスト自動実行]
+    D --> K[テストデータ管理]
+
+    E --> L[設計書実装同期]
+    E --> M[API仕様更新]
+
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
 ```
 
-### 9.2 Virtual Scrolling 対応
+### 9.3 スケーラビリティ対応
+- **大量データ対応**: Virtual Scrolling・Lazy Loading実装
+- **多言語対応**: i18n対応・文字列外部化
+- **テーマ対応**: CSS Custom Properties・Dark Mode対応
+- **機能拡張対応**: プラグインアーキテクチャ・Hook拡張点
 
-```javascript
-// 大量のFeatureCard表示時の仮想スクロール対応
-import { FixedSizeList as List } from 'react-window';
+## 10. 結論
 
-export const FeatureCardList = ({ features }) => {
-  const Row = ({ index, style }) => (
-    <div style={style}>
-      <FeatureCard
-        feature={features[index]}
-        expanded={expandedStates[features[index].issue.id] || false}
-        onToggle={(id) => handleToggle(id)}
-      />
-    </div>
-  );
+### 10.1 設計実現による価値
+本Feature Card設計により、以下の価値を実現する：
 
-  return (
-    <List
-      height={600}
-      itemCount={features.length}
-      itemSize={200}  // 折り畳み時の概算高さ
-    >
-      {Row}
-    </List>
-  );
-};
+- **直感的な階層UI**: Feature→UserStory→Task/Test/Bugの3階層構造で、プロジェクト進捗の視認性向上
+- **効率的な操作性**: 折り畳み・展開・ドラッグ&ドロップによる快適な管理体験
+- **データ整合性**: Redmine Issue階層との同期による正確な情報管理
+- **スケーラブル設計**: 大量データ・多機能拡張に対応可能なアーキテクチャ
+
+### 10.2 実装成功要因
+```mermaid
+mindmap
+  root((成功要因))
+    設計品質
+      ワイヤーフレーム準拠
+      責務分離徹底
+      状態管理統一
+      アクセシビリティ配慮
+    開発効率
+      コンポーネント再利用
+      TypeScript型安全性
+      自動テスト完備
+      継続的リファクタリング
+    運用品質
+      パフォーマンス監視
+      保守性確保
+      拡張性担保
+      ドキュメント同期
 ```
+
+### 10.3 継続的改善指針
+- **フィードバック駆動**: ユーザビリティテスト結果による継続的UI改善
+- **技術負債管理**: 定期的コードレビュー・リファクタリングによる品質維持
+- **機能拡張対応**: プラグインアーキテクチャによる柔軟な機能追加
+- **パフォーマンス最適化**: Virtual Scrolling・メモ化による大規模対応
 
 ---
 

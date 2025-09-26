@@ -1,7 +1,7 @@
 # 共通サービス サーバーサイド詳細設計書
 
 ## 🔗 関連ドキュメント
-- @vibes/specs/ui/shared_services_wireframe.drawio
+- @vibes/docs/logics/wireframe/kanban_ui_grid_layout.drawio (UI共通コンポーネント参考)
 - @vibes/rules/technical_architecture_standards.md
 - @vibes/logics/shared_components/shared_components_specification.md
 
