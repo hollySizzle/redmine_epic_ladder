@@ -1,6 +1,36 @@
 # frozen_string_literal: true
 
 module Kanban
+  # カスタム例外クラス群
+  class KanbanError < StandardError
+    attr_reader :details
+
+    def initialize(message = nil, details = {})
+      super(message)
+      @details = details
+    end
+  end
+
+  class PermissionDenied < KanbanError
+    attr_reader :permission, :resource
+
+    def initialize(permission = nil, resource = nil, message = nil)
+      @permission = permission
+      @resource = resource
+      super(message || "権限が不足しています: #{permission}")
+    end
+  end
+
+  class WorkflowViolation < KanbanError
+    attr_reader :current_status, :attempted_action, :suggested_actions
+
+    def initialize(current_status = nil, attempted_action = nil, suggested_actions = [], message = nil)
+      @current_status = current_status
+      @attempted_action = attempted_action
+      @suggested_actions = suggested_actions
+      super(message || "ワークフロー違反: #{attempted_action}")
+    end
+  end
   # 統一API基底コントローラー
   # API統合仕様書準拠の標準化されたレスポンス・エラーハンドリング提供
   class BaseApiController < ApplicationController

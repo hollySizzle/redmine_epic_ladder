@@ -50,6 +50,6 @@
       "**/coverage/lcov-report/**": true,
       "**/vibes/scripts/node_modules/**": true
     },
-    "terminal.integrated.cwd": "./"
+    "terminal.integrated.cwd": "/usr/src/redmine/plugins/redmine_release_kanban"
   }
 }
