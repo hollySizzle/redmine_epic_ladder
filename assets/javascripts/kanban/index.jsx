@@ -1,7 +1,7 @@
 // assets/javascripts/kanban/index.jsx
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { KanbanApp } from './KanbanApp';
+import { KanbanGridLayoutV2 } from './components/KanbanGridLayoutV2';
 
 // DOM読み込み完了後にReactアプリを初期化
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,10 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reactアプリをマウント
     const root = createRoot(container);
     root.render(
-      <KanbanApp
-        projectId={projectId}
+      <KanbanGridLayoutV2
+        projectId={parseInt(projectId, 10)}
         currentUser={currentUser}
-        apiBaseUrl={apiBaseUrl}
+        dragEnabled={true}
+        showStatistics={true}
+        enableFiltering={true}
       />
     );
   }

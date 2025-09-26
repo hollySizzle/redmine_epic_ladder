@@ -725,16 +725,6 @@ function buildCellCoordinates(cellData) {
   };
 }
 
-function rollbackOptimisticUpdate(data, updateId) {
-  // 楽観的更新のロールバック処理
-  // 実装簡略化のため現在のデータを返す
-  return data;
-}
 
-function applyRealTimeUpdate(currentData, updatePayload) {
-  // リアルタイム更新の適用処理
-  // 実装簡略化のため現在のデータを返す
-  return currentData;
-}
 
 export default KanbanGridLayoutV2;

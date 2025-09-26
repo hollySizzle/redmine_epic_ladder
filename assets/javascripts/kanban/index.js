@@ -4,7 +4,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { ReleaseKanbanApp } from './components/ReleaseKanbanApp';
+import { KanbanGridLayoutV2 } from './components/KanbanGridLayoutV2';
 
 // CSS imports (if using CSS modules or styled-components)
 // import './styles/kanban.css';
@@ -57,10 +57,13 @@ function initializeReleaseKanban() {
   // React アプリケーションをマウント
   try {
     ReactDOM.render(
-      React.createElement(ReleaseKanbanApp, {
+      React.createElement(KanbanGridLayoutV2, {
         projectId: parseInt(projectId, 10),
         currentUser: currentUser,
-        initialData: parsedInitialData
+        initialData: parsedInitialData,
+        dragEnabled: true,
+        showStatistics: true,
+        enableFiltering: true
       }),
       kanbanContainer
     );
