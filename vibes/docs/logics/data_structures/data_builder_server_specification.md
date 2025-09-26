@@ -1,823 +1,445 @@
-# データビルダー サーバーサイド実装仕様
+# データビルダー サーバーサイド詳細設計書
 
-## 概要
-Kanban UI用データ構築サービス。Issue階層データ変換、統計計算、キャッシュ戦略、フィルタリング、ソート処理、パフォーマンス最適化。
+## 🔗 関連ドキュメント
+- @vibes/specs/ui/data_structures_wireframe.drawio
+- @vibes/rules/technical_architecture_standards.md
+- @vibes/logics/data_structures/data_structures_specification.md
 
-## 基底データビルダークラス
+## 1. 設計概要
 
-### 抽象データビルダー
+### 1.1 設計目的・背景
+**なぜこのデータビルダー実装が必要なのか**
+- ビジネス要件：複雑なIssue階層データの効率的な変換・集約・配信
+- ユーザー価値：高速なデータ表示、リアルタイム統計、柔軟なフィルタリング機能
+- システム価値：N+1クエリ解消、キャッシュ最適化、スケーラブルなデータ処理アーキテクチャ
+
+### 1.2 設計方針
+**どのようなアプローチで実現するか**
+- 主要設計思想：Builder パターン、Template Method パターン、Factory パターン
+- 技術選択理由：Rails Service Object、Active Record最適化、Redis キャッシング
+- 制約・前提条件：大規模データ対応、リアルタイム性、メモリ効率、拡張性
+
+## 2. 機能要求仕様
+
+### 2.1 主要機能
+```mermaid
+mindmap
+  root((データビルダー))
+    階層データ構築
+      Issue階層読み込み
+      N+1クエリ最適化
+      関連データ事前読み込み
+      効率的なJOIN処理
+    データ変換・集約
+      シリアライゼーション
+      統計計算
+      メタデータ生成
+      視覚表現データ
+    フィルタリング・ソート
+      動的フィルタ適用
+      複合条件処理
+      カスタムソート
+      ページング対応
+    キャッシュ戦略
+      多層キャッシュ
+      自動無効化
+      ウォームアップ
+      パフォーマンス監視
+    専用ビルダー
+      Gridデータ構築
+      Issue詳細構築
+      統計データ構築
+      Timeline構築
+```
+
+### 2.2 機能詳細
+| 機能ID | 機能名 | 説明 | 優先度 | 受容条件 |
+|--------|--------|------|---------|----------|
+| DB001 | 階層データ効率構築 | Issue階層の最適化された読み込み・変換 | High | N+1クエリゼロ、3秒以内構築 |
+| DB002 | 動的フィルタリング | 複数条件の組み合わせフィルタ処理 | High | 10種類以上フィルタ対応、1秒以内適用 |
+| DB003 | リアルタイム統計 | プロジェクト・Epic・機能別統計計算 | Medium | 50指標対応、2秒以内計算 |
+| DB004 | 多層キャッシュ | Redis・メモリキャッシュの効率的活用 | High | 90%キャッシュヒット率、自動無効化 |
+| DB005 | 拡張可能アーキテクチャ | 新しいビルダータイプの容易な追加 | Medium | Factory パターン、プラグイン対応 |
+
+## 3. UI/UX設計仕様
+
+### 3.1 データ構築処理フロー
+```mermaid
+graph TD
+    A[データ要求] --> B[BaseDataBuilder]
+    B --> C[権限チェック]
+    C --> D[キャッシュ確認]
+    D --> E{キャッシュヒット}
+    E -->|Hit| F[キャッシュデータ返却]
+    E -->|Miss| G[データ構築開始]
+    G --> H[Issue階層読み込み]
+    H --> I[フィルタ適用]
+    I --> J[データ変換・集約]
+    J --> K[統計計算]
+    K --> L[メタデータ生成]
+    L --> M[結果キャッシュ]
+    M --> N[構築完了データ返却]
+
+    style A fill:#e1f5fe
+    style H fill:#f3e5f5
+    style J fill:#f3e5f5
+```
+
+### 3.2 階層データ読み込み戦略
+```mermaid
+stateDiagram-v2
+    [*] --> 階層読み込み開始
+    階層読み込み開始 --> Epic取得: 最上位階層特定
+    Epic取得 --> 子データ事前読み込み: includes設定
+    子データ事前読み込み --> 関連データ結合: 一括JOIN処理
+    関連データ結合 --> フィルタ適用: 条件絞り込み
+    フィルタ適用 --> 階層構造構築: parent-child関係構築
+    階層構造構築 --> 完了
+    完了 --> [*]
+
+    Epic取得 --> エラー処理: データ不整合
+    子データ事前読み込み --> エラー処理: メモリ不足
+    エラー処理 --> [*]
+```
+
+### 3.3 統計計算パイプライン
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant SDB as StatisticsDataBuilder
+    participant Cache as Redis Cache
+    participant DB as Database
+    participant Calc as StatisticsCalculator
+
+    C->>SDB: build_statistics()
+    SDB->>Cache: check_statistics_cache
+    alt Cache Hit
+        Cache->>SDB: cached_statistics
+    else Cache Miss
+        SDB->>DB: load_project_issues
+        DB->>SDB: raw_issue_data
+        SDB->>Calc: calculate_overview_stats
+        SDB->>Calc: calculate_trend_analysis
+        SDB->>Calc: calculate_velocity_metrics
+        SDB->>Cache: store_calculated_stats
+    end
+    SDB->>C: complete_statistics_data
+```
+
+## 4. データ設計
+
+### 4.1 データビルダー階層構造
+```mermaid
+erDiagram
+    BASE_DATA_BUILDER {
+        project_id integer FK
+        user_id integer FK
+        options json
+        cache_enabled boolean
+        cache_key string
+        performance_metrics json
+    }
+
+    KANBAN_GRID_BUILDER {
+        id integer PK
+        epic_batch_size integer
+        include_closed boolean
+        filter_options json
+        column_configuration json
+    }
+
+    ISSUE_DETAIL_BUILDER {
+        id integer PK
+        issue_id integer FK
+        include_activity boolean
+        include_relations boolean
+        activity_limit integer
+    }
+
+    STATISTICS_BUILDER {
+        id integer PK
+        trend_period string
+        velocity_period integer
+        health_score_weights json
+        bottleneck_thresholds json
+    }
+
+    BUILDER_CACHE {
+        cache_key string PK
+        builder_type string
+        project_id integer FK
+        user_id integer FK
+        data_hash string
+        expires_at datetime
+        created_at datetime
+    }
+
+    BASE_DATA_BUILDER ||--o{ KANBAN_GRID_BUILDER : "extends"
+    BASE_DATA_BUILDER ||--o{ ISSUE_DETAIL_BUILDER : "extends"
+    BASE_DATA_BUILDER ||--o{ STATISTICS_BUILDER : "extends"
+    BUILDER_CACHE }|--|| PROJECTS : "project"
+    BUILDER_CACHE }|--|| USERS : "user"
+```
+
+### 4.2 データ処理フロー
+```mermaid
+flowchart LR
+    A[生Issue Data] --> B[フィルタリング処理]
+    B --> C[階層構造構築]
+    C --> D[関連データ結合]
+    D --> E[統計計算]
+    E --> F[シリアライゼーション]
+    F --> G[メタデータ付加]
+    G --> H[キャッシュ保存]
+
+    H --> I[フロントエンド配信]
+    I --> J[UI表示]
+    J --> K[ユーザー操作]
+    K --> L[データ更新要求]
+    L --> M[キャッシュ無効化]
+    M --> A
+
+    N[バックグラウンド処理] --> O[統計再計算]
+    O --> P[キャッシュウォームアップ]
+    P --> H
+```
+
+## 5. アーキテクチャ設計
+
+### 5.1 システム構成
+```mermaid
+C4Context
+    Person(user, "ユーザー", "データ要求者")
+    System(builders, "データビルダーシステム", "階層データ構築・統計処理")
+
+    System_Ext(redmine, "Redmine Core", "Issue・Project・User管理")
+    SystemDb(db, "Database", "PostgreSQL/MySQL")
+    SystemDb(redis, "Redis Cache", "階層データ・統計キャッシュ")
+    System_Ext(bg, "Background Jobs", "統計計算・キャッシュ更新")
+
+    Rel(user, builders, "データ構築要求")
+    Rel(builders, redmine, "基本データ取得")
+    Rel(builders, db, "複雑クエリ・統計処理")
+    Rel(builders, redis, "高速キャッシュアクセス")
+    Rel(builders, bg, "非同期統計更新")
+```
+
+### 5.2 ビルダー構成
+```mermaid
+C4Component
+    Component(base, "BaseDataBuilder", "Abstract Ruby Class", "共通機能・テンプレートメソッド")
+    Component(grid, "KanbanGridDataBuilder", "Concrete Ruby Class", "グリッド用データ構築")
+    Component(detail, "IssueDetailDataBuilder", "Concrete Ruby Class", "Issue詳細データ構築")
+    Component(stats, "StatisticsDataBuilder", "Concrete Ruby Class", "統計・分析データ構築")
+    Component(factory, "DataBuilderFactory", "Ruby Factory", "ビルダーインスタンス生成")
+
+    Rel(grid, base, "継承・共通機能利用")
+    Rel(detail, base, "継承・共通機能利用")
+    Rel(stats, base, "継承・共通機能利用")
+    Rel(factory, grid, "インスタンス生成")
+    Rel(factory, detail, "インスタンス生成")
+    Rel(factory, stats, "インスタンス生成")
+```
+
+## 6. インターフェース設計
+
+### 6.1 統一データビルダー インターフェース
 ```ruby
-# app/services/kanban/base_data_builder.rb
+# データビルダー統一インターフェース（疑似コード）
 module Kanban
   class BaseDataBuilder
-    include ActiveSupport::Benchmarkable
-
+    # 共通初期化・設定
     def initialize(project, user, options = {})
       @project = project
       @user = user
       @options = options.with_indifferent_access
-      @cache_enabled = @options[:cache_enabled] != false
-      @logger = Rails.logger
+      validate_permissions!
     end
 
+    # メイン構築メソッド（Template Method）
     def build
-      benchmark "#{self.class.name}#build" do
-        validate_permissions!
+      return cached_result if cache_enabled? && cached_result_exists?
 
-        if @cache_enabled
-          cache_key = generate_cache_key
-          Rails.cache.fetch(cache_key, expires_in: cache_expiry) do
-            build_data
-          end
-        else
-          build_data
-        end
+      result = benchmark("#{self.class.name}#build_data") do
+        build_data # サブクラスで実装
       end
+
+      cache_result(result) if cache_enabled?
+      result
     end
 
+    # サブクラスで実装必須
     protected
 
     def build_data
-      raise NotImplementedError, "#{self.class.name} must implement #build_data"
+      raise NotImplementedError, "Subclasses must implement #build_data"
     end
 
-    def validate_permissions!
-      unless @user.allowed_to?(:view_kanban, @project)
-        raise Kanban::PermissionDenied.new('Kanban表示権限がありません')
-      end
-    end
-
-    def generate_cache_key
-      key_parts = [
-        'kanban',
-        self.class.name.demodulize.underscore,
-        @project.id,
-        @user.id,
-        Digest::MD5.hexdigest(@options.to_json),
-        @project.issues.maximum(:updated_on)&.to_i || 0
-      ]
-      key_parts.join(':')
-    end
-
-    def cache_expiry
-      @options[:cache_expiry] || 10.minutes
-    end
-
+    # 共通ユーティリティ
     def serialize_issue(issue, options = {})
       Kanban::SerializerService.serialize_issue(issue, options)
     end
 
-    def filter_issues(scope)
-      scope = apply_version_filter(scope)
-      scope = apply_assignee_filter(scope)
-      scope = apply_status_filter(scope)
-      scope = apply_tracker_filter(scope)
-      scope = apply_date_filter(scope)
-      scope
-    end
-
-    def apply_version_filter(scope)
-      return scope unless @options[:version_filter].present?
-
-      version_ids = Array(@options[:version_filter])
-      scope.where(fixed_version_id: version_ids)
-    end
-
-    def apply_assignee_filter(scope)
-      return scope unless @options[:assignee_filter].present?
-
-      assignee_ids = Array(@options[:assignee_filter])
-      scope.where(assigned_to_id: assignee_ids)
-    end
-
-    def apply_status_filter(scope)
-      return scope unless @options[:status_filter].present?
-
-      status_ids = Array(@options[:status_filter])
-      scope.where(status_id: status_ids)
-    end
-
-    def apply_tracker_filter(scope)
-      return scope unless @options[:tracker_filter].present?
-
-      tracker_names = Array(@options[:tracker_filter])
-      scope.joins(:tracker).where(trackers: { name: tracker_names })
-    end
-
-    def apply_date_filter(scope)
-      scope = scope.where('created_on >= ?', Date.parse(@options[:created_after])) if @options[:created_after].present?
-      scope = scope.where('created_on <= ?', Date.parse(@options[:created_before])) if @options[:created_before].present?
-      scope = scope.where('updated_on >= ?', Date.parse(@options[:updated_after])) if @options[:updated_after].present?
-      scope = scope.where('updated_on <= ?', Date.parse(@options[:updated_before])) if @options[:updated_before].present?
-      scope
+    def apply_filters(scope)
+      # 複数フィルターの統一適用
     end
   end
-end
-```
 
-## 主要データビルダー実装
-
-### Kanbanグリッドデータビルダー
-```ruby
-# app/services/kanban/kanban_grid_data_builder.rb
-module Kanban
+  # 具体的なビルダー例
   class KanbanGridDataBuilder < BaseDataBuilder
-    BATCH_SIZE = 100
-
-    protected
-
     def build_data
       {
         grid_structure: build_grid_structure,
         metadata: build_metadata,
         statistics: build_statistics,
-        performance_metrics: build_performance_metrics
+        performance_metrics: @performance_metrics
       }
     end
 
     private
 
     def build_grid_structure
-      benchmark 'build_grid_structure' do
-        epics = load_epics_with_hierarchy
-        versions = load_active_versions
-        columns = load_column_configuration
+      epics = load_epics_with_hierarchy
+      versions = load_active_versions
 
-        {
-          rows: build_epic_rows(epics, versions, columns),
-          columns: columns,
-          versions: versions.map { |v| serialize_version(v) }
-        }
-      end
-    end
-
-    def load_epics_with_hierarchy
-      benchmark 'load_epics_with_hierarchy' do
-        epic_scope = @project.issues
-                            .includes(epic_includes)
-                            .joins(:tracker)
-                            .where(trackers: { name: 'Epic' })
-
-        epic_scope = filter_issues(epic_scope)
-        epic_scope = apply_epic_specific_filters(epic_scope)
-
-        epics = epic_scope.order(:id).to_a
-
-        # 子要素を効率的に読み込み
-        preload_epic_children(epics)
-
-        epics
-      end
-    end
-
-    def epic_includes
-      [
-        :tracker, :status, :assigned_to, :fixed_version, :priority,
-        { children: [
-          :tracker, :status, :assigned_to, :fixed_version, :priority,
-          { children: [:tracker, :status, :assigned_to, :fixed_version, :priority] }
-        ]}
-      ]
-    end
-
-    def preload_epic_children(epics)
-      return if epics.empty?
-
-      # すべての子Issueを一括読み込み
-      all_child_ids = epics.flat_map { |epic| collect_all_child_ids(epic) }
-
-      if all_child_ids.any?
-        child_issues = Issue.includes(:tracker, :status, :assigned_to, :fixed_version, :priority)
-                           .where(id: all_child_ids)
-                           .index_by(&:id)
-
-        # 階層構造を効率的に構築
-        build_hierarchy_associations(epics, child_issues)
-      end
-    end
-
-    def collect_all_child_ids(issue, collected_ids = Set.new)
-      issue.children.each do |child|
-        next if collected_ids.include?(child.id)
-        collected_ids.add(child.id)
-        collect_all_child_ids(child, collected_ids)
-      end
-      collected_ids.to_a
-    end
-
-    def build_epic_rows(epics, versions, columns)
-      benchmark 'build_epic_rows' do
-        epics.map.with_index do |epic, index|
-          {
-            epic: serialize_epic_with_context(epic, index),
-            cells: build_epic_cells(epic, versions, columns)
-          }
-        end
-      end
-    end
-
-    def serialize_epic_with_context(epic, index)
-      base_data = serialize_issue(epic, include_hierarchy: true)
-      base_data.merge({
-        row_index: index,
-        feature_count: count_features(epic),
-        total_user_stories: count_user_stories(epic),
-        completion_percentage: calculate_epic_completion(epic),
-        last_activity: epic.descendants.maximum(:updated_on) || epic.updated_on
-      })
-    end
-
-    def build_epic_cells(epic, versions, columns)
-      versions.map do |version|
-        features_in_cell = find_features_for_cell(epic, version)
-
-        {
-          epic_id: epic.id,
-          version_id: version.id,
-          position: { row: epic.id, column: version.id },
-          features: build_cell_features(features_in_cell, columns),
-          statistics: calculate_cell_statistics(features_in_cell),
-          interaction_config: build_cell_interaction_config(epic, version)
-        }
-      end
-    end
-
-    def find_features_for_cell(epic, version)
-      features = epic.children.select { |child| child.tracker.name == 'Feature' }
-
-      features.select do |feature|
-        feature_matches_version?(feature, version)
-      end
-    end
-
-    def feature_matches_version?(feature, version)
-      # Direct version assignment
-      return true if feature.fixed_version == version
-
-      # Child UserStory version assignment
-      feature.children.any? do |child|
-        child.tracker.name == 'UserStory' && child.fixed_version == version
-      end
-    end
-
-    def build_cell_features(features, columns)
-      features.map do |feature|
-        current_column = determine_feature_column(feature, columns)
-
-        {
-          feature: serialize_issue(feature, include_relations: true),
-          current_column: current_column,
-          user_stories: build_feature_user_stories(feature),
-          visual_indicators: calculate_visual_indicators(feature),
-          drag_config: build_drag_configuration(feature)
-        }
-      end
-    end
-
-    def build_feature_user_stories(feature)
-      user_stories = feature.children.select { |child| child.tracker.name == 'UserStory' }
-
-      user_stories.map do |us|
-        {
-          issue: serialize_issue(us),
-          child_items: build_user_story_children(us),
-          completion_status: calculate_user_story_completion(us)
-        }
-      end
-    end
-
-    def build_user_story_children(user_story)
-      children = user_story.children.group_by { |child| child.tracker.name }
-
-      {
-        tasks: (children['Task'] || []).map { |task| serialize_issue(task) },
-        tests: (children['Test'] || []).map { |test| serialize_issue(test) },
-        bugs: (children['Bug'] || []).map { |bug| serialize_issue(bug) }
-      }
-    end
-
-    def build_metadata
-      {
-        project: serialize_project_metadata,
-        user_permissions: calculate_user_permissions,
-        grid_configuration: load_grid_configuration,
-        filter_options: build_filter_options,
-        last_build_time: Time.zone.now.iso8601
-      }
-    end
-
-    def load_grid_configuration
-      {
-        column_definitions: KanbanColumnConfig.for_project(@project),
-        tracker_hierarchy: TrackerHierarchy.for_project(@project),
-        workflow_rules: WorkflowRules.for_project(@project),
-        drag_drop_rules: DragDropRules.for_project(@project)
-      }
-    end
-
-    def build_filter_options
-      {
-        versions: @project.versions.open.pluck(:id, :name),
-        assignees: @project.assignable_users.active.pluck(:id, :name),
-        statuses: @project.rolled_up_statuses.pluck(:id, :name),
-        trackers: @project.trackers.pluck(:id, :name)
-      }
-    end
-
-    def build_statistics
-      all_issues = @project.issues.joins(:tracker)
-      epic_issues = all_issues.where(trackers: { name: 'Epic' })
-      feature_issues = all_issues.where(trackers: { name: 'Feature' })
-
-      {
-        overview: build_overview_statistics(all_issues),
-        by_tracker: build_tracker_statistics(all_issues),
-        by_status: build_status_statistics(all_issues),
-        by_version: build_version_statistics,
-        trends: build_trend_statistics,
-        completion_analysis: build_completion_analysis
-      }
-    end
-
-    def build_overview_statistics(all_issues)
-      {
-        total_issues: all_issues.count,
-        total_epics: all_issues.joins(:tracker).where(trackers: { name: 'Epic' }).count,
-        total_features: all_issues.joins(:tracker).where(trackers: { name: 'Feature' }).count,
-        completion_ratio: calculate_overall_completion_ratio,
-        velocity: calculate_velocity_metrics
-      }
-    end
-
-    def build_performance_metrics
-      {
-        query_time: @query_time || 0,
-        serialization_time: @serialization_time || 0,
-        cache_hit_ratio: calculate_cache_hit_ratio,
-        total_build_time: @total_build_time || 0
-      }
-    end
-
-    # ヘルパーメソッド続き...
-    def count_features(epic)
-      epic.children.count { |child| child.tracker.name == 'Feature' }
-    end
-
-    def count_user_stories(epic)
-      epic.descendants.count { |desc| desc.tracker.name == 'UserStory' }
-    end
-
-    def calculate_epic_completion(epic)
-      user_stories = epic.descendants.select { |desc| desc.tracker.name == 'UserStory' }
-      return 0 if user_stories.empty?
-
-      completed = user_stories.count(&:closed?)
-      (completed.to_f / user_stories.size * 100).round(1)
+      # 2次元グリッド構築ロジック
     end
   end
 end
 ```
 
-### Issue詳細データビルダー
+### 6.2 ファクトリーパターン活用
+```mermaid
+sequenceDiagram
+    participant C as Controller
+    participant F as DataBuilderFactory
+    participant GB as GridBuilder
+    participant DB as DetailBuilder
+    participant SB as StatsBuilder
+
+    C->>F: create(:grid, project, user, options)
+    F->>GB: new(project, user, options)
+    GB->>C: grid_builder_instance
+
+    C->>F: create(:issue_detail, issue, user, options)
+    F->>DB: new(issue, user, options)
+    DB->>C: detail_builder_instance
+
+    C->>F: create(:statistics, project, user, options)
+    F->>SB: new(project, user, options)
+    SB->>C: stats_builder_instance
+
+    C->>GB: build()
+    GB->>C: grid_data
+
+    C->>DB: build()
+    DB->>C: issue_detail_data
+
+    C->>SB: build()
+    SB->>C: statistics_data
+```
+
+## 7. 非機能要求
+
+### 7.1 パフォーマンス要求
+| 項目 | 要求値 | 測定方法 |
+|------|---------|----------|
+| グリッドデータ構築 | 3秒以内 | 100 Epic × 1000 Issue規模 |
+| N+1クエリ発生 | ゼロ件必須 | Rails Query ログ監視 |
+| メモリ使用量 | 500MB以内 | Ruby プロファイラ測定 |
+| キャッシュヒット率 | 90%以上 | Redis 統計・APM監視 |
+
+### 7.2 スケーラビリティ要求
+- **データ量対応**: 10,000 Issue、100 Epic、50 Version同時処理
+- **同時ユーザー**: 100ユーザー並列データ構築要求
+- **メモリ効率**: バッチ処理・ストリーミング対応
+
+## 8. 実装指針
+
+### 8.1 技術スタック
+- **フレームワーク**: Ruby on Rails Service Object パターン
+- **ORM最適化**: Active Record includes/joins最適化、Raw SQL併用
+- **キャッシュ**: Redis (階層キャッシュ・統計キャッシュ・メタデータ)
+- **バックグラウンド処理**: Sidekiq (統計更新・キャッシュウォームアップ)
+- **監視**: Rails Benchmark・New Relic・カスタムメトリクス
+
+### 8.2 実装パターン
 ```ruby
-# app/services/kanban/issue_detail_data_builder.rb
-module Kanban
-  class IssueDetailDataBuilder < BaseDataBuilder
-    def initialize(issue, user, options = {})
-      @issue = issue
-      super(issue.project, user, options)
-    end
+# 効率的な階層データ読み込みパターン（疑似コード）
+class KanbanGridDataBuilder < BaseDataBuilder
+  # 1. N+1クエリ回避のincludes設定
+  def epic_includes
+    [
+      :tracker, :status, :assigned_to, :fixed_version,
+      { children: [
+        :tracker, :status, :assigned_to, :fixed_version,
+        { children: [:tracker, :status] }
+      ]}
+    ]
+  end
 
-    protected
+  # 2. バッチ処理によるメモリ効率化
+  def load_epics_with_hierarchy
+    epics = @project.issues
+                    .includes(epic_includes)
+                    .joins(:tracker)
+                    .where(trackers: { name: 'Epic' })
+                    .find_in_batches(batch_size: BATCH_SIZE)
 
-    def build_data
-      {
-        issue: build_issue_data,
-        hierarchy_context: build_hierarchy_context,
-        relations: build_relations_data,
-        activity: build_activity_data,
-        permissions: build_permissions_data
-      }
-    end
+    # 階層構造を効率的に構築
+    build_hierarchy_efficiently(epics)
+  end
 
-    private
+  # 3. キャッシュ戦略の実装
+  def build_with_cache
+    cache_key = generate_hierarchical_cache_key
 
-    def build_issue_data
-      base_data = serialize_issue(@issue, include_description: true, include_relations: true)
-
-      base_data.merge({
-        custom_fields: serialize_custom_fields,
-        attachments: serialize_attachments,
-        watchers: serialize_watchers,
-        time_entries: serialize_time_entries,
-        changesets: serialize_changesets
-      })
-    end
-
-    def build_hierarchy_context
-      {
-        root: @issue.root ? serialize_issue(@issue.root) : nil,
-        parent: @issue.parent ? serialize_issue(@issue.parent) : nil,
-        children: @issue.children.map { |child| serialize_issue(child) },
-        siblings: load_and_serialize_siblings,
-        ancestry_path: build_ancestry_path,
-        descendants_summary: build_descendants_summary
-      }
-    end
-
-    def load_and_serialize_siblings
-      return [] unless @issue.parent
-
-      @issue.parent.children
-                   .where.not(id: @issue.id)
-                   .includes(:tracker, :status, :assigned_to)
-                   .map { |sibling| serialize_issue(sibling) }
-    end
-
-    def build_ancestry_path
-      path = []
-      current = @issue.parent
-
-      while current
-        path.unshift(serialize_issue(current))
-        current = current.parent
-        break if path.size > 10 # 無限ループ防止
-      end
-
-      path
-    end
-
-    def build_descendants_summary
-      descendants = @issue.descendants.includes(:tracker, :status)
-      grouped = descendants.group_by { |desc| desc.tracker.name }
-
-      grouped.transform_values do |issues|
-        {
-          total: issues.size,
-          by_status: issues.group_by { |i| i.status.name }.transform_values(&:size),
-          completion_ratio: issues.empty? ? 0 : (issues.count(&:closed?).to_f / issues.size * 100).round(1)
-        }
-      end
-    end
-
-    def build_relations_data
-      {
-        blocks: build_blocking_relations,
-        blocked_by: build_blocked_by_relations,
-        relates: build_related_relations,
-        duplicates: build_duplicate_relations,
-        follows: build_follows_relations,
-        precedes: build_precedes_relations
-      }
-    end
-
-    def build_blocking_relations
-      @issue.relations_from
-             .where(relation_type: 'blocks')
-             .includes(:issue_to)
-             .map do |relation|
-        {
-          id: relation.id,
-          target_issue: serialize_issue(relation.issue_to),
-          delay: relation.delay
-        }
-      end
-    end
-
-    def build_activity_data
-      return {} unless @options[:include_activity]
-
-      journals = @issue.journals
-                       .includes(:user, :details)
-                       .order(created_on: :desc)
-                       .limit(@options[:activity_limit] || 50)
-
-      {
-        journals: serialize_journals(journals),
-        recent_changes: build_recent_changes_summary,
-        activity_statistics: build_activity_statistics
-      }
-    end
-
-    def serialize_journals(journals)
-      journals.map do |journal|
-        {
-          id: journal.id,
-          user: journal.user ? { id: journal.user.id, name: journal.user.name } : nil,
-          created_on: journal.created_on.iso8601,
-          notes: journal.notes,
-          details: serialize_journal_details(journal.details)
-        }
-      end
-    end
-
-    def serialize_journal_details(details)
-      details.map do |detail|
-        {
-          property: detail.property,
-          prop_key: detail.prop_key,
-          old_value: detail.old_value,
-          value: detail.value,
-          formatted_change: format_journal_detail(detail)
-        }
-      end
-    end
-
-    def build_permissions_data
-      {
-        can_edit: @user.allowed_to?(:edit_issues, @project),
-        can_add_notes: @user.allowed_to?(:add_issue_notes, @project),
-        can_change_status: can_change_status?,
-        can_assign_version: @user.allowed_to?(:manage_versions, @project),
-        can_delete: @user.allowed_to?(:delete_issues, @project),
-        can_add_watchers: @user.allowed_to?(:add_issue_watchers, @project),
-        available_transitions: calculate_available_transitions
-      }
-    end
-
-    def calculate_available_transitions
-      return [] unless @user.allowed_to?(:edit_issues, @project)
-
-      WorkflowPermission
-        .where(
-          tracker_id: @issue.tracker_id,
-          old_status_id: @issue.status_id,
-          role_id: @user.roles_for_project(@project).pluck(:id)
-        )
-        .includes(:new_status)
-        .map do |transition|
-          {
-            id: transition.new_status.id,
-            name: transition.new_status.name,
-            color: transition.new_status.color,
-            is_closed: transition.new_status.is_closed?
-          }
-        end
+    Rails.cache.fetch(cache_key, expires_in: 15.minutes) do
+      benchmark('grid_data_build') { build_data }
     end
   end
 end
 ```
 
-### 統計データビルダー
-```ruby
-# app/services/kanban/statistics_data_builder.rb
-module Kanban
-  class StatisticsDataBuilder < BaseDataBuilder
-    TREND_PERIODS = %w[daily weekly monthly].freeze
-    DEFAULT_PERIOD = 30.days
+### 8.3 パフォーマンス最適化戦略
+```mermaid
+flowchart TD
+    A[データ要求] --> B{キャッシュ確認}
+    B -->|Hit| C[キャッシュデータ返却]
+    B -->|Miss| D[効率クエリ実行]
 
-    protected
+    D --> E[includes最適化]
+    E --> F[バッチ処理]
+    F --> G[メモリ監視]
+    G --> H{メモリ制限}
+    H -->|OK| I[データ変換処理]
+    H -->|NG| J[ガベージコレクション]
+    J --> I
 
-    def build_data
-      {
-        overview: build_overview_statistics,
-        trends: build_trend_analysis,
-        performance: build_performance_metrics,
-        completion: build_completion_analysis,
-        bottlenecks: build_bottleneck_analysis,
-        velocity: build_velocity_metrics
-      }
-    end
-
-    private
-
-    def build_overview_statistics
-      issues = load_project_issues
-      epics = issues.select { |i| i.tracker.name == 'Epic' }
-      features = issues.select { |i| i.tracker.name == 'Feature' }
-
-      {
-        total_issues: issues.size,
-        by_tracker: issues.group_by { |i| i.tracker.name }.transform_values(&:size),
-        by_status: issues.group_by { |i| i.status.name }.transform_values(&:size),
-        completion_ratios: calculate_completion_ratios(issues),
-        active_vs_closed: calculate_active_vs_closed(issues),
-        assignment_distribution: calculate_assignment_distribution(issues)
-      }
-    end
-
-    def build_trend_analysis
-      period = @options[:period]&.to_sym || :monthly
-      range = calculate_date_range
-
-      case period
-      when :daily
-        build_daily_trends(range)
-      when :weekly
-        build_weekly_trends(range)
-      when :monthly
-        build_monthly_trends(range)
-      else
-        build_monthly_trends(range)
-      end
-    end
-
-    def build_daily_trends(range)
-      trends = {}
-      range.each do |date|
-        day_start = date.beginning_of_day
-        day_end = date.end_of_day
-
-        trends[date.iso8601] = {
-          created: count_issues_created_in_period(day_start, day_end),
-          closed: count_issues_closed_in_period(day_start, day_end),
-          updated: count_issues_updated_in_period(day_start, day_end),
-          velocity: calculate_daily_velocity(day_start, day_end)
-        }
-      end
-      trends
-    end
-
-    def build_completion_analysis
-      issues_by_epic = load_project_issues.group_by(&:root)
-
-      epic_analysis = issues_by_epic.map do |epic, epic_issues|
-        features = epic_issues.select { |i| i.tracker.name == 'Feature' }
-        user_stories = epic_issues.select { |i| i.tracker.name == 'UserStory' }
-
-        {
-          epic: serialize_issue(epic),
-          feature_completion: calculate_feature_completion(features),
-          user_story_completion: calculate_user_story_completion(user_stories),
-          overall_progress: calculate_epic_progress(epic_issues),
-          estimated_completion: estimate_completion_date(epic_issues),
-          blockers: identify_epic_blockers(epic_issues)
-        }
-      end
-
-      {
-        by_epic: epic_analysis,
-        project_health: calculate_project_health_score,
-        risk_indicators: identify_risk_indicators
-      }
-    end
-
-    def build_bottleneck_analysis
-      status_transitions = analyze_status_transitions
-      assignment_patterns = analyze_assignment_patterns
-      version_patterns = analyze_version_patterns
-
-      {
-        status_bottlenecks: identify_status_bottlenecks(status_transitions),
-        assignment_bottlenecks: identify_assignment_bottlenecks(assignment_patterns),
-        version_bottlenecks: identify_version_bottlenecks(version_patterns),
-        recommendations: generate_bottleneck_recommendations
-      }
-    end
-
-    def build_velocity_metrics
-      period_days = (@options[:velocity_period] || 30).to_i
-      end_date = Date.current
-      start_date = end_date - period_days.days
-
-      completed_issues = @project.issues
-                                .joins(:status)
-                                .where(issue_statuses: { is_closed: true })
-                                .where(closed_on: start_date..end_date)
-
-      {
-        period: { start: start_date.iso8601, end: end_date.iso8601 },
-        total_completed: completed_issues.count,
-        by_tracker: completed_issues.joins(:tracker).group('trackers.name').count,
-        average_daily: (completed_issues.count.to_f / period_days).round(2),
-        story_points: calculate_story_points_velocity(completed_issues),
-        cycle_time: calculate_average_cycle_time(completed_issues),
-        throughput_trend: calculate_throughput_trend(start_date, end_date)
-      }
-    end
-
-    # ヘルパーメソッド
-    def load_project_issues
-      @project.issues
-              .includes(:tracker, :status, :assigned_to, :fixed_version, :priority)
-              .to_a
-    end
-
-    def calculate_completion_ratios(issues)
-      total = issues.size
-      return {} if total.zero?
-
-      closed_count = issues.count(&:closed?)
-
-      {
-        overall: (closed_count.to_f / total * 100).round(1),
-        by_tracker: issues.group_by { |i| i.tracker.name }.transform_values do |tracker_issues|
-          tracker_total = tracker_issues.size
-          tracker_closed = tracker_issues.count(&:closed?)
-          (tracker_closed.to_f / tracker_total * 100).round(1)
-        end
-      }
-    end
-
-    def calculate_project_health_score
-      issues = load_project_issues
-      total_score = 0
-      max_score = 0
-
-      # 完了率スコア (40%)
-      completion_ratio = issues.count(&:closed?).to_f / issues.size
-      total_score += completion_ratio * 40
-      max_score += 40
-
-      # 期限遵守スコア (30%)
-      overdue_ratio = calculate_overdue_ratio(issues)
-      total_score += (1 - overdue_ratio) * 30
-      max_score += 30
-
-      # アクティビティスコア (30%)
-      activity_score = calculate_activity_score(issues)
-      total_score += activity_score * 30
-      max_score += 30
-
-      (total_score / max_score * 100).round(1)
-    end
-  end
-end
+    I --> K[統計計算]
+    K --> L[結果キャッシュ保存]
+    L --> M[パフォーマンスメトリクス記録]
+    M --> N[データ返却]
 ```
 
-## ファクトリーパターン実装
+## 9. テスト設計
 
-### データビルダーファクトリー
-```ruby
-# app/services/kanban/data_builder_factory.rb
-module Kanban
-  class DataBuilderFactory
-    BUILDER_TYPES = {
-      grid: KanbanGridDataBuilder,
-      issue_detail: IssueDetailDataBuilder,
-      statistics: StatisticsDataBuilder,
-      feature_card: FeatureCardDataBuilder,
-      version_timeline: VersionTimelineDataBuilder
-    }.freeze
+テスト戦略・ケース設計・実装については以下を参照：
+- @vibes/rules/testing/server_side_testing_strategy.md
+- @vibes/rules/testing/data_builder_server_test_specification.md
 
-    def self.create(type, *args)
-      builder_class = BUILDER_TYPES[type.to_sym]
+## 10. 運用・保守設計
 
-      unless builder_class
-        raise ArgumentError, "Unknown builder type: #{type}. Available types: #{BUILDER_TYPES.keys}"
-      end
+### 10.1 監視・メトリクス設計
+- **パフォーマンス監視**: ビルダー実行時間・メモリ使用量・クエリ回数
+- **キャッシュ監視**: ヒット率・無効化頻度・ストレージ使用量
+- **エラー監視**: 構築失敗率・タイムアウト・メモリ不足
 
-      builder_class.new(*args)
-    end
-
-    def self.available_types
-      BUILDER_TYPES.keys
-    end
-  end
-end
-```
-
-## テスト実装
-
-```ruby
-# spec/services/kanban/kanban_grid_data_builder_spec.rb
-RSpec.describe Kanban::KanbanGridDataBuilder do
-  let(:project) { create(:project) }
-  let(:user) { create(:user_with_kanban_permissions, project: project) }
-  let(:builder) { described_class.new(project, user) }
-
-  describe '#build' do
-    let!(:epic) { create(:epic_issue, project: project) }
-    let!(:feature) { create(:feature_issue, project: project, parent: epic) }
-    let!(:version) { create(:version, project: project) }
-
-    it 'グリッド構造データを構築' do
-      result = builder.build
-
-      expect(result).to include(:grid_structure, :metadata, :statistics)
-      expect(result[:grid_structure]).to include(:rows, :columns, :versions)
-      expect(result[:grid_structure][:rows]).to be_an(Array)
-      expect(result[:grid_structure][:rows].first[:epic][:id]).to eq(epic.id)
-    end
-
-    it 'フィルターを適用' do
-      builder = described_class.new(project, user, version_filter: version.id)
-      result = builder.build
-
-      expect(result[:grid_structure][:rows]).to be_an(Array)
-    end
-
-    it 'キャッシュが有効' do
-      expect(Rails.cache).to receive(:fetch).and_call_original
-      builder.build
-    end
-  end
-
-  describe '#build_epic_rows' do
-    let!(:epic) { create(:epic_issue, project: project) }
-    let!(:feature) { create(:feature_issue, project: project, parent: epic) }
-
-    it 'Epic行データを正しく構築' do
-      result = builder.send(:build_epic_rows, [epic], [create(:version, project: project)], [])
-
-      expect(result).to be_an(Array)
-      expect(result.first[:epic][:id]).to eq(epic.id)
-      expect(result.first[:cells]).to be_an(Array)
-    end
-  end
-end
-```
+### 10.2 運用自動化
+- **キャッシュ管理**: 自動無効化・定期ウォームアップ・容量監視
+- **パフォーマンス最適化**: スロークエリ検知・自動チューニング推奨
+- **障害対応**: フォールバック処理・部分データ構築・エラー復旧
 
 ---
 
-*Kanban UI用データ構築サービス。Issue階層データ変換、統計計算、キャッシュ戦略、パフォーマンス最適化*
+*データビルダー サーバーサイド実装は、複雑なIssue階層データを効率的に構築・変換し、高性能なKanban UI体験を支える中核システムです。スケーラブルなアーキテクチャと最適化されたキャッシュ戦略により、大規模プロジェクトでも安定したパフォーマンスを実現します。*

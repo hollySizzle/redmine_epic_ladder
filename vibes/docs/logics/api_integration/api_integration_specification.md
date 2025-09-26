@@ -1,1030 +1,511 @@
-# API統合設計仕様書
+# API統合 詳細設計書
 
 ## 🔗 関連ドキュメント
 - @vibes/logics/ui_components/feature_card/feature_card_component_specification.md
 - @vibes/logics/ui_components/kanban_grid/kanban_grid_layout_specification.md
+- @vibes/logics/data_structures/data_structures_specification.md
 - @vibes/rules/technical_architecture_standards.md
-- @vibes/logics/api_integration_implementation.md
 
-## 1. 概要
+## 1. 設計概要
 
-React FrontendとRuby Rails Backendの完全統合。Redmine標準APIとカスタムAPI統合によるリアルタイムデータ同期システム。
+### 1.1 設計目的・背景
+**なぜこのAPI統合システムが必要なのか**
+- ビジネス要件：React Frontend と Ruby Rails Backend の完全分離・独立開発可能性
+- ユーザー価値：リアルタイム操作・即座フィードバック・オフライン耐性・楽観的更新
+- システム価値：Redmine標準API活用・プラグイン互換性・拡張性・セキュリティ保証
 
-## 2. API アーキテクチャ
+### 1.2 設計方針
+**どのようなアプローチで実現するか**
+- 主要設計思想：RESTful API設計、レイヤード アーキテクチャ、API First開発
+- 技術選択理由：JSON API（軽量）、CSRF保護（セキュリティ）、楽観的更新（UX）
+- 制約・前提条件：Redmine標準API準拠、既存プラグイン互換性、認証・権限継承
 
-### 2.1 API階層構造
+## 2. 機能要求仕様
 
+### 2.1 主要機能
+```mermaid
+mindmap
+  root((API統合システム))
+    データ取得API
+      Grid Layout データ
+      Feature Card 一覧
+      階層構造データ
+      統計・集計情報
+    操作API
+      Feature移動・配置
+      Epic・Version作成
+      Issue CRUD操作
+      一括更新処理
+    リアルタイム同期
+      楽観的更新
+      競合検出・解決
+      差分更新配信
+      エラー回復処理
+    認証・権限
+      Redmine認証統合
+      権限ベース操作制限
+      CSRF攻撃保護
+      API利用監査
 ```
-API Layer Architecture:
-┌─────────────────────────────────┐
-│ React Frontend (Client)         │
-├─────────────────────────────────┤
-│ KanbanAPI Utility (Abstraction) │
-├─────────────────────────────────┤
-│ Custom Kanban Controllers       │
-├─────────────────────────────────┤
-│ Redmine Standard API           │
-├─────────────────────────────────┤
-│ Service Layer (Business Logic) │
-├─────────────────────────────────┤
-│ ActiveRecord Models            │
-└─────────────────────────────────┘
+
+### 2.2 機能詳細
+| 機能ID | API名 | 説明 | 優先度 | 受容条件 |
+|--------|-------|------|---------|----------|
+| API001 | Grid Data取得 | Epic×Version マトリクスデータ取得 | High | 3秒以内で完全データ取得 |
+| API002 | Feature移動 | D&D操作によるFeature配置変更 | High | 1秒以内で楽観的更新完了 |
+| API003 | 階層作成・編集 | Epic・Version・UserStory作成 | High | 作成後即座にUI反映 |
+| API004 | Version自動伝播 | 親要素Version変更時の子要素更新 | High | 階層全体で一貫性保証 |
+| API005 | 一括操作 | 複数Issue同時更新・割り当て | Medium | 100件以内2秒で処理完了 |
+| API006 | リアルタイム同期 | 他ユーザー操作の即座反映 | Medium | WebSocket・ポーリング対応 |
+| API007 | エラー回復 | 通信失敗・競合時の自動回復 | Low | ユーザー操作継続可能性確保 |
+
+## 3. API設計仕様
+
+### 3.1 API階層アーキテクチャ
+```mermaid
+graph TD
+    A[React Frontend] --> B[KanbanAPI Client]
+    B --> C[HTTP/HTTPS]
+    C --> D[Rails Router]
+    D --> E[Kanban Controllers]
+    E --> F[Service Layer]
+    E --> G[Redmine Standard API]
+    F --> H[ActiveRecord Models]
+    G --> H
+
+    I[CSRF Protection] --> C
+    J[Authentication] --> E
+    K[Authorization] --> F
+
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style E fill:#fff3e0
+    style F fill:#e8f5e8
+    style H fill:#ffebee
 ```
 
-### 2.2 エンドポイント設計
+### 3.2 エンドポイント設計
+```mermaid
+graph LR
+    subgraph "Data Retrieval APIs"
+        A[GET /kanban/projects/:id/grid]
+        B[GET /kanban/projects/:id/feature_cards]
+        C[GET /kanban/projects/:id/statistics]
+    end
 
-| 機能 | Method | エンドポイント | 説明 |
-|------|--------|---------------|------|
-| **Grid Data** | GET | `/kanban/projects/:id/grid` | グリッドレイアウト用データ |
-| **Feature Cards** | GET | `/kanban/projects/:id/feature_cards` | Feature Card一覧 |
-| **Move Feature** | POST | `/kanban/projects/:id/grid/move_feature` | Feature移動 |
-| **Create Epic** | POST | `/kanban/projects/:id/grid/create_epic` | Epic作成 |
-| **Create Version** | POST | `/kanban/projects/:id/grid/create_version` | Version作成 |
-| **UserStory CRUD** | POST/PUT/DELETE | `/kanban/projects/:id/feature_cards/:id/user_stories` | UserStory管理 |
-| **Task CRUD** | POST/PUT/DELETE | `/kanban/projects/:id/user_stories/:id/tasks` | Task管理 |
-| **Test Generation** | POST | `/kanban/projects/:id/user_stories/:id/generate_test` | Test自動生成 |
-| **Version Assignment** | POST | `/kanban/projects/:id/assign_version` | Version割当 |
-| **Batch Operations** | POST | `/kanban/projects/:id/batch_update` | 一括操作 |
+    subgraph "Manipulation APIs"
+        D[POST /kanban/projects/:id/grid/move_feature]
+        E[POST /kanban/projects/:id/grid/create_epic]
+        F[POST /kanban/projects/:id/feature_cards/:id/user_stories]
+    end
 
-## 3. Frontend API Client
+    subgraph "Batch Operation APIs"
+        G[POST /kanban/projects/:id/batch_update]
+        H[POST /kanban/projects/:id/assign_version]
+        I[POST /kanban/projects/:id/generate_tests]
+    end
 
-### 3.1 KanbanAPI クラス
+    style A fill:#e8f5e8
+    style D fill:#fff3e0
+    style G fill:#f3e5f5
+```
 
-```javascript
-// assets/javascripts/kanban/utils/KanbanAPI.js
-class KanbanAPIError extends Error {
-  constructor(message, status, response) {
-    super(message);
-    this.name = 'KanbanAPIError';
-    this.status = status;
-    this.response = response;
-  }
+### 3.3 API通信フロー設計
+```mermaid
+sequenceDiagram
+    participant UI as React UI
+    participant Client as KanbanAPI Client
+    participant Router as Rails Router
+    participant Controller as Kanban Controller
+    participant Service as Service Layer
+    participant DB as Database
+
+    Note over UI,DB: データ取得フロー
+    UI->>Client: getGridData(projectId)
+    Client->>Router: GET /kanban/projects/:id/grid
+    Router->>Controller: GridController#show
+    Controller->>Service: GridDataBuilder.build()
+    Service->>DB: Issue階層クエリ
+    DB->>Service: 階層データ
+    Service->>Controller: 構造化グリッドデータ
+    Controller->>Client: JSON Response
+    Client->>UI: 型安全データ
+
+    Note over UI,DB: Feature移動フロー（楽観的更新）
+    UI->>UI: 即座UI更新（楽観的）
+    UI->>Client: moveFeature(featureId, targetCell)
+    Client->>Router: POST /kanban/projects/:id/grid/move_feature
+    Router->>Controller: GridController#move_feature
+    Controller->>Service: FeatureMoveService.execute()
+    Service->>DB: Issue更新・Version伝播
+    DB->>Service: 更新完了
+    Service->>Controller: 成功結果
+    Controller->>Client: Success Response
+    Client->>UI: 確定・エラー回復
+
+    Note over UI,DB: エラー処理フロー
+    UI->>Client: API操作実行
+    Client-->>Router: 通信失敗
+    Client->>Client: エラー検出・分類
+    Client->>UI: 楽観的更新ロールバック
+    UI->>UI: エラー通知・再試行UI
+```
+
+## 4. クライアントサイドAPI設計
+
+### 4.1 API Client アーキテクチャ
+```mermaid
+classDiagram
+    class KanbanAPIClient {
+        +BASE_URL: string
+        +projectId: number
+        +getGridData(): Promise~GridData~
+        +moveFeature(params): Promise~MoveResult~
+        +createEpic(params): Promise~Epic~
+        +batchUpdate(params): Promise~BatchResult~
+    }
+
+    class APIError {
+        +status: number
+        +message: string
+        +details: object
+        +isNetworkError(): boolean
+        +isValidationError(): boolean
+    }
+
+    class RequestManager {
+        +sendRequest(config): Promise
+        +handleResponse(response): object
+        +handleError(error): APIError
+        +retryRequest(config): Promise
+    }
+
+    class OptimisticUpdater {
+        +applyOptimistic(operation): void
+        +rollbackOptimistic(operation): void
+        +confirmOptimistic(result): void
+    }
+
+    KanbanAPIClient --> RequestManager
+    KanbanAPIClient --> OptimisticUpdater
+    RequestManager --> APIError
+```
+
+### 4.2 エラーハンドリング戦略
+```mermaid
+stateDiagram-v2
+    [*] --> API_Call
+    API_Call --> Success: 通信成功
+    API_Call --> Network_Error: 通信失敗
+    API_Call --> Server_Error: サーバーエラー
+    API_Call --> Validation_Error: バリデーションエラー
+
+    Success --> [*]: 処理完了
+
+    Network_Error --> Retry_Logic: 自動リトライ
+    Server_Error --> Error_Analysis: エラー分析
+    Validation_Error --> User_Notification: ユーザー通知
+
+    Retry_Logic --> Success: リトライ成功
+    Retry_Logic --> Give_Up: 最大回数超過
+
+    Error_Analysis --> Recoverable: 回復可能
+    Error_Analysis --> Fatal_Error: 致命的エラー
+
+    Recoverable --> User_Action: ユーザー操作要求
+    Fatal_Error --> System_Fallback: システム代替処理
+    Give_Up --> User_Notification
+    User_Action --> API_Call
+    User_Notification --> [*]
+    System_Fallback --> [*]
+
+    note right of Retry_Logic: 指数バックオフ\n最大3回リトライ
+    note right of Error_Analysis: HTTP Status・エラーコード分析
+```
+
+## 5. サーバーサイドAPI設計
+
+### 5.1 Controller層設計
+```mermaid
+graph TD
+    A[Kanban Controllers] --> B[GridController]
+    A --> C[FeatureCardsController]
+    A --> D[BatchOperationsController]
+
+    B --> E[show: Grid Data取得]
+    B --> F[move_feature: Feature移動]
+    B --> G[create_epic: Epic作成]
+
+    C --> H[index: Feature一覧]
+    C --> I[create: Feature作成]
+    C --> J[update: Feature更新]
+
+    D --> K[update: 一括更新]
+    D --> L[assign_version: Version割当]
+    D --> M[generate_tests: Test生成]
+
+    style B fill:#e1f5fe
+    style C fill:#f3e5f5
+    style D fill:#fff3e0
+```
+
+### 5.2 Service層統合設計
+```mermaid
+sequenceDiagram
+    participant Controller as Kanban Controller
+    participant DataBuilder as GridDataBuilder
+    participant MoveService as FeatureMoveService
+    participant VersionService as VersionPropagationService
+    participant TestService as TestGenerationService
+    participant Validator as DataValidator
+
+    Note over Controller,Validator: 複合操作フロー例
+    Controller->>DataBuilder: 現在データ取得
+    DataBuilder->>Controller: Grid構造データ
+
+    Controller->>Validator: 操作可能性検証
+    Validator->>Controller: 検証結果
+
+    Controller->>MoveService: Feature移動実行
+    MoveService->>VersionService: Version自動伝播
+    VersionService->>TestService: 必要に応じてTest生成
+    TestService->>MoveService: 生成結果
+    MoveService->>Controller: 移動完了・副作用結果
+
+    Controller->>DataBuilder: 更新後データ構築
+    DataBuilder->>Controller: 最新Grid構造
+```
+
+## 6. データ変換・シリアライゼーション
+
+### 6.1 データ変換フロー
+```mermaid
+flowchart TD
+    A[Redmine ActiveRecord] --> B[Hash変換]
+    B --> C[データ正規化]
+    C --> D[統計計算]
+    D --> E[権限フィルタ]
+    E --> F[JSON シリアライズ]
+    F --> G[HTTP レスポンス]
+
+    G --> H[HTTP リクエスト]
+    H --> I[JSON パース]
+    I --> J[型検証・変換]
+    J --> K[React Props]
+    K --> L[Component State]
+
+    M[バリデーション エラー] --> N[エラー レスポンス]
+    N --> O[クライアント エラー処理]
+    O --> P[ユーザー フィードバック]
+
+    style A fill:#ffebee
+    style F fill:#fff3e0
+    style K fill:#e8f5e8
+    style M fill:#f44336,color:#ffffff
+```
+
+### 6.2 型安全性保証
+```typescript
+// API型定義インターフェース（疑似コード）
+interface APIEndpoint<TRequest, TResponse> {
+  method: HTTPMethod;
+  path: string;
+  requestSchema: Schema<TRequest>;
+  responseSchema: Schema<TResponse>;
+  authRequired: boolean;
+  permissions: Permission[];
 }
 
-export class KanbanAPI {
-  static BASE_URL = '/kanban/projects';
-  static DEFAULT_HEADERS = {
-    'Content-Type': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest'
-  };
+// Grid Data API例
+interface GridDataAPI extends APIEndpoint<GridDataRequest, GridDataResponse> {
+  method: 'GET';
+  path: '/kanban/projects/:id/grid';
+  requestSchema: GridDataRequestSchema;
+  responseSchema: GridDataResponseSchema;
+  authRequired: true;
+  permissions: ['view_issues'];
+}
 
-  // CSRF Token管理
-  static getCSRFToken() {
-    return document.querySelector('meta[name="csrf-token"]')?.content;
-  }
-
-  static getHeaders(additionalHeaders = {}) {
-    return {
-      ...this.DEFAULT_HEADERS,
-      'X-CSRF-Token': this.getCSRFToken(),
-      ...additionalHeaders
-    };
-  }
-
-  // 共通リクエストメソッド
-  static async request(method, url, data = null, options = {}) {
-    const config = {
-      method,
-      headers: this.getHeaders(options.headers),
-      ...options
-    };
-
-    if (data) {
-      config.body = JSON.stringify(data);
-    }
-
-    try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new KanbanAPIError(
-          errorData.message || `HTTP Error ${response.status}`,
-          response.status,
-          errorData
-        );
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-
-      return await response.text();
-    } catch (error) {
-      if (error instanceof KanbanAPIError) {
-        throw error;
-      }
-      throw new KanbanAPIError('Network Error', 0, { originalError: error });
-    }
-  }
-
-  // GET requests
-  static async get(endpoint, params = {}) {
-    const url = new URL(`${this.BASE_URL}${endpoint}`, window.location.origin);
-    Object.keys(params).forEach(key => {
-      if (params[key] !== null && params[key] !== undefined) {
-        url.searchParams.append(key, params[key]);
-      }
-    });
-
-    return this.request('GET', url.toString());
-  }
-
-  // POST requests
-  static async post(endpoint, data = {}) {
-    return this.request('POST', `${this.BASE_URL}${endpoint}`, data);
-  }
-
-  // PUT requests
-  static async put(endpoint, data = {}) {
-    return this.request('PUT', `${this.BASE_URL}${endpoint}`, data);
-  }
-
-  // DELETE requests
-  static async delete(endpoint) {
-    return this.request('DELETE', `${this.BASE_URL}${endpoint}`);
-  }
-
-  // --- Grid API Methods ---
-
-  // グリッドデータ取得
-  static async getGridData(projectId, filters = {}) {
-    return this.get(`/${projectId}/grid`, filters);
-  }
-
-  // Feature移動
-  static async moveFeatureCard(projectId, moveData) {
-    return this.post(`/${projectId}/grid/move_feature`, moveData);
-  }
-
-  // Epic作成
-  static async createEpic(projectId, epicData) {
-    return this.post(`/${projectId}/grid/create_epic`, { epic: epicData });
-  }
-
-  // Version作成
-  static async createVersion(projectId, versionData) {
-    return this.post(`/${projectId}/grid/create_version`, { version: versionData });
-  }
-
-  // --- Feature Card API Methods ---
-
-  // Feature Card一覧
-  static async getFeatureCards(projectId, filters = {}) {
-    return this.get(`/${projectId}/feature_cards`, filters);
-  }
-
-  // UserStory作成
-  static async createUserStory(projectId, featureId, userStoryData) {
-    return this.post(`/${projectId}/feature_cards/${featureId}/user_stories`, {
-      user_story: userStoryData
-    });
-  }
-
-  // UserStory更新
-  static async updateUserStory(projectId, featureId, userStoryId, userStoryData) {
-    return this.put(`/${projectId}/feature_cards/${featureId}/user_stories/${userStoryId}`, {
-      user_story: userStoryData
-    });
-  }
-
-  // UserStory削除
-  static async deleteUserStory(projectId, featureId, userStoryId) {
-    return this.delete(`/${projectId}/feature_cards/${featureId}/user_stories/${userStoryId}`);
-  }
-
-  // Task作成
-  static async createTask(projectId, userStoryId, taskData) {
-    return this.post(`/${projectId}/user_stories/${userStoryId}/tasks`, {
-      task: taskData
-    });
-  }
-
-  // Task更新
-  static async updateTask(projectId, userStoryId, taskId, taskData) {
-    return this.put(`/${projectId}/user_stories/${userStoryId}/tasks/${taskId}`, {
-      task: taskData
-    });
-  }
-
-  // Task削除
-  static async deleteTask(projectId, userStoryId, taskId) {
-    return this.delete(`/${projectId}/user_stories/${userStoryId}/tasks/${taskId}`);
-  }
-
-  // Test自動生成
-  static async generateTest(projectId, userStoryId, testData = {}) {
-    return this.post(`/${projectId}/user_stories/${userStoryId}/generate_test`, {
-      test: testData
-    });
-  }
-
-  // --- Version Management API Methods ---
-
-  // Version割当
-  static async assignVersion(projectId, assignmentData) {
-    return this.post(`/${projectId}/assign_version`, assignmentData);
-  }
-
-  // Version一覧取得
-  static async getVersions(projectId) {
-    return this.get(`/${projectId}/versions`);
-  }
-
-  // --- Batch Operations API Methods ---
-
-  // 一括更新
-  static async batchUpdate(projectId, batchData) {
-    return this.post(`/${projectId}/batch_update`, batchData);
-  }
-
-  // 一括削除
-  static async batchDelete(projectId, deleteData) {
-    return this.post(`/${projectId}/batch_delete`, deleteData);
-  }
-
-  // --- Real-time Updates ---
-
-  // ポーリング用データ取得
-  static async getUpdatedData(projectId, lastUpdated) {
-    return this.get(`/${projectId}/updates`, { since: lastUpdated });
-  }
-
-  // データ変更通知
-  static async notifyDataChange(projectId, changeData) {
-    return this.post(`/${projectId}/notify_change`, changeData);
-  }
+// Feature移動API例
+interface MoveFeatureAPI extends APIEndpoint<MoveFeatureRequest, MoveFeatureResponse> {
+  method: 'POST';
+  path: '/kanban/projects/:id/grid/move_feature';
+  requestSchema: MoveFeatureRequestSchema;
+  responseSchema: MoveFeatureResponseSchema;
+  authRequired: true;
+  permissions: ['edit_issues'];
 }
 ```
 
-### 3.2 React Hook統合
+## 7. 非機能要求
 
-```javascript
-// assets/javascripts/kanban/hooks/useKanbanAPI.js
-import { useState, useCallback, useRef } from 'react';
-import { KanbanAPI } from '../utils/KanbanAPI';
+### 7.1 パフォーマンス要求
+| 項目 | 要求値 | 測定方法 | 備考 |
+|------|---------|----------|------|
+| Grid Data初期取得 | 3秒以内 | Time to First Response | 100Epic×10Version想定 |
+| Feature移動レスポンス | 500ms以内 | API Response Time | 楽観的更新適用時 |
+| 一括操作処理 | 100件2秒以内 | Batch Processing Time | Version伝播含む |
+| API同時接続 | 50ユーザー対応 | Concurrent Users | Rails標準制限内 |
+| データ転送量 | 1MB以内/リクエスト | Payload Size | gzip圧縮適用時 |
 
-export const useKanbanAPI = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const abortControllerRef = useRef(null);
+### 7.2 可用性・信頼性要求
+- **API可用性**: 99.9%以上（Redmine本体稼働時）
+- **エラー回復**: 一時的障害から30秒以内自動回復
+- **データ整合性**: 競合操作時の適切な競合解決
+- **セキュリティ**: CSRF・XSS・SQLインジェクション対策完備
 
-  const execute = useCallback(async (apiCall, options = {}) => {
-    // 前回のリクエストをキャンセル
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+### 7.3 運用性要求
+- **監査ログ**: 全API操作のログ記録・追跡可能性
+- **API監視**: レスポンス時間・エラー率・使用状況監視
+- **バージョニング**: API仕様変更時の後方互換性保証
+- **ドキュメント**: OpenAPI/Swagger仕様書自動生成
 
-    // 新しいAbortControllerを作成
-    abortControllerRef.current = new AbortController();
+## 8. セキュリティ設計
 
-    try {
-      setLoading(true);
-      setError(null);
+### 8.1 認証・認可フロー
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant Browser as ブラウザ
+    participant Rails as Rails App
+    participant Redmine as Redmine Core
+    participant DB as Database
 
-      const result = await apiCall({
-        signal: abortControllerRef.current.signal,
-        ...options
-      });
+    Note over User,DB: 認証フロー
+    User->>Browser: ログイン操作
+    Browser->>Rails: ログイン要求
+    Rails->>Redmine: Redmine認証処理
+    Redmine->>DB: ユーザー認証情報確認
+    DB->>Redmine: 認証結果
+    Redmine->>Rails: セッション確立
+    Rails->>Browser: セッションCookie設定
 
-      return result;
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        return null; // リクエストがキャンセルされた場合
-      }
-
-      setError(err);
-
-      if (options.onError) {
-        options.onError(err);
-      } else {
-        console.error('Kanban API Error:', err);
-      }
-
-      throw err;
-    } finally {
-      setLoading(false);
-      abortControllerRef.current = null;
-    }
-  }, []);
-
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  return {
-    loading,
-    error,
-    execute,
-    clearError
-  };
-};
+    Note over User,DB: API認可フロー
+    Browser->>Rails: API要求（Cookie付き）
+    Rails->>Redmine: セッション検証
+    Redmine->>Rails: ユーザー情報・権限
+    Rails->>Rails: プロジェクト権限チェック
+    Rails->>Rails: 操作権限チェック
+    Rails->>Browser: API実行 or 権限エラー
 ```
 
-### 3.3 エラーハンドリング Hook
+### 8.2 セキュリティ対策
+```mermaid
+graph TD
+    A[API Security Layers] --> B[CSRF Protection]
+    A --> C[XSS Prevention]
+    A --> D[SQL Injection Protection]
+    A --> E[Authorization Check]
 
-```javascript
-// assets/javascripts/kanban/hooks/useErrorHandler.js
-import { useCallback } from 'react';
-import { useToast } from '../components/shared/Toast';
+    B --> F[CSRF Token検証]
+    B --> G[SameSite Cookie]
 
-export const useErrorHandler = () => {
-  const { showToast } = useToast();
+    C --> H[Content Security Policy]
+    C --> I[Input Sanitization]
 
-  const handleError = useCallback((error, context = '') => {
-    let message = 'システムエラーが発生しました';
-    let type = 'error';
+    D --> J[ActiveRecord ORM]
+    D --> K[Prepared Statements]
 
-    if (error.status) {
-      switch (error.status) {
-        case 400:
-          message = 'リクエストが無効です';
-          break;
-        case 401:
-          message = 'ログインが必要です';
-          break;
-        case 403:
-          message = 'この操作を実行する権限がありません';
-          break;
-        case 404:
-          message = 'データが見つかりません';
-          break;
-        case 422:
-          message = error.response?.errors
-            ? Object.values(error.response.errors).flat().join(', ')
-            : 'データの検証に失敗しました';
-          break;
-        case 500:
-          message = 'サーバーエラーが発生しました';
-          break;
-        default:
-          message = error.message || 'システムエラーが発生しました';
-      }
-    } else if (error.message) {
-      message = error.message;
-    }
+    E --> L[Redmine Permission System]
+    E --> M[Project-based Access Control]
 
-    if (context) {
-      message = `${context}: ${message}`;
-    }
-
-    showToast(message, type);
-
-    // 開発環境では詳細なエラー情報をコンソールに出力
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error Details:', {
-        context,
-        error,
-        message,
-        stack: error.stack
-      });
-    }
-  }, [showToast]);
-
-  return { handleError };
-};
+    style A fill:#f44336,color:#ffffff
+    style B fill:#ff9800
+    style C fill:#ff9800
+    style D fill:#ff9800
+    style E fill:#ff9800
 ```
 
-## 4. Backend API Controllers
+## 9. テスト設計
 
-### 4.1 Base Controller
+### 9.1 API テスト戦略
+```mermaid
+pyramid
+    title API統合 テストピラミッド
 
-```ruby
-# app/controllers/kanban/base_controller.rb
-class Kanban::BaseController < ApplicationController
-  include KanbanApiConcern
-
-  before_action :require_login
-  before_action :find_project
-  before_action :authorize_kanban
-  before_action :set_cors_headers
-
-  rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
-  rescue_from ActiveRecord::RecordInvalid, with: :render_validation_error
-  rescue_from StandardError, with: :render_internal_error
-
-  protected
-
-  def find_project
-    @project = Project.find(params[:project_id] || params[:id])
-  rescue ActiveRecord::RecordNotFound
-    render_not_found('プロジェクトが見つかりません')
-  end
-
-  def authorize_kanban
-    unless User.current.allowed_to?(:view_issues, @project)
-      render_forbidden('カンバン表示権限がありません')
-      return false
-    end
-
-    # 操作系API用権限チェック
-    if request.post? || request.put? || request.patch? || request.delete?
-      unless User.current.allowed_to?(:edit_issues, @project)
-        render_forbidden('編集権限がありません')
-        return false
-      end
-    end
-
-    true
-  end
-
-  def set_cors_headers
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Requested-With, X-CSRF-Token'
-  end
-
-  def render_success(data = {}, message = nil, status = :ok)
-    render json: {
-      success: true,
-      data: data,
-      message: message,
-      timestamp: Time.current.iso8601
-    }, status: status
-  end
-
-  def render_error(message, status = :bad_request, errors = nil)
-    render json: {
-      success: false,
-      message: message,
-      errors: errors,
-      timestamp: Time.current.iso8601
-    }, status: status
-  end
-
-  def render_not_found(message = 'データが見つかりません')
-    render_error(message, :not_found)
-  end
-
-  def render_forbidden(message = 'アクセス権限がありません')
-    render_error(message, :forbidden)
-  end
-
-  def render_validation_error(exception)
-    render_error(
-      'データの検証に失敗しました',
-      :unprocessable_entity,
-      exception.record.errors.full_messages
-    )
-  end
-
-  def render_internal_error(exception)
-    Rails.logger.error "Kanban API Error: #{exception.class}: #{exception.message}"
-    Rails.logger.error exception.backtrace.join("\n")
-
-    render_error(
-      Rails.env.development? ? exception.message : 'システムエラーが発生しました',
-      :internal_server_error
-    )
-  end
-
-  def pagination_params
-    params.permit(:page, :per_page).tap do |p|
-      p[:page] = [p[:page].to_i, 1].max
-      p[:per_page] = [[p[:per_page].to_i, 100].min, 10].max
-    end
-  end
-
-  def filter_params
-    params.permit(:version_id, :assignee_id, :status_id, :tracker_id, :priority_id, :q)
-  end
-
-  # ページング情報を含むレスポンス
-  def render_paginated_success(collection, serializer = nil)
-    data = if serializer
-             collection.map { |item| serializer.call(item) }
-           else
-             collection.to_a
-           end
-
-    render_success({
-      items: data,
-      pagination: {
-        current_page: collection.current_page,
-        per_page: collection.limit_value,
-        total_pages: collection.total_pages,
-        total_count: collection.total_count
-      }
-    })
-  end
-end
+    "E2E API テスト（Postman/Newman）" : 10
+    "統合テスト（Controller + Service）" : 30
+    "単体テスト（Service・Utils）" : 60
 ```
 
-### 4.2 Feature Cards Controller
-
-```ruby
-# app/controllers/kanban/feature_cards_controller.rb
-class Kanban::FeatureCardsController < Kanban::BaseController
-
-  # GET /kanban/projects/:project_id/feature_cards
-  def index
-    features = build_feature_query
-                 .includes(:tracker, :status, :assigned_to, :fixed_version, :children)
-                 .page(pagination_params[:page])
-                 .per(pagination_params[:per_page])
-
-    render_paginated_success(features, method(:serialize_feature_card))
-  end
-
-  # GET /kanban/projects/:project_id/feature_cards/:id
-  def show
-    feature = find_feature
-
-    render_success(
-      Kanban::FeatureCardDataBuilder.new(feature).build
-    )
-  end
-
-  # POST /kanban/projects/:project_id/feature_cards/:id/user_stories
-  def create_user_story
-    feature = find_feature
-    user_story = build_user_story(feature)
-
-    ActiveRecord::Base.transaction do
-      user_story.save!
-
-      # 自動化処理
-      trigger_automations(user_story, :created)
-    end
-
-    render_success(
-      serialize_issue(user_story),
-      'UserStory作成が完了しました',
-      :created
-    )
-  end
-
-  # PUT /kanban/projects/:project_id/feature_cards/:feature_id/user_stories/:id
-  def update_user_story
-    user_story = find_user_story
-    old_attributes = user_story.attributes.dup
-
-    ActiveRecord::Base.transaction do
-      user_story.update!(user_story_params)
-
-      # 変更検知と自動化処理
-      trigger_automations(user_story, :updated, old_attributes)
-    end
-
-    render_success(
-      serialize_issue(user_story),
-      'UserStory更新が完了しました'
-    )
-  end
-
-  # DELETE /kanban/projects/:project_id/feature_cards/:feature_id/user_stories/:id
-  def destroy_user_story
-    user_story = find_user_story
-
-    ActiveRecord::Base.transaction do
-      # 依存関係チェック
-      if user_story.children.exists?
-        render_error('子要素が存在するため削除できません', :unprocessable_entity)
-        return
-      end
-
-      user_story.destroy!
-    end
-
-    render_success(nil, 'UserStory削除が完了しました')
-  end
-
-  # POST /kanban/projects/:project_id/user_stories/:user_story_id/tasks
-  def create_task
-    user_story = find_user_story_for_tasks
-    task = build_task(user_story)
-
-    ActiveRecord::Base.transaction do
-      task.save!
-      trigger_automations(task, :created)
-    end
-
-    render_success(
-      serialize_issue(task),
-      'Task作成が完了しました',
-      :created
-    )
-  end
-
-  # POST /kanban/projects/:project_id/user_stories/:user_story_id/generate_test
-  def generate_test
-    user_story = find_user_story_for_tasks
-
-    begin
-      test_issue = Kanban::TestGenerationService.new(user_story, User.current).execute
-
-      render_success(
-        serialize_issue(test_issue),
-        'Test自動生成が完了しました',
-        :created
-      )
-    rescue Kanban::TestGenerationService::Error => e
-      render_error(e.message, :unprocessable_entity)
-    end
-  end
-
-  private
-
-  def find_feature
-    @project.issues
-            .joins(:tracker)
-            .where(trackers: { name: 'Feature' }, id: params[:id])
-            .first!
-  end
-
-  def find_user_story
-    Issue.joins(:tracker)
-         .where(
-           trackers: { name: 'UserStory' },
-           id: params[:id],
-           project_id: @project.id
-         )
-         .first!
-  end
-
-  def find_user_story_for_tasks
-    Issue.joins(:tracker)
-         .where(
-           trackers: { name: 'UserStory' },
-           id: params[:user_story_id],
-           project_id: @project.id
-         )
-         .first!
-  end
-
-  def build_feature_query
-    query = @project.issues.joins(:tracker).where(trackers: { name: 'Feature' })
-
-    # フィルタリング
-    query = query.where(fixed_version_id: filter_params[:version_id]) if filter_params[:version_id].present?
-    query = query.where(assigned_to_id: filter_params[:assignee_id]) if filter_params[:assignee_id].present?
-    query = query.where(status_id: filter_params[:status_id]) if filter_params[:status_id].present?
-
-    # 検索
-    if filter_params[:q].present?
-      query = query.where("subject ILIKE ?", "%#{filter_params[:q]}%")
-    end
-
-    query.order(:created_on)
-  end
-
-  def build_user_story(feature)
-    user_story = Issue.new(user_story_params)
-    user_story.project = @project
-    user_story.parent = feature
-    user_story.tracker = Tracker.find_by!(name: 'UserStory')
-    user_story.author = User.current
-    user_story.status = IssueStatus.default
-
-    user_story
-  end
-
-  def build_task(user_story)
-    task = Issue.new(task_params)
-    task.project = @project
-    task.parent = user_story
-    task.tracker = Tracker.find_by!(name: 'Task')
-    task.author = User.current
-    task.status = IssueStatus.default
-
-    task
-  end
-
-  def serialize_feature_card(feature)
-    Kanban::FeatureCardDataBuilder.new(feature).build
-  end
-
-  def serialize_issue(issue)
-    {
-      id: issue.id,
-      subject: issue.subject,
-      description: issue.description,
-      status: issue.status.name,
-      priority: issue.priority&.name,
-      assigned_to: issue.assigned_to&.name,
-      fixed_version: issue.fixed_version&.name,
-      tracker: issue.tracker.name,
-      created_on: issue.created_on.iso8601,
-      updated_on: issue.updated_on.iso8601
-    }
-  end
-
-  def trigger_automations(issue, action, old_attributes = nil)
-    case action
-    when :created
-      # UserStory作成時の自動Test生成
-      if issue.tracker.name == 'UserStory'
-        Kanban::TestGenerationService.new(issue, User.current).execute_if_needed
-      end
-
-      # バージョン自動伝播
-      if issue.parent&.fixed_version
-        Kanban::VersionPropagationService.new(issue.parent, issue.parent.fixed_version).execute
-      end
-
-    when :updated
-      # バージョン変更時の自動伝播
-      if old_attributes['fixed_version_id'] != issue.fixed_version_id && issue.fixed_version
-        Kanban::VersionPropagationService.new(issue, issue.fixed_version).execute
-      end
-
-      # ステータス変更時のvalidation guard
-      if old_attributes['status_id'] != issue.status_id
-        Kanban::ValidationGuardService.new(issue).execute
-      end
-    end
-  end
-
-  def user_story_params
-    params.require(:user_story).permit(:subject, :description, :assigned_to_id, :priority_id)
-  end
-
-  def task_params
-    params.require(:task).permit(:subject, :description, :assigned_to_id, :priority_id, :estimated_hours)
-  end
-end
-```
-
-### 4.3 Real-time Update Service
-
-```ruby
-# app/services/kanban/real_time_update_service.rb
-class Kanban::RealTimeUpdateService
-  CACHE_PREFIX = 'kanban_updates'.freeze
-  UPDATE_EXPIRY = 1.hour
-
-  def initialize(project)
-    @project = project
-    @cache_key = "#{CACHE_PREFIX}:#{@project.id}"
-  end
-
-  def register_change(change_data)
-    changes = get_cached_changes
-    changes << {
-      id: SecureRandom.uuid,
-      timestamp: Time.current.iso8601,
-      **change_data
-    }
-
-    # 古い変更履歴をクリーンアップ（最新100件まで保持）
-    changes = changes.last(100)
-
-    Rails.cache.write(@cache_key, changes, expires_in: UPDATE_EXPIRY)
-  end
-
-  def get_updates_since(since_timestamp)
-    changes = get_cached_changes
-
-    if since_timestamp.present?
-      since_time = Time.parse(since_timestamp)
-      changes = changes.select { |change| Time.parse(change[:timestamp]) > since_time }
-    end
-
-    {
-      updates: changes,
-      last_updated: Time.current.iso8601,
-      has_more: false
-    }
-  end
-
-  def notify_feature_moved(feature, old_epic_id, new_epic_id, old_version_id, new_version_id)
-    register_change(
-      type: 'feature_moved',
-      feature_id: feature.id,
-      old_epic_id: old_epic_id,
-      new_epic_id: new_epic_id,
-      old_version_id: old_version_id,
-      new_version_id: new_version_id,
-      updated_feature: Kanban::FeatureCardDataBuilder.new(feature).build
-    )
-  end
-
-  def notify_user_story_created(user_story)
-    register_change(
-      type: 'user_story_created',
-      feature_id: user_story.parent_id,
-      user_story: serialize_issue(user_story)
-    )
-  end
-
-  def notify_task_updated(task)
-    register_change(
-      type: 'task_updated',
-      user_story_id: task.parent_id,
-      task: serialize_issue(task)
-    )
-  end
-
-  def notify_version_created(version)
-    register_change(
-      type: 'version_created',
-      version: serialize_version(version)
-    )
-  end
-
-  private
-
-  def get_cached_changes
-    Rails.cache.fetch(@cache_key, expires_in: UPDATE_EXPIRY) { [] }
-  end
-
-  def serialize_issue(issue)
-    {
-      id: issue.id,
-      subject: issue.subject,
-      status: issue.status.name,
-      assigned_to: issue.assigned_to&.name,
-      updated_on: issue.updated_on.iso8601
-    }
-  end
-
-  def serialize_version(version)
-    {
-      id: version.id,
-      name: version.name,
-      effective_date: version.effective_date&.iso8601
-    }
-  end
-end
-```
-
-## 5. データ同期戦略
-
-### 5.1 楽観的更新パターン
-
-```javascript
-// assets/javascripts/kanban/hooks/useOptimisticUpdate.js
-import { useState, useCallback } from 'react';
-
-export const useOptimisticUpdate = (initialData) => {
-  const [data, setData] = useState(initialData);
-  const [optimisticChanges, setOptimisticChanges] = useState(new Map());
-
-  const applyOptimisticUpdate = useCallback((id, updateFn) => {
-    const changeId = `${id}_${Date.now()}`;
-
-    // UI即座に更新
-    setData(prevData => updateFn(prevData));
-
-    // 楽観的変更を記録
-    setOptimisticChanges(prev => new Map(prev).set(changeId, { id, updateFn }));
-
-    return changeId;
-  }, []);
-
-  const confirmUpdate = useCallback((changeId, serverData) => {
-    // サーバーからの確定データで更新
-    setData(serverData);
-
-    // 楽観的変更をクリーンアップ
-    setOptimisticChanges(prev => {
-      const newMap = new Map(prev);
-      newMap.delete(changeId);
-      return newMap;
-    });
-  }, []);
-
-  const revertUpdate = useCallback((changeId, originalData) => {
-    // 楽観的変更を元に戻す
-    setData(originalData);
-
-    setOptimisticChanges(prev => {
-      const newMap = new Map(prev);
-      newMap.delete(changeId);
-      return newMap;
-    });
-  }, []);
-
-  return {
-    data,
-    setData,
-    applyOptimisticUpdate,
-    confirmUpdate,
-    revertUpdate,
-    hasOptimisticChanges: optimisticChanges.size > 0
-  };
-};
-```
-
-### 5.2 ポーリング更新システム
-
-```javascript
-// assets/javascripts/kanban/hooks/useRealTimeUpdates.js
-import { useEffect, useRef, useState } from 'react';
-import { KanbanAPI } from '../utils/KanbanAPI';
-
-export const useRealTimeUpdates = (projectId, onUpdate, enabled = true) => {
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const intervalRef = useRef(null);
-  const POLLING_INTERVAL = 30000; // 30秒間隔
-
-  const checkForUpdates = useCallback(async () => {
-    try {
-      const updates = await KanbanAPI.getUpdatedData(projectId, lastUpdated);
-
-      if (updates.updates.length > 0) {
-        onUpdate(updates.updates);
-        setLastUpdated(updates.last_updated);
-      }
-    } catch (error) {
-      console.error('Real-time update check failed:', error);
-    }
-  }, [projectId, lastUpdated, onUpdate]);
-
-  useEffect(() => {
-    if (!enabled) return;
-
-    // 初回チェック
-    checkForUpdates();
-
-    // 定期ポーリング開始
-    intervalRef.current = setInterval(checkForUpdates, POLLING_INTERVAL);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+### 9.2 テストケース設計
+| テストレベル | 対象 | 主要テストケース | カバレッジ目標 |
+|-------------|------|------------------|----------------|
+| 単体テスト | Service・Utils | データ変換・バリデーション・計算ロジック | 95%以上 |
+| 統合テスト | Controller + DB | API動作・権限・エラー処理 | 90%以上 |
+| E2Eテスト | フルスタック | ユーザーシナリオ・実環境動作 | 主要API100% |
+
+### 9.3 API契約テスト
+```typescript
+// API契約テスト例（疑似コード）
+describe('Grid Data API Contract', () => {
+  it('should return valid grid data structure', async () => {
+    const response = await request(app)
+      .get('/kanban/projects/1/grid')
+      .set('X-CSRF-Token', csrfToken)
+      .expect(200);
+
+    // レスポンススキーマ検証
+    expect(response.body).toMatchSchema(GridDataResponseSchema);
+
+    // 必須フィールド存在確認
+    expect(response.body).toHaveProperty('project');
+    expect(response.body).toHaveProperty('epics');
+    expect(response.body).toHaveProperty('versions');
+
+    // 統計情報精度確認
+    const statistics = response.body.metadata.statistics;
+    expect(statistics.total_features).toBeGreaterThan(0);
+  });
+
+  it('should handle feature move with version propagation', async () => {
+    const moveRequest = {
+      feature_id: 123,
+      target_epic_id: 456,
+      target_version_id: 789
     };
-  }, [enabled, checkForUpdates]);
 
-  const forceUpdate = useCallback(() => {
-    checkForUpdates();
-  }, [checkForUpdates]);
+    const response = await request(app)
+      .post('/kanban/projects/1/grid/move_feature')
+      .send(moveRequest)
+      .expect(200);
 
-  return { forceUpdate };
-};
+    expect(response.body.success).toBe(true);
+    expect(response.body.propagation_results).toBeDefined();
+  });
+});
 ```
 
-## 6. キャッシュ戦略
+## 10. 運用・保守設計
 
-### 6.1 Frontend キャッシュ
+### 10.1 API監視・ログ設計
+- **アクセスログ**: 全API要求の記録（時刻・ユーザー・エンドポイント・レスポンス時間）
+- **エラーログ**: API障害・バリデーションエラー・権限違反の詳細記録
+- **パフォーマンス監視**: 応答時間・スループット・リソース使用率測定
+- **ビジネスログ**: Feature移動・Epic作成等の業務操作監査証跡
 
-```javascript
-// assets/javascripts/kanban/utils/KanbanCache.js
-class KanbanCache {
-  constructor() {
-    this.cache = new Map();
-    this.timestamps = new Map();
-    this.DEFAULT_TTL = 5 * 60 * 1000; // 5分
-  }
+### 10.2 API進化・バージョン管理
+```mermaid
+stateDiagram-v2
+    [*] --> v1_0_stable
+    v1_0_stable --> v1_1_development: 新機能開発
+    v1_1_development --> v1_1_beta: 機能完成・テスト
+    v1_1_beta --> v1_1_stable: 品質確認完了
+    v1_1_stable --> v1_2_development: 次期機能開発
 
-  set(key, value, ttl = this.DEFAULT_TTL) {
-    this.cache.set(key, value);
-    this.timestamps.set(key, Date.now() + ttl);
-  }
+    v1_0_stable --> v1_0_deprecated: v1.1リリース後
+    v1_0_deprecated --> v1_0_removed: 移行期間終了後
 
-  get(key) {
-    if (!this.cache.has(key)) return null;
-
-    const expiry = this.timestamps.get(key);
-    if (Date.now() > expiry) {
-      this.cache.delete(key);
-      this.timestamps.delete(key);
-      return null;
-    }
-
-    return this.cache.get(key);
-  }
-
-  invalidate(pattern) {
-    if (pattern instanceof RegExp) {
-      for (const key of this.cache.keys()) {
-        if (pattern.test(key)) {
-          this.cache.delete(key);
-          this.timestamps.delete(key);
-        }
-      }
-    } else {
-      this.cache.delete(pattern);
-      this.timestamps.delete(pattern);
-    }
-  }
-
-  clear() {
-    this.cache.clear();
-    this.timestamps.clear();
-  }
-}
-
-export const kanbanCache = new KanbanCache();
-
-// キャッシュ対応KanbanAPI拡張
-KanbanAPI.getWithCache = async function(endpoint, params = {}, ttl) {
-  const cacheKey = `${endpoint}?${new URLSearchParams(params).toString()}`;
-
-  // キャッシュから取得試行
-  const cached = kanbanCache.get(cacheKey);
-  if (cached) return cached;
-
-  // APIから取得してキャッシュ
-  const result = await this.get(endpoint, params);
-  kanbanCache.set(cacheKey, result, ttl);
-
-  return result;
-};
+    note right of v1_1_beta: 後方互換性確認\nクライアント適応テスト
+    note right of v1_0_deprecated: 6ヶ月移行期間\n非推奨警告表示
 ```
+
+### 10.3 スケーラビリティ・パフォーマンス監視
+- **スケールアウト対応**: ロードバランサー・複数Rails インスタンス対応
+- **キャッシング戦略**: Redis活用の統計情報・頻繁アクセスデータキャッシング
+- **データベース最適化**: クエリ最適化・インデックス設計・接続プール管理
+- **CDN活用**: 静的アセット・APIレスポンス（適切な場合）のCDN配信
 
 ---
 
-*React Frontend と Ruby Rails Backend の完全統合API設計。楽観的更新とリアルタイム同期によるUX最適化を実現*
+*API統合設計は、React Frontend と Rails Backend を結ぶ重要な架け橋です。この設計書は実装コードではなく、RESTful API設計・セキュリティ・パフォーマンス・運用の思想を明確化し、フロントエンド・バックエンド開発チーム間の効率的な協働を実現します。*

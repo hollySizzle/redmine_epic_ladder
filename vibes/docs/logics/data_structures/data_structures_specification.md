@@ -1,1149 +1,581 @@
-# データ構造設計仕様書
+# データ構造 詳細設計書
 
 ## 🔗 関連ドキュメント
 - @vibes/logics/ui_components/feature_card/feature_card_component_specification.md
 - @vibes/logics/ui_components/kanban_grid/kanban_grid_layout_specification.md
-- @vibes/logics/ui_components/api_integration/api_integration_specification.md
+- @vibes/logics/api_integration/api_integration_specification.md
 - @vibes/rules/technical_architecture_standards.md
 
-## 1. 概要
+## 1. 設計概要
 
-ワイヤーフレーム準拠のカンバンシステムにおけるデータ構造定義。React-Ruby間のデータフロー、階層構造管理、状態管理の統一仕様。
+### 1.1 設計目的・背景
+**なぜこのデータ構造設計が必要なのか**
+- ビジネス要件：Epic→Feature→UserStory→Task/Test/Bug の4層階層でプロジェクト管理統一
+- ユーザー価値：直感的な階層理解、Version伝播による一貫性、リアルタイム統計
+- システム価値：React-Ruby間データ整合性、型安全性確保、拡張性・保守性向上
 
-## 2. 階層データ構造
+### 1.2 設計方針
+**どのようなアプローチで実現するか**
+- 主要設計思想：階層データ正規化、型安全性重視、イミュータブル設計、統計計算分離
+- 技術選択理由：TypeScript（型安全性）、正規化（データ整合性）、JSON API（軽量通信）
+- 制約・前提条件：Redmine Issue構造準拠、既存プラグイン互換性、パフォーマンス配慮
 
-### 2.1 Issue階層定義
+## 2. 機能要求仕様
 
+### 2.1 主要機能
+```mermaid
+mindmap
+  root((データ構造管理))
+    階層構造管理
+      Epic-Feature-UserStory-Task階層
+      親子関係整合性保証
+      循環参照検出・防止
+    Version管理
+      Version割り当て・継承
+      自動伝播処理
+      Version変更影響分析
+    統計計算
+      階層別進捗計算
+      リアルタイム集計
+      パフォーマンス最適化
+    データ変換
+      Redmine↔React変換
+      正規化・非正規化
+      型安全性保証
 ```
-Epic (トラッカー: Epic)
-└── Feature (トラッカー: Feature)
-    └── UserStory (トラッカー: UserStory)
-        ├── Task (トラッカー: Task)
-        ├── Test (トラッカー: Test)
-        └── Bug (トラッカー: Bug)
+
+### 2.2 機能詳細
+| 機能ID | 機能名 | 説明 | 優先度 | 受容条件 |
+|--------|--------|------|---------|----------|
+| DS001 | 階層構造管理 | Epic-Feature-UserStory-Task の4層階層データ管理 | High | 親子関係・循環参照検証完了 |
+| DS002 | Version継承管理 | 親要素のVersion変更時の子要素自動更新 | High | 階層全体でVersion一貫性確保 |
+| DS003 | 統計情報計算 | 各階層の進捗率・完了数リアルタイム計算 | High | 1秒以内での統計更新完了 |
+| DS004 | データ型安全性 | TypeScript型定義による実行時型チェック | Medium | コンパイル時・実行時エラー0 |
+| DS005 | データ正規化 | 重複排除・参照整合性保証のデータ構造 | Medium | データ整合性100%保証 |
+| DS006 | 変更追跡 | データ変更履歴・差分検出機能 | Low | 変更点正確検出・ロールバック対応 |
+
+## 3. データ設計仕様
+
+### 3.1 階層構造設計
+```mermaid
+erDiagram
+    EPIC {
+        id integer PK "Epic Issue ID"
+        subject string "Epic件名"
+        description text "説明"
+        status string "ステータス"
+        fixed_version_id integer FK "割り当てVersion"
+        statistics object "集計統計"
+        metadata object "メタデータ"
+    }
+
+    FEATURE {
+        id integer PK "Feature Issue ID"
+        parent_id integer FK "親Epic ID"
+        subject string "Feature件名"
+        status string "ステータス"
+        fixed_version_id integer FK "割り当てVersion"
+        version_source string "Version継承元（direct/inherited）"
+        statistics object "集計統計"
+    }
+
+    USER_STORY {
+        id integer PK "UserStory Issue ID"
+        parent_id integer FK "親Feature ID"
+        subject string "UserStory件名"
+        status string "ステータス"
+        fixed_version_id integer FK "割り当てVersion"
+        version_source string "Version継承元"
+        expansion_state boolean "UI展開状態"
+    }
+
+    CHILD_ITEM {
+        id integer PK "Task/Test/Bug Issue ID"
+        parent_id integer FK "親UserStory ID"
+        type string "種別（Task/Test/Bug）"
+        subject string "件名"
+        status string "ステータス"
+        assigned_to string "担当者"
+        fixed_version_id integer FK "割り当てVersion"
+    }
+
+    VERSION {
+        id integer PK "Version ID"
+        name string "Version名"
+        effective_date date "リリース予定日"
+        status string "Version状態"
+        issue_count integer "関連Issue数"
+    }
+
+    EPIC ||--o{ FEATURE : contains
+    FEATURE ||--o{ USER_STORY : contains
+    USER_STORY ||--o{ CHILD_ITEM : contains
+    VERSION ||--o{ EPIC : assigned
+    VERSION ||--o{ FEATURE : assigned
+    VERSION ||--o{ USER_STORY : assigned
+    VERSION ||--o{ CHILD_ITEM : assigned
 ```
 
-### 2.2 TypeScript型定義
+### 3.2 統計データ構造設計
+```mermaid
+erDiagram
+    EPIC_STATISTICS {
+        epic_id integer PK
+        total_features integer "配下Feature総数"
+        total_user_stories integer "配下UserStory総数"
+        total_child_items integer "配下Task/Test/Bug総数"
+        completed_features integer "完了Feature数"
+        completed_user_stories integer "完了UserStory数"
+        completed_child_items integer "完了Task/Test/Bug数"
+        completion_percentage decimal "完了率"
+        last_updated datetime "最終更新日時"
+    }
 
+    FEATURE_STATISTICS {
+        feature_id integer PK
+        total_user_stories integer "配下UserStory総数"
+        total_child_items integer "配下Task/Test/Bug総数"
+        child_items_by_type object "種別ごとのカウント"
+        completion_percentage decimal "完了率"
+        version_consistency boolean "Version一貫性"
+    }
+
+    VERSION_STATISTICS {
+        version_id integer PK
+        total_epics integer "関連Epic数"
+        total_features integer "関連Feature数"
+        issues_by_status object "ステータス別Issue数"
+        completion_trend array "完了率推移"
+        release_readiness decimal "リリース準備度"
+    }
+
+    EPIC_STATISTICS ||--|| EPIC : calculates
+    FEATURE_STATISTICS ||--|| FEATURE : calculates
+    VERSION_STATISTICS ||--|| VERSION : calculates
+```
+
+### 3.3 データフロー設計
+```mermaid
+flowchart TD
+    A[Redmine Issues DB] --> B[Issue階層クエリ]
+    C[Redmine Versions DB] --> D[Version情報取得]
+
+    B --> E[階層構造解析]
+    D --> E
+
+    E --> F[正規化処理]
+    F --> G[統計計算]
+    G --> H[Version継承解決]
+    H --> I[型安全性変換]
+
+    I --> J[React Props生成]
+    J --> K[UI表示]
+
+    K --> L[ユーザー操作]
+    L --> M{操作種別}
+
+    M -->|階層変更| N[親子関係更新]
+    M -->|Version変更| O[Version伝播処理]
+    M -->|ステータス変更| P[統計再計算]
+
+    N --> Q[データ整合性検証]
+    O --> Q
+    P --> Q
+
+    Q --> R[DB更新コミット]
+    R --> S[変更通知]
+    S --> T[データ再構築]
+    T --> J
+
+    style A fill:#ffebee
+    style J fill:#e8f5e8
+    style K fill:#e1f5fe
+    style R fill:#fff3e0
+```
+
+## 4. 型安全性設計
+
+### 4.1 TypeScript型階層設計
+```mermaid
+classDiagram
+    class BaseIssue {
+        +id: number
+        +subject: string
+        +status: IssueStatus
+        +created_on: DateTime
+        +updated_on: DateTime
+    }
+
+    class VersionReference {
+        +id: number
+        +name: string
+        +source: VersionSource
+    }
+
+    class Epic {
+        +issue: BaseIssue
+        +features: Feature[]
+        +statistics: EpicStatistics
+        +version: VersionReference?
+    }
+
+    class Feature {
+        +issue: BaseIssue
+        +user_stories: UserStory[]
+        +statistics: FeatureStatistics
+        +version: VersionReference?
+    }
+
+    class UserStory {
+        +issue: BaseIssue
+        +child_items: ChildItemsGroup
+        +statistics: UserStoryStatistics
+        +expansion_state: boolean
+    }
+
+    class ChildItemsGroup {
+        +tasks: Task[]
+        +tests: Test[]
+        +bugs: Bug[]
+    }
+
+    BaseIssue <|-- Epic
+    BaseIssue <|-- Feature
+    BaseIssue <|-- UserStory
+    Epic *-- Feature
+    Feature *-- UserStory
+    UserStory *-- ChildItemsGroup
+    Epic -- VersionReference
+    Feature -- VersionReference
+```
+
+### 4.2 型制約・バリデーション設計
 ```typescript
-// assets/javascripts/kanban/types/kanban.types.ts
+// 型安全性保証の実装指針（疑似コード）
+interface TypeSafetyConstraints {
+  // 階層制約
+  epic_can_only_contain_features: boolean;
+  feature_must_have_parent_epic: boolean;
+  user_story_must_have_parent_feature: boolean;
 
-// 基本Issue型
-export interface BaseIssue {
-  id: number;
-  subject: string;
-  description?: string;
-  status: string;
-  priority?: string;
-  assigned_to?: string;
-  created_on: string;
-  updated_on: string;
-  tracker: string;
+  // Version制約
+  child_version_must_match_or_inherit_parent: boolean;
+  version_change_triggers_propagation: boolean;
+
+  // 循環参照防止
+  no_circular_parent_child_reference: boolean;
+  max_hierarchy_depth: 4; // Epic→Feature→UserStory→Task
 }
 
-// バージョン型
-export interface Version {
-  id: number;
-  name: string;
-  description?: string;
-  effective_date?: string;
-  status: 'open' | 'locked' | 'closed';
-  sharing: 'none' | 'descendants' | 'hierarchy' | 'tree' | 'system';
-  issue_count?: number;
-}
-
-// バージョン参照型（Issue内で使用）
-export interface VersionReference {
-  id: number;
-  name: string;
-  source: 'direct' | 'inherited' | 'none';
-}
-
-// Epic型
-export interface Epic {
-  issue: BaseIssue & {
-    tracker: 'Epic';
-    fixed_version?: VersionReference;
-  };
-  features: Feature[];
-  statistics: {
-    total_features: number;
-    total_user_stories: number;
-    total_tasks: number;
-    completed_percentage: number;
-  };
-}
-
-// Feature型
-export interface Feature {
-  issue: BaseIssue & {
-    tracker: 'Feature';
-    parent_id?: number;
-    fixed_version?: VersionReference;
-  };
-  user_stories: UserStory[];
-  statistics: {
-    total_user_stories: number;
-    total_tasks: number;
-    total_tests: number;
-    total_bugs: number;
-    completed_tasks: number;
-    pending_tests: number;
-    open_bugs: number;
-  };
-}
-
-// UserStory型
-export interface UserStory {
-  issue: BaseIssue & {
-    tracker: 'UserStory';
-    parent_id: number;
-    fixed_version?: VersionReference;
-    blocks_relations?: BlocksRelation[];
-  };
-  tasks: Task[];
-  tests: Test[];
-  bugs: Bug[];
-  expanded?: boolean; // UI表示状態
-}
-
-// Task型
-export interface Task {
-  id: number;
-  subject: string;
-  status: string;
-  assigned_to?: string;
-  estimated_hours?: number;
-  spent_hours?: number;
-  parent_id: number;
-  created_on: string;
-  updated_on: string;
-  tracker: 'Task';
-}
-
-// Test型
-export interface Test {
-  id: number;
-  subject: string;
-  status: string;
-  assigned_to?: string;
-  test_type?: 'unit' | 'integration' | 'e2e' | 'manual';
-  auto_generated?: boolean;
-  parent_id: number;
-  created_on: string;
-  updated_on: string;
-  tracker: 'Test';
-}
-
-// Bug型
-export interface Bug {
-  id: number;
-  subject: string;
-  status: string;
-  priority?: string;
-  assigned_to?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-  parent_id: number;
-  created_on: string;
-  updated_on: string;
-  tracker: 'Bug';
-}
-
-// Blocks関係型
-export interface BlocksRelation {
-  id: number;
-  blocked_issue_id: number;
-  blocking_issue_id: number;
-  relation_type: 'blocks';
-  delay?: number;
-}
-
-// Grid関連型
-export interface GridData {
-  project: ProjectMetadata;
-  versions: Version[];
-  epics: Epic[];
-  orphan_features: Feature[]; // 親Epicが存在しないFeature
-  columns: KanbanColumn[];
-  metadata: GridMetadata;
-}
-
-export interface ProjectMetadata {
-  id: number;
-  name: string;
-  identifier: string;
-  description?: string;
-}
-
-export interface KanbanColumn {
-  id: string;
-  name: string;
-  statuses: string[];
-  color?: string;
-  order: number;
-}
-
-export interface GridMetadata {
-  total_epics: number;
-  total_features: number;
-  total_user_stories: number;
-  total_versions: number;
-  last_updated: string;
-  user_permissions: UserPermissions;
-}
-
-export interface UserPermissions {
-  view_issues: boolean;
-  edit_issues: boolean;
-  add_issues: boolean;
-  delete_issues: boolean;
-  manage_versions: boolean;
-  view_time_entries: boolean;
-}
+// バリデーション関数型定義
+type HierarchyValidator<T> = (data: T) => ValidationResult;
+type VersionConsistencyChecker = (hierarchy: IssueHierarchy) => ConsistencyReport;
+type StatisticsCalculator<T> = (items: T[]) => StatisticsResult;
 ```
 
-## 3. API レスポンス構造
+## 5. Version管理設計
 
-### 3.1 Grid Data API Response
+### 5.1 Version継承戦略
+```mermaid
+stateDiagram-v2
+    [*] --> Version未設定
+    Version未設定 --> 直接割当: Epic/FeatureにVersion設定
+    Version未設定 --> 継承待ち: 親にVersion設定済み
 
-```json
-{
-  "project": {
-    "id": 1,
-    "name": "サンプルプロジェクト",
-    "identifier": "sample",
-    "description": "サンプルプロジェクトの説明"
-  },
-  "versions": [
-    {
-      "id": 1,
-      "name": "Version-1",
-      "description": "最初のバージョン",
-      "effective_date": "2024-03-31T23:59:59Z",
-      "status": "open",
-      "sharing": "none",
-      "issue_count": 5
-    }
-  ],
-  "epics": [
-    {
-      "issue": {
-        "id": 1,
-        "subject": "施設・ユーザー管理",
-        "description": "施設とユーザーの管理機能",
-        "status": "進行中",
-        "priority": "高",
-        "assigned_to": "プロジェクトマネージャー",
-        "created_on": "2024-01-15T09:00:00Z",
-        "updated_on": "2024-01-20T15:30:00Z",
-        "tracker": "Epic",
-        "fixed_version": {
-          "id": 1,
-          "name": "Version-1",
-          "source": "direct"
-        }
-      },
-      "features": [
-        {
-          "issue": {
-            "id": 101,
-            "subject": "ユーザー登録機能",
-            "description": "新規ユーザーの登録機能",
-            "status": "進行中",
-            "assigned_to": "開発チームリーダー",
-            "created_on": "2024-01-16T10:00:00Z",
-            "updated_on": "2024-01-22T14:00:00Z",
-            "tracker": "Feature",
-            "parent_id": 1,
-            "fixed_version": {
-              "id": 1,
-              "name": "Version-1",
-              "source": "inherited"
-            }
-          },
-          "user_stories": [
-            {
-              "issue": {
-                "id": 201,
-                "subject": "ユーザー登録フォーム",
-                "description": "ユーザー情報入力フォームの実装",
-                "status": "進行中",
-                "assigned_to": "フロントエンドエンジニア",
-                "created_on": "2024-01-17T11:00:00Z",
-                "updated_on": "2024-01-23T09:15:00Z",
-                "tracker": "UserStory",
-                "parent_id": 101,
-                "fixed_version": {
-                  "id": 1,
-                  "name": "Version-1",
-                  "source": "inherited"
-                }
-              },
-              "tasks": [
-                {
-                  "id": 301,
-                  "subject": "バリデーション実装",
-                  "status": "進行中",
-                  "assigned_to": "田中太郎",
-                  "estimated_hours": 8,
-                  "spent_hours": 5,
-                  "parent_id": 201,
-                  "created_on": "2024-01-18T09:30:00Z",
-                  "updated_on": "2024-01-23T16:45:00Z",
-                  "tracker": "Task"
-                },
-                {
-                  "id": 302,
-                  "subject": "UI設計完了",
-                  "status": "完了",
-                  "assigned_to": "佐藤花子",
-                  "estimated_hours": 6,
-                  "spent_hours": 6,
-                  "parent_id": 201,
-                  "created_on": "2024-01-18T10:00:00Z",
-                  "updated_on": "2024-01-21T17:30:00Z",
-                  "tracker": "Task"
-                }
-              ],
-              "tests": [
-                {
-                  "id": 401,
-                  "subject": "単体テスト作成",
-                  "status": "未着手",
-                  "assigned_to": null,
-                  "test_type": "unit",
-                  "auto_generated": true,
-                  "parent_id": 201,
-                  "created_on": "2024-01-18T12:00:00Z",
-                  "updated_on": "2024-01-18T12:00:00Z",
-                  "tracker": "Test"
-                }
-              ],
-              "bugs": [
-                {
-                  "id": 501,
-                  "subject": "バリデーションエラー修正",
-                  "status": "対応中",
-                  "priority": "中",
-                  "assigned_to": "山田一郎",
-                  "severity": "medium",
-                  "parent_id": 201,
-                  "created_on": "2024-01-22T13:20:00Z",
-                  "updated_on": "2024-01-23T10:30:00Z",
-                  "tracker": "Bug"
-                }
-              ],
-              "expanded": true
-            }
-          ],
-          "statistics": {
-            "total_user_stories": 1,
-            "total_tasks": 2,
-            "total_tests": 1,
-            "total_bugs": 1,
-            "completed_tasks": 1,
-            "pending_tests": 1,
-            "open_bugs": 1
-          }
-        }
-      ],
-      "statistics": {
-        "total_features": 1,
-        "total_user_stories": 1,
-        "total_tasks": 2,
-        "completed_percentage": 40
-      }
-    }
-  ],
-  "orphan_features": [],
-  "columns": [
-    {
-      "id": "todo",
-      "name": "ToDo",
-      "statuses": ["新規", "未着手"],
-      "color": "#f1f1f1",
-      "order": 1
-    },
-    {
-      "id": "in_progress",
-      "name": "In Progress",
-      "statuses": ["進行中", "対応中"],
-      "color": "#fff3cd",
-      "order": 2
-    },
-    {
-      "id": "ready_for_test",
-      "name": "Ready for Test",
-      "statuses": ["レビュー待ち", "テスト待ち"],
-      "color": "#d1ecf1",
-      "order": 3
-    },
-    {
-      "id": "released",
-      "name": "Released",
-      "statuses": ["解決", "完了"],
-      "color": "#d4edda",
-      "order": 4
-    }
-  ],
-  "metadata": {
-    "total_epics": 3,
-    "total_features": 8,
-    "total_user_stories": 12,
-    "total_versions": 3,
-    "last_updated": "2024-01-23T18:00:00Z",
-    "user_permissions": {
-      "view_issues": true,
-      "edit_issues": true,
-      "add_issues": true,
-      "delete_issues": false,
-      "manage_versions": true,
-      "view_time_entries": true
-    }
+    直接割当 --> 伝播処理中: 子要素への伝播開始
+    継承待ち --> 継承完了: 親Versionを継承
+
+    伝播処理中 --> 伝播完了: 全子要素更新完了
+    伝播完了 --> 直接割当: 一貫性確保
+    継承完了 --> 直接割当: 継承元明記
+
+    直接割当 --> Version変更: 別Version割当
+    Version変更 --> 伝播処理中: 子要素影響確認
+
+    note right of 伝播処理中: UserStory→Task/Test/Bug\n一括更新・整合性チェック
+    note right of 継承完了: source='inherited'\n元Version追跡可能
+```
+
+### 5.2 Version変更影響分析
+```mermaid
+flowchart TD
+    A[Version変更要求] --> B{変更対象判定}
+    B -->|Epic| C[Epic配下全要素影響]
+    B -->|Feature| D[Feature配下要素影響]
+    B -->|UserStory| E[UserStory配下要素影響]
+
+    C --> F[影響範囲計算]
+    D --> F
+    E --> F
+
+    F --> G[変更前後差分分析]
+    G --> H[依存関係チェック]
+    H --> I[制約違反検証]
+
+    I --> J{制約チェック結果}
+    J -->|OK| K[変更実行可能]
+    J -->|NG| L[制約違反エラー]
+
+    K --> M[段階的更新実行]
+    M --> N[整合性最終確認]
+    N --> O[変更完了通知]
+
+    L --> P[エラー詳細レポート]
+    P --> Q[変更要求拒否]
+
+    style J fill:#fff3e0
+    style K fill:#e8f5e8
+    style L fill:#ffebee
+```
+
+## 6. アーキテクチャ設計
+
+### 6.1 システム構成
+```mermaid
+C4Context
+    Person(pm, "プロジェクトマネージャー", "階層構造・Version管理")
+    Person(dev, "開発者", "Issue作成・ステータス更新")
+    Person(qa, "QA担当", "Test Issue・品質管理")
+
+    System(data_system, "Data Structure System", "階層データ管理・統計計算")
+    System_Ext(redmine_db, "Redmine Database", "Issue・Version永続化")
+    System_Ext(react_ui, "React UI", "データ表示・操作")
+    System_Ext(rails_api, "Rails API", "データ変換・配信")
+
+    Rel(pm, data_system, "階層構造設計・Version計画")
+    Rel(dev, data_system, "Issue作成・関連付け")
+    Rel(qa, data_system, "Test管理・品質統計")
+
+    Rel(data_system, redmine_db, "階層データ永続化")
+    Rel(data_system, react_ui, "型安全データ配信")
+    Rel(data_system, rails_api, "データ変換・統計計算")
+```
+
+### 6.2 データレイヤー構成
+```mermaid
+C4Component
+    Component(hierarchy_manager, "Hierarchy Manager", "階層構造管理", "親子関係・循環参照チェック")
+    Component(version_manager, "Version Manager", "Version継承管理", "自動伝播・整合性保証")
+    Component(statistics_engine, "Statistics Engine", "統計計算エンジン", "リアルタイム集計・キャッシング")
+    Component(type_converter, "Type Converter", "型変換システム", "Redmine↔React安全変換")
+    Component(data_validator, "Data Validator", "データ検証", "整合性・制約チェック")
+    Component(cache_manager, "Cache Manager", "キャッシュ管理", "統計・クエリ結果キャッシング")
+
+    Rel(hierarchy_manager, version_manager, "階層変更→Version伝播")
+    Rel(hierarchy_manager, statistics_engine, "構造変更→統計再計算")
+    Rel(version_manager, data_validator, "Version変更→整合性検証")
+    Rel(statistics_engine, cache_manager, "統計結果キャッシング")
+    Rel(type_converter, data_validator, "変換後データ検証")
+
+    style hierarchy_manager fill:#e1f5fe
+    style version_manager fill:#f3e5f5
+    style statistics_engine fill:#fff3e0
+    style data_validator fill:#e8f5e8
+```
+
+## 7. パフォーマンス設計
+
+### 7.1 統計計算最適化戦略
+```mermaid
+flowchart TD
+    A[統計計算要求] --> B{計算範囲判定}
+    B -->|局所変更| C[差分計算]
+    B -->|大規模変更| D[全体再計算]
+
+    C --> E[変更影響範囲特定]
+    E --> F[影響部分のみ更新]
+
+    D --> G[階層並列計算]
+    G --> H[レベル別集約]
+
+    F --> I[キャッシュ更新]
+    H --> I
+
+    I --> J[統計結果配信]
+
+    K[キャッシュヒット] --> L[即座レスポンス]
+
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style K fill:#e1f5fe
+```
+
+### 7.2 データ取得最適化
+| 最適化項目 | 手法 | 効果 | 適用条件 |
+|-----------|------|------|----------|
+| N+1問題回避 | includes・joins活用 | 90%クエリ削減 | 階層データ取得時 |
+| 統計キャッシング | Redis・メモリキャッシュ | 80%応答時間短縮 | 頻繁な統計参照 |
+| 部分更新 | 差分検出・局所更新 | 70%計算時間削減 | 小規模データ変更 |
+| 並列処理 | 非同期・並列計算 | 60%処理時間短縮 | 大規模統計計算 |
+
+## 8. 実装指針
+
+### 8.1 技術スタック
+- **型システム**: TypeScript 4.8+ strict mode
+- **データ検証**: joi・yup（スキーマ検証）
+- **状態管理**: Immutable.js・immer（イミュータブル）
+- **キャッシング**: React Query・SWR（クライアント）、Redis（サーバー）
+- **統計計算**: Lodash・Ramda（関数型計算）
+
+### 8.2 実装パターン
+```typescript
+// データ構造管理基本パターン（疑似コード）
+class HierarchyManager {
+  // 階層構造検証
+  validateHierarchy(data: IssueHierarchy): ValidationResult {
+    const rules = [
+      this.checkCircularReference,
+      this.validateParentChildTypes,
+      this.checkHierarchyDepth,
+      this.validateVersionConsistency
+    ];
+
+    return rules.reduce((result, rule) => ({
+      ...result,
+      ...rule(data)
+    }), { valid: true, errors: [] });
   }
-}
-```
 
-## 4. 状態管理データ構造
+  // Version自動伝播
+  async propagateVersion(parentIssue: Issue, newVersion: Version): Promise<PropagationResult> {
+    const affectedIssues = await this.findChildrenRecursively(parentIssue);
 
-### 4.1 React Context State
-
-```typescript
-// assets/javascripts/kanban/contexts/KanbanContext.types.ts
-
-export interface KanbanState {
-  // データ
-  gridData: GridData | null;
-  loading: boolean;
-  error: string | null;
-
-  // UI状態
-  selectedCards: Set<number>;
-  expandedUserStories: Map<number, boolean>;
-  draggedCard: DraggedCard | null;
-
-  // フィルタ・検索
-  filters: KanbanFilters;
-  searchQuery: string;
-
-  // 設定
-  viewMode: 'grid' | 'list';
-  compactMode: boolean;
-  showAssignee: boolean;
-  showVersion: boolean;
-}
-
-export interface KanbanFilters {
-  versionId?: number | null;
-  assigneeId?: number | null;
-  statusId?: number | null;
-  trackerId?: number | null;
-  epicId?: number | null;
-}
-
-export interface DraggedCard {
-  type: 'Feature' | 'UserStory' | 'Task' | 'Test' | 'Bug';
-  issue: BaseIssue;
-  source: {
-    epicId?: number;
-    versionId?: number;
-    parentId?: number;
-  };
-}
-
-// Action型
-export type KanbanAction =
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_GRID_DATA'; payload: GridData }
-  | { type: 'UPDATE_FEATURE'; payload: Feature }
-  | { type: 'ADD_USER_STORY'; payload: { featureId: number; userStory: UserStory } }
-  | { type: 'UPDATE_USER_STORY'; payload: { featureId: number; userStory: UserStory } }
-  | { type: 'DELETE_USER_STORY'; payload: { featureId: number; userStoryId: number } }
-  | { type: 'ADD_TASK'; payload: { userStoryId: number; task: Task } }
-  | { type: 'UPDATE_TASK'; payload: { userStoryId: number; task: Task } }
-  | { type: 'DELETE_TASK'; payload: { userStoryId: number; taskId: number } }
-  | { type: 'TOGGLE_CARD_SELECTION'; payload: number }
-  | { type: 'CLEAR_SELECTION' }
-  | { type: 'TOGGLE_USER_STORY_EXPANSION'; payload: number }
-  | { type: 'SET_DRAGGED_CARD'; payload: DraggedCard | null }
-  | { type: 'SET_FILTERS'; payload: KanbanFilters }
-  | { type: 'SET_SEARCH_QUERY'; payload: string }
-  | { type: 'SET_VIEW_MODE'; payload: 'grid' | 'list' }
-  | { type: 'SET_COMPACT_MODE'; payload: boolean };
-```
-
-### 4.2 Redux Store Structure (代替案)
-
-```typescript
-// assets/javascripts/kanban/store/store.types.ts
-
-export interface RootState {
-  kanban: KanbanSliceState;
-  ui: UISliceState;
-  auth: AuthSliceState;
-}
-
-export interface KanbanSliceState {
-  projects: {
-    [projectId: number]: ProjectKanbanState;
-  };
-  currentProjectId: number | null;
-}
-
-export interface ProjectKanbanState {
-  gridData: GridData | null;
-  lastUpdated: string | null;
-  loading: boolean;
-  error: string | null;
-  optimisticUpdates: Map<string, OptimisticUpdate>;
-}
-
-export interface UISliceState {
-  selectedCards: Set<number>;
-  expandedUserStories: Map<number, boolean>;
-  dragState: DragState;
-  filters: KanbanFilters;
-  searchQuery: string;
-  viewSettings: ViewSettings;
-  modal: ModalState;
-}
-
-export interface ViewSettings {
-  viewMode: 'grid' | 'list';
-  compactMode: boolean;
-  showAssignee: boolean;
-  showVersion: boolean;
-  gridColumnWidth: number;
-  featureCardHeight: number;
-}
-
-export interface ModalState {
-  type: 'none' | 'create_epic' | 'create_feature' | 'create_user_story' | 'create_task' | 'edit_issue';
-  data: any;
-  isOpen: boolean;
-}
-
-export interface OptimisticUpdate {
-  id: string;
-  type: 'create' | 'update' | 'delete' | 'move';
-  timestamp: number;
-  originalData: any;
-  optimisticData: any;
-  status: 'pending' | 'confirmed' | 'failed';
-}
-```
-
-## 5. Ruby側データモデル拡張
-
-### 5.1 Issue Model 拡張
-
-```ruby
-# app/models/issue_extension.rb (concerns)
-module IssueExtension
-  extend ActiveSupport::Concern
-
-  included do
-    # スコープ定義
-    scope :epics, -> { joins(:tracker).where(trackers: { name: 'Epic' }) }
-    scope :features, -> { joins(:tracker).where(trackers: { name: 'Feature' }) }
-    scope :user_stories, -> { joins(:tracker).where(trackers: { name: 'UserStory' }) }
-    scope :tasks, -> { joins(:tracker).where(trackers: { name: 'Task' }) }
-    scope :tests, -> { joins(:tracker).where(trackers: { name: 'Test' }) }
-    scope :bugs, -> { joins(:tracker).where(trackers: { name: 'Bug' }) }
-
-    # バージョン継承関連
-    scope :with_inherited_version, -> { includes(:fixed_version, :parent) }
-
-    # 統計用スコープ
-    scope :completed, -> { joins(:status).where(issue_statuses: { is_closed: true }) }
-    scope :in_progress, -> { joins(:status).where(issue_statuses: { name: ['進行中', '対応中'] }) }
-
-    # バリデーション
-    validates :subject, presence: true, length: { maximum: 255 }
-    validates :tracker_id, presence: true
-    validates :project_id, presence: true
-    validates :author_id, presence: true
-    validates :status_id, presence: true
-
-    # コールバック
-    after_update :propagate_version_if_changed
-    after_create :auto_generate_test_if_user_story
-  end
-
-  # インスタンスメソッド
-  def hierarchy_level
-    case tracker.name
-    when 'Epic' then 1
-    when 'Feature' then 2
-    when 'UserStory' then 3
-    when 'Task', 'Test', 'Bug' then 4
-    else 0
-    end
-  end
-
-  def epic
-    return self if tracker.name == 'Epic'
-    return parent.epic if parent
-    nil
-  end
-
-  def feature
-    return self if tracker.name == 'Feature'
-    return parent.feature if parent && parent.tracker.name == 'Feature'
-    return parent.parent if parent&.parent&.tracker&.name == 'Feature'
-    nil
-  end
-
-  def user_story
-    return self if tracker.name == 'UserStory'
-    return parent if parent&.tracker&.name == 'UserStory'
-    nil
-  end
-
-  def effective_version
-    return fixed_version if fixed_version
-
-    # 親から継承
-    current = parent
-    while current
-      return current.fixed_version if current.fixed_version
-      current = current.parent
-    end
-
-    nil
-  end
-
-  def version_source
-    return 'direct' if fixed_version
-    return 'inherited' if effective_version
-    'none'
-  end
-
-  def children_by_tracker(tracker_name)
-    children.joins(:tracker).where(trackers: { name: tracker_name })
-  end
-
-  def completion_percentage
-    return 0 if children.empty?
-
-    completed_count = children.completed.count
-    total_count = children.count
-
-    (completed_count.to_f / total_count * 100).round(2)
-  end
-
-  def has_blocking_relations?
-    IssueRelation.where(
-      issue_from: self,
-      relation_type: 'blocks'
-    ).exists?
-  end
-
-  def blocked_by_issues
-    Issue.joins(:relations_to)
-         .where(issue_relations: {
-           issue_to: self,
-           relation_type: 'blocks'
-         })
-  end
-
-  def status_column
-    case status.name
-    when '新規', '未着手'
-      'todo'
-    when '進行中', '対応中'
-      'in_progress'
-    when 'レビュー待ち', 'テスト待ち'
-      'ready_for_test'
-    when '解決', '完了'
-      'released'
-    else
-      'todo'
-    end
-  end
-
-  private
-
-  def propagate_version_if_changed
-    return unless saved_change_to_fixed_version_id?
-    return unless fixed_version
-
-    Kanban::VersionPropagationService.new(self, fixed_version).execute_async
-  end
-
-  def auto_generate_test_if_user_story
-    return unless tracker.name == 'UserStory'
-
-    Kanban::TestGenerationService.new(self, author).execute_if_needed_async
-  end
-end
-
-# Issue クラスにinclude
-Issue.include(IssueExtension)
-```
-
-### 5.2 データビルダーサービス
-
-```ruby
-# app/services/kanban/data_serializer_service.rb
-class Kanban::DataSerializerService
-  def initialize(project, user)
-    @project = project
-    @user = user
-  end
-
-  def serialize_grid_data(epics, versions, orphan_features)
-    {
-      project: serialize_project(@project),
-      versions: versions.map { |v| serialize_version(v) },
-      epics: epics.map { |e| serialize_epic(e) },
-      orphan_features: orphan_features.map { |f| serialize_feature(f) },
-      columns: kanban_columns,
-      metadata: serialize_metadata(epics, versions)
-    }
-  end
-
-  def serialize_epic(epic)
-    {
-      issue: serialize_base_issue(epic),
-      features: epic.children.features
-                    .includes(:tracker, :status, :assigned_to, :fixed_version, :children)
-                    .map { |f| serialize_feature(f) },
-      statistics: calculate_epic_statistics(epic)
-    }
-  end
-
-  def serialize_feature(feature)
-    {
-      issue: serialize_base_issue(feature),
-      user_stories: feature.children.user_stories
-                           .includes(:tracker, :status, :assigned_to, :fixed_version, :children)
-                           .map { |us| serialize_user_story(us) },
-      statistics: calculate_feature_statistics(feature)
-    }
-  end
-
-  def serialize_user_story(user_story)
-    {
-      issue: serialize_base_issue(user_story).merge(
-        blocks_relations: serialize_blocks_relations(user_story)
-      ),
-      tasks: user_story.children_by_tracker('Task').map { |t| serialize_task(t) },
-      tests: user_story.children_by_tracker('Test').map { |t| serialize_test(t) },
-      bugs: user_story.children_by_tracker('Bug').map { |b| serialize_bug(b) },
-      expanded: false # デフォルトは折り畳み
-    }
-  end
-
-  private
-
-  def serialize_project(project)
-    {
-      id: project.id,
-      name: project.name,
-      identifier: project.identifier,
-      description: project.description
-    }
-  end
-
-  def serialize_base_issue(issue)
-    {
+    const propagationPlan = affectedIssues.map(issue => ({
       id: issue.id,
-      subject: issue.subject,
-      description: issue.description,
-      status: issue.status.name,
-      priority: issue.priority&.name,
-      assigned_to: issue.assigned_to&.name,
-      created_on: issue.created_on.iso8601,
-      updated_on: issue.updated_on.iso8601,
-      tracker: issue.tracker.name,
-      parent_id: issue.parent_id,
-      fixed_version: serialize_version_reference(issue)
+      currentVersion: issue.fixed_version,
+      targetVersion: newVersion,
+      conflicts: this.detectVersionConflicts(issue, newVersion)
+    }));
+
+    if (propagationPlan.some(plan => plan.conflicts.length > 0)) {
+      return { success: false, conflicts: propagationPlan };
     }
-  end
 
-  def serialize_version_reference(issue)
-    version = issue.effective_version
-    return nil unless version
+    return await this.executePropagation(propagationPlan);
+  }
 
-    {
-      id: version.id,
-      name: version.name,
-      source: issue.version_source
-    }
-  end
-
-  def serialize_version(version)
-    {
-      id: version.id,
-      name: version.name,
-      description: version.description,
-      effective_date: version.effective_date&.iso8601,
-      status: version.status,
-      sharing: version.sharing,
-      issue_count: version.issues.count
-    }
-  end
-
-  def serialize_task(task)
-    {
-      id: task.id,
-      subject: task.subject,
-      status: task.status.name,
-      assigned_to: task.assigned_to&.name,
-      estimated_hours: task.estimated_hours,
-      spent_hours: task.spent_hours,
-      parent_id: task.parent_id,
-      created_on: task.created_on.iso8601,
-      updated_on: task.updated_on.iso8601,
-      tracker: 'Task'
-    }
-  end
-
-  def serialize_test(test)
-    {
-      id: test.id,
-      subject: test.subject,
-      status: test.status.name,
-      assigned_to: test.assigned_to&.name,
-      test_type: extract_test_type(test),
-      auto_generated: extract_auto_generated(test),
-      parent_id: test.parent_id,
-      created_on: test.created_on.iso8601,
-      updated_on: test.updated_on.iso8601,
-      tracker: 'Test'
-    }
-  end
-
-  def serialize_bug(bug)
-    {
-      id: bug.id,
-      subject: bug.subject,
-      status: bug.status.name,
-      priority: bug.priority&.name,
-      assigned_to: bug.assigned_to&.name,
-      severity: extract_severity(bug),
-      parent_id: bug.parent_id,
-      created_on: bug.created_on.iso8601,
-      updated_on: bug.updated_on.iso8601,
-      tracker: 'Bug'
-    }
-  end
-
-  def serialize_blocks_relations(issue)
-    issue.relations_from
-         .where(relation_type: 'blocks')
-         .includes(:issue_to)
-         .map do |relation|
-      {
-        id: relation.id,
-        blocked_issue_id: relation.issue_to_id,
-        blocking_issue_id: relation.issue_from_id,
-        relation_type: 'blocks',
-        delay: relation.delay
-      }
-    end
-  end
-
-  def calculate_epic_statistics(epic)
-    features = epic.children.features.includes(:children)
-
-    {
-      total_features: features.count,
-      total_user_stories: features.sum { |f| f.children.user_stories.count },
-      total_tasks: features.sum { |f| f.children.user_stories.sum { |us| us.children_by_tracker('Task').count } },
-      completed_percentage: epic.completion_percentage
-    }
-  end
-
-  def calculate_feature_statistics(feature)
-    user_stories = feature.children.user_stories.includes(:children)
-
-    {
-      total_user_stories: user_stories.count,
-      total_tasks: user_stories.sum { |us| us.children_by_tracker('Task').count },
-      total_tests: user_stories.sum { |us| us.children_by_tracker('Test').count },
-      total_bugs: user_stories.sum { |us| us.children_by_tracker('Bug').count },
-      completed_tasks: user_stories.sum { |us| us.children_by_tracker('Task').completed.count },
-      pending_tests: user_stories.sum { |us| us.children_by_tracker('Test').where.not(issue_statuses: { is_closed: true }).count },
-      open_bugs: user_stories.sum { |us| us.children_by_tracker('Bug').where.not(issue_statuses: { is_closed: true }).count }
-    }
-  end
-
-  def serialize_metadata(epics, versions)
-    {
-      total_epics: epics.count,
-      total_features: @project.issues.features.count,
-      total_user_stories: @project.issues.user_stories.count,
-      total_versions: versions.count,
-      last_updated: Time.current.iso8601,
-      user_permissions: {
-        view_issues: @user.allowed_to?(:view_issues, @project),
-        edit_issues: @user.allowed_to?(:edit_issues, @project),
-        add_issues: @user.allowed_to?(:add_issues, @project),
-        delete_issues: @user.allowed_to?(:delete_issues, @project),
-        manage_versions: @user.allowed_to?(:manage_versions, @project),
-        view_time_entries: @user.allowed_to?(:view_time_entries, @project)
-      }
-    }
-  end
-
-  def kanban_columns
-    [
-      { id: 'todo', name: 'ToDo', statuses: ['新規', '未着手'], color: '#f1f1f1', order: 1 },
-      { id: 'in_progress', name: 'In Progress', statuses: ['進行中', '対応中'], color: '#fff3cd', order: 2 },
-      { id: 'ready_for_test', name: 'Ready for Test', statuses: ['レビュー待ち', 'テスト待ち'], color: '#d1ecf1', order: 3 },
-      { id: 'released', name: 'Released', statuses: ['解決', '完了'], color: '#d4edda', order: 4 }
-    ]
-  end
-
-  def extract_test_type(test)
-    # カスタムフィールドや件名から推定
-    subject = test.subject.downcase
-
-    return 'unit' if subject.include?('単体') || subject.include?('unit')
-    return 'integration' if subject.include?('結合') || subject.include?('integration')
-    return 'e2e' if subject.include?('e2e') || subject.include?('エンドツーエンド')
-    return 'manual' if subject.include?('手動') || subject.include?('manual')
-
-    'unit' # デフォルト
-  end
-
-  def extract_auto_generated(test)
-    # カスタムフィールドまたはサブジェクトから判定
-    test.description&.include?('自動生成') || false
-  end
-
-  def extract_severity(bug)
-    # プライオリティやカスタムフィールドから推定
-    case bug.priority&.name
-    when '低'
-      'low'
-    when '中', '標準'
-      'medium'
-    when '高'
-      'high'
-    when '緊急', '即座'
-      'critical'
-    else
-      'medium'
-    end
-  end
-end
-```
-
-## 6. データ変換ユーティリティ
-
-### 6.1 Frontend データ変換
-
-```javascript
-// assets/javascripts/kanban/utils/DataTransformUtils.js
-
-export class DataTransformUtils {
-  // API レスポンスを内部状態に変換
-  static transformGridResponse(response) {
+  // 統計計算（メモ化）
+  @Memoize({ ttl: 300000 }) // 5分キャッシュ
+  calculateStatistics(hierarchy: IssueHierarchy): HierarchyStatistics {
     return {
-      ...response,
-      epics: response.epics.map(epic => ({
-        ...epic,
-        features: epic.features.map(feature => ({
-          ...feature,
-          user_stories: feature.user_stories.map(userStory => ({
-            ...userStory,
-            expanded: false // 初期状態は折り畳み
-          }))
-        }))
-      }))
+      epic: this.calculateEpicStatistics(hierarchy.epics),
+      feature: this.calculateFeatureStatistics(hierarchy.features),
+      userStory: this.calculateUserStoryStatistics(hierarchy.userStories),
+      overall: this.calculateOverallStatistics(hierarchy)
     };
   }
+}
 
-  // グリッドセル用データフラット化
-  static flattenForGridCells(gridData) {
-    const cellMap = new Map();
+// 型安全なデータ変換
+class TypeSafeConverter {
+  redmineToReact<T>(redmineData: RedmineIssue[], schema: Schema<T>): T[] {
+    return redmineData.map(data => {
+      const converted = this.convertFields(data);
+      const validated = schema.validate(converted);
 
-    gridData.epics.forEach(epic => {
-      epic.features.forEach(feature => {
-        const versionId = feature.issue.fixed_version?.id || 'no-version';
-        const cellKey = `${epic.issue.id}-${versionId}`;
-
-        if (!cellMap.has(cellKey)) {
-          cellMap.set(cellKey, []);
-        }
-        cellMap.get(cellKey).push(feature);
-      });
-    });
-
-    // 孤立Feature
-    gridData.orphan_features.forEach(feature => {
-      const versionId = feature.issue.fixed_version?.id || 'no-version';
-      const cellKey = `no-epic-${versionId}`;
-
-      if (!cellMap.has(cellKey)) {
-        cellMap.set(cellKey, []);
+      if (validated.error) {
+        throw new DataValidationError(validated.error);
       }
-      cellMap.get(cellKey).push(feature);
+
+      return validated.value;
     });
-
-    return cellMap;
-  }
-
-  // 検索用インデックス構築
-  static buildSearchIndex(gridData) {
-    const index = [];
-
-    gridData.epics.forEach(epic => {
-      index.push({
-        id: epic.issue.id,
-        type: 'Epic',
-        subject: epic.issue.subject,
-        description: epic.issue.description,
-        assignedTo: epic.issue.assigned_to
-      });
-
-      epic.features.forEach(feature => {
-        index.push({
-          id: feature.issue.id,
-          type: 'Feature',
-          epicId: epic.issue.id,
-          subject: feature.issue.subject,
-          description: feature.issue.description,
-          assignedTo: feature.issue.assigned_to
-        });
-
-        feature.user_stories.forEach(userStory => {
-          index.push({
-            id: userStory.issue.id,
-            type: 'UserStory',
-            epicId: epic.issue.id,
-            featureId: feature.issue.id,
-            subject: userStory.issue.subject,
-            description: userStory.issue.description,
-            assignedTo: userStory.issue.assigned_to
-          });
-
-          // Task, Test, Bugも同様にインデックス化
-          [...userStory.tasks, ...userStory.tests, ...userStory.bugs].forEach(item => {
-            index.push({
-              id: item.id,
-              type: item.tracker,
-              epicId: epic.issue.id,
-              featureId: feature.issue.id,
-              userStoryId: userStory.issue.id,
-              subject: item.subject,
-              assignedTo: item.assigned_to
-            });
-          });
-        });
-      });
-    });
-
-    return index;
-  }
-
-  // フィルタリング
-  static applyFilters(gridData, filters) {
-    if (!filters || Object.keys(filters).length === 0) {
-      return gridData;
-    }
-
-    const filteredEpics = gridData.epics.map(epic => {
-      const filteredFeatures = epic.features.filter(feature => {
-        return this.matchesFilters(feature, filters);
-      });
-
-      return { ...epic, features: filteredFeatures };
-    }).filter(epic => epic.features.length > 0);
-
-    const filteredOrphanFeatures = gridData.orphan_features.filter(feature => {
-      return this.matchesFilters(feature, filters);
-    });
-
-    return {
-      ...gridData,
-      epics: filteredEpics,
-      orphan_features: filteredOrphanFeatures
-    };
-  }
-
-  static matchesFilters(feature, filters) {
-    if (filters.versionId && feature.issue.fixed_version?.id !== filters.versionId) {
-      return false;
-    }
-
-    if (filters.assigneeId) {
-      const hasAssignedStory = feature.user_stories.some(us =>
-        us.issue.assigned_to === filters.assigneeId ||
-        us.tasks.some(task => task.assigned_to === filters.assigneeId) ||
-        us.tests.some(test => test.assigned_to === filters.assigneeId) ||
-        us.bugs.some(bug => bug.assigned_to === filters.assigneeId)
-      );
-      if (!hasAssignedStory) return false;
-    }
-
-    if (filters.statusId) {
-      const hasMatchingStatus = feature.user_stories.some(us =>
-        us.issue.status === filters.statusId ||
-        us.tasks.some(task => task.status === filters.statusId) ||
-        us.tests.some(test => test.status === filters.statusId) ||
-        us.bugs.some(bug => bug.status === filters.statusId)
-      );
-      if (!hasMatchingStatus) return false;
-    }
-
-    return true;
-  }
-
-  // 統計計算
-  static calculateStatistics(gridData) {
-    const stats = {
-      totalEpics: gridData.epics.length,
-      totalFeatures: 0,
-      totalUserStories: 0,
-      totalTasks: 0,
-      totalTests: 0,
-      totalBugs: 0,
-      completedTasks: 0,
-      pendingTests: 0,
-      openBugs: 0,
-      byVersion: new Map(),
-      byAssignee: new Map(),
-      byStatus: new Map()
-    };
-
-    gridData.epics.forEach(epic => {
-      stats.totalFeatures += epic.features.length;
-
-      epic.features.forEach(feature => {
-        stats.totalUserStories += feature.user_stories.length;
-
-        feature.user_stories.forEach(userStory => {
-          stats.totalTasks += userStory.tasks.length;
-          stats.totalTests += userStory.tests.length;
-          stats.totalBugs += userStory.bugs.length;
-
-          stats.completedTasks += userStory.tasks.filter(t => t.status === '完了').length;
-          stats.pendingTests += userStory.tests.filter(t => t.status !== '完了').length;
-          stats.openBugs += userStory.bugs.filter(b => b.status !== '完了').length;
-
-          // バージョン別統計
-          const versionKey = feature.issue.fixed_version?.name || 'No Version';
-          if (!stats.byVersion.has(versionKey)) {
-            stats.byVersion.set(versionKey, { features: 0, userStories: 0, tasks: 0 });
-          }
-          const versionStats = stats.byVersion.get(versionKey);
-          versionStats.features += 1;
-          versionStats.userStories += 1;
-          versionStats.tasks += userStory.tasks.length;
-        });
-      });
-    });
-
-    return stats;
   }
 }
 ```
+
+### 8.3 エラーハンドリング設計
+```mermaid
+flowchart TD
+    A[データ操作エラー] --> B{エラー種別判定}
+    B -->|型エラー| C[TypeScript コンパイル時]
+    B -->|制約違反| D[Runtime バリデーション]
+    B -->|整合性エラー| E[データ整合性チェック]
+
+    C --> F[開発時エラー表示]
+    D --> G[ユーザー向けエラーメッセージ]
+    E --> H[システム回復処理]
+
+    G --> I[操作再試行可能状態]
+    H --> J[データ修復・ロールバック]
+
+    style B fill:#fff3e0
+    style G fill:#ffebee
+    style H fill:#f3e5f5
+```
+
+## 9. テスト設計
+
+### 9.1 テスト戦略
+```mermaid
+pyramid
+    title データ構造 テストピラミッド
+
+    "E2E（階層操作シナリオ）" : 5
+    "統合テスト（DB連携）" : 15
+    "単体テスト（ロジック・計算）" : 80
+```
+
+### 9.2 テストケース設計
+| テストレベル | 対象 | 主要テストケース | カバレッジ目標 |
+|-------------|------|------------------|----------------|
+| 単体テスト | データ変換・統計計算 | 型変換・統計計算・バリデーション | 95%以上 |
+| 統合テスト | 階層操作・Version伝播 | 親子関係・Version継承・整合性 | 90%以上 |
+| E2Eテスト | ユーザーシナリオ | Epic作成→Feature追加→Version伝播 | 主要フロー100% |
+
+### 9.3 テストデータ設計
+```typescript
+// テスト用階層データ生成（疑似コード）
+const createTestHierarchy = (options: TestOptions) => ({
+  epics: Array(options.epicCount).fill(null).map((_, i) => ({
+    id: 100 + i,
+    subject: `Epic ${i + 1}`,
+    features: Array(options.featuresPerEpic).fill(null).map((_, j) => ({
+      id: 1000 + i * 10 + j,
+      subject: `Feature ${i + 1}-${j + 1}`,
+      user_stories: Array(options.userStoriesPerFeature).fill(null).map((_, k) => ({
+        id: 10000 + i * 100 + j * 10 + k,
+        subject: `UserStory ${i + 1}-${j + 1}-${k + 1}`,
+        child_items: {
+          tasks: createChildItems('Task', 2),
+          tests: createChildItems('Test', 1),
+          bugs: createChildItems('Bug', 0)
+        }
+      }))
+    }))
+  }))
+});
+```
+
+## 10. 運用・保守設計
+
+### 10.1 データ品質監視
+- **整合性監視**: 階層構造・Version一貫性の定期チェック
+- **パフォーマンス監視**: 統計計算時間・クエリ実行時間測定
+- **データ異常検出**: 循環参照・孤立データ・不整合の自動検出
+- **統計精度検証**: 手動計算結果との定期突合
+
+### 10.2 スキーマ進化戦略
+```mermaid
+stateDiagram-v2
+    [*] --> Current_Schema
+    Current_Schema --> Migration_Planning: スキーマ変更要求
+    Migration_Planning --> Backward_Compatibility: 互換性検証
+    Backward_Compatibility --> Migration_Execution: 段階的移行
+    Migration_Execution --> Validation: データ検証
+    Validation --> Current_Schema: 移行完了
+    Validation --> Rollback: 検証失敗
+    Rollback --> Current_Schema: ロールバック完了
+
+    note right of Migration_Planning: 影響範囲分析\n移行スクリプト作成
+    note right of Validation: データ整合性確認\n統計精度検証
+```
+
+### 10.3 データアーカイブ戦略
+- **履歴データ管理**: 変更履歴・統計推移の長期保存
+- **パフォーマンス維持**: 古いデータの段階的アーカイブ
+- **復旧対応**: 重要データの定期バックアップ・復元テスト
+- **法的要件**: データ保持期間・削除ポリシー準拠
 
 ---
 
-*ワイヤーフレーム準拠カンバンシステムのデータ構造設計。型安全性とパフォーマンスを両立するReact-Ruby統合データフロー*
+*データ構造設計は、Kanban Release システムの信頼性・拡張性・保守性を支える重要な基盤です。この設計書は実装コードではなく、階層データ管理・Version継承・統計計算の設計思想を明確化し、開発チーム全体でのデータ品質向上を実現します。*

@@ -1,1183 +1,686 @@
-# 共通UIコンポーネント設計仕様書
+# 共通UIコンポーネント 詳細設計書
 
 ## 🔗 関連ドキュメント
 - @vibes/logics/ui_components/feature_card/feature_card_component_specification.md
 - @vibes/logics/ui_components/kanban_grid/kanban_grid_layout_specification.md
 - @vibes/rules/technical_architecture_standards.md
 
-## 1. 概要
+## 1. 設計概要
 
-Feature CardとKanban Gridで共通利用するReactコンポーネント群。D&D操作、モーダル表示、通知システム、フォーム要素の統一実装。
+### 1.1 設計目的・背景
+**なぜこの共通コンポーネント群が必要なのか**
+- ビジネス要件：統一されたUXによるユーザー学習コスト削減、開発効率向上
+- ユーザー価値：一貫性のある操作感、予測可能なインタラクション、アクセシビリティ対応
+- システム価値：再利用性向上、保守性確保、デザインシステム統一、品質担保
 
-## 2. 共通コンポーネント一覧
+### 1.2 設計方針
+**どのようなアプローチで実現するか**
+- 主要設計思想：Atomic Design、単一責務原則、合成可能性、テスト容易性
+- 技術選択理由：React（合成パターン）、TypeScript（型安全性）、CSS-in-JS（スコープ化）
+- 制約・前提条件：Redmine UI統合、既存スタイル踏襲、パフォーマンス配慮、アクセシビリティ準拠
 
-### 2.1 コンポーネント階層
+## 2. 機能要求仕様
 
+### 2.1 主要機能
+```mermaid
+mindmap
+  root((共通UIコンポーネント))
+    Layout Components
+      Modal・Dialog管理
+      Tooltip・Popover表示
+      Confirm・Alert通知
+    Form Components
+      統一フォーム要素
+      バリデーション統合
+      アクセシビリティ対応
+    Display Components
+      ステータス表示統一
+      データ表示形式統一
+      ローディング状態管理
+    Navigation Components
+      ページネーション
+      タブナビゲーション
+      パンくずリスト
+    Feedback Components
+      Toast通知システム
+      プログレス表示
+      エラー状態管理
 ```
-SharedComponents/
-├── Layout/
-│   ├── Modal
-│   ├── Tooltip
-│   ├── Popover
-│   └── ConfirmDialog
-├── Form/
-│   ├── Button
-│   ├── Input
-│   ├── Select
-│   ├── Textarea
-│   └── DatePicker
-├── Display/
-│   ├── Badge
-│   ├── StatusChip
-│   ├── Avatar
-│   └── LoadingSpinner
-├── Navigation/
-│   ├── Tabs
-│   ├── Breadcrumb
-│   └── Pagination
-└── Feedback/
-    ├── Toast
-    ├── Alert
-    └── ProgressBar
+
+### 2.2 機能詳細
+| 機能ID | コンポーネント名 | 説明 | 優先度 | 受容条件 |
+|--------|------------------|------|---------|----------|
+| SC001 | Modal | モーダルダイアログ表示・管理 | High | キーボード・マウス操作対応 |
+| SC002 | Button | 統一ボタンコンポーネント | High | 全バリアント・状態対応 |
+| SC003 | Toast | 通知メッセージ表示システム | High | 自動消失・スタック管理 |
+| SC004 | StatusChip | ステータス表示統一 | High | Issue状態色・アイコン統一 |
+| SC005 | ConfirmDialog | 確認ダイアログ統一 | Medium | 危険操作時の適切な警告 |
+| SC006 | LoadingSpinner | ローディング状態表示 | Medium | 非同期処理中の適切フィードバック |
+| SC007 | Tooltip | ヘルプ・説明表示 | Medium | ホバー・フォーカス対応 |
+| SC008 | Input・Select | フォーム要素統一 | Low | バリデーション・エラー表示 |
+
+## 3. UI/UX設計仕様
+
+### 3.1 コンポーネント階層構造
+```mermaid
+graph TD
+    A[SharedComponents] --> B[Layout]
+    A --> C[Form]
+    A --> D[Display]
+    A --> E[Navigation]
+    A --> F[Feedback]
+
+    B --> G[Modal]
+    B --> H[Tooltip]
+    B --> I[Popover]
+    B --> J[ConfirmDialog]
+
+    C --> K[Button]
+    C --> L[Input]
+    C --> M[Select]
+    C --> N[Textarea]
+    C --> O[DatePicker]
+
+    D --> P[Badge]
+    D --> Q[StatusChip]
+    D --> R[Avatar]
+    D --> S[LoadingSpinner]
+
+    E --> T[Tabs]
+    E --> U[Breadcrumb]
+    E --> V[Pagination]
+
+    F --> W[Toast]
+    F --> X[Alert]
+    F --> Y[ProgressBar]
+
+    style A fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    style B fill:#f3e5f5,stroke:#9c27b0
+    style C fill:#fff3e0,stroke:#ff9800
+    style D fill:#e8f5e8,stroke:#4caf50
+    style E fill:#ffebee,stroke:#f44336
+    style F fill:#fce4ec,stroke:#e91e63
 ```
 
-## 3. Layout コンポーネント
+### 3.2 Modal システム状態遷移
+```mermaid
+stateDiagram-v2
+    [*] --> Closed
+    Closed --> Opening: showModal()
+    Opening --> Opened: アニメーション完了
+    Opened --> Closing: closeModal() | Escape | Backdrop Click
+    Closing --> Closed: アニメーション完了
 
-### 3.1 Modal
+    Opened --> Opened: 内部操作・データ更新
 
-```javascript
-// assets/javascripts/kanban/components/shared/Modal.jsx
-import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom';
+    note right of Opening: フェードイン\nz-index最前面\nbody scroll無効化
+    note right of Closing: フェードアウト\nbody scroll復元
+```
 
-export const Modal = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-  size = 'medium', // 'small' | 'medium' | 'large' | 'fullscreen'
-  closeOnBackdropClick = true,
-  closeOnEscape = true,
-  className = ''
-}) => {
-  useEffect(() => {
-    if (!isOpen) return;
+### 3.3 Toast 通知システム設計
+```mermaid
+stateDiagram-v2
+    [*] --> Queue待機
+    Queue待機 --> 表示中: show()
+    表示中 --> 自動消失待ち: タイマー開始
+    表示中 --> ホバー中: マウスホバー
+    ホバー中 --> 表示中: マウスリーブ
+    自動消失待ち --> 消失中: タイマー完了
+    表示中 --> 消失中: 手動クローズ
+    消失中 --> [*]: アニメーション完了
 
-    const handleEscape = (event) => {
-      if (event.key === 'Escape' && closeOnEscape) {
-        onClose();
-      }
-    };
+    note right of 自動消失待ち: success: 3秒\nerror: 5秒\nwarning: 4秒
+    note right of ホバー中: タイマー一時停止
+```
 
-    document.addEventListener('keydown', handleEscape);
-    document.body.style.overflow = 'hidden';
+### 3.4 ユーザーインタラクション設計
+```mermaid
+sequenceDiagram
+    participant U as ユーザー
+    participant C as Component
+    participant M as ModalManager
+    participant T as ToastManager
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, closeOnEscape, onClose]);
+    Note over U,T: Modal表示フロー
+    U->>C: 操作実行（編集・削除等）
+    C->>M: showModal(type, props)
+    M->>M: z-index計算・重複チェック
+    M->>U: Modal表示・フォーカス移動
 
-  if (!isOpen) return null;
+    U->>M: 操作完了・キャンセル
+    M->>C: 結果コールバック
+    C->>T: showToast(message, type)
+    T->>U: 成功・エラー通知表示
 
-  const modalContent = (
-    <div className="modal-overlay">
-      <div
-        className="modal-backdrop"
-        onClick={closeOnBackdropClick ? onClose : undefined}
-      />
-      <div className={`modal-container modal-${size} ${className}`}>
-        <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
-          <button
-            className="modal-close-btn"
-            onClick={onClose}
-            aria-label="モーダルを閉じる"
-          >
-            ✕
-          </button>
-        </div>
+    Note over U,T: フォーム操作フロー
+    U->>C: フォーム入力
+    C->>C: リアルタイムバリデーション
+    C->>U: エラー状態・ヘルプ表示
+    U->>C: フォーム送信
+    C->>T: 送信結果通知
+```
 
-        <div className="modal-body">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
+## 4. データ設計
 
-  // ポータルを使用してbody直下にレンダリング
-  return ReactDOM.createPortal(modalContent, document.body);
+### 4.1 データ構造
+```mermaid
+erDiagram
+    COMPONENT_PROPS {
+        id string "コンポーネント識別子"
+        variant string "表示バリアント"
+        size string "サイズ指定"
+        disabled boolean "無効状態"
+        loading boolean "ローディング状態"
+        className string "追加CSS"
+    }
+
+    MODAL_STATE {
+        is_open boolean "表示状態"
+        z_index integer "重ね順"
+        backdrop_dismissible boolean "背景クリック可否"
+        escape_dismissible boolean "ESCキー可否"
+        animation_state string "アニメーション状態"
+    }
+
+    TOAST_ITEM {
+        id string "通知ID"
+        type string "通知種別（success/error/warning/info）"
+        message string "表示メッセージ"
+        duration integer "表示時間（ms）"
+        created_at datetime "作成日時"
+        auto_dismiss boolean "自動消失設定"
+    }
+
+    FORM_FIELD_STATE {
+        value any "フィールド値"
+        error string "エラーメッセージ"
+        touched boolean "操作済みフラグ"
+        dirty boolean "変更済みフラグ"
+        validating boolean "検証中フラグ"
+    }
+
+    COMPONENT_PROPS ||--o{ MODAL_STATE : extends
+    COMPONENT_PROPS ||--o{ TOAST_ITEM : extends
+    COMPONENT_PROPS ||--o{ FORM_FIELD_STATE : extends
+```
+
+### 4.2 データフロー
+```mermaid
+flowchart TD
+    A[ユーザー操作] --> B{操作種別判定}
+    B -->|Modal表示| C[ModalManager]
+    B -->|通知表示| D[ToastManager]
+    B -->|フォーム操作| E[FormFieldManager]
+
+    C --> F[Modal状態更新]
+    D --> G[Toast Queue管理]
+    E --> H[Field Validation]
+
+    F --> I[DOM更新・アニメーション]
+    G --> J[通知表示・タイマー管理]
+    H --> K[エラー状態・UI更新]
+
+    I --> L[ユーザーフィードバック]
+    J --> L
+    K --> L
+
+    L --> M[次のユーザー操作待機]
+    M --> A
+
+    style C fill:#e1f5fe
+    style D fill:#f3e5f5
+    style E fill:#fff3e0
+    style L fill:#e8f5e8
+```
+
+## 5. アーキテクチャ設計
+
+### 5.1 システム構成
+```mermaid
+C4Context
+    Person(dev, "開発者", "コンポーネント利用・カスタマイズ")
+    Person(user, "エンドユーザー", "UI操作・フィードバック受信")
+    Person(designer, "デザイナー", "デザインシステム管理")
+
+    System(shared_components, "Shared Components System", "統一UIコンポーネント群")
+    System_Ext(react_eco, "React Ecosystem", "React・styled-components")
+    System_Ext(design_tokens, "Design Tokens", "色・フォント・間隔定義")
+
+    Rel(dev, shared_components, "コンポーネント利用")
+    Rel(user, shared_components, "UI操作・体験")
+    Rel(designer, design_tokens, "デザインシステム管理")
+
+    Rel(shared_components, react_eco, "ライブラリ活用")
+    Rel(shared_components, design_tokens, "デザイントークン参照")
+```
+
+### 5.2 コンポーネント構成
+```mermaid
+C4Component
+    Component(component_lib, "Component Library", "React Components", "統一UIコンポーネント")
+    Component(theme_provider, "Theme Provider", "Context + CSS-in-JS", "テーマ・スタイル管理")
+    Component(modal_manager, "Modal Manager", "React Portal + Context", "モーダル状態管理")
+    Component(toast_manager, "Toast Manager", "React Context + Queue", "通知システム管理")
+    Component(form_manager, "Form Manager", "React Hook Form", "フォーム状態・バリデーション")
+    Component(accessibility, "A11y Helper", "ARIA・Focus管理", "アクセシビリティ支援")
+
+    Rel(component_lib, theme_provider, "スタイル適用")
+    Rel(component_lib, modal_manager, "モーダル制御")
+    Rel(component_lib, toast_manager, "通知発信")
+    Rel(component_lib, form_manager, "フォーム統合")
+    Rel(component_lib, accessibility, "A11y対応")
+
+    style component_lib fill:#e1f5fe
+    style theme_provider fill:#f3e5f5
+    style modal_manager fill:#fff3e0
+    style toast_manager fill:#e8f5e8
+```
+
+## 6. インターフェース設計
+
+### 6.1 Props インターフェース
+```typescript
+// 基底コンポーネントProps
+interface BaseComponentProps {
+  className?: string;
+  testId?: string;
+  children?: React.ReactNode;
+}
+
+// Modal Props
+interface ModalProps extends BaseComponentProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  size?: 'small' | 'medium' | 'large' | 'fullscreen';
+  closeOnBackdropClick?: boolean;
+  closeOnEscape?: boolean;
+  zIndex?: number;
+}
+
+// Button Props
+interface ButtonProps extends BaseComponentProps {
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  size?: 'small' | 'medium' | 'large';
+  loading?: boolean;
+  disabled?: boolean;
+  onClick?: (event: React.MouseEvent) => void;
+  type?: 'button' | 'submit' | 'reset';
+  icon?: React.ReactNode;
+  fullWidth?: boolean;
+}
+
+// Toast Props
+interface ToastProps extends BaseComponentProps {
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  duration?: number;
+  autoClose?: boolean;
+  onClose?: () => void;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+}
+
+// StatusChip Props
+interface StatusChipProps extends BaseComponentProps {
+  status: IssueStatus;
+  size?: 'small' | 'medium';
+  clickable?: boolean;
+  onClick?: () => void;
+}
+
+// Form Field Props
+interface FormFieldProps extends BaseComponentProps {
+  label: string;
+  value: any;
+  onChange: (value: any) => void;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  helperText?: string;
+}
+```
+
+### 6.2 Context API設計
+```typescript
+// Modal Context
+interface ModalContextValue {
+  showModal: (component: React.ComponentType, props?: any) => string;
+  closeModal: (id: string) => void;
+  closeAllModals: () => void;
+  activeModals: ModalInstance[];
+}
+
+// Toast Context
+interface ToastContextValue {
+  showToast: (toast: ToastOptions) => string;
+  removeToast: (id: string) => void;
+  clearAllToasts: () => void;
+  toasts: ToastInstance[];
+}
+
+// Theme Context
+interface ThemeContextValue {
+  currentTheme: ThemeConfig;
+  colors: ColorTokens;
+  typography: TypographyTokens;
+  spacing: SpacingTokens;
+  breakpoints: BreakpointTokens;
+  setTheme: (theme: ThemeConfig) => void;
+}
+```
+
+### 6.3 Hook API設計
+```typescript
+// Modal Hook
+const useModal = () => {
+  const showConfirm = (options: ConfirmOptions) => Promise<boolean>;
+  const showAlert = (message: string, type?: AlertType) => void;
+  const showCustomModal = (component: React.ComponentType, props?: any) => string;
+
+  return { showConfirm, showAlert, showCustomModal };
+};
+
+// Toast Hook
+const useToast = () => {
+  const showSuccess = (message: string) => void;
+  const showError = (message: string) => void;
+  const showWarning = (message: string) => void;
+  const showInfo = (message: string) => void;
+
+  return { showSuccess, showError, showWarning, showInfo };
+};
+
+// Form Hook
+const useFormField = <T>(initialValue: T, validators?: Validator<T>[]) => {
+  const value: T;
+  const error: string | null;
+  const touched: boolean;
+  const setValue: (value: T) => void;
+  const validate: () => boolean;
+  const reset: () => void;
+
+  return { value, error, touched, setValue, validate, reset };
 };
 ```
 
-### 3.2 Tooltip
+## 7. 非機能要求
 
-```javascript
-// assets/javascripts/kanban/components/shared/Tooltip.jsx
-import React, { useState, useRef, useEffect } from 'react';
+### 7.1 パフォーマンス要求
+| 項目 | 要求値 | 測定方法 | 備考 |
+|------|---------|----------|------|
+| コンポーネント初期化 | 100ms以内 | React DevTools Profiler | 初回マウント時 |
+| Modal表示・非表示 | 300ms以内 | アニメーション完了まで | CSS transition |
+| Toast表示応答 | 50ms以内 | API呼び出し→表示開始 | キュー処理含む |
+| フォームバリデーション | 200ms以内 | 入力→エラー表示 | 複雑バリデーション |
+| メモリ使用量 | 1コンポーネント100KB以内 | Bundle analyzer | Tree shaking適用 |
 
-export const Tooltip = ({
-  content,
-  children,
-  position = 'top', // 'top' | 'bottom' | 'left' | 'right'
-  delay = 300,
-  disabled = false
-}) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [tooltipStyle, setTooltipStyle] = useState({});
-  const triggerRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const timeoutRef = useRef(null);
+### 7.2 品質要求
+- **可用性**: 99.9%以上（エラー境界による保護）
+- **保守性**: 単一責務・高凝集・低結合、テストカバレッジ90%以上
+- **拡張性**: 新コンポーネント追加・既存カスタマイズ容易
+- **互換性**: React 16.8+ 対応、主要ブラウザ対応
 
-  const showTooltip = () => {
-    if (disabled) return;
+### 7.3 アクセシビリティ要求
+- **WCAG 2.1 AA準拠**: すべてのコンポーネントで対応
+- **キーボード操作**: Tab・Enter・Spaceキー完全対応
+- **スクリーンリーダー**: ARIA属性適切設定
+- **色覚サポート**: 色以外の手段でも情報伝達
+- **フォーカス管理**: Modal・Toast適切なフォーカス制御
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+## 8. 実装指針
 
-    timeoutRef.current = setTimeout(() => {
-      setIsVisible(true);
-      calculatePosition();
-    }, delay);
-  };
+### 8.1 技術スタック
+- **UI Framework**: React 18 + TypeScript 4.8+
+- **スタイリング**: styled-components + CSS-in-JS
+- **アニメーション**: CSS Transitions + React Transition Group
+- **フォーム管理**: React Hook Form + yup（バリデーション）
+- **テスト**: Jest + React Testing Library + Storybook
 
-  const hideTooltip = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    setIsVisible(false);
-  };
-
-  const calculatePosition = () => {
-    if (!triggerRef.current || !tooltipRef.current) return;
-
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const tooltipRect = tooltipRef.current.getBoundingClientRect();
-
-    let left, top;
-
-    switch (position) {
-      case 'top':
-        left = triggerRect.left + (triggerRect.width - tooltipRect.width) / 2;
-        top = triggerRect.top - tooltipRect.height - 8;
-        break;
-      case 'bottom':
-        left = triggerRect.left + (triggerRect.width - tooltipRect.width) / 2;
-        top = triggerRect.bottom + 8;
-        break;
-      case 'left':
-        left = triggerRect.left - tooltipRect.width - 8;
-        top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2;
-        break;
-      case 'right':
-        left = triggerRect.right + 8;
-        top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2;
-        break;
-      default:
-        left = triggerRect.left;
-        top = triggerRect.top;
-    }
-
-    setTooltipStyle({ left, top });
-  };
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <div className="tooltip-wrapper">
-      <div
-        ref={triggerRef}
-        onMouseEnter={showTooltip}
-        onMouseLeave={hideTooltip}
-        onFocus={showTooltip}
-        onBlur={hideTooltip}
-      >
-        {children}
-      </div>
-
-      {isVisible && (
-        <div
-          ref={tooltipRef}
-          className={`tooltip tooltip-${position}`}
-          style={{
-            position: 'fixed',
-            ...tooltipStyle,
-            zIndex: 9999
-          }}
-        >
-          {content}
-        </div>
-      )}
-    </div>
-  );
-};
-```
-
-### 3.3 ConfirmDialog
-
-```javascript
-// assets/javascripts/kanban/components/shared/ConfirmDialog.jsx
-import React from 'react';
-import { Modal } from './Modal';
-
-export const ConfirmDialog = ({
-  isOpen,
-  title = '確認',
-  message,
-  confirmText = '確認',
-  cancelText = 'キャンセル',
-  onConfirm,
-  onCancel,
-  confirmButtonType = 'danger' // 'primary' | 'danger' | 'warning'
-}) => {
-  const handleConfirm = () => {
-    onConfirm();
-    onCancel(); // ダイアログを閉じる
-  };
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onCancel}
-      title={title}
-      size="small"
-      closeOnBackdropClick={false}
-    >
-      <div className="confirm-dialog">
-        <div className="confirm-message">
-          {message}
-        </div>
-
-        <div className="confirm-actions">
-          <button
-            className="btn btn-secondary"
-            onClick={onCancel}
-          >
-            {cancelText}
-          </button>
-
-          <button
-            className={`btn btn-${confirmButtonType}`}
-            onClick={handleConfirm}
-          >
-            {confirmText}
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-```
-
-## 4. Form コンポーネント
-
-### 4.1 Button
-
-```javascript
-// assets/javascripts/kanban/components/shared/Button.jsx
-import React from 'react';
-
-export const Button = ({
-  children,
-  variant = 'primary', // 'primary' | 'secondary' | 'danger' | 'warning' | 'success'
-  size = 'medium', // 'small' | 'medium' | 'large'
-  disabled = false,
+### 8.2 実装パターン
+```typescript
+// 共通コンポーネント基本パターン（疑似コード）
+export const Button: FC<ButtonProps> = ({
+  variant = 'primary',
+  size = 'medium',
   loading = false,
+  disabled = false,
+  children,
   onClick,
-  type = 'button',
-  className = '',
-  ...props
+  ...restProps
 }) => {
-  const handleClick = (event) => {
+  // 1. 状態管理（必要最小限）
+  const [isPressed, setIsPressed] = useState(false);
+
+  // 2. スタイル計算（メモ化）
+  const buttonStyles = useMemo(() => ({
+    variant,
+    size,
+    loading,
+    disabled: disabled || loading,
+    pressed: isPressed
+  }), [variant, size, loading, disabled, isPressed]);
+
+  // 3. イベントハンドラー（最適化）
+  const handleClick = useCallback((event: React.MouseEvent) => {
     if (disabled || loading) return;
     onClick?.(event);
+  }, [disabled, loading, onClick]);
+
+  const handleMouseDown = useCallback(() => setIsPressed(true), []);
+  const handleMouseUp = useCallback(() => setIsPressed(false), []);
+
+  // 4. アクセシビリティ対応
+  const ariaProps = {
+    'aria-disabled': disabled || loading,
+    'aria-busy': loading,
+    role: 'button',
+    tabIndex: disabled ? -1 : 0
   };
 
+  // 5. レンダリング（条件分岐最小化）
   return (
-    <button
-      type={type}
-      className={`btn btn-${variant} btn-${size} ${className} ${loading ? 'loading' : ''}`}
-      disabled={disabled || loading}
+    <StyledButton
+      {...restProps}
+      {...ariaProps}
+      styleProps={buttonStyles}
       onClick={handleClick}
-      {...props}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
     >
-      {loading && <span className="btn-spinner" />}
-      <span className="btn-text">{children}</span>
-    </button>
-  );
-};
-```
-
-### 4.2 Input
-
-```javascript
-// assets/javascripts/kanban/components/shared/Input.jsx
-import React, { forwardRef } from 'react';
-
-export const Input = forwardRef(({
-  label,
-  error,
-  helper,
-  required = false,
-  disabled = false,
-  placeholder,
-  type = 'text',
-  size = 'medium', // 'small' | 'medium' | 'large'
-  className = '',
-  ...props
-}, ref) => {
-  const inputId = `input-${Math.random().toString(36).substr(2, 9)}`;
-
-  return (
-    <div className={`input-group ${className}`}>
-      {label && (
-        <label
-          htmlFor={inputId}
-          className={`input-label ${required ? 'required' : ''}`}
-        >
-          {label}
-          {required && <span className="required-mark">*</span>}
-        </label>
-      )}
-
-      <input
-        ref={ref}
-        id={inputId}
-        type={type}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`input input-${size} ${error ? 'error' : ''}`}
-        {...props}
-      />
-
-      {error && (
-        <div className="input-error">{error}</div>
-      )}
-
-      {helper && !error && (
-        <div className="input-helper">{helper}</div>
-      )}
-    </div>
-  );
-});
-
-Input.displayName = 'Input';
-```
-
-### 4.3 Select
-
-```javascript
-// assets/javascripts/kanban/components/shared/Select.jsx
-import React, { forwardRef } from 'react';
-
-export const Select = forwardRef(({
-  label,
-  options = [],
-  error,
-  helper,
-  required = false,
-  disabled = false,
-  placeholder,
-  size = 'medium',
-  className = '',
-  ...props
-}, ref) => {
-  const selectId = `select-${Math.random().toString(36).substr(2, 9)}`;
-
-  return (
-    <div className={`select-group ${className}`}>
-      {label && (
-        <label
-          htmlFor={selectId}
-          className={`select-label ${required ? 'required' : ''}`}
-        >
-          {label}
-          {required && <span className="required-mark">*</span>}
-        </label>
-      )}
-
-      <select
-        ref={ref}
-        id={selectId}
-        disabled={disabled}
-        className={`select select-${size} ${error ? 'error' : ''}`}
-        {...props}
-      >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
-
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-
-      {error && (
-        <div className="select-error">{error}</div>
-      )}
-
-      {helper && !error && (
-        <div className="select-helper">{helper}</div>
-      )}
-    </div>
-  );
-});
-
-Select.displayName = 'Select';
-```
-
-## 5. Display コンポーネント
-
-### 5.1 Badge
-
-```javascript
-// assets/javascripts/kanban/components/shared/Badge.jsx
-import React from 'react';
-
-export const Badge = ({
-  children,
-  variant = 'default', // 'default' | 'primary' | 'success' | 'warning' | 'danger'
-  size = 'medium', // 'small' | 'medium' | 'large'
-  className = ''
-}) => {
-  return (
-    <span className={`badge badge-${variant} badge-${size} ${className}`}>
+      {loading && <LoadingSpinner size="small" />}
       {children}
-    </span>
+    </StyledButton>
   );
 };
+
+// styled-components実装例
+const StyledButton = styled.button<{ styleProps: ButtonStyleProps }>`
+  ${({ styleProps, theme }) => css`
+    // 基本スタイル
+    border: none;
+    border-radius: ${theme.borderRadius.medium};
+    cursor: ${styleProps.disabled ? 'not-allowed' : 'pointer'};
+    transition: all 0.2s ease;
+
+    // バリアント別スタイル
+    ${getVariantStyles(styleProps.variant, theme)}
+
+    // サイズ別スタイル
+    ${getSizeStyles(styleProps.size, theme)}
+
+    // 状態別スタイル
+    ${styleProps.disabled && disabledStyles}
+    ${styleProps.loading && loadingStyles}
+    ${styleProps.pressed && pressedStyles}
+  `}
+`;
 ```
 
-### 5.2 StatusChip
+### 8.3 エラーハンドリング戦略
+```mermaid
+flowchart TD
+    A[コンポーネント エラー] --> B{エラー種別}
+    B -->|Props エラー| C[Development Warning]
+    B -->|レンダリング エラー| D[Error Boundary]
+    B -->|イベント エラー| E[Event Error Handler]
 
-```javascript
-// assets/javascripts/kanban/components/shared/StatusChip.jsx
-import React from 'react';
+    C --> F[Console.warn + PropTypes]
+    D --> G[Fallback UI表示]
+    E --> H[Toast Error通知]
 
-export const StatusChip = ({
-  status,
-  source = 'direct', // 'direct' | 'inherited' | 'none'
-  onClick,
-  className = ''
-}) => {
-  const getStatusConfig = (status) => {
-    const configs = {
-      '新規': { color: '#f8f9fa', textColor: '#6c757d', border: '#dee2e6' },
-      '進行中': { color: '#fff3cd', textColor: '#856404', border: '#ffeeba' },
-      '完了': { color: '#d4edda', textColor: '#155724', border: '#c3e6cb' },
-      '未着手': { color: '#f5f5f5', textColor: '#6c757d', border: '#dee2e6' },
-      '対応中': { color: '#cce5ff', textColor: '#004085', border: '#99d1ff' },
-      '要確認': { color: '#ffeaa7', textColor: '#6c5500', border: '#fdd835' }
-    };
+    F --> I[開発時のみ表示]
+    G --> J[ユーザーへの適切な代替表示]
+    H --> K[操作継続可能な状態維持]
 
-    return configs[status] || configs['未着手'];
-  };
+    style B fill:#ffebee
+    style G fill:#f3e5f5
+    style H fill:#fff3e0
+```
 
-  const getSourceStyle = () => {
-    const styles = {
-      direct: { borderStyle: 'solid', opacity: 1.0 },
-      inherited: { borderStyle: 'dashed', opacity: 0.8 },
-      none: { borderStyle: 'dotted', opacity: 0.6 }
-    };
+## 9. テスト設計
 
-    return styles[source];
-  };
+### 9.1 テスト戦略
+```mermaid
+pyramid
+    title 共通コンポーネント テストピラミッド
 
-  const statusConfig = getStatusConfig(status);
-  const sourceStyle = getSourceStyle();
+    "Visual Regression (Chromatic)" : 5
+    "Integration (MSW + RTL)" : 15
+    "Component Test (RTL)" : 50
+    "Unit Test (Jest)" : 30
+```
 
-  const chipStyle = {
-    backgroundColor: statusConfig.color,
-    color: statusConfig.textColor,
-    border: `1px ${sourceStyle.borderStyle} ${statusConfig.border}`,
-    opacity: sourceStyle.opacity
-  };
+### 9.2 テストケース設計
+| テストレベル | 対象 | 主要テストケース | カバレッジ目標 |
+|-------------|------|------------------|----------------|
+| Unit Test | Hooks・Utils | ロジック・計算・変換処理 | 95%以上 |
+| Component Test | 個別コンポーネント | Props・イベント・状態変化 | 90%以上 |
+| Integration Test | Context・Manager | 複数コンポーネント連携 | 80%以上 |
+| Visual Test | Storybook | デザイン回帰・アクセシビリティ | 主要パターン100% |
 
-  const getTooltipText = () => {
-    const tooltips = {
-      direct: '直接設定されたステータス',
-      inherited: '親から継承されたステータス',
-      none: 'ステータス未設定'
-    };
-    return tooltips[source];
-  };
+### 9.3 Storybook活用設計
+```typescript
+// Button.stories.tsx（疑似コード）
+export default {
+  title: 'Components/Button',
+  component: Button,
+  argTypes: {
+    variant: {
+      control: { type: 'select' },
+      options: ['primary', 'secondary', 'danger', 'ghost']
+    },
+    size: {
+      control: { type: 'select' },
+      options: ['small', 'medium', 'large']
+    }
+  }
+} as ComponentMeta<typeof Button>;
+
+// 基本パターン
+export const Default: ComponentStory<typeof Button> = (args) => (
+  <Button {...args}>ボタン</Button>
+);
+
+// バリエーション展示
+export const AllVariants = () => (
+  <div style={{ display: 'flex', gap: '1rem' }}>
+    {['primary', 'secondary', 'danger', 'ghost'].map(variant => (
+      <Button key={variant} variant={variant}>
+        {variant}
+      </Button>
+    ))}
+  </div>
+);
+
+// インタラクション テスト
+export const WithInteraction: ComponentStory<typeof Button> = () => {
+  const [count, setCount] = useState(0);
 
   return (
-    <span
-      className={`status-chip status-${source} ${onClick ? 'clickable' : ''} ${className}`}
-      style={chipStyle}
-      onClick={onClick}
-      title={getTooltipText()}
-    >
-      {status}
-    </span>
+    <Button onClick={() => setCount(c => c + 1)}>
+      クリック数: {count}
+    </Button>
   );
 };
-```
 
-### 5.3 Avatar
+// アクセシビリティ テスト
+WithInteraction.play = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const button = canvas.getByRole('button');
 
-```javascript
-// assets/javascripts/kanban/components/shared/Avatar.jsx
-import React from 'react';
+  await userEvent.tab(); // キーボードフォーカス確認
+  await expect(button).toHaveFocus();
 
-export const Avatar = ({
-  user,
-  size = 'medium', // 'small' | 'medium' | 'large'
-  showName = false,
-  showTooltip = true,
-  onClick,
-  className = ''
-}) => {
-  const getInitials = (user) => {
-    if (!user || !user.name) return '?';
-
-    const names = user.name.split(' ');
-    if (names.length >= 2) {
-      return `${names[0][0]}${names[names.length - 1][0]}`;
-    }
-    return names[0][0] || '?';
-  };
-
-  const getAvatarUrl = (user) => {
-    // Redmineのアバターシステムと連携
-    if (user?.avatar_url) {
-      return user.avatar_url;
-    }
-    // Gravatarフォールバック
-    if (user?.email) {
-      const md5 = require('crypto').createHash('md5').update(user.email.toLowerCase()).digest('hex');
-      return `https://www.gravatar.com/avatar/${md5}?s=40&d=identicon`;
-    }
-    return null;
-  };
-
-  const avatarUrl = getAvatarUrl(user);
-  const initials = getInitials(user);
-  const displayName = user?.name || '未割当';
-
-  return (
-    <div
-      className={`avatar avatar-${size} ${onClick ? 'clickable' : ''} ${className}`}
-      onClick={onClick}
-      title={showTooltip ? displayName : undefined}
-    >
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt={displayName}
-          className="avatar-image"
-        />
-      ) : (
-        <div className="avatar-initials">
-          {initials}
-        </div>
-      )}
-
-      {showName && (
-        <span className="avatar-name">{displayName}</span>
-      )}
-    </div>
-  );
+  await userEvent.click(button); // クリック動作確認
+  await expect(canvas.getByText('クリック数: 1')).toBeInTheDocument();
 };
 ```
 
-## 6. Feedback コンポーネント
+## 10. 運用・保守設計
 
-### 6.1 Toast
+### 10.1 コンポーネント ライフサイクル管理
+```mermaid
+stateDiagram-v2
+    [*] --> Design
+    Design --> Development: デザイン承認
+    Development --> Review: 実装完了
+    Review --> Testing: コードレビュー通過
+    Testing --> Documentation: テスト完了
+    Documentation --> Release: ドキュメント完成
+    Release --> Maintenance: リリース完了
 
-```javascript
-// assets/javascripts/kanban/components/shared/Toast.jsx
-import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
+    Maintenance --> Update: 改善要求
+    Maintenance --> Deprecation: 非推奨化
 
-export const Toast = ({
-  message,
-  type = 'info', // 'info' | 'success' | 'warning' | 'error'
-  duration = 5000,
-  position = 'top-right', // 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
-  onClose
-}) => {
-  const [isVisible, setIsVisible] = useState(true);
+    Update --> Review: 修正実装
+    Deprecation --> Migration: 移行ガイド提供
+    Migration --> Removal: 移行完了
+    Removal --> [*]: 削除完了
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        onClose?.();
-      }, 300); // フェードアウトアニメーション時間
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
-
-  const getIcon = () => {
-    const icons = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️',
-      error: '❌'
-    };
-    return icons[type];
-  };
-
-  const toastContent = (
-    <div className={`toast toast-${type} toast-${position} ${isVisible ? 'visible' : 'hidden'}`}>
-      <div className="toast-content">
-        <span className="toast-icon">{getIcon()}</span>
-        <span className="toast-message">{message}</span>
-        <button
-          className="toast-close"
-          onClick={() => {
-            setIsVisible(false);
-            setTimeout(() => onClose?.(), 300);
-          }}
-        >
-          ✕
-        </button>
-      </div>
-    </div>
-  );
-
-  return ReactDOM.createPortal(toastContent, document.body);
-};
-
-// Toast管理用Hook
-export const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-
-  const showToast = (message, type = 'info', options = {}) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const toast = {
-      id,
-      message,
-      type,
-      ...options
-    };
-
-    setToasts(prev => [...prev, toast]);
-
-    return id;
-  };
-
-  const hideToast = (id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
-
-  const ToastContainer = () => (
-    <>
-      {toasts.map(toast => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          duration={toast.duration}
-          position={toast.position}
-          onClose={() => hideToast(toast.id)}
-        />
-      ))}
-    </>
-  );
-
-  return {
-    showToast,
-    hideToast,
-    ToastContainer
-  };
-};
+    note right of Documentation: Storybook + README + API Doc
+    note right of Maintenance: バグ修正・機能拡張・パフォーマンス改善
 ```
 
-### 6.2 LoadingSpinner
-
-```javascript
-// assets/javascripts/kanban/components/shared/LoadingSpinner.jsx
-import React from 'react';
-
-export const LoadingSpinner = ({
-  size = 'medium', // 'small' | 'medium' | 'large'
-  color = 'primary',
-  overlay = false,
-  message = '読み込み中...'
-}) => {
-  const spinner = (
-    <div className={`spinner spinner-${size} spinner-${color}`}>
-      <div className="spinner-circle"></div>
-      {message && (
-        <div className="spinner-message">{message}</div>
-      )}
-    </div>
-  );
-
-  if (overlay) {
-    return (
-      <div className="spinner-overlay">
-        {spinner}
-      </div>
-    );
-  }
-
-  return spinner;
-};
-```
-
-## 7. CSS共通スタイル
-
-### 7.1 レイアウトコンポーネント
-
-```scss
-// assets/stylesheets/kanban/shared/layout.scss
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-}
-
-.modal-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.modal-container {
-  position: relative;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  margin: 50px auto;
-  max-height: calc(100vh - 100px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  &.modal-small { width: 400px; }
-  &.modal-medium { width: 600px; }
-  &.modal-large { width: 800px; }
-  &.modal-fullscreen {
-    width: calc(100vw - 40px);
-    height: calc(100vh - 40px);
-    margin: 20px;
-  }
-
-  .modal-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid #e9ecef;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .modal-title {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .modal-close-btn {
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 4px;
-
-      &:hover {
-        background: #f8f9fa;
-        border-radius: 4px;
-      }
-    }
-  }
-
-  .modal-body {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1;
-  }
-}
-
-.tooltip {
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  max-width: 200px;
-  text-align: center;
-
-  &.tooltip-top::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -5px;
-    border: 5px solid transparent;
-    border-top-color: rgba(0, 0, 0, 0.9);
-  }
-
-  // その他の方向のarrowスタイル...
-}
-```
-
-### 7.2 フォームコンポーネント
-
-```scss
-// assets/stylesheets/kanban/shared/form.scss
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  &.loading {
-    pointer-events: none;
-
-    .btn-spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid transparent;
-      border-top: 2px solid currentColor;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-right: 8px;
-    }
-  }
-
-  // サイズバリエーション
-  &.btn-small {
-    padding: 4px 8px;
-    font-size: 12px;
-  }
-
-  &.btn-large {
-    padding: 12px 24px;
-    font-size: 16px;
-  }
-
-  // カラーバリエーション
-  &.btn-primary {
-    background: #007bff;
-    color: white;
-
-    &:hover { background: #0056b3; }
-  }
-
-  &.btn-secondary {
-    background: #6c757d;
-    color: white;
-
-    &:hover { background: #545b62; }
-  }
-
-  &.btn-danger {
-    background: #dc3545;
-    color: white;
-
-    &:hover { background: #c82333; }
-  }
-
-  &.btn-success {
-    background: #28a745;
-    color: white;
-
-    &:hover { background: #1e7e34; }
-  }
-
-  &.btn-warning {
-    background: #ffc107;
-    color: #212529;
-
-    &:hover { background: #e0a800; }
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.input-group, .select-group {
-  margin-bottom: 16px;
-
-  .input-label, .select-label {
-    display: block;
-    margin-bottom: 4px;
-    font-weight: 500;
-    font-size: 14px;
-
-    &.required {
-      .required-mark {
-        color: #dc3545;
-        margin-left: 2px;
-      }
-    }
-  }
-
-  .input, .select {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 14px;
-    transition: border-color 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-    }
-
-    &.error {
-      border-color: #dc3545;
-
-      &:focus {
-        border-color: #dc3545;
-        box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
-      }
-    }
-
-    &:disabled {
-      background: #f8f9fa;
-      opacity: 0.6;
-    }
-  }
-
-  .input-error, .select-error {
-    color: #dc3545;
-    font-size: 12px;
-    margin-top: 4px;
-  }
-
-  .input-helper, .select-helper {
-    color: #6c757d;
-    font-size: 12px;
-    margin-top: 4px;
-  }
-}
-```
-
-### 7.3 Displayコンポーネント
-
-```scss
-// assets/stylesheets/kanban/shared/display.scss
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-
-  &.badge-small {
-    padding: 2px 6px;
-    font-size: 10px;
-  }
-
-  &.badge-large {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  &.badge-default {
-    background: #f8f9fa;
-    color: #6c757d;
-  }
-
-  &.badge-primary {
-    background: #007bff;
-    color: white;
-  }
-
-  &.badge-success {
-    background: #28a745;
-    color: white;
-  }
-
-  &.badge-warning {
-    background: #ffc107;
-    color: #212529;
-  }
-
-  &.badge-danger {
-    background: #dc3545;
-    color: white;
-  }
-}
-
-.status-chip {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-
-  &.clickable {
-    cursor: pointer;
-    transition: opacity 0.2s;
-
-    &:hover {
-      opacity: 0.8;
-    }
-  }
-}
-
-.avatar {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  &.clickable {
-    cursor: pointer;
-  }
-
-  .avatar-image, .avatar-initials {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .avatar-image {
-    object-fit: cover;
-  }
-
-  .avatar-initials {
-    background: #6c757d;
-    color: white;
-    font-size: 10px;
-    font-weight: 600;
-  }
-
-  &.avatar-small {
-    .avatar-image, .avatar-initials {
-      width: 20px;
-      height: 20px;
-      font-size: 9px;
-    }
-  }
-
-  &.avatar-large {
-    .avatar-image, .avatar-initials {
-      width: 32px;
-      height: 32px;
-      font-size: 12px;
-    }
-  }
-
-  .avatar-name {
-    font-size: 12px;
-    color: #495057;
-  }
-}
-```
-
-## 8. React Hook 統合
-
-### 8.1 useModal Hook
-
-```javascript
-// assets/javascripts/kanban/hooks/useModal.js
-import { useState } from 'react';
-
-export const useModal = (initialOpen = false) => {
-  const [isOpen, setIsOpen] = useState(initialOpen);
-
-  const openModal = () => setIsOpen(true);
-  const closeModal = () => setIsOpen(false);
-  const toggleModal = () => setIsOpen(prev => !prev);
-
-  return {
-    isOpen,
-    openModal,
-    closeModal,
-    toggleModal
-  };
-};
-```
-
-### 8.2 useConfirm Hook
-
-```javascript
-// assets/javascripts/kanban/hooks/useConfirm.js
-import { useState } from 'react';
-
-export const useConfirm = () => {
-  const [confirmState, setConfirmState] = useState({
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-    confirmText: '確認',
-    cancelText: 'キャンセル',
-    confirmButtonType: 'primary'
-  });
-
-  const showConfirm = ({
-    title = '確認',
-    message,
-    onConfirm,
-    confirmText = '確認',
-    cancelText = 'キャンセル',
-    confirmButtonType = 'primary'
-  }) => {
-    return new Promise((resolve) => {
-      setConfirmState({
-        isOpen: true,
-        title,
-        message,
-        onConfirm: () => {
-          resolve(true);
-          onConfirm?.();
-        },
-        confirmText,
-        cancelText,
-        confirmButtonType
-      });
-    });
-  };
-
-  const hideConfirm = () => {
-    setConfirmState(prev => ({ ...prev, isOpen: false }));
-  };
-
-  return {
-    confirmState,
-    showConfirm,
-    hideConfirm
-  };
-};
+### 10.2 バージョニング戦略
+- **Semantic Versioning**: MAJOR.MINOR.PATCH形式
+  - MAJOR: 破壊的変更（Props API変更等）
+  - MINOR: 後方互換性ある機能追加
+  - PATCH: バグ修正・パフォーマンス改善
+- **Breaking Changes**: 事前告知 + 移行ガイド + 段階的廃止
+- **リリース頻度**: 月1回メジャー、随時パッチ
+
+### 10.3 品質管理・監視
+- **自動品質チェック**: ESLint・Prettier・TypeScript・テスト必須
+- **デザインレビュー**: Figma連携・デザインシステム準拠確認
+- **パフォーマンス監視**: Bundle size・レンダリング時間測定
+- **使用状況分析**: コンポーネント利用頻度・エラー発生傾向
+
+### 10.4 コミュニティ・ドキュメント
+```mermaid
+graph LR
+    A[開発者] --> B[Storybook]
+    A --> C[API Documentation]
+    A --> D[Migration Guide]
+    A --> E[Best Practices]
+
+    B --> F[コンポーネント一覧・デモ]
+    C --> G[Props・Methods・Events]
+    D --> H[バージョン間移行手順]
+    E --> I[推奨パターン・アンチパターン]
+
+    F --> J[開発効率向上]
+    G --> J
+    H --> J
+    I --> J
+
+    style A fill:#e1f5fe
+    style J fill:#e8f5e8
 ```
 
 ---
 
-*Feature CardとKanban Grid共通のReactコンポーネント群。統一されたUI/UXとRedmine統合を実現*
+*共通UIコンポーネントは、Kanban Release システム全体の統一されたユーザー体験を支える基盤です。この設計書は実装コードではなく、設計思想・要求仕様・アーキテクチャ構造を明確化し、開発チームの効率的な協働と高品質なコンポーネント開発を実現します。*
