@@ -250,8 +250,8 @@ rules:
     message: |
       📋 Feature Card関連スケルトンコード編集前に仕様書を確認してください
 
-      必読: @vibes/docs/logics/ui_components/feature_card/feature_card_component_specification.md
-      必読: @vibes/docs/logics/ui_components/feature_card/feature_card_server_specification.md
+      必読: @vibes/docs/logics/feature_card/feature_card_component_specification.md
+      必読: @vibes/docs/logics/feature_card/feature_card_server_specification.md
 
       Feature Cardコンポーネント・UserStoryアイテム・BaseItemCardのワイヤーフレーム準拠実装です
 
@@ -267,8 +267,8 @@ rules:
     message: |
       📋 Kanban Grid関連スケルトンコード編集前に仕様書を確認してください
 
-      必読: @vibes/docs/logics/ui_components/kanban_grid/kanban_grid_layout_specification.md
-      必読: @vibes/docs/logics/ui_components/kanban_grid/kanban_grid_server_specification.md
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_layout_specification.md
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_server_specification.md
 
       Epic×Versionの2次元グリッドレイアウト・ドラッグ&ドロップのワイヤーフレーム準拠実装です
 
@@ -284,8 +284,8 @@ rules:
     message: |
       📋 共通コンポーネント関連スケルトンコード編集前に仕様書を確認してください
 
-      必読: @vibes/docs/logics/ui_components/shared_components/shared_components_specification.md
-      必読: @vibes/docs/logics/ui_components/shared_components/shared_services_server_specification.md
+      必読: @vibes/docs/logics/shared_components/shared_components_specification.md
+      必読: @vibes/docs/logics/shared_components/shared_services_server_specification.md
 
       Modal・Tooltip・Button等の共通コンポーネントのワイヤーフレーム準拠実装です
 
@@ -302,8 +302,8 @@ rules:
     message: |
       📋 API・サービス関連スケルトンコード編集前に仕様書を確認してください
 
-      必読: @vibes/docs/logics/ui_components/api_integration/api_integration_specification.md
-      必読: @vibes/docs/logics/ui_components/api_integration/api_controller_server_specification.md
+      必読: @vibes/docs/logics/api_integration/api_integration_specification.md
+      必読: @vibes/docs/logics/api_integration/api_controller_server_specification.md
 
       KanbanAPIサービス・Reactフック類のワイヤーフレーム準拠実装です
 
@@ -313,17 +313,17 @@ rules:
   - name: "Wireframe実装ドキュメント規約"
     patterns:
       # Feature Card仕様書
-      - "**/vibes/docs/logics/ui_components/feature_card/**/*.md"
+      - "**/vibes/docs/logics/feature_card/**/*.md"
       # Kanban Grid仕様書
-      - "**/vibes/docs/logics/ui_components/kanban_grid/**/*.md"
+      - "**/vibes/docs/logics/kanban_grid/**/*.md"
       # 共通コンポーネント仕様書
-      - "**/vibes/docs/logics/ui_components/shared_components/**/*.md"
+      - "**/vibes/docs/logics/shared_components/**/*.md"
       # API統合仕様書
-      - "**/vibes/docs/logics/ui_components/api_integration/**/*.md"
+      - "**/vibes/docs/logics/api_integration/**/*.md"
       # データ構造仕様書
-      - "**/vibes/docs/logics/ui_components/data_structures/**/*.md"
+      - "**/vibes/docs/logics/data_structures/**/*.md"
       # 自動化仕様書
-      - "**/vibes/docs/logics/ui_components/automation/**/*.md"
+      - "**/vibes/docs/logics/automation/**/*.md"
     severity: "block"
     token_threshold: 12000
     message: |

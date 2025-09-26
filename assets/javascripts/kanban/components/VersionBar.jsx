@@ -1,115 +1,89 @@
-import { useState, useCallback } from 'react';
+// assets/javascripts/kanban/components/VersionBar.jsx
+import React, { useState, useEffect } from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import { VersionAPI } from '../utils/VersionAPI';
+import { CreateVersionModal } from './CreateVersionModal';
 
-/**
- * VersionBar Component
- * KanbanGridLayout統合用バージョン管理バー
- * ワイヤーフレーム準拠: バージョン列ヘッダーとして機能
- */
-export const VersionBar = ({
-  versions = [],
-  selectedVersions = new Set(),
-  onVersionSelect,
-  onVersionCreate,
-  permissions = {},
-  ...props
-}) => {
-  const [showCreateForm, setShowCreateForm] = useState(false);
+export const VersionBar = ({ projectId, onVersionChange }) => {
+  const [versions, setVersions] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const handleVersionSelect = useCallback((versionId, event) => {
-    event.preventDefault();
-    const isSelected = selectedVersions.has(versionId);
-    onVersionSelect?.(versionId, !isSelected);
-  }, [selectedVersions, onVersionSelect]);
+  useEffect(() => {
+    fetchVersions();
+  }, [projectId]);
 
-  const handleNewVersionAction = useCallback(() => {
-    if (onVersionCreate) {
-      onVersionCreate();
-    } else {
-      setShowCreateForm(!showCreateForm);
+  const fetchVersions = async () => {
+    try {
+      const data = await VersionAPI.getProjectVersions(projectId);
+      setVersions(data);
+    } catch (error) {
+      console.error('バージョン取得エラー:', error);
     }
-  }, [onVersionCreate, showCreateForm]);
+  };
+
+  const handleCreateVersion = async (versionData) => {
+    try {
+      const newVersion = await VersionAPI.createVersion(projectId, versionData);
+      setVersions([...versions, newVersion]);
+      setShowCreateModal(false);
+      onVersionChange?.();
+    } catch (error) {
+      console.error('バージョン作成エラー:', error);
+    }
+  };
 
   return (
-    <div className="version-bar" {...props}>
-      <div className="version-bar-header">
-        <h3 className="version-bar-title">Versions</h3>
-        {permissions.can_manage_versions && (
-          <button
-            className="new-version-btn"
-            onClick={handleNewVersionAction}
-            title="新しいVersionを作成"
-          >
-            + New Version
-          </button>
-        )}
-      </div>
-
-      <div className="version-list">
+    <div className="version-bar">
+      <div className="version-tabs">
         {versions.map(version => (
-          <div
+          <VersionTab
             key={version.id}
-            className={`version-item ${selectedVersions.has(version.id) ? 'selected' : ''}`}
-            onClick={(e) => handleVersionSelect(version.id, e)}
-          >
-            <span className="version-name">{version.name}</span>
-            <span className="version-status">{version.status}</span>
-            {version.issue_count !== undefined && (
-              <span className="version-issue-count">
-                {version.issue_count} issues
-              </span>
-            )}
-          </div>
+            version={version}
+            projectId={projectId}
+            onAssignmentChange={onVersionChange}
+          />
         ))}
+        <button
+          className="create-version-btn"
+          onClick={() => setShowCreateModal(true)}
+        >
+          + 新規
+        </button>
       </div>
 
-      {showCreateForm && (
-        <div className="version-create-form">
-          <input
-            type="text"
-            placeholder="Version名を入力"
-            className="version-name-input"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const versionName = e.target.value.trim();
-                if (versionName) {
-                  onVersionCreate?.({ name: versionName });
-                  setShowCreateForm(false);
-                  e.target.value = '';
-                }
-              } else if (e.key === 'Escape') {
-                setShowCreateForm(false);
-                e.target.value = '';
-              }
-            }}
-            autoFocus
-          />
-          <div className="version-create-actions">
-            <button
-              className="btn btn-primary btn-small"
-              onClick={(e) => {
-                const input = e.target.parentElement.previousElementSibling;
-                const versionName = input.value.trim();
-                if (versionName) {
-                  onVersionCreate?.({ name: versionName });
-                  setShowCreateForm(false);
-                  input.value = '';
-                }
-              }}
-            >
-              作成
-            </button>
-            <button
-              className="btn btn-secondary btn-small"
-              onClick={() => setShowCreateForm(false)}
-            >
-              キャンセル
-            </button>
-          </div>
-        </div>
+      {showCreateModal && (
+        <CreateVersionModal
+          onSubmit={handleCreateVersion}
+          onClose={() => setShowCreateModal(false)}
+        />
       )}
     </div>
   );
 };
 
-// default export も追加（後方互換性のため）
-export default VersionBar;
+const VersionTab = ({ version, projectId, onAssignmentChange }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `version-${version.id}`,
+    data: { type: 'version', version }
+  });
+
+  const handleDrop = async (cardData) => {
+    try {
+      await VersionAPI.assignVersion(projectId, cardData.issue.id, version.id);
+      onAssignmentChange?.();
+    } catch (error) {
+      console.error('バージョン割当エラー:', error);
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`version-tab ${isOver ? 'drop-hover' : ''}`}
+      data-version-id={version.id}
+    >
+      <span className="version-name">{version.name}</span>
+      <span className="version-due-date">{version.due_date}</span>
+    </div>
+  );
+};
