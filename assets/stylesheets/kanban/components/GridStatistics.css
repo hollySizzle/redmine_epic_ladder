@@ -1,0 +1,462 @@
+/* GridStatistics Component Styles */
+/* 設計書準拠のスタイル実装 */
+
+.grid-statistics {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.grid-statistics.compact {
+  padding: 12px;
+  margin-top: 12px;
+}
+
+/* ===== Statistics Header ===== */
+.statistics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.title-section h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.last-updated {
+  font-size: 0.85rem;
+  color: #666;
+  margin-left: 12px;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refresh-button {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.refresh-button:hover {
+  background: #e0e0e0;
+}
+
+/* ===== Overview Panel ===== */
+.overview-panel {
+  margin-bottom: 24px;
+}
+
+.kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-cards.compact {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  background: #fafafa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.kpi-card.compact {
+  padding: 12px;
+  flex-direction: column;
+  text-align: center;
+}
+
+.kpi-icon {
+  font-size: 2rem;
+  margin-right: 12px;
+}
+
+.kpi-card.compact .kpi-icon {
+  margin-right: 0;
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+}
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.2;
+}
+
+.kpi-card.compact .kpi-value {
+  font-size: 1.25rem;
+}
+
+.kpi-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* ===== Overall Progress ===== */
+.overall-progress {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.progress-label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.progress-bar {
+  background: #e9ecef;
+  border-radius: 10px;
+  height: 20px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-text {
+  text-align: center;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* ===== Detail Panels ===== */
+.detail-panels {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tab-navigation {
+  display: flex;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #495057;
+  font-weight: 500;
+}
+
+.tab-button:hover {
+  background: #e9ecef;
+}
+
+.tab-button.active {
+  background: #ffffff;
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+}
+
+.tab-icon {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.tab-label {
+  font-size: 0.9rem;
+}
+
+.tab-content {
+  padding: 20px;
+  background: #ffffff;
+  min-height: 200px;
+}
+
+/* ===== Tab Content Styles ===== */
+.overview-tab h4,
+.epic-statistics-tab h4,
+.version-statistics-tab h4,
+.distribution-tab h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.summary-item {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.no-data {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 40px;
+}
+
+/* ===== Epic List ===== */
+.epic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.epic-item {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.epic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.completion-badge {
+  background: #28a745;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.epic-progress-bar {
+  background: #e9ecef;
+  border-radius: 4px;
+  height: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.epic-progress-fill {
+  height: 100%;
+  background: #28a745;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.epic-details {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* ===== Version List ===== */
+.version-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.version-item {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.version-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge.on-track {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.overdue {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.version-details {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* ===== Distribution Tab ===== */
+.distribution-tab {
+  text-align: center;
+}
+
+.chart-placeholder {
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 40px;
+  margin: 20px 0;
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+.distribution-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.distribution-summary p {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 0;
+}
+
+/* ===== Statistics Footer ===== */
+.statistics-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+}
+
+.footer-info small {
+  color: #6c757d;
+}
+
+.export-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.export-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s;
+}
+
+.export-button:hover {
+  background: #0056b3;
+}
+
+.export-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+  .statistics-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .kpi-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tab-navigation {
+    flex-wrap: wrap;
+  }
+
+  .tab-button {
+    flex: 1 1 50%;
+    min-width: 120px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .statistics-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .export-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .tab-button {
+    flex: 1 1 100%;
+  }
+
+  .tab-icon {
+    margin-right: 4px;
+  }
+
+  .tab-label {
+    font-size: 0.8rem;
+  }
+}

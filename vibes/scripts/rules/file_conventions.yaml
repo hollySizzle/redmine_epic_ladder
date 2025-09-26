@@ -441,6 +441,7 @@ rules:
       - "**/assets/javascripts/kanban/components/grid/GridCell.jsx"
       - "**/assets/javascripts/kanban/components/grid/FeatureCard.jsx"
       - "**/assets/javascripts/kanban/components/grid/DragIndicator.jsx"
+      - "**/assets/javascripts/kanban/components/grid/GridStatistics.jsx"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -448,6 +449,21 @@ rules:
       必読: @vibes/docs/logics/kanban_grid/kanban_grid_layout_specification.md (UI設計)
       必読: @vibes/docs/logics/kanban_grid/kanban_grid_server_specification.md (サーバーサイド設計)
       仮想スクロール・楽観的更新・リアルタイム同期・パフォーマンス最適化を理解してから作業を続けてください
+
+  # Grid Statistics コンポーネント規約
+  - name: "Grid Statistics コンポーネント実装規約"
+    patterns:
+      - "**/assets/javascripts/kanban/components/grid/GridStatistics.jsx"
+      - "**/assets/stylesheets/kanban/components/GridStatistics.css"
+      - "**/assets/stylesheets/kanban/components/GridStatistics.scss"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 Grid Statistics コンポーネント実装前に専用設計書を確認してください
+      必読: @vibes/docs/logics/grid_statistics/grid_statistics_component_specification.md (専用設計書)
+      必読: @vibes/docs/logics/kanban_grid/kanban_grid_layout_specification.md (統合設計)
+      必読: @vibes/docs/logics/data_structures/data_structures_specification.md (統計データ構造)
+      統計計算・KPI表示・グラフ描画・リアルタイム更新・エクスポート機能の実装要件を理解してから作業を続けてください
 
   # Kanban実用ユーティリティ規約
   - name: "Kanban実用ユーティリティ実装規約"

@@ -43,4 +43,6 @@
 - [VersionManagement技術実装仕様](@vibes/logics/version_management_implementation.md)
 - **カンバン管理**
   - **トラッカー管理**
+- **grid_statistics**
+  - [Grid Statistics コンポーネント設計仕様書](@vibes/logics/grid_statistics/grid_statistics_component_specification.md)
 

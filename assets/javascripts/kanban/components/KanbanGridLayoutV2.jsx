@@ -19,6 +19,7 @@ import { NewEpicRow } from './grid/NewEpicRow';
 import { GridCell } from './grid/GridCell';
 import { FeatureCard } from './grid/FeatureCard';
 import { DragIndicator } from './grid/DragIndicator';
+import { GridStatistics } from './grid/GridStatistics';
 import { GridV2API } from '../services/GridV2API';
 import { GridWebSocketService } from '../services/GridWebSocketService.js';
 import {
@@ -251,7 +252,7 @@ export const KanbanGridLayoutV2 = ({
 
   // Version列計算（メモ化）
   const versionColumns = useMemo(() => {
-    if (!gridMatrix) return [];
+    if (!gridMatrix || !gridMatrix.versions) return [];
 
     const versions = gridMatrix.versions.map(version => ({
       id: version.id,
@@ -276,7 +277,7 @@ export const KanbanGridLayoutV2 = ({
 
   // Epic行計算（メモ化）
   const epicRows = useMemo(() => {
-    if (!gridMatrix) return [];
+    if (!gridMatrix || !gridMatrix.grid || !gridMatrix.grid.rows) return [];
 
     const epics = gridMatrix.grid.rows.map(epicData => ({
       id: epicData.issue.id,
@@ -519,6 +520,7 @@ export const KanbanGridLayoutV2 = ({
     }
 
     // 通常Epic行の処理
+    if (!gridMatrix.grid || !gridMatrix.grid.rows) return [];
     const epicData = gridMatrix.grid.rows.find(row => row.issue.id === epicId);
     if (!epicData) return [];
 
@@ -645,10 +647,14 @@ export const KanbanGridLayoutV2 = ({
       </DndContext>
 
       {/* 統計情報パネル */}
-      {showStatistics && gridMatrix && (
-        <div className="grid-statistics-panel">
-          <GridStatistics statistics={gridMatrix.statistics} />
-        </div>
+      {showStatistics && gridMatrix && gridMatrix.statistics && (
+        <GridStatistics
+          statistics={gridMatrix.statistics}
+          compactMode={compactMode}
+          showCharts={true}
+          onFilterChange={(filters) => console.log('Statistics filters:', filters)}
+          onExport={(format) => console.log('Export requested:', format)}
+        />
       )}
     </div>
   );
@@ -657,12 +663,13 @@ export const KanbanGridLayoutV2 = ({
 // ヘルパー関数群（設計書準拠）
 
 function buildGridMatrix(data) {
+  // ドキュメント準拠: サーバーからversionsは直接送られてくる
   return {
-    grid: data.grid,
-    versions: data.grid.versions,
-    orphan_features: data.orphan_features,
-    metadata: data.metadata,
-    statistics: data.statistics
+    grid: data.grid || { rows: [] },
+    versions: data.versions || data.grid?.versions || [],
+    orphan_features: data.orphan_features || [],
+    metadata: data.metadata || {},
+    statistics: data.statistics || {}
   };
 }
 
