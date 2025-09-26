@@ -7,7 +7,6 @@
       "path": "../../"
     }
   ],
-  "terminal.integrated.cwd": "/myapp/Source/rails/",
   "settings": {
     "files.watcherExclude": {
       "**/node_modules/**": true,
@@ -50,6 +49,7 @@
       "**/node_modules/**": true,
       "**/coverage/lcov-report/**": true,
       "**/vibes/scripts/node_modules/**": true
-    }
+    },
+    "terminal.integrated.cwd": "${fileDirname}"
   }
 }

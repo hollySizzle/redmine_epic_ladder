@@ -1,7 +1,7 @@
 // assets/javascripts/kanban/KanbanApp.jsx
 import React, { useState, useEffect } from 'react';
 import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
-import VersionBar from './components/VersionBar';
+import { VersionBar } from './components/VersionBar';
 import { KanbanBoard } from './components/KanbanBoard';
 import { BatchActionPanel } from './components/BatchActionPanel';
 import { KanbanAPIService } from './services/KanbanAPIService';
@@ -99,7 +99,6 @@ export const KanbanApp = ({ projectId, currentUser, apiBaseUrl }) => {
       >
         <VersionBar
           projectId={projectId}
-          apiService={apiService}
           onVersionChange={loadKanbanData}
         />
 
