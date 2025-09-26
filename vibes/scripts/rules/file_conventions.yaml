@@ -432,6 +432,15 @@ rules:
       - "**/assets/javascripts/kanban/components/*V2.jsx"
       - "**/assets/javascripts/kanban/components/grid/**/*.jsx"
       - "**/assets/javascripts/kanban/components/Optimistic*.jsx"
+      # 2025-09-26 新規実装完了: gridディレクトリコンポーネント群
+      - "**/assets/javascripts/kanban/components/grid/GridHeader.jsx"
+      - "**/assets/javascripts/kanban/components/grid/GridBody.jsx"
+      - "**/assets/javascripts/kanban/components/grid/EpicRow.jsx"
+      - "**/assets/javascripts/kanban/components/grid/NoEpicRow.jsx"
+      - "**/assets/javascripts/kanban/components/grid/NewEpicRow.jsx"
+      - "**/assets/javascripts/kanban/components/grid/GridCell.jsx"
+      - "**/assets/javascripts/kanban/components/grid/FeatureCard.jsx"
+      - "**/assets/javascripts/kanban/components/grid/DragIndicator.jsx"
     severity: "block"
     token_threshold: 15000
     message: |

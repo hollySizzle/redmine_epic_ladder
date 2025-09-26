@@ -218,7 +218,10 @@
       "Bash(git reset:*)",
       "Bash(git push:*)",
       "Bash(gh pr create:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(webpack:*)",
+      "Bash(npx webpack:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": [],

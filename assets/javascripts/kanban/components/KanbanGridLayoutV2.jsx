@@ -317,10 +317,10 @@ export const KanbanGridLayoutV2 = ({
 
   // WebSocketリアルタイム同期
   useEffect(() => {
-    if (!gridState.data || !userId) return;
+    if (!gridState.data || !currentUser?.id) return;
 
     // WebSocket接続初期化
-    const wsService = GridWebSocketService.getInstance(projectId, userId, {
+    const wsService = GridWebSocketService.getInstance(projectId, currentUser.id, {
       autoReconnect: true,
       reconnectDelay: 1000,
       maxReconnectAttempts: 3
@@ -378,9 +378,9 @@ export const KanbanGridLayoutV2 = ({
 
     return () => {
       wsService.disconnect();
-      GridWebSocketService.removeInstance(projectId, userId);
+      GridWebSocketService.removeInstance(projectId, currentUser.id);
     };
-  }, [projectId, userId, gridState.data]);
+  }, [projectId, currentUser?.id, gridState.data]);
 
   // ポーリングフォールバック（WebSocket接続失敗時）
   const startPollingUpdates = useCallback(() => {
@@ -472,7 +472,7 @@ export const KanbanGridLayoutV2 = ({
     try {
       const moveData = {
         project_id: projectId,
-        user_id: userId,
+        user_id: currentUser?.id,
         feature_id: draggedCard.feature.issue.id,
         source_cell: buildCellCoordinates(draggedCard.currentCell),
         target_cell: buildCellCoordinates(dropTarget),
@@ -500,7 +500,7 @@ export const KanbanGridLayoutV2 = ({
     } finally {
       gridDispatch({ type: 'END_DRAG' });
     }
-  }, [projectId, userId, gridState.data, dropConstraints, loadGridData, onDataUpdate]);
+  }, [projectId, currentUser?.id, gridState.data, dropConstraints, loadGridData, onDataUpdate]);
 
   // セル内Feature取得
   const getCellFeatures = useCallback((epicId, versionId) => {
