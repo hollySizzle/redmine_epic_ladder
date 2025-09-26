@@ -141,11 +141,11 @@ export class GridV2API {
   }
 
   /**
-   * POST /kanban/projects/:project_id/versions/create
-   * Version作成処理（設計書準拠）
+   * POST /kanban/projects/:project_id/api/v1/grid/create_version
+   * Version作成処理（設計書準拠GridController統合）
    */
   static async createVersion(projectId, versionData) {
-    const url = `${this.baseUrl}/${projectId}/versions/create`;
+    const url = `${this.baseUrl}/${projectId}/api/v1/grid/create_version`;
 
     return await this.request(url, {
       method: 'POST',

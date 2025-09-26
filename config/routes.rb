@@ -42,12 +42,15 @@ RedmineApp::Application.routes.draw do
 
     # ===== API統合仕様書準拠の新APIエンドポイント =====
     scope 'api/v1', defaults: { format: 'json' } do
-      # Grid Data API (API001-004)
+      # Grid Data API (API001-004) - 設計書完全準拠
       scope 'grid', controller: 'kanban/grid' do
-        get '',              action: 'show'               # Grid Data取得
-        post 'move_feature', action: 'move_feature'       # Feature移動（楽観的更新）
-        post 'create_epic',  action: 'create_epic'        # Epic作成
-        post 'propagate_version', action: 'propagate_version' # Version自動伝播
+        get '',                   action: 'show'               # Grid Data取得
+        post 'move_feature',      action: 'move_feature'       # Feature移動（楽観的更新）
+        post 'move_card',         action: 'move_card'          # カード移動（設計書準拠）
+        post 'create_epic',       action: 'create_epic'        # Epic作成
+        post 'create_version',    action: 'create_version'     # Version作成（設計書準拠）
+        post 'propagate_version', action: 'propagate_version'  # Version自動伝播
+        get 'updates',            action: 'real_time_updates'  # リアルタイム更新取得
       end
 
       # Feature Cards API

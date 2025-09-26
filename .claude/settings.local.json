@@ -221,7 +221,9 @@
       "Bash(kill:*)",
       "Bash(webpack:*)",
       "Bash(npx webpack:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/vibes/docs/rules/**)",
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/vibes/docs/**)"
     ],
     "deny": [],
     "ask": [],

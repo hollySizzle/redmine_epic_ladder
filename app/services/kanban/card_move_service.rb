@@ -4,6 +4,12 @@ module Kanban
   # CardMoveService - D&Dカード移動処理サービス
   # 設計書仕様: Feature移動の制約検証、状態遷移、バージョン伝播処理
   class CardMoveService
+    # 静的メソッドとしてのメインインターフェース
+    def self.execute(card:, source_cell:, target_cell:, user:, project:)
+      service = new(card, user)
+      service.execute(source_cell, target_cell)
+    end
+
     attr_reader :issue, :user, :move_constraints
 
     def initialize(issue, user)
@@ -12,7 +18,7 @@ module Kanban
       @move_constraints = build_move_constraints
     end
 
-    # メインの移動実行メソッド
+    # メインの移動実行メソッド（インスタンスメソッド）
     def execute(source_cell, target_cell)
       begin
         ActiveRecord::Base.transaction do
