@@ -255,14 +255,16 @@ module Kanban
     end
 
     def warm_up_statistics_cache(project)
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+
       # Epic統計
-      epics = project.issues.joins(:tracker).where(trackers: { name: 'Epic' }).limit(10)
+      epics = project.issues.joins(:tracker).where(trackers: { name: tracker_names[:epic] }).limit(10)
       epics.each do |epic|
         StatisticsEngine.calculate_epic_statistics(epic)
       end
 
       # Feature統計
-      features = project.issues.joins(:tracker).where(trackers: { name: 'Feature' }).limit(20)
+      features = project.issues.joins(:tracker).where(trackers: { name: tracker_names[:feature] }).limit(20)
       features.each do |feature|
         StatisticsEngine.calculate_feature_statistics(feature)
       end

@@ -13,8 +13,9 @@ module Kanban
       cache_key = "epic_statistics_#{epic.id}_#{epic.updated_on.to_i}"
 
       Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
+        feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
         features = epic.children.joins(:tracker)
-                      .where(trackers: { name: 'Feature' })
+                      .where(trackers: { name: feature_tracker_name })
                       .includes(:status, children: [:tracker, :status])
 
         {
@@ -37,8 +38,9 @@ module Kanban
       cache_key = "feature_statistics_#{feature.id}_#{feature.updated_on.to_i}"
 
       Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
+        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
         user_stories = feature.children.joins(:tracker)
-                              .where(trackers: { name: 'UserStory' })
+                              .where(trackers: { name: user_story_tracker_name })
                               .includes(:status, children: [:tracker, :status])
 
         child_items = user_stories.flat_map(&:children)
@@ -60,8 +62,10 @@ module Kanban
       cache_key = "user_story_statistics_#{user_story.id}_#{user_story.updated_on.to_i}"
 
       Rails.cache.fetch(cache_key, expires_in: CACHE_TTL) do
+        tracker_names = Kanban::TrackerHierarchy.tracker_names
+        child_tracker_names = [tracker_names[:task], tracker_names[:test], tracker_names[:bug]]
         child_items = user_story.children.joins(:tracker)
-                                .where(trackers: { name: ['Task', 'Test', 'Bug'] })
+                                .where(trackers: { name: child_tracker_names })
                                 .includes(:status, :tracker)
 
         {
@@ -85,8 +89,11 @@ module Kanban
         issues = Issue.where(fixed_version_id: version.id)
                      .includes(:tracker, :status)
 
-        epics = issues.joins(:tracker).where(trackers: { name: 'Epic' })
-        features = issues.joins(:tracker).where(trackers: { name: 'Feature' })
+        tracker_names = Kanban::TrackerHierarchy.tracker_names
+        epic_tracker_name = tracker_names[:epic]
+        feature_tracker_name = tracker_names[:feature]
+        epics = issues.joins(:tracker).where(trackers: { name: epic_tracker_name })
+        features = issues.joins(:tracker).where(trackers: { name: feature_tracker_name })
 
         {
           version_id: version.id,
@@ -106,19 +113,20 @@ module Kanban
       cache_keys = []
 
       # 自身のキャッシュ
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
       case issue.tracker.name
-      when 'Epic'
+      when tracker_names[:epic]
         cache_keys << "epic_statistics_#{issue.id}_*"
-      when 'Feature'
+      when tracker_names[:feature]
         cache_keys << "feature_statistics_#{issue.id}_*"
         cache_keys << "epic_statistics_#{issue.parent_id}_*" if issue.parent
-      when 'UserStory'
+      when tracker_names[:user_story]
         cache_keys << "user_story_statistics_#{issue.id}_*"
         if issue.parent
           cache_keys << "feature_statistics_#{issue.parent_id}_*"
           cache_keys << "epic_statistics_#{issue.parent.parent_id}_*" if issue.parent.parent
         end
-      when 'Task', 'Test', 'Bug'
+      when tracker_names[:task], tracker_names[:test], tracker_names[:bug]
         if issue.parent
           cache_keys << "user_story_statistics_#{issue.parent_id}_*"
           if issue.parent.parent
@@ -141,19 +149,24 @@ module Kanban
     private
 
     def self.count_user_stories(features)
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
       features.flat_map do |feature|
-        feature.children.joins(:tracker).where(trackers: { name: 'UserStory' })
+        feature.children.joins(:tracker).where(trackers: { name: user_story_tracker_name })
       end.count
     end
 
     def self.count_child_items(features)
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      user_story_tracker_name = tracker_names[:user_story]
+      child_tracker_names = [tracker_names[:task], tracker_names[:test], tracker_names[:bug]]
+
       user_stories = features.flat_map do |feature|
-        feature.children.joins(:tracker).where(trackers: { name: 'UserStory' })
+        feature.children.joins(:tracker).where(trackers: { name: user_story_tracker_name })
       end
 
       user_stories.flat_map do |user_story|
         user_story.children.joins(:tracker)
-                  .where(trackers: { name: ['Task', 'Test', 'Bug'] })
+                  .where(trackers: { name: child_tracker_names })
       end.count
     end
 
@@ -162,21 +175,26 @@ module Kanban
     end
 
     def self.count_completed_user_stories(features)
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
       user_stories = features.flat_map do |feature|
-        feature.children.joins(:tracker).where(trackers: { name: 'UserStory' })
+        feature.children.joins(:tracker).where(trackers: { name: user_story_tracker_name })
       end
 
       count_completed_issues(user_stories)
     end
 
     def self.count_completed_child_items(features)
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      user_story_tracker_name = tracker_names[:user_story]
+      child_tracker_names = [tracker_names[:task], tracker_names[:test], tracker_names[:bug]]
+
       user_stories = features.flat_map do |feature|
-        feature.children.joins(:tracker).where(trackers: { name: 'UserStory' })
+        feature.children.joins(:tracker).where(trackers: { name: user_story_tracker_name })
       end
 
       child_items = user_stories.flat_map do |user_story|
         user_story.children.joins(:tracker)
-                  .where(trackers: { name: ['Task', 'Test', 'Bug'] })
+                  .where(trackers: { name: child_tracker_names })
       end
 
       count_completed_issues(child_items)
@@ -218,8 +236,9 @@ module Kanban
       blocking_issues = []
 
       # 未完了のTask
+      task_tracker_name = Kanban::TrackerHierarchy.tracker_names[:task]
       incomplete_tasks = user_story.children.joins(:tracker, :status)
-                                  .where(trackers: { name: 'Task' })
+                                  .where(trackers: { name: task_tracker_name })
                                   .where.not(issue_statuses: { is_closed: true })
 
       if incomplete_tasks.any?
@@ -231,8 +250,9 @@ module Kanban
       end
 
       # 失敗したTest
+      test_tracker_name = Kanban::TrackerHierarchy.tracker_names[:test]
       failed_tests = user_story.children.joins(:tracker, :status)
-                              .where(trackers: { name: 'Test' })
+                              .where(trackers: { name: test_tracker_name })
                               .where(issue_statuses: { name: ['Failed', 'Rejected'] })
 
       if failed_tests.any?
@@ -279,7 +299,9 @@ module Kanban
       max_score = 0
 
       # Epic完成度 (40%)
-      epics = issues.joins(:tracker).where(trackers: { name: 'Epic' })
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      epic_tracker_name = tracker_names[:epic]
+      epics = issues.joins(:tracker).where(trackers: { name: epic_tracker_name })
       if epics.any?
         epic_completion = epics.joins(:status).where(issue_statuses: { is_closed: true }).count.to_f / epics.count
         total_score += epic_completion * 40
@@ -287,7 +309,8 @@ module Kanban
       max_score += 40
 
       # Feature完成度 (30%)
-      features = issues.joins(:tracker).where(trackers: { name: 'Feature' })
+      feature_tracker_name = tracker_names[:feature]
+      features = issues.joins(:tracker).where(trackers: { name: feature_tracker_name })
       if features.any?
         feature_completion = features.joins(:status).where(issue_statuses: { is_closed: true }).count.to_f / features.count
         total_score += feature_completion * 30
@@ -295,7 +318,8 @@ module Kanban
       max_score += 30
 
       # Test合格率 (30%)
-      tests = issues.joins(:tracker).where(trackers: { name: 'Test' })
+      test_tracker_name = tracker_names[:test]
+      tests = issues.joins(:tracker).where(trackers: { name: test_tracker_name })
       if tests.any?
         passed_tests = tests.joins(:status).where(issue_statuses: { name: ['Resolved', 'Closed'] }).count.to_f
         test_pass_rate = passed_tests / tests.count

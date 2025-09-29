@@ -70,13 +70,14 @@ module Kanban
     # Task完了率
     def task_completion_rate
       type_stats = child_items_by_type_hash
-      task_count = type_stats['Task'] || 0
+      task_tracker_name = Kanban::TrackerHierarchy.tracker_names[:task]
+      task_count = type_stats[task_tracker_name] || 0
       return 0.0 if task_count.zero?
 
       feature = Issue.find(feature_id)
       completed_tasks = feature.children
                                .joins(:tracker, :status)
-                               .where(trackers: { name: 'Task' })
+                               .where(trackers: { name: task_tracker_name })
                                .where(issue_statuses: { is_closed: true })
                                .count
 
@@ -86,13 +87,14 @@ module Kanban
     # Test合格率
     def test_pass_rate
       type_stats = child_items_by_type_hash
-      test_count = type_stats['Test'] || 0
+      test_tracker_name = Kanban::TrackerHierarchy.tracker_names[:test]
+      test_count = type_stats[test_tracker_name] || 0
       return 0.0 if test_count.zero?
 
       feature = Issue.find(feature_id)
       passed_tests = feature.children
                             .joins(:tracker, :status)
-                            .where(trackers: { name: 'Test' })
+                            .where(trackers: { name: test_tracker_name })
                             .where(issue_statuses: { name: ['Resolved', 'Closed'] })
                             .count
 
@@ -102,13 +104,14 @@ module Kanban
     # Bug修正率
     def bug_fix_rate
       type_stats = child_items_by_type_hash
-      bug_count = type_stats['Bug'] || 0
+      bug_tracker_name = Kanban::TrackerHierarchy.tracker_names[:bug]
+      bug_count = type_stats[bug_tracker_name] || 0
       return 0.0 if bug_count.zero?
 
       feature = Issue.find(feature_id)
       fixed_bugs = feature.children
                           .joins(:tracker, :status)
-                          .where(trackers: { name: 'Bug' })
+                          .where(trackers: { name: bug_tracker_name })
                           .where(issue_statuses: { is_closed: true })
                           .count
 
@@ -127,17 +130,22 @@ module Kanban
       score = 0.0
       total_weight = 0.0
 
-      if (type_stats['Task'] || 0) > 0
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      task_tracker_name = tracker_names[:task]
+      test_tracker_name = tracker_names[:test]
+      bug_tracker_name = tracker_names[:bug]
+
+      if (type_stats[task_tracker_name] || 0) > 0
         score += task_completion_rate * task_weight
         total_weight += task_weight
       end
 
-      if (type_stats['Test'] || 0) > 0
+      if (type_stats[test_tracker_name] || 0) > 0
         score += test_pass_rate * test_weight
         total_weight += test_weight
       end
 
-      if (type_stats['Bug'] || 0) > 0
+      if (type_stats[bug_tracker_name] || 0) > 0
         score += bug_fix_rate * bug_weight
         total_weight += bug_weight
       end
@@ -167,9 +175,10 @@ module Kanban
       blocking_issues = []
 
       # 未完了のUserStoryが多い場合
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
       incomplete_user_stories = feature.children
                                        .joins(:tracker, :status)
-                                       .where(trackers: { name: 'UserStory' })
+                                       .where(trackers: { name: user_story_tracker_name })
                                        .where.not(issue_statuses: { is_closed: true })
 
       if incomplete_user_stories.count > (total_user_stories * 0.7)
@@ -183,7 +192,11 @@ module Kanban
 
       # 失敗したTestが多い場合
       type_stats = child_items_by_type_hash
-      if (type_stats['Test'] || 0) > 0 && test_pass_rate < 70
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      test_tracker_name = tracker_names[:test]
+      bug_tracker_name = tracker_names[:bug]
+
+      if (type_stats[test_tracker_name] || 0) > 0 && test_pass_rate < 70
         blocking_issues << {
           type: 'low_test_pass_rate',
           severity: 'medium',
@@ -193,7 +206,7 @@ module Kanban
       end
 
       # 未修正のBugが多い場合
-      if (type_stats['Bug'] || 0) > 0 && bug_fix_rate < 80
+      if (type_stats[bug_tracker_name] || 0) > 0 && bug_fix_rate < 80
         blocking_issues << {
           type: 'many_unfixed_bugs',
           severity: 'high',

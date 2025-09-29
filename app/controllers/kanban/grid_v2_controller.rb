@@ -128,8 +128,9 @@ module Kanban
       begin
         epic_params = params.require(:epic).permit(:subject, :description, :assigned_to_id, :fixed_version_id)
 
+        epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
         epic = @project.issues.build(epic_params.merge(
-          tracker: Tracker.find_by(name: 'Epic'),
+          tracker: Tracker.find_by(name: epic_tracker_name),
           author: User.current,
           status: IssueStatus.default
         ))
@@ -231,7 +232,8 @@ module Kanban
       begin
         epic = @project.issues.find(params[:id])
 
-        unless epic.tracker.name == 'Epic'
+        epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+        unless epic.tracker.name == epic_tracker_name
           render json: {
             success: false,
             error: 'Not an Epic',

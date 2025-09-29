@@ -20,9 +20,10 @@ module Kanban
     private
 
     def build_epics_with_features
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       @project.issues
               .joins(:tracker)
-              .where(trackers: { name: 'Epic' })
+              .where(trackers: { name: epic_tracker_name })
               .includes(:children, :fixed_version, :status, :assigned_to)
               .map do |epic|
         {
@@ -33,9 +34,10 @@ module Kanban
     end
 
     def build_features_for_epic(epic)
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
       epic.children
           .joins(:tracker)
-          .where(trackers: { name: 'Feature' })
+          .where(trackers: { name: feature_tracker_name })
           .includes(:children, :fixed_version, :status, :assigned_to)
           .map do |feature|
         {
@@ -46,16 +48,17 @@ module Kanban
     end
 
     def build_user_stories_for_feature(feature)
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
       feature.children
              .joins(:tracker)
-             .where(trackers: { name: 'UserStory' })
+             .where(trackers: { name: user_story_tracker_name })
              .includes(:children, :fixed_version, :status, :assigned_to)
              .map do |user_story|
         {
           issue: serialize_issue(user_story),
-          tasks: serialize_child_issues(user_story, 'Task'),
-          tests: serialize_child_issues(user_story, 'Test'),
-          bugs: serialize_child_issues(user_story, 'Bug')
+          tasks: serialize_child_issues(user_story, Kanban::TrackerHierarchy.tracker_names[:task]),
+          tests: serialize_child_issues(user_story, Kanban::TrackerHierarchy.tracker_names[:test]),
+          bugs: serialize_child_issues(user_story, Kanban::TrackerHierarchy.tracker_names[:bug])
         }
       end
     end
@@ -76,7 +79,8 @@ module Kanban
     end
 
     def build_matrix_data
-      epics = @project.issues.joins(:tracker).where(trackers: { name: 'Epic' })
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      epics = @project.issues.joins(:tracker).where(trackers: { name: epic_tracker_name })
       versions = @project.versions.where(status: 'open')
 
       matrix = {}
@@ -127,9 +131,10 @@ module Kanban
     end
 
     def count_features_in_cell(epic, version)
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
       epic.children
           .joins(:tracker)
-          .where(trackers: { name: 'Feature' }, fixed_version_id: version.id)
+          .where(trackers: { name: feature_tracker_name }, fixed_version_id: version.id)
           .count
     end
   end

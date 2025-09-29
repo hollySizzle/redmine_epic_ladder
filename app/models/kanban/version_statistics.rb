@@ -196,7 +196,8 @@ module Kanban
       critical_issues = []
 
       # Epic単位での問題
-      epics = version.issues.joins(:tracker).where(trackers: { name: 'Epic' })
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      epics = version.issues.joins(:tracker).where(trackers: { name: epic_tracker_name })
       epics.each do |epic|
         epic_stats = EpicStatistics.for_epic(epic)
 
@@ -213,7 +214,8 @@ module Kanban
       end
 
       # Feature単位での問題
-      features = version.issues.joins(:tracker).where(trackers: { name: 'Feature' })
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      features = version.issues.joins(:tracker).where(trackers: { name: feature_tracker_name })
       high_risk_features = features.select do |feature|
         feature_stats = FeatureStatistics.for_feature(feature)
         feature_stats.blocking_issues.any? { |issue| issue[:severity] == 'high' }

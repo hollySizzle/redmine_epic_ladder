@@ -82,29 +82,34 @@ module Kanban
 
     # プロジェクト内のEpic一覧を取得
     def load_project_epics
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       @project.issues.joins(:tracker)
-              .where(trackers: { name: 'Epic' })
+              .where(trackers: { name: epic_tracker_name })
               .includes(:status)
     end
 
     # プロジェクト内のFeature一覧を取得
     def load_project_features
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
       @project.issues.joins(:tracker)
-              .where(trackers: { name: 'Feature' })
+              .where(trackers: { name: feature_tracker_name })
               .includes(:status)
     end
 
     # プロジェクト内のUserStory一覧を取得
     def load_project_user_stories
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
       @project.issues.joins(:tracker)
-              .where(trackers: { name: 'UserStory' })
+              .where(trackers: { name: user_story_tracker_name })
               .includes(:status)
     end
 
     # プロジェクト内のTask/Test/Bug一覧を取得
     def load_project_child_items
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      child_tracker_names = [tracker_names[:task], tracker_names[:test], tracker_names[:bug]]
       @project.issues.joins(:tracker)
-              .where(trackers: { name: ['Task', 'Test', 'Bug'] })
+              .where(trackers: { name: child_tracker_names })
               .includes(:status)
     end
 

@@ -52,10 +52,11 @@ module Kanban
     end
 
     def load_filtered_epics
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       query = @project.issues
                      .includes(:tracker, :status, :fixed_version, :assigned_to)
                      .joins(:tracker)
-                     .where(trackers: { name: 'Epic' })
+                     .where(trackers: { name: epic_tracker_name })
 
       # フィルタ適用
       query = apply_filters(query) if @filters.present?
@@ -86,10 +87,11 @@ module Kanban
 
     def build_epic_row(epic)
       # Load features efficiently using parent_id query
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
       features = @project.issues
                          .includes(:tracker, :status, :fixed_version, :assigned_to)
                          .joins(:tracker)
-                         .where(trackers: { name: 'Feature' })
+                         .where(trackers: { name: feature_tracker_name })
                          .where(parent_id: epic.id)
 
       {
@@ -118,10 +120,11 @@ module Kanban
     end
 
     def load_orphan_features
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
       @project.issues
               .includes(:tracker, :status, :fixed_version, :assigned_to)
               .joins(:tracker)
-              .where(trackers: { name: 'Feature' })
+              .where(trackers: { name: feature_tracker_name })
               .where(parent_id: nil)
     end
 
@@ -168,9 +171,10 @@ module Kanban
     end
 
     def count_no_version_issues
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
       @project.issues
               .joins(:tracker)
-              .where(trackers: { name: 'Feature' })
+              .where(trackers: { name: feature_tracker_name })
               .where(fixed_version_id: nil)
               .count
     end
@@ -178,7 +182,8 @@ module Kanban
     # 統計・メタデータ構築
     def build_grid_metadata
       epics = load_filtered_epics
-      all_features = @project.issues.joins(:tracker).where(trackers: { name: 'Feature' })
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      all_features = @project.issues.joins(:tracker).where(trackers: { name: feature_tracker_name })
       versions = load_project_versions
 
       {
@@ -228,10 +233,11 @@ module Kanban
 
     def build_feature_json(feature)
       # Load user stories efficiently using parent_id query
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
       user_stories = @project.issues
                              .includes(:tracker, :status, :fixed_version, :assigned_to)
                              .joins(:tracker)
-                             .where(trackers: { name: 'UserStory' })
+                             .where(trackers: { name: user_story_tracker_name })
                              .where(parent_id: feature.id)
 
       {
@@ -258,9 +264,10 @@ module Kanban
       # Count user stories efficiently using database query
       feature_ids = features.map(&:id)
       total_user_stories = if feature_ids.any?
+        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
         @project.issues
                 .joins(:tracker)
-                .where(trackers: { name: 'UserStory' })
+                .where(trackers: { name: user_story_tracker_name })
                 .where(parent_id: feature_ids)
                 .count
       else

@@ -270,18 +270,19 @@ module Kanban
     end
 
     def determine_hierarchy_level
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
       if Kanban::TrackerHierarchy.epic_tracker_ids.include?(@issue.tracker_id)
-        'Epic'
+        tracker_names[:epic]
       elsif Kanban::TrackerHierarchy.feature_tracker_ids.include?(@issue.tracker_id)
-        'Feature'
+        tracker_names[:feature]
       elsif Kanban::TrackerHierarchy.user_story_tracker_ids.include?(@issue.tracker_id)
-        'UserStory'
+        tracker_names[:user_story]
       elsif Kanban::TrackerHierarchy.task_tracker_ids.include?(@issue.tracker_id)
-        'Task'
+        tracker_names[:task]
       elsif Kanban::TrackerHierarchy.test_tracker_ids.include?(@issue.tracker_id)
-        'Test'
+        tracker_names[:test]
       elsif Kanban::TrackerHierarchy.bug_tracker_ids.include?(@issue.tracker_id)
-        'Bug'
+        tracker_names[:bug]
       else
         'Other'
       end

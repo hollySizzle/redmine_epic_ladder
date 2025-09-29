@@ -101,11 +101,13 @@ module Kanban
     private
 
     def check_epic_feature_consistency
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+
       epic_collection.each do |epic|
         next unless epic.fixed_version_id
 
         epic.children.each do |feature|
-          next unless feature.tracker.name == 'Feature'
+          next unless feature.tracker.name == feature_tracker_name
 
           inheritance_result = validate_version_inheritance(feature, epic)
 
@@ -129,13 +131,15 @@ module Kanban
     end
 
     def check_feature_user_story_consistency
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+
       feature_collection.each do |feature|
         # Featureに直接Versionが割り当てられているか、親EpicからVersion継承しているかチェック
         effective_version_id = feature.fixed_version_id || feature.parent&.fixed_version_id
         next unless effective_version_id
 
         feature.children.each do |user_story|
-          next unless user_story.tracker.name == 'UserStory'
+          next unless user_story.tracker.name == user_story_tracker_name
 
           # UserStoryのVersionが有効なVersionと一致するかチェック
           if user_story.fixed_version_id != effective_version_id
@@ -160,11 +164,14 @@ module Kanban
     end
 
     def check_user_story_child_consistency
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      child_tracker_names = [tracker_names[:task], tracker_names[:test], tracker_names[:bug]]
+
       user_story_collection.each do |user_story|
         next unless user_story.fixed_version_id
 
         user_story.children.each do |child|
-          next unless ['Task', 'Test', 'Bug'].include?(child.tracker.name)
+          next unless child_tracker_names.include?(child.tracker.name)
 
           inheritance_result = validate_version_inheritance(child, user_story)
 
@@ -218,15 +225,18 @@ module Kanban
     end
 
     def epic_collection
-      @epic_collection ||= issue_collection.select { |issue| issue.tracker.name == 'Epic' }
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      @epic_collection ||= issue_collection.select { |issue| issue.tracker.name == epic_tracker_name }
     end
 
     def feature_collection
-      @feature_collection ||= issue_collection.select { |issue| issue.tracker.name == 'Feature' }
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      @feature_collection ||= issue_collection.select { |issue| issue.tracker.name == feature_tracker_name }
     end
 
     def user_story_collection
-      @user_story_collection ||= issue_collection.select { |issue| issue.tracker.name == 'UserStory' }
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+      @user_story_collection ||= issue_collection.select { |issue| issue.tracker.name == user_story_tracker_name }
     end
 
     # 自動修復機能（オプション）
@@ -234,7 +244,7 @@ module Kanban
       consistency_result = check_consistency(
         project.issues
                .joins(:tracker)
-               .where(trackers: { name: TrackerHierarchy.configured_tracker_names })
+               .where(trackers: { name: Kanban::TrackerHierarchy.configured_tracker_names })
                .includes(:tracker, :fixed_version, :parent => :fixed_version, children: [:tracker, :fixed_version])
       )
 

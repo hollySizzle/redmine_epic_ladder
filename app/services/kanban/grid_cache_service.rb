@@ -267,7 +267,8 @@ module Kanban
       def calculate_cell_statistics(project_id, epic_id, version_id)
         project = Project.find(project_id)
 
-        query = project.issues.joins(:tracker).where(trackers: { name: 'Feature' })
+        feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+        query = project.issues.joins(:tracker).where(trackers: { name: feature_tracker_name })
 
         if epic_id && epic_id != 'no-epic'
           query = query.where(parent_id: epic_id)

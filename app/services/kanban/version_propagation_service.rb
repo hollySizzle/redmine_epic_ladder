@@ -6,10 +6,11 @@ module Kanban
   class VersionPropagationService
     # UserStoryから子要素へバージョンを伝播
     def self.propagate_to_children(user_story, version, options = {})
-      return { error: 'UserStoryではありません' } unless user_story.tracker.name == 'UserStory'
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      return { error: 'UserStoryではありません' } unless user_story.tracker.name == tracker_names[:user_story]
 
       children = user_story.children.joins(:tracker)
-                           .where(trackers: { name: ['Task', 'Test', 'Bug'] })
+                           .where(trackers: { name: [tracker_names[:task], tracker_names[:test], tracker_names[:bug]] })
       propagation_mode = options[:mode] || :force_overwrite
 
       ActiveRecord::Base.transaction do
@@ -32,8 +33,9 @@ module Kanban
 
     # UserStoryの子要素からバージョンを削除
     def self.remove_version_from_children(user_story)
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
       children = user_story.children.joins(:tracker)
-                           .where(trackers: { name: ['Task', 'Test', 'Bug'] })
+                           .where(trackers: { name: [tracker_names[:task], tracker_names[:test], tracker_names[:bug]] })
 
       ActiveRecord::Base.transaction do
         children.update_all(

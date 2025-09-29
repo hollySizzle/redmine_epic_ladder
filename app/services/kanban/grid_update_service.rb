@@ -104,9 +104,10 @@ module Kanban
     def collect_epic_changes
       return [] unless @since_timestamp
 
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       updated_epics = @project.issues
                              .joins(:tracker)
-                             .where(trackers: { name: 'Epic' })
+                             .where(trackers: { name: epic_tracker_name })
                              .where('updated_on > ?', @since_timestamp)
 
       updated_epics.map do |epic|
@@ -288,7 +289,8 @@ module Kanban
       effects = []
 
       # 子要素への影響
-      if issue.tracker.name == 'Epic' && issue.fixed_version_id_changed?
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      if issue.tracker.name == epic_tracker_name && issue.fixed_version_id_changed?
         child_features = issue.children.where(tracker: feature_tracker)
         if child_features.any?
           effects << {
@@ -324,11 +326,14 @@ module Kanban
     end
 
     def epic_and_feature_trackers
-      Tracker.where(name: ['Epic', 'Feature'])
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      Tracker.where(name: [epic_tracker_name, feature_tracker_name])
     end
 
     def feature_tracker
-      Tracker.find_by(name: 'Feature')
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      Tracker.find_by(name: feature_tracker_name)
     end
 
     def determine_kanban_column(issue)

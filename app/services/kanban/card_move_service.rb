@@ -393,7 +393,8 @@ module Kanban
     end
 
     def count_features_in_cell(cell)
-      query = @issue.project.issues.joins(:tracker).where(trackers: { name: 'Feature' })
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      query = @issue.project.issues.joins(:tracker).where(trackers: { name: feature_tracker_name })
 
       if cell[:epic_id]
         query = query.where(parent_id: cell[:epic_id])
@@ -411,8 +412,9 @@ module Kanban
     end
 
     def count_completed_features_in_cell(cell)
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
       query = @issue.project.issues.joins(:tracker, :status)
-                   .where(trackers: { name: 'Feature' })
+                   .where(trackers: { name: feature_tracker_name })
                    .where(issue_statuses: { name: ['Resolved', 'Closed'] })
 
       if cell[:epic_id]

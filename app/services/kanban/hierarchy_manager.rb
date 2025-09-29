@@ -177,14 +177,15 @@ module Kanban
 
     def validate_type_constraints
       constraint_violations = []
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
 
       # Epic → Feature制約チェック
       epics_with_non_features = epic_collection.select do |epic|
-        epic.children.any? { |child| child.tracker.name != 'Feature' }
+        epic.children.any? { |child| child.tracker.name != tracker_names[:feature] }
       end
 
       epics_with_non_features.each do |epic|
-        invalid_children = epic.children.reject { |child| child.tracker.name == 'Feature' }
+        invalid_children = epic.children.reject { |child| child.tracker.name == tracker_names[:feature] }
         constraint_violations << {
           constraint: 'epic_can_only_contain_features',
           issue_id: epic.id,
@@ -197,11 +198,11 @@ module Kanban
 
       # Feature → UserStory制約チェック
       features_with_non_stories = feature_collection.select do |feature|
-        feature.children.any? { |child| child.tracker.name != 'UserStory' }
+        feature.children.any? { |child| child.tracker.name != tracker_names[:user_story] }
       end
 
       features_with_non_stories.each do |feature|
-        invalid_children = feature.children.reject { |child| child.tracker.name == 'UserStory' }
+        invalid_children = feature.children.reject { |child| child.tracker.name == tracker_names[:user_story] }
         constraint_violations << {
           constraint: 'feature_can_only_contain_user_stories',
           issue_id: feature.id,
@@ -234,11 +235,17 @@ module Kanban
     end
 
     def epic_collection
-      @epic_collection ||= issue_collection.select { |issue| issue.tracker.name == 'Epic' }
+      @epic_collection ||= begin
+        epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+        issue_collection.select { |issue| issue.tracker.name == epic_tracker_name }
+      end
     end
 
     def feature_collection
-      @feature_collection ||= issue_collection.select { |issue| issue.tracker.name == 'Feature' }
+      @feature_collection ||= begin
+        feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+        issue_collection.select { |issue| issue.tracker.name == feature_tracker_name }
+      end
     end
   end
 end

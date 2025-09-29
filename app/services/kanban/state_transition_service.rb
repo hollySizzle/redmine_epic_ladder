@@ -43,9 +43,10 @@ module Kanban
       blocks = []
 
       # UserStoryの場合、子Taskの完了チェック
-      if issue.tracker.name == 'UserStory' && target_status.name.in?(['Testing', 'Resolved'])
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      if issue.tracker.name == tracker_names[:user_story] && target_status.name.in?(['Testing', 'Resolved'])
         incomplete_tasks = issue.children.joins(:tracker, :status)
-                                .where(trackers: { name: 'Task' })
+                                .where(trackers: { name: tracker_names[:task] })
                                 .where.not(issue_statuses: { name: ['Resolved', 'Closed'] })
 
         if incomplete_tasks.any?
@@ -54,9 +55,9 @@ module Kanban
       end
 
       # Testの合格チェック
-      if issue.tracker.name == 'UserStory' && target_status.name == 'Resolved'
+      if issue.tracker.name == tracker_names[:user_story] && target_status.name == 'Resolved'
         failed_tests = issue.children.joins(:tracker, :status)
-                            .where(trackers: { name: 'Test' })
+                            .where(trackers: { name: tracker_names[:test] })
                             .where(issue_statuses: { name: ['Failed', 'Rejected'] })
 
         if failed_tests.any?

@@ -121,7 +121,13 @@ class KanbanController < ApplicationController
   end
 
   def determine_hierarchy_level(tracker_name)
-    { 'Epic' => 1, 'Feature' => 2, 'UserStory' => 3 }.fetch(tracker_name, 4)
+    tracker_names = Kanban::TrackerHierarchy.tracker_names
+    hierarchy_map = {
+      tracker_names[:epic] => 1,
+      tracker_names[:feature] => 2,
+      tracker_names[:user_story] => 3
+    }
+    hierarchy_map.fetch(tracker_name, 4)
   end
 
   def determine_column_for_status(status_name)
@@ -140,9 +146,10 @@ class KanbanController < ApplicationController
   end
 
   def find_epic_name(issue)
+    epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
     current = issue.parent
     while current
-      return current.subject if current.tracker.name == 'Epic'
+      return current.subject if current.tracker.name == epic_tracker_name
       current = current.parent
     end
     nil

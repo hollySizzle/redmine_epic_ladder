@@ -77,7 +77,8 @@ module Kanban
 
       # Epic トラッカーの存在確認
       Rails.logger.info "[EpicCreationService] Checking Epic tracker availability for project #{@project.id}"
-      epic_tracker = @project.trackers.find_by(name: 'Epic')
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      epic_tracker = @project.trackers.find_by(name: epic_tracker_name)
       Rails.logger.info "[EpicCreationService] Epic tracker found: #{epic_tracker&.name} (ID: #{epic_tracker&.id})"
 
       unless epic_tracker
@@ -106,7 +107,8 @@ module Kanban
     def create_epic_issue
       Rails.logger.info "[EpicCreationService] Starting Epic issue creation"
 
-      epic_tracker = @project.trackers.find_by(name: 'Epic')
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      epic_tracker = @project.trackers.find_by(name: epic_tracker_name)
       Rails.logger.info "[EpicCreationService] Epic tracker: #{epic_tracker.name} (ID: #{epic_tracker.id})"
 
       # 初期ステータス取得（New または Open）
@@ -174,9 +176,10 @@ module Kanban
 
     def calculate_epic_row_position(epic)
       # 同プロジェクト内のEpic総数を基に位置を計算
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       epics_before = @project.issues
                              .joins(:tracker)
-                             .where(trackers: { name: 'Epic' })
+                             .where(trackers: { name: epic_tracker_name })
                              .where('created_on < ?', epic.created_on)
                              .count
 
@@ -185,7 +188,8 @@ module Kanban
 
     def calculate_statistics_update
       # N+1回避でEpic数を取得
-      total_epics = @project.issues.joins(:tracker).where(trackers: { name: 'Epic' }).count
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      total_epics = @project.issues.joins(:tracker).where(trackers: { name: epic_tracker_name }).count
 
       {
         total_epics: total_epics,

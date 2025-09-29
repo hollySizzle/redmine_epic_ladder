@@ -72,7 +72,7 @@ module Kanban
 
       render_success({
         feature: serialize_issue_with_children(feature),
-        user_stories: serialize_user_stories_with_children(feature.children.joins(:tracker).where(trackers: { name: 'UserStory' })),
+        user_stories: serialize_user_stories_with_children(feature.children.joins(:tracker).where(trackers: { name: Kanban::TrackerHierarchy.tracker_names[:user_story] })),
         relationships: serialize_relationships(feature),
         activity_timeline: build_activity_timeline(feature),
         validation_status: Kanban::ValidationGuardService.validate_feature_readiness(feature)
@@ -397,15 +397,17 @@ module Kanban
     def serialize_issue_with_children(issue)
       base_data = serialize_issue(issue)
 
-      if issue.tracker.name == 'Feature'
-        user_stories = issue.children.joins(:tracker).where(trackers: { name: 'UserStory' })
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      if issue.tracker.name == feature_tracker_name
+        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+        user_stories = issue.children.joins(:tracker).where(trackers: { name: user_story_tracker_name })
         base_data.merge({
           user_stories: user_stories.map do |us|
             {
               issue: serialize_issue(us),
-              tasks: serialize_children_by_tracker(us, 'Task'),
-              tests: serialize_children_by_tracker(us, 'Test'),
-              bugs: serialize_children_by_tracker(us, 'Bug')
+              tasks: serialize_children_by_tracker(us, Kanban::TrackerHierarchy.tracker_names[:task]),
+              tests: serialize_children_by_tracker(us, Kanban::TrackerHierarchy.tracker_names[:test]),
+              bugs: serialize_children_by_tracker(us, Kanban::TrackerHierarchy.tracker_names[:bug])
             }
           end
         })

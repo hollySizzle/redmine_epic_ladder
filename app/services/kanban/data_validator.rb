@@ -113,13 +113,16 @@ module Kanban
       epics.each do |epic|
         validate_epic_structure(epic, result)
 
+        feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+
         epic.children.each do |feature|
-          next unless feature.tracker.name == 'Feature'
+          next unless feature.tracker.name == feature_tracker_name
 
           validate_feature_structure(feature, result)
 
           feature.children.each do |user_story|
-            next unless user_story.tracker.name == 'UserStory'
+            next unless user_story.tracker.name == user_story_tracker_name
 
             validate_user_story_structure(user_story, result)
           end
@@ -201,15 +204,19 @@ module Kanban
       inconsistent_versions = []
 
       # Epic → Feature → UserStory の Version継承チェック
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       epics_with_version = @project.issues
                                   .joins(:tracker)
-                                  .where(trackers: { name: 'Epic' })
+                                  .where(trackers: { name: epic_tracker_name })
                                   .where.not(fixed_version_id: nil)
                                   .includes(children: [:tracker, :fixed_version])
 
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+
       epics_with_version.each do |epic|
         epic.children.each do |feature|
-          next unless feature.tracker.name == 'Feature'
+          next unless feature.tracker.name == feature_tracker_name
 
           if feature.fixed_version_id && feature.fixed_version_id != epic.fixed_version_id
             inconsistent_versions << {
@@ -225,7 +232,7 @@ module Kanban
 
           # Feature → UserStory の Version継承チェック
           feature.children.each do |user_story|
-            next unless user_story.tracker.name == 'UserStory'
+            next unless user_story.tracker.name == user_story_tracker_name
 
             expected_version_id = feature.fixed_version_id || epic.fixed_version_id
 
@@ -303,7 +310,8 @@ module Kanban
 
       # 統計計算クエリ数測定
       stats_query_count = measure_query_count do
-        epic = @project.issues.joins(:tracker).where(trackers: { name: 'Epic' }).first
+        epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+        epic = @project.issues.joins(:tracker).where(trackers: { name: epic_tracker_name }).first
         StatisticsEngine.calculate_epic_statistics(epic) if epic
       end
       query_metrics[:statistics_calculation_queries] = stats_query_count
@@ -333,8 +341,11 @@ module Kanban
 
     def validate_issue_relationships(issue, result)
       # blocks関係の妥当性チェック
-      if issue.tracker.name == 'UserStory'
-        test_children = issue.children.joins(:tracker).where(trackers: { name: 'Test' })
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+      test_tracker_name = Kanban::TrackerHierarchy.tracker_names[:test]
+
+      if issue.tracker.name == user_story_tracker_name
+        test_children = issue.children.joins(:tracker).where(trackers: { name: test_tracker_name })
 
         test_children.each do |test|
           blocks_relation = IssueRelation.find_by(
@@ -368,10 +379,13 @@ module Kanban
 
     def validate_issue_status_transitions(issue, result)
       # UserStoryのステータス遷移制約チェック
-      if issue.tracker.name == 'UserStory' && issue.status.name.in?(['Testing', 'Resolved'])
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+      task_tracker_name = Kanban::TrackerHierarchy.tracker_names[:task]
+
+      if issue.tracker.name == user_story_tracker_name && issue.status.name.in?(['Testing', 'Resolved'])
         incomplete_tasks = issue.children
                                .joins(:tracker, :status)
-                               .where(trackers: { name: 'Task' })
+                               .where(trackers: { name: task_tracker_name })
                                .where.not(issue_statuses: { is_closed: true })
 
         if incomplete_tasks.any?
@@ -386,6 +400,7 @@ module Kanban
 
     # ユーティリティメソッド群
     def load_epics_efficiently
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       @project.issues
               .includes(
                 :tracker, :status, :assigned_to, :fixed_version,
@@ -395,7 +410,7 @@ module Kanban
                 ]
               )
               .joins(:tracker)
-              .where(trackers: { name: 'Epic' })
+              .where(trackers: { name: epic_tracker_name })
     end
 
     def has_circular_reference?(issue, visited, rec_stack, path)
@@ -438,9 +453,13 @@ module Kanban
     end
 
     def find_orphaned_issues
+      tracker_names = Kanban::TrackerHierarchy.tracker_names
+      orphaned_tracker_names = [tracker_names[:feature], tracker_names[:user_story],
+                                tracker_names[:task], tracker_names[:test], tracker_names[:bug]]
+
       @project.issues
               .joins(:tracker)
-              .where(trackers: { name: ['Feature', 'UserStory', 'Task', 'Test', 'Bug'] })
+              .where(trackers: { name: orphaned_tracker_names })
               .where(parent_id: nil)
               .pluck(:id, :subject, :tracker_id)
               .map { |id, subject, tracker_id|
@@ -469,7 +488,9 @@ module Kanban
         missing_fields << 'subject' if issue.subject.blank?
         missing_fields << 'status' unless issue.status
         missing_fields << 'tracker' unless issue.tracker
-        missing_fields << 'assigned_to' if issue.tracker.name.in?(['Task', 'Test']) && issue.assigned_to_id.nil?
+        task_tracker_name = Kanban::TrackerHierarchy.tracker_names[:task]
+        test_tracker_name = Kanban::TrackerHierarchy.tracker_names[:test]
+        missing_fields << 'assigned_to' if issue.tracker.name.in?([task_tracker_name, test_tracker_name]) && issue.assigned_to_id.nil?
 
         if missing_fields.any?
           issues_missing_fields << {
@@ -495,12 +516,15 @@ module Kanban
     end
 
     def validate_epic_structure(epic, result)
-      unless epic.tracker.name == 'Epic'
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+
+      unless epic.tracker.name == epic_tracker_name
         result.add_error('epic_structure', 'invalid_tracker', "Issue##{epic.id}はEpicトラッカーではありません")
         return
       end
 
-      non_feature_children = epic.children.joins(:tracker).where.not(trackers: { name: 'Feature' })
+      non_feature_children = epic.children.joins(:tracker).where.not(trackers: { name: feature_tracker_name })
       if non_feature_children.any?
         result.add_error(
           'epic_structure',
@@ -511,12 +535,16 @@ module Kanban
     end
 
     def validate_feature_structure(feature, result)
-      unless feature.tracker.name == 'Feature'
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+
+      unless feature.tracker.name == feature_tracker_name
         result.add_error('feature_structure', 'invalid_tracker', "Issue##{feature.id}はFeatureトラッカーではありません")
         return
       end
 
-      unless feature.parent&.tracker&.name == 'Epic'
+      unless feature.parent&.tracker&.name == epic_tracker_name
         result.add_error(
           'feature_structure',
           'missing_epic_parent',
@@ -524,7 +552,7 @@ module Kanban
         )
       end
 
-      non_user_story_children = feature.children.joins(:tracker).where.not(trackers: { name: 'UserStory' })
+      non_user_story_children = feature.children.joins(:tracker).where.not(trackers: { name: user_story_tracker_name })
       if non_user_story_children.any?
         result.add_warning(
           'feature_structure',
@@ -535,12 +563,16 @@ module Kanban
     end
 
     def validate_user_story_structure(user_story, result)
-      unless user_story.tracker.name == 'UserStory'
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      test_tracker_name = Kanban::TrackerHierarchy.tracker_names[:test]
+
+      unless user_story.tracker.name == user_story_tracker_name
         result.add_error('user_story_structure', 'invalid_tracker', "Issue##{user_story.id}はUserStoryトラッカーではありません")
         return
       end
 
-      unless user_story.parent&.tracker&.name == 'Feature'
+      unless user_story.parent&.tracker&.name == feature_tracker_name
         result.add_error(
           'user_story_structure',
           'missing_feature_parent',
@@ -549,7 +581,7 @@ module Kanban
       end
 
       # Test存在チェック
-      test_children = user_story.children.joins(:tracker).where(trackers: { name: 'Test' })
+      test_children = user_story.children.joins(:tracker).where(trackers: { name: test_tracker_name })
       if test_children.empty?
         result.add_warning(
           'user_story_structure',

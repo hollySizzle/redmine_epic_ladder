@@ -399,8 +399,9 @@ module Kanban
       # 削除されたVersionの検出は難しいため、キャッシュベースで検出予定
 
       # 新しいEpicの検出
+      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
       new_epics = @project.issues.joins(:tracker)
-                          .where(trackers: { name: 'Epic' })
+                          .where(trackers: { name: epic_tracker_name })
                           .where('issues.created_on > ?', since_time)
       new_epics.each do |epic|
         changes << {
