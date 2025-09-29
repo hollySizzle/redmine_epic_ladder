@@ -28,7 +28,7 @@ export const GridBody = ({
 }) => {
   // Epic行とNo Epic行の分離
   const { normalEpics, noEpicRow } = useMemo(() => {
-    const normal = epicRows.filter(epic => epic.type === 'epic');
+    const normal = epicRows.filter(epic => epic.id !== 'no-epic');
     const noEpic = epicRows.find(epic => epic.type === 'no-epic');
 
     return {

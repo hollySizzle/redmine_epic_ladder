@@ -404,7 +404,50 @@ interface DropConstraintConfig {
 }
 ```
 
-### 6.2 API インターフェース
+### 6.2 データ変換仕様（重要）
+
+#### 6.2.1 バックエンド→フロントエンド データ変換
+**⚠️ 重要**: バックエンドとフロントエンドでデータ構造が異なります
+
+```javascript
+// バックエンドデータ構造（grid_data_builder.rb）
+{
+  issue: { id: 123, subject: "テストEpic" },
+  features: [...],
+  statistics: {...}
+  // ← typeプロパティは存在しない（トラッカー名で分類済み）
+}
+
+// フロントエンド変換後（KanbanGridLayoutV2.jsx）
+{
+  id: 123,
+  name: "テストEpic",
+  type: 'epic',  // ← フロントエンドでUI用に付与
+  data: { issue: {...}, features: [...] },
+  statistics: {...}
+}
+```
+
+#### 6.2.2 Epic行フィルタリング正解パターン
+```javascript
+// ❌ 間違い: バックエンドデータにはtypeが存在しない場合がある
+const normal = epicRows.filter(epic => epic.type === 'epic');
+
+// ✅ 正解: IDベースでNo Epicを除外
+const normal = epicRows.filter(epic => epic.id !== 'no-epic');
+
+// ✅ 代替案: type存在チェック付き
+const normal = epicRows.filter(epic =>
+  epic.type === 'epic' || (!epic.type && epic.id !== 'no-epic')
+);
+```
+
+#### 6.2.3 No Epic特別扱い
+- **バックエンド**: `type: 'no-epic'` を明示的に付与
+- **フロントエンド**: `type: 'no-epic'` をそのまま継承
+- **判定基準**: `epic.id === 'no-epic'` が最も確実
+
+### 6.3 API インターフェース
 ```mermaid
 sequenceDiagram
     participant C as Client
@@ -635,9 +678,45 @@ describe('KanbanGridLayout', () => {
 });
 ```
 
-## 10. 運用・保守設計
+## 10. トラブルシューティング・よくある問題
 
-### 10.1 監視・ログ設計
+### 10.1 データ表示問題
+
+#### 問題: 通常Epic行が表示されない
+**症状**: No Epic行のみ表示され、通常Epic行が0件
+**原因**: フィルタリング条件の誤り
+```javascript
+// ❌ バグのあるコード
+const normal = epicRows.filter(epic => epic.type === 'epic');
+// → バックエンドデータにtypeが存在しない場合、空配列になる
+```
+**解決方法**:
+```javascript
+// ✅ 修正版
+const normal = epicRows.filter(epic => epic.id !== 'no-epic');
+```
+
+#### 問題: トラッカー設定変更後にEpicが表示されない
+**症状**: 設定変更したトラッカー名のEpicが認識されない
+**原因**: TrackerHierarchy.clear_cache!の呼び忘れ
+**解決方法**:
+```ruby
+# 設定変更後に必ず実行
+Kanban::TrackerHierarchy.clear_cache!
+```
+
+### 10.2 パフォーマンス問題
+
+#### 問題: グリッド表示が遅い
+**症状**: 大量Epic/Featureでレンダリング遅延
+**原因**: 仮想スクロール無効 or N+1クエリ
+**解決方法**:
+- `compactMode={true}` でレンダリング負荷軽減
+- サーバーサイド includes での N+1回避確認
+
+## 11. 運用・保守設計
+
+### 11.1 監視・ログ設計
 - **パフォーマンス監視**: Web Vitals測定（LCP, FID, CLS）
 - **操作ログ**: D&D操作・Epic/Version作成をRedmine Journal記録
 - **エラートラッキング**: クライアントサイドエラー→サーバーログ連携

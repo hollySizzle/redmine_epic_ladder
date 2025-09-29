@@ -239,7 +239,8 @@
       "Bash(./bin/reset_db.sh:*)",
       "Bash(RAILS_ENV=development rails runner \"\nputs ''=== データベーステーブル状況確認 ===''\n\n# view_customizesテーブルが存在するかチェック\nbegin\n  ViewCustomize.connection.table_exists?(''view_customizes'')\n  puts ''view_customizesテーブル: 存在する''\n  puts \"\"レコード数: #{ViewCustomize.count}\"\"\nrescue => e\n  puts ''view_customizesテーブル: 存在しない''\n  puts \"\"エラー: #{e.message}\"\"\nend\n\nputs ''''\nputs ''=== 利用可能なマイグレーションタスク ===''\n\")",
       "Bash(RAILS_ENV=development rails runner:*)",
-      "Bash(RAILS_ENV=development rails server -b 0.0.0.0 -p 3000 --daemon)"
+      "Bash(RAILS_ENV=development rails server -b 0.0.0.0 -p 3000 --daemon)",
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/**)"
     ],
     "deny": [],
     "ask": [],

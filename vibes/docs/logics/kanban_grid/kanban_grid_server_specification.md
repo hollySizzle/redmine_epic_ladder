@@ -323,14 +323,26 @@ class GridDataBuilder
     end
   end
 
-  # 2. N+1クエリ回避
+  # 2. N+1クエリ回避 + トラッカー判定システム
   def load_filtered_epics
+    # ⚠️ 重要: 設定ベースのトラッカー判定
+    epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+
     @project.issues
             .includes(:tracker, :status, :fixed_version,
                      children: [:tracker, :status, :fixed_version])
             .joins(:tracker)
-            .where(trackers: { name: 'Epic' })
+            .where(trackers: { name: epic_tracker_name })
+            # ← 'Epic'ハードコーディングではなく設定値使用
   end
+
+  # トラッカー階層設定取得（TrackerHierarchy.rb）
+  # settings = Setting.plugin_redmine_release_kanban || {}
+  # {
+  #   epic: settings['epic_tracker'] || 'Epic',
+  #   feature: settings['feature_tracker'] || 'Feature',
+  #   user_story: settings['user_story_tracker'] || 'UserStory'
+  # }
 
   # 3. 2Dマトリクス効率構築
   def build_epic_row(epic, versions, columns)
