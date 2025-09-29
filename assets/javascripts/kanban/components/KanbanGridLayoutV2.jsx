@@ -686,14 +686,23 @@ export const KanbanGridLayoutV2 = ({
 // ヘルパー関数群（設計書準拠）
 
 function buildGridMatrix(data) {
+  console.log('[buildGridMatrix] 🔍 入力data:', data);
+  console.log('[buildGridMatrix] 🔍 data.grid:', data.grid);
+  console.log('[buildGridMatrix] 🔍 data.grid.grid:', data.grid?.grid);
+  console.log('[buildGridMatrix] 🔍 data.grid.grid.rows:', data.grid?.grid?.rows);
+
   // ドキュメント準拠: サーバーからversionsは直接送られてくる
-  return {
-    grid: data.grid || { rows: [] },
+  const result = {
+    grid: data.grid?.grid || data.grid || { rows: [] },  // 二重ネスト対応
     versions: data.versions || data.grid?.versions || [],
     orphan_features: data.orphan_features || [],
     metadata: data.metadata || {},
     statistics: data.statistics || {}
   };
+
+  console.log('[buildGridMatrix] ✅ 出力result:', result);
+  console.log('[buildGridMatrix] ✅ result.grid.rows:', result.grid.rows);
+  return result;
 }
 
 function countNoVersionIssues(gridMatrix) {
