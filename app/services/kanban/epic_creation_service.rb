@@ -116,6 +116,10 @@ module Kanban
       Rails.logger.info "[EpicCreationService] Initial status: #{initial_status&.name} (ID: #{initial_status&.id})"
       raise InvalidEpicDataError, "Epic作成用の初期ステータスが見つかりません" unless initial_status
 
+      # デフォルト優先度を取得（priority_idが指定されていない場合）
+      priority_id = determine_priority_id
+      Rails.logger.info "[EpicCreationService] Priority ID: #{priority_id}"
+
       # Epic Issue作成
       Rails.logger.info "[EpicCreationService] Building Epic issue with attributes:"
       Rails.logger.info "[EpicCreationService]   subject: '#{@epic_params[:subject]}'"
@@ -125,6 +129,7 @@ module Kanban
       Rails.logger.info "[EpicCreationService]   author_id: #{@user.id}"
       Rails.logger.info "[EpicCreationService]   assigned_to_id: #{@epic_params[:assigned_to_id].presence}"
       Rails.logger.info "[EpicCreationService]   fixed_version_id: #{@epic_params[:fixed_version_id].presence}"
+      Rails.logger.info "[EpicCreationService]   priority_id: #{priority_id}"
 
       epic = @project.issues.build(
         subject: @epic_params[:subject],
@@ -133,7 +138,8 @@ module Kanban
         status: initial_status,
         author: @user,
         assigned_to_id: @epic_params[:assigned_to_id].presence,
-        fixed_version_id: @epic_params[:fixed_version_id].presence
+        fixed_version_id: @epic_params[:fixed_version_id].presence,
+        priority_id: priority_id
       )
 
       Rails.logger.info "[EpicCreationService] Epic built successfully, attempting to save..."
@@ -163,6 +169,37 @@ module Kanban
 
       # フォールバック: 最初のステータス
       IssueStatus.first
+    end
+
+    def determine_priority_id
+      # パラメータで priority_id が指定されている場合はそれを使用
+      if @epic_params[:priority_id].present?
+        specified_priority = IssuePriority.find_by(id: @epic_params[:priority_id])
+        if specified_priority
+          Rails.logger.info "[EpicCreationService] Using specified priority: #{specified_priority.name} (ID: #{specified_priority.id})"
+          return specified_priority.id
+        else
+          Rails.logger.warn "[EpicCreationService] Specified priority ID #{@epic_params[:priority_id]} not found, falling back to default"
+        end
+      end
+
+      # デフォルト優先度を取得
+      default_priority = IssuePriority.default
+      if default_priority
+        Rails.logger.info "[EpicCreationService] Using default priority: #{default_priority.name} (ID: #{default_priority.id})"
+        return default_priority.id
+      end
+
+      # フォールバック: 最初の有効な優先度
+      fallback_priority = IssuePriority.where(active: true).order(:position).first
+      if fallback_priority
+        Rails.logger.warn "[EpicCreationService] No default priority found, using fallback: #{fallback_priority.name} (ID: #{fallback_priority.id})"
+        return fallback_priority.id
+      end
+
+      # 最後のフォールバック: 優先度が全く存在しない場合
+      Rails.logger.error "[EpicCreationService] No priorities found in the system"
+      raise InvalidEpicDataError, "システムに優先度が設定されていません。管理者に連絡してください。"
     end
 
     def calculate_grid_position(epic)
