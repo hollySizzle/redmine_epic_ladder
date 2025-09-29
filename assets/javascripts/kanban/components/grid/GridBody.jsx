@@ -28,8 +28,18 @@ export const GridBody = ({
 }) => {
   // Epic行とNo Epic行の分離
   const { normalEpics, noEpicRow } = useMemo(() => {
+    console.log('[GridBody] 🔍 デバッグ - Epic行分離処理開始');
+    console.log('[GridBody] 📋 epicRows受信データ:', epicRows);
+    console.log('[GridBody] 📊 epicRows件数:', epicRows?.length || 0);
+
     const normal = epicRows.filter(epic => epic.id !== 'no-epic');
     const noEpic = epicRows.find(epic => epic.type === 'no-epic');
+
+    console.log('[GridBody] ✅ フィルタリング結果:');
+    console.log('[GridBody] 👥 normalEpics:', normal);
+    console.log('[GridBody] 👥 normalEpics件数:', normal.length);
+    console.log('[GridBody] 🚫 noEpicRow:', noEpic);
+    console.log('[GridBody] 🎯 表示判定: normalEpics.length === 0 && !noEpicRow =', normal.length === 0 && !noEpic);
 
     return {
       normalEpics: normal,

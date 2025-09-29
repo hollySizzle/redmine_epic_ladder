@@ -246,7 +246,13 @@ export const KanbanGridLayoutV2 = ({
 
   // グリッド構造計算（メモ化）
   const gridMatrix = useMemo(() => {
-    if (!gridState.data) return null;
+    console.log('[KanbanGridLayoutV2] 🔍 gridState.data:', gridState.data);
+    console.log('[KanbanGridLayoutV2] 🔍 gridState全体:', gridState);
+    if (!gridState.data) {
+      console.log('[KanbanGridLayoutV2] ⚠️ gridState.data is null/undefined');
+      return null;
+    }
+    console.log('[KanbanGridLayoutV2] ✅ buildGridMatrix実行');
     return buildGridMatrix(gridState.data);
   }, [gridState.data]);
 
@@ -279,24 +285,36 @@ export const KanbanGridLayoutV2 = ({
   const epicRows = useMemo(() => {
     if (!gridMatrix || !gridMatrix.grid || !gridMatrix.grid.rows) return [];
 
-    const epics = gridMatrix.grid.rows.map(epicData => ({
-      id: epicData.issue.id,
-      name: epicData.issue.subject,
-      type: 'epic',
-      data: epicData,
-      statistics: epicData.statistics
-    }));
+    console.log('[KanbanGridLayoutV2] 🔍 gridMatrix.grid.rows:', gridMatrix.grid.rows);
 
-    return [
+    const epics = gridMatrix.grid.rows
+      .filter(epicData => epicData.issue.id !== 'no-epic')  // No Epicを除外
+      .map(epicData => ({
+        id: epicData.issue.id,
+        name: epicData.issue.subject,
+        type: 'epic',
+        data: epicData,
+        statistics: epicData.statistics
+      }));
+
+    console.log('[KanbanGridLayoutV2] 🎯 通常Epic変換結果:', epics);
+
+    const noEpicRow = gridMatrix.grid.rows.find(epicData => epicData.issue.id === 'no-epic');
+    console.log('[KanbanGridLayoutV2] 🚫 No Epic行発見:', noEpicRow);
+
+    const result = [
       ...epics,
       {
         id: 'no-epic',
         name: 'No EPIC',
         type: 'no-epic',
-        data: null,
+        data: noEpicRow,
         statistics: calculateNoEpicStatistics(gridMatrix)
       }
     ];
+
+    console.log('[KanbanGridLayoutV2] ✅ 最終epicRows:', result);
+    return result;
   }, [gridMatrix]);
 
   // D&Dセンサー設定（設計書準拠）
@@ -402,20 +420,25 @@ export const KanbanGridLayoutV2 = ({
   // グリッドデータ読み込み
   const loadGridData = useCallback(async (filters = {}) => {
     try {
+      console.log('[KanbanGridLayoutV2] 🔄 loadGridData開始, projectId:', projectId);
       gridDispatch({ type: 'SET_LOADING', payload: true });
 
       const response = await GridV2API.getGridData(projectId, filters);
+      console.log('[KanbanGridLayoutV2] 📡 API response:', response);
 
       if (response.success) {
+        console.log('[KanbanGridLayoutV2] ✅ データ読み込み成功');
+        console.log('[KanbanGridLayoutV2] 📋 response.data:', response.data);
         gridDispatch({
           type: 'SET_INITIAL_DATA',
           payload: response.data
         });
       } else {
+        console.log('[KanbanGridLayoutV2] ❌ API response失敗:', response.error);
         throw new Error(response.error);
       }
     } catch (error) {
-      console.error('Grid data loading error:', error);
+      console.error('[KanbanGridLayoutV2] ⚠️ Grid data loading error:', error);
       gridDispatch({
         type: 'SET_ERROR',
         payload: error.message
