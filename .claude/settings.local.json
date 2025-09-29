@@ -223,7 +223,10 @@
       "Bash(npx webpack:*)",
       "Bash(node:*)",
       "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/vibes/docs/rules/**)",
-      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/vibes/docs/**)"
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/vibes/docs/**)",
+      "Bash(RAILS_ENV=test DISABLE_FACTORY_GIRL=1 ruby -I test -I plugins/redmine_release_kanban/test plugins/redmine_release_kanban/test/integration/kanban_settings_test.rb --verbose)",
+      "Bash(RAILS_ENV=test DISABLE_FACTORY_GIRL=1 ruby -I test -I . test/integration/kanban_settings_test.rb --verbose)",
+      "Bash(RAILS_ENV=test rake redmine:plugins:test:integration PLUGIN=redmine_release_kanban TEST=test/integration/kanban_settings_test.rb)"
     ],
     "deny": [],
     "ask": [],
