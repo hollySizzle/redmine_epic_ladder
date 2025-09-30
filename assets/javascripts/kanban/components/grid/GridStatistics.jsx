@@ -74,15 +74,17 @@ export const GridStatistics = ({
   // 6. レンダリング
   return (
     <div className={`grid-statistics ${compactMode ? 'compact' : ''}`}>
-      {/* 統計情報ヘッダー */}
-      <StatisticsHeader
+      {/* 統計情報ヘッダー（タブ付き） */}
+      <StatisticsHeaderWithTabs
         filters={filters}
         onFilterChange={handleFilterChange}
         lastUpdated={safeStatistics.lastUpdated}
         compactMode={compactMode}
+        selectedTab={selectedTab}
+        onTabChange={handleTabChange}
       />
 
-      {/* 統計情報コンテンツ */}
+      {/* 統計情報コンテンツ（タブ内容表示） */}
       <StatisticsContent
         statistics={filteredStatistics}
         kpiMetrics={kpiMetrics}
@@ -103,9 +105,16 @@ export const GridStatistics = ({
 };
 
 /**
- * StatisticsHeader - 統計情報ヘッダーコンポーネント
+ * StatisticsHeaderWithTabs - タブ付き統計情報ヘッダーコンポーネント
  */
-const StatisticsHeader = ({ filters, onFilterChange, lastUpdated, compactMode }) => {
+const StatisticsHeaderWithTabs = ({
+  filters,
+  onFilterChange,
+  lastUpdated,
+  compactMode,
+  selectedTab,
+  onTabChange
+}) => {
   const formatLastUpdated = (timestamp) => {
     try {
       return new Date(timestamp).toLocaleString();
@@ -114,35 +123,58 @@ const StatisticsHeader = ({ filters, onFilterChange, lastUpdated, compactMode })
     }
   };
 
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: '📊' },
+    { id: 'epics', label: 'Epics', icon: '🗂️' },
+    { id: 'versions', label: 'Versions', icon: '🏷️' },
+    { id: 'distribution', label: 'Distribution', icon: '📈' }
+  ];
+
   return (
     <div className="statistics-header">
-      <div className="title-section">
-        <h3>📊 Project Statistics</h3>
+      <div className="header-top">
+        <div className="title-section">
+          <h3>📊 Project Statistics</h3>
+          {!compactMode && (
+            <span className="last-updated">
+              Last updated: {formatLastUpdated(lastUpdated)}
+            </span>
+          )}
+        </div>
+
         {!compactMode && (
-          <span className="last-updated">
-            Last updated: {formatLastUpdated(lastUpdated)}
-          </span>
+          <div className="filter-controls">
+            {/* TODO: フィルターコントロール実装 */}
+            <button
+              className="refresh-button"
+              onClick={() => window.location.reload()}
+              title="Refresh Statistics"
+            >
+              🔄
+            </button>
+          </div>
         )}
       </div>
 
-      {!compactMode && (
-        <div className="filter-controls">
-          {/* TODO: フィルターコントロール実装 */}
+      {/* タブナビゲーション */}
+      <div className="statistics-tabs">
+        {tabs.map(tab => (
           <button
-            className="refresh-button"
-            onClick={() => window.location.reload()}
-            title="Refresh Statistics"
+            key={tab.id}
+            className={`statistics-tab ${selectedTab === tab.id ? 'active' : ''}`}
+            onClick={() => onTabChange(tab.id)}
           >
-            🔄
+            <span className="tab-icon">{tab.icon}</span>
+            <span className="tab-label">{tab.label}</span>
           </button>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 };
 
 /**
- * StatisticsContent - 統計情報メインコンテンツ
+ * StatisticsContent - 統計情報メインコンテンツ（タブ切り替え）
  */
 const StatisticsContent = ({
   statistics,
@@ -154,26 +186,33 @@ const StatisticsContent = ({
 }) => {
   return (
     <div className="statistics-content">
-      {/* Overview Panel - KPI Cards */}
-      <OverviewPanel kpiMetrics={kpiMetrics} compactMode={compactMode} />
-
-      {/* Detail Panels - Tabbed Interface */}
-      {!compactMode && (
-        <DetailPanels
-          statistics={statistics}
-          selectedTab={selectedTab}
-          onTabChange={onTabChange}
-          showCharts={showCharts}
-        />
-      )}
+      {/* タブごとの内容を表示 */}
+      <div className="tab-content-area">
+        {selectedTab === 'overview' && (
+          <OverviewTabContent
+            kpiMetrics={kpiMetrics}
+            statistics={statistics}
+            compactMode={compactMode}
+          />
+        )}
+        {selectedTab === 'epics' && (
+          <EpicStatisticsTabContent epics={statistics.epics} />
+        )}
+        {selectedTab === 'versions' && (
+          <VersionStatisticsTabContent versions={statistics.versions} />
+        )}
+        {selectedTab === 'distribution' && showCharts && (
+          <DistributionTabContent statistics={statistics} />
+        )}
+      </div>
     </div>
   );
 };
 
 /**
- * OverviewPanel - プロジェクト概要統計表示
+ * OverviewTabContent - Overview タブの内容（KPI + Progress）
  */
-const OverviewPanel = ({ kpiMetrics, compactMode }) => {
+const OverviewTabContent = ({ kpiMetrics, statistics, compactMode }) => {
   const kpiCards = [
     {
       label: 'Total Epics',
@@ -202,7 +241,8 @@ const OverviewPanel = ({ kpiMetrics, compactMode }) => {
   ];
 
   return (
-    <div className="overview-panel">
+    <div className="overview-tab-content">
+      {/* KPI Cards */}
       <div className={`kpi-cards ${compactMode ? 'compact' : ''}`}>
         {kpiCards.map(card => (
           <KPICard
@@ -231,6 +271,22 @@ const OverviewPanel = ({ kpiMetrics, compactMode }) => {
           {kpiMetrics.overallCompletion}% Complete
         </div>
       </div>
+
+      {/* Project Summary */}
+      <div className="project-summary">
+        <h4>Project Summary</h4>
+        <div className="summary-grid">
+          <div className="summary-item">
+            <strong>Total Issues:</strong> {statistics.project.totalFeatures || 0}
+          </div>
+          <div className="summary-item">
+            <strong>Completion Rate:</strong> {statistics.project.completionRate || 0}%
+          </div>
+          <div className="summary-item">
+            <strong>Active Versions:</strong> {statistics.versions.filter(v => !v.isOverdue).length}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -251,71 +307,8 @@ const KPICard = ({ label, value, icon, color, compactMode }) => (
 );
 
 /**
- * DetailPanels - 詳細統計情報タブパネル
+ * EpicStatisticsTabContent - Epic統計タブコンテンツ
  */
-const DetailPanels = ({ statistics, selectedTab, onTabChange, showCharts }) => {
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'epics', label: 'Epic Statistics', icon: '🗂️' },
-    { id: 'versions', label: 'Version Statistics', icon: '🏷️' },
-    { id: 'distribution', label: 'Distribution', icon: '📈' }
-  ];
-
-  return (
-    <div className="detail-panels">
-      {/* Tab Navigation */}
-      <div className="tab-navigation">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab-button ${selectedTab === tab.id ? 'active' : ''}`}
-            onClick={() => onTabChange(tab.id)}
-          >
-            <span className="tab-icon">{tab.icon}</span>
-            <span className="tab-label">{tab.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div className="tab-content">
-        {selectedTab === 'overview' && (
-          <OverviewTabContent statistics={statistics} />
-        )}
-        {selectedTab === 'epics' && (
-          <EpicStatisticsTabContent epics={statistics.epics} />
-        )}
-        {selectedTab === 'versions' && (
-          <VersionStatisticsTabContent versions={statistics.versions} />
-        )}
-        {selectedTab === 'distribution' && showCharts && (
-          <DistributionTabContent statistics={statistics} />
-        )}
-      </div>
-    </div>
-  );
-};
-
-/**
- * タブコンテンツコンポーネント群
- */
-const OverviewTabContent = ({ statistics }) => (
-  <div className="overview-tab">
-    <h4>Project Summary</h4>
-    <div className="summary-grid">
-      <div className="summary-item">
-        <strong>Total Issues:</strong> {statistics.project.totalFeatures || 0}
-      </div>
-      <div className="summary-item">
-        <strong>Completion Rate:</strong> {statistics.project.completionRate || 0}%
-      </div>
-      <div className="summary-item">
-        <strong>Active Versions:</strong> {statistics.versions.filter(v => !v.isOverdue).length}
-      </div>
-    </div>
-  </div>
-);
-
 const EpicStatisticsTabContent = ({ epics }) => (
   <div className="epic-statistics-tab">
     <h4>Epic Progress</h4>
