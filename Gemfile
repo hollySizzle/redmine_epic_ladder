@@ -1,15 +1,60 @@
 # Gemfile for redmine_react_gantt_chart plugin
 
-# Test gems temporarily commented out to avoid conflicts in development environment
-# group :test do
-#   gem 'factory_bot_rails', '~> 6.2'
-#   gem 'shoulda-matchers', '~> 5.3'
-#   gem 'rspec-benchmark', '~> 0.6'
-#   gem 'timecop', '~> 0.9'
-# end
+group :test do
+  # 条件付き gem 定義: 既にインストールされている場合はスキップ
+  begin
+    Gem::Specification.find_by_name('rspec-rails')
+  rescue Gem::LoadError
+    gem 'rspec-rails', '~> 6.1'
+  end
 
-# Development gems are managed by the main Redmine Gemfile.local to avoid conflicts
-# group :development, :test do
-#   gem 'pry-rails', '~> 0.3'
-#   gem 'pry-byebug', '~> 3.10'
-# end
+  begin
+    Gem::Specification.find_by_name('factory_bot_rails')
+  rescue Gem::LoadError
+    gem 'factory_bot_rails', '~> 6.4'
+  end
+
+  begin
+    Gem::Specification.find_by_name('faker')
+  rescue Gem::LoadError
+    gem 'faker', '~> 3.2'
+  end
+
+  begin
+    Gem::Specification.find_by_name('database_cleaner-active_record')
+  rescue Gem::LoadError
+    gem 'database_cleaner-active_record', '~> 2.1'
+  end
+
+  begin
+    Gem::Specification.find_by_name('simplecov')
+  rescue Gem::LoadError
+    gem 'simplecov', '~> 0.22', require: false
+  end
+
+  begin
+    Gem::Specification.find_by_name('capybara')
+  rescue Gem::LoadError
+    gem 'capybara', '~> 3.40'
+  end
+
+  begin
+    Gem::Specification.find_by_name('selenium-webdriver')
+  rescue Gem::LoadError
+    gem 'selenium-webdriver', '~> 4.15'
+  end
+end
+
+group :development, :test do
+  begin
+    Gem::Specification.find_by_name('pry-rails')
+  rescue Gem::LoadError
+    gem 'pry-rails', '~> 0.3'
+  end
+
+  begin
+    Gem::Specification.find_by_name('pry-byebug')
+  rescue Gem::LoadError
+    gem 'pry-byebug', '~> 3.10'
+  end
+end

@@ -242,7 +242,13 @@
       "Bash(RAILS_ENV=development rails server -b 0.0.0.0 -p 3000 --daemon)",
       "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/**)",
       "Bash(RAILS_ENV=test bundle exec ruby -I test -I . -r test_helper -e \"\nputs ''=== TrackerHierarchy設定確認 ===''\nputs Kanban::TrackerHierarchy.tracker_names.inspect\n\nputs ''''\nputs ''=== Epic フィルタリングテスト ===''\n\n# モックデータでepicRowsをシミュレート\nepic_rows = [\n  { id: 1, name: ''テストEpic1'', type: ''epic'', data: { issue: { id: 1 } } },\n  { id: 2, name: ''テストEpic2'', type: ''epic'', data: { issue: { id: 2 } } },\n  { id: ''no-epic'', name: ''No EPIC'', type: ''no-epic'', data: nil }\n]\n\nputs ''元データ: '' + epic_rows.length.to_s + ''件''\nepic_rows.each do |epic|\n  puts \"\"  #{epic[:id]}: #{epic[:name]} (type: #{epic[:type]})\"\"\nend\n\nputs ''''\nputs ''=== フィルタリング結果比較 ===''\n\n# 修正前（バグ）\nold_filter = epic_rows.select { |epic| epic[:type] == ''epic'' }\nputs ''修正前(type==epic): '' + old_filter.length.to_s + ''件''\nold_filter.each { |epic| puts \"\"  #{epic[:id]}: #{epic[:name]}\"\" }\n\n# 修正後（正解）\nnew_filter = epic_rows.select { |epic| epic[:id] != ''no-epic'' }\nputs ''修正後(id!=no-epic): '' + new_filter.length.to_s + ''件''\nnew_filter.each { |epic| puts \"\"  #{epic[:id]}: #{epic[:name]}\"\" }\n\nputs ''''\nputs ''=== 結果 ===''\nif old_filter.length == new_filter.length\n  puts ''✅ フィルタリング結果は一致（この場合は正常）''\nelse\n  puts ''❌ フィルタリング結果に差異あり（修正が必要だった証拠）''\nend\n\")",
-      "Bash(RAILS_ENV=test DISABLE_FACTORY_GIRL=1 rake redmine:plugins:test:units PLUGIN=redmine_release_kanban TEST=test/unit/kanban_tracker_hierarchy_test.rb)"
+      "Bash(RAILS_ENV=test DISABLE_FACTORY_GIRL=1 rake redmine:plugins:test:units PLUGIN=redmine_release_kanban TEST=test/unit/kanban_tracker_hierarchy_test.rb)",
+      "Bash(bundle list:*)",
+      "Bash(bundle install:*)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npx playwright:*)",
+      "Bash(./bin/setup_test_env.sh:*)"
     ],
     "deny": [],
     "ask": [],

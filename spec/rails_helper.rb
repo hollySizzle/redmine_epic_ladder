@@ -1,5 +1,15 @@
 # frozen_string_literal: true
 
+# factory_girl を無効化（他プラグインのテストは実行しないため）
+ENV['DISABLE_FACTORY_GIRL'] = '1'
+
+# factory_girl の読み込みをブロック
+begin
+  Object.send(:remove_const, :FactoryGirl) if defined?(FactoryGirl)
+rescue => e
+  # 無視 - factory_girl が定義されていない場合もある
+end
+
 # SimpleCov設定（カバレッジ測定）
 if ENV['COVERAGE']
   require 'simplecov'

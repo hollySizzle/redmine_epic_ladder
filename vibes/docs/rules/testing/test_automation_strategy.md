@@ -105,7 +105,7 @@ jobs:
         run: rake redmine:plugins:test:system
 ```
 
-## 3. カスタムtest_runner.sh活用
+## 3. RSpec + Playwright 実行
 
 ### 3.1 CI環境での実行
 ```bash
@@ -113,11 +113,15 @@ jobs:
 export CI=true
 export RAILS_ENV=test
 
-# フェーズ別実行
-./vibes/scripts/testing/test_runner.sh phase1  # Critical機能
-./vibes/scripts/testing/test_runner.sh phase2  # High機能
-./vibes/scripts/testing/test_runner.sh phase3  # Integration
-./vibes/scripts/testing/test_runner.sh phase4  # System
+# RSpec テスト実行
+bundle exec rspec spec/models       # Model テスト
+bundle exec rspec spec/services     # Service テスト
+bundle exec rspec spec/requests     # Request テスト
+bundle exec rspec spec/integration  # Integration テスト
+bundle exec rspec spec/system       # System テスト
+
+# Playwright テスト実行
+npx playwright test                 # E2E テスト
 
 # 結果集約
 if [ $? -eq 0 ]; then
@@ -135,10 +139,16 @@ jobs:
   test-matrix:
     strategy:
       matrix:
-        test_phase: [phase1, phase2, phase3, phase4]
+        test_type: [models, services, requests, integration, system]
     steps:
-      - name: Run Test Phase
-        run: ./vibes/scripts/testing/test_runner.sh ${{ matrix.test_phase }}
+      - name: Run RSpec Tests
+        run: bundle exec rspec spec/${{ matrix.test_type }}
+
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Playwright Tests
+        run: npx playwright test
 ```
 
 ## 4. 品質ゲート設定
@@ -171,13 +181,16 @@ check_release_ready() {
   local failed=0
 
   # Critical機能100%テスト
-  if ! ./vibes/scripts/testing/test_runner.sh phase1; then
+  if ! bundle exec rspec spec/models spec/services; then
     echo "❌ Critical tests failed"
     failed=1
   fi
 
   # 全体カバレッジ85%以上
-  # coverage_check.sh実行（実装後）
+  if ! COVERAGE=true bundle exec rspec | grep "100.00%"; then
+    echo "❌ Coverage check failed"
+    failed=1
+  fi
 
   # RuboCop violations 0
   if ! bundle exec rubocop; then
@@ -255,7 +268,7 @@ run_flaky_test_detection() {
   local retry_count=3
 
   for i in $(seq 1 $retry_count); do
-    if rake redmine:plugins:test:units TEST="$test_file"; then
+    if bundle exec rspec "$test_file"; then
       return 0
     fi
     echo "Retry $i/$retry_count failed"
@@ -280,8 +293,8 @@ pre_development_check() {
     return 1
   fi
 
-  # 高速テスト
-  if ! ./vibes/scripts/testing/test_runner.sh quick; then
+  # 高速テスト（Model + Service）
+  if ! bundle exec rspec spec/models spec/services; then
     echo "❌ Quick tests failed"
     return 1
   fi
@@ -293,9 +306,8 @@ pre_development_check() {
 post_development_check() {
   echo "🔍 Post-development checks..."
 
-  # 影響範囲テスト
-  ./vibes/scripts/testing/test_runner.sh phase1  # Critical
-  ./vibes/scripts/testing/test_runner.sh phase2  # High
+  # 影響範囲テスト（Critical + High）
+  bundle exec rspec spec/models spec/services spec/requests
 
   # 静的解析
   bundle exec rubocop
@@ -321,7 +333,8 @@ jobs:
 
       - name: Test Coverage Check
         run: |
-          ./vibes/scripts/testing/test_runner.sh full
+          COVERAGE=true bundle exec rspec
+          npx playwright test
           # カバレッジレポート生成・コメント
 ```
 
