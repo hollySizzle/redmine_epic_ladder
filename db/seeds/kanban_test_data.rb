@@ -213,11 +213,90 @@ if created_projects['sakura-ec'] && created_projects['ai-recommend']
   puts "  📁 AIレコメンドをECサイトのサブプロジェクトに設定"
 end
 
+# ===== プロジェクトモジュール有効化 =====
+puts "\n🔌 プロジェクトモジュールを有効化中..."
+
+# 桜商店ECサイトプロジェクトにrelease_kanbanモジュールを有効化
+if created_projects['sakura-ec']
+  sakura_ec = created_projects['sakura-ec']
+
+  # 有効化するモジュール一覧
+  enabled_modules = [
+    'issue_tracking',
+    'time_tracking',
+    'news',
+    'documents',
+    'files',
+    'wiki',
+    'repository',
+    'boards',
+    'calendar',
+    'gantt',
+    'release_kanban'  # カンバンモジュール追加
+  ]
+
+  sakura_ec.enabled_module_names = enabled_modules
+
+  if sakura_ec.save
+    puts "  ✅ 桜商店ECサイト: #{enabled_modules.size}個のモジュールを有効化"
+    puts "    - release_kanban モジュールを含む"
+  else
+    puts "  ❌ 桜商店ECサイトのモジュール有効化に失敗: #{sakura_ec.errors.full_messages.join(', ')}"
+  end
+end
+
+# ===== 優先度設定投入 =====
+puts "\n⭐ 優先度（Enumeration）を投入中..."
+
+priorities_data = [
+  { name: '低', position: 1, is_default: false },
+  { name: '通常', position: 2, is_default: true },
+  { name: '高', position: 3, is_default: false },
+  { name: '緊急', position: 4, is_default: false },
+  { name: '即座', position: 5, is_default: false }
+]
+
+priorities_data.each do |data|
+  priority = IssuePriority.find_or_initialize_by(name: data[:name])
+  priority.assign_attributes(
+    position: data[:position],
+    is_default: data[:is_default],
+    active: true
+  )
+
+  if priority.save
+    puts "  ✅ #{priority.name} (Position: #{priority.position}#{priority.is_default ? ', デフォルト' : ''})"
+  else
+    puts "  ❌ #{data[:name]} の作成に失敗: #{priority.errors.full_messages.join(', ')}"
+  end
+end
+
+# ===== プラグイン設定投入 =====
+puts "\n🔧 カンバンプラグイン設定を投入中..."
+
+plugin_settings = {
+  'epic_tracker' => 'エピック',
+  'feature_tracker' => '機能',
+  'user_story_tracker' => 'ユーザストーリ',
+  'task_tracker' => '作業',
+  'test_tracker' => '評価',
+  'bug_tracker' => '不具合'
+}
+
+# Settingモデルを使用してプラグイン設定を保存
+Setting.plugin_redmine_release_kanban = plugin_settings
+puts "  ✅ カンバントラッカー設定完了"
+plugin_settings.each do |key, value|
+  puts "    - #{key}: #{value}"
+end
+
 # ===== 投入結果確認 =====
 puts "\n📊 === 投入結果確認 ==="
 puts "  トラッカー数: #{Tracker.count}"
 puts "  ユーザー数: #{User.count}"
 puts "  プロジェクト数: #{Project.count}"
+puts "  優先度数: #{IssuePriority.count}"
+puts "  プラグイン設定: #{Setting.plugin_redmine_release_kanban.present? ? '設定済み' : '未設定'}"
 
 puts "\n🌸 === 桜商店カンバンテストデータ投入完了！ === 🌸"
 puts "以下のコマンドで実行:"

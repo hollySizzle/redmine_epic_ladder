@@ -645,7 +645,7 @@ export const KanbanGridLayoutV2 = ({
         </button>
       </div>
 
-      {/* Gridタブコンテンツ - display: contents による親Grid統合 */}
+      {/* Gridタブコンテンツ */}
       {activeTab === 'grid' && (
         <DndContext
           sensors={sensors}
@@ -654,34 +654,26 @@ export const KanbanGridLayoutV2 = ({
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          {/* 親Grid統合コンテナ - 単一のCSS Grid定義 */}
-          <div
-            className="kanban-unified-grid-container"
-            style={{
-              '--version-count': versionColumns.length
-            }}
-          >
-            <GridHeader
-              projectTitle={gridMatrix?.metadata?.project?.name}
-              versionColumns={versionColumns}
-              onNewVersion={handleNewVersion}
-              showStatistics={showStatistics}
-              enableFiltering={enableFiltering}
-              onFiltersChange={loadGridData}
-              compactMode={compactMode}
-            />
+          <GridHeader
+            projectTitle={gridMatrix?.metadata?.project?.name}
+            versionColumns={versionColumns}
+            onNewVersion={handleNewVersion}
+            showStatistics={showStatistics}
+            enableFiltering={enableFiltering}
+            onFiltersChange={loadGridData}
+            compactMode={compactMode}
+          />
 
-            <GridBody
-              epicRows={epicRows}
-              versionColumns={versionColumns}
-              getCellFeatures={getCellFeatures}
-              getCellStatistics={getCellStatistics}
-              draggedCard={gridState.ui.draggedCard}
-              hoveredCell={gridState.ui.hoveredCell}
-              compactMode={compactMode}
-              onNewEpic={handleNewEpic}
-            />
-          </div>
+          <GridBody
+            epicRows={epicRows}
+            versionColumns={versionColumns}
+            getCellFeatures={getCellFeatures}
+            getCellStatistics={getCellStatistics}
+            draggedCard={gridState.ui.draggedCard}
+            hoveredCell={gridState.ui.hoveredCell}
+            compactMode={compactMode}
+            onNewEpic={handleNewEpic}
+          />
 
           <DragOverlay>
             {gridState.ui.draggedCard && (

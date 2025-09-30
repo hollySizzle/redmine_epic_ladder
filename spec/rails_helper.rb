@@ -31,6 +31,9 @@ if ENV['COVERAGE']
   end
 end
 
+# DatabaseCleaner 設定（system spec で別プロセスからデータを見えるようにする）
+require 'database_cleaner/active_record'
+
 # Redmineのrails_helperまたは標準のrails_helper設定
 begin
   require File.expand_path('../../../spec/rails_helper', __dir__)
@@ -84,10 +87,81 @@ RSpec.configure do |config|
       Rake::Task['redmine:load_default_data'].invoke
       puts "[INFO] Default data loaded successfully\n"
     end
+
+    # === 選択肢A: Eager loading で Redmine::I18n を強制的に読み込む ===
+    puts "\n[INFO] Forcing Redmine::I18n to be included in ActionView::Base..."
+
+    # Redmine コアの Helper を確実にロード
+    require 'application_helper'
+
+    # ActionView::Base に Redmine::I18n を強制的に include
+    unless ActionView::Base.included_modules.include?(Redmine::I18n)
+      ActionView::Base.send(:include, Redmine::I18n)
+      puts "[INFO] ✅ Redmine::I18n included in ActionView::Base"
+    else
+      puts "[INFO] ✅ Redmine::I18n already included in ActionView::Base"
+    end
+
+    # ApplicationHelper にも確認
+    unless ApplicationHelper.included_modules.include?(Redmine::I18n)
+      ApplicationHelper.send(:include, Redmine::I18n)
+      puts "[INFO] ✅ Redmine::I18n included in ApplicationHelper"
+    else
+      puts "[INFO] ✅ Redmine::I18n already included in ApplicationHelper"
+    end
+
+    puts "[INFO] Redmine::I18n setup completed\n"
   end
 
-  # トランザクショナルテスト（default data を保護）
-  config.use_transactional_fixtures = true
+  # DatabaseCleaner 設定
+  config.use_transactional_fixtures = false
+
+  config.before(:suite) do
+    # DATABASE_URL が設定されている環境でも許可
+    DatabaseCleaner.allow_remote_database_url = true
+
+    # Redmine default data を保護しながら truncation
+    # users, projects, issues などは削除するが、roles, trackers, issue_statuses は保護
+    protected_tables = %w[
+      roles
+      trackers
+      issue_statuses
+      enumerations
+      workflows
+      custom_fields
+      settings
+      groups_users
+    ]
+
+    DatabaseCleaner.strategy = :truncation, { except: protected_tables }
+    DatabaseCleaner.clean_with(:truncation, { except: protected_tables })
+  end
+
+  config.around(:each) do |example|
+    protected_tables = %w[
+      roles
+      trackers
+      issue_statuses
+      enumerations
+      workflows
+      custom_fields
+      settings
+      groups_users
+    ]
+
+    if example.metadata[:type] == :system
+      # System spec: 別プロセス（Railsサーバー）から見えるように truncation 使用
+      # default data テーブルは保護
+      DatabaseCleaner.strategy = :truncation, { except: protected_tables }
+    else
+      # 通常の spec: 高速な transaction 使用
+      DatabaseCleaner.strategy = :transaction
+    end
+
+    DatabaseCleaner.cleaning do
+      example.run
+    end
+  end
   
   # パフォーマンステスト用の設定
   config.before(:each, :performance) do
@@ -179,21 +253,67 @@ RSpec.configure do |config|
   end
 end
 
-# Capybara Playwright driver 設定
-require 'capybara/playwright'
-Capybara.register_driver(:playwright) do |app|
-  Capybara::Playwright::Driver.new(
-    app,
-    browser_type: :chromium,
-    headless: true,
-    playwright_cli_executable_path: File.expand_path('../node_modules/.bin/playwright', __dir__)
-  )
-end
+# Pure Playwright Ruby Client（Capybara 不使用）
+require 'playwright'
 
-# System テストで Playwright を使用
+# System テストで Pure Playwright を使用
 RSpec.configure do |config|
+  config.around(:each, type: :system) do |example|
+    # Rails サーバーを起動
+    @server_port = ENV['TEST_PORT'] || 3001
+
+    # 既存のプロセスをクリーンアップ
+    system("lsof -ti:#{@server_port} | xargs kill -9 2>/dev/null")
+    sleep 0.5
+
+    @server_pid = fork do
+      # 子プロセスで Rails サーバー起動
+      ENV['RAILS_ENV'] = 'test'
+      exec("bundle exec rails s -p #{@server_port} -e test > log/test_server.log 2>&1")
+    end
+
+    # サーバー起動待機
+    max_wait = 30
+    start_time = Time.now
+    loop do
+      break if system("curl -s http://localhost:#{@server_port} > /dev/null 2>&1")
+      if Time.now - start_time > max_wait
+        Process.kill('TERM', @server_pid) rescue nil
+        raise "Rails server failed to start within #{max_wait} seconds"
+      end
+      sleep 0.5
+    end
+
+    # Playwright でブラウザ起動
+    Playwright.create(playwright_cli_executable_path: File.expand_path('../node_modules/.bin/playwright', __dir__)) do |playwright|
+      playwright.chromium.launch(headless: true) do |browser|
+        @playwright_page = browser.new_page(baseURL: "http://localhost:#{@server_port}")
+        @playwright_page.context.set_default_timeout(10000)
+
+        begin
+          # テスト実行
+          example.run
+        ensure
+          # スクリーンショット保存（失敗時）
+          if example.exception
+            screenshot_dir = Rails.root.join('tmp', 'playwright_screenshots')
+            FileUtils.mkdir_p(screenshot_dir)
+            screenshot_path = screenshot_dir.join("#{example.full_description.parameterize}_#{Time.now.to_i}.png")
+            @playwright_page.screenshot(path: screenshot_path.to_s)
+            puts "\n[Screenshot] #{screenshot_path}"
+          end
+        end
+      end
+    end
+
+    # Rails サーバー停止
+    Process.kill('TERM', @server_pid) rescue nil
+    Process.wait(@server_pid) rescue nil
+  end
+
+  # @playwright_page をテストから参照できるようにする
   config.before(:each, type: :system) do
-    driven_by :playwright
+    # @playwright_page は around ブロックで設定される
   end
 end
 

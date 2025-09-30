@@ -38,42 +38,25 @@ RSpec.describe 'Kanban Grid Layout Measurement', type: :system do
                       fixed_version: version,
                       author: user)
 
-    # デバッグ情報
-    puts "\n=== Debug Info ==="
-    puts "Capybara app_host: #{Capybara.app_host}"
-    puts "Capybara server_port: #{Capybara.server_port}"
-    puts "Capybara current_driver: #{Capybara.current_driver}"
-    puts "==================\n"
+    # Playwright API でログイン
+    @playwright_page.goto('/login')
+    @playwright_page.fill('input[name="username"]', user.login)
+    @playwright_page.fill('input[name="password"]', 'password123')
+    @playwright_page.click('input#login-submit')
 
-    # ログイン
-    visit '/login'
-
-    # ページ内容を確認
-    puts "\n=== Page Title ==="
-    puts page.title
-    puts "==================\n"
-
-    # エラーページかどうか確認
-    if page.has_css?('h1', text: /Error/)
-      puts "\n=== ERROR DETECTED ==="
-      puts page.text
-      puts "=====================\n"
-    end
-
-    fill_in 'username', with: user.login
-    fill_in 'password', with: 'password123'
-    click_button 'Login'
+    # ログイン成功を確認（Web-first assertion）
+    @playwright_page.wait_for_selector('#loggedas', timeout: 5000)
 
     # カンバンページに移動
-    visit "/projects/#{project.identifier}/kanban"
+    @playwright_page.goto("/projects/#{project.identifier}/kanban")
 
     # Grid 読み込み待機
-    expect(page).to have_css('.kanban-grid-body', wait: 10)
+    @playwright_page.wait_for_selector('.kanban-grid-body', timeout: 10000)
   end
 
   describe 'Grid Structure Integrity' do
     it 'validates grid structure and cell counts' do
-      grid_metrics = page.evaluate_script(<<~JS)
+      grid_metrics = @playwright_page.evaluate(<<~JS)
         (() => {
           const grid = document.querySelector('.kanban-grid-body');
           if (!grid) return null;
@@ -131,7 +114,7 @@ RSpec.describe 'Kanban Grid Layout Measurement', type: :system do
 
   describe 'Overflow Detection' do
     it 'detects no overflow in grid elements' do
-      overflow_metrics = page.evaluate_script(<<~JS)
+      overflow_metrics = @playwright_page.evaluate(<<~JS)
         (() => {
           const grid = document.querySelector('.kanban-grid-body');
           if (!grid) return [];

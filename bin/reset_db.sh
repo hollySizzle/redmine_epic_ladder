@@ -73,6 +73,15 @@ fi
 #     exit 0
 # fi
 
+# ステップ0: データベース環境を明示的に設定
+print_step "0. データベース環境設定 (db:environment:set)"
+if bin/rails db:environment:set RAILS_ENV=development 2>/dev/null; then
+    print_success "データベース環境をdevelopmentに設定しました"
+else
+    print_warning "環境設定コマンドが失敗しましたが、処理を続行します"
+    print_warning "（初回実行時やdb:dropが必要な場合は正常な挙動です）"
+fi
+
 # ステップ1: データベース削除
 print_step "1. データベース削除 (db:drop)"
 if RAILS_ENV=development rake db:drop; then

@@ -71,23 +71,37 @@
 }
 
 /* ========================================
+   Unified Grid Container - display: contents による親Grid統合
+========================================== */
+.kanban-unified-grid-container {
+  display: grid;
+  grid-template-columns: 200px repeat(var(--version-count, 1), minmax(160px, 1fr)) 120px;
+  gap: 1px;
+  background-color: #e1e4e8;
+  overflow: auto;
+  flex: 1;
+}
+
+/* ========================================
    Grid Header - 設計書59-71行目準拠
 ========================================== */
 .kanban-grid-header {
-  background: white;
-  border-bottom: 2px solid #e1e4e8;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  z-index: 10;
-  position: sticky;
-  top: 0;
+  /* display: contents にしてGridに直接参加 */
+  display: contents;
 }
 
 .grid-header-title-section {
+  /* Grid全列にまたがるタイトルセクション */
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
   border-bottom: 1px solid #e1e4e8;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .project-title-cell {
@@ -164,13 +178,9 @@
   user-select: none;
 }
 
-/* Version Column Headers */
+/* Version Column Headers - display: contents で親Gridに参加 */
 .grid-header-columns {
-  display: grid;
-  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr)) 120px;
-  gap: 1px;
-  background-color: #e1e4e8;
-  overflow-x: auto;
+  display: contents;
 }
 
 .version-column-header {
@@ -181,6 +191,9 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  position: sticky;
+  top: 56px; /* grid-header-title-sectionの下に配置 */
+  z-index: 15;
 }
 
 .version-column-header.no-version {
@@ -353,10 +366,8 @@
    Grid Body - 設計書73-85行目準拠
 ========================================== */
 .kanban-grid-body {
-  flex: 1;
-  overflow: auto;
-  position: relative;
-  background: #f6f8fa;
+  /* display: contents にして親Gridに直接参加 */
+  display: contents;
 }
 
 .kanban-grid-body.compact {
@@ -433,12 +444,8 @@
    Epic Row - 設計書77-83行目準拠
 ========================================== */
 .epic-row {
-  display: grid;
-  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1px;
-  background-color: #e1e4e8;
-  min-height: var(--row-min-height);
-  border-bottom: 1px solid #e1e4e8;
+  /* display: contents にして親Gridに直接参加 */
+  display: contents;
 }
 
 .epic-row.compact {
@@ -460,9 +467,11 @@
   display: flex;
   align-items: center;
   border-right: 1px solid #e1e4e8;
+  border-bottom: 1px solid #e1e4e8;
   position: sticky;
   left: 0;
   z-index: 5;
+  min-height: 80px;
 }
 
 .epic-header-content {
@@ -651,12 +660,8 @@
    No Epic Row - 設計書79-83行目準拠
 ========================================== */
 .no-epic-row {
-  display: grid;
-  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1px;
-  background-color: #e1e4e8;
-  min-height: var(--row-min-height);
-  border-bottom: 1px solid #e1e4e8;
+  /* display: contents にして親Gridに直接参加 */
+  display: contents;
 }
 
 .no-epic-header-cell {
@@ -665,10 +670,12 @@
   display: flex;
   align-items: center;
   border-right: 1px solid #e1e4e8;
+  border-bottom: 1px solid #e1e4e8;
   border-left: 3px solid #f59e0b;
   position: sticky;
   left: 0;
   z-index: 5;
+  min-height: 80px;
 }
 
 .no-epic-header-content {
@@ -785,12 +792,8 @@
    New Epic Row - 設計書76-77行目準拠
 ========================================== */
 .new-epic-row {
-  display: grid;
-  grid-template-columns: 200px repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1px;
-  background-color: #e1e4e8;
-  min-height: var(--row-min-height);
-  border-bottom: 2px solid #d1d5da;
+  /* display: contents にして親Gridに直接参加 */
+  display: contents;
 }
 
 .new-epic-button-container {
@@ -801,9 +804,11 @@
   align-items: center;
   justify-content: center;
   border-right: 1px solid #e1e4e8;
+  border-bottom: 2px solid #d1d5da;
   position: sticky;
   left: 0;
   z-index: 5;
+  min-height: 80px;
 }
 
 .new-epic-button {
@@ -950,8 +955,9 @@
 ========================================== */
 .grid-cell {
   background: white;
-  border: 1px solid #e1e4e8;
-  min-height: var(--row-min-height);
+  border-right: 1px solid #e1e4e8;
+  border-bottom: 1px solid #e1e4e8;
+  min-height: 80px;
   position: relative;
   overflow: hidden;
   transition: all 0.2s ease;
