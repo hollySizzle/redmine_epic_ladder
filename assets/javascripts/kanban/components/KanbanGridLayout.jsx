@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
 import { GridHeader } from './GridHeader';
 import { EpicRow } from './EpicRow';

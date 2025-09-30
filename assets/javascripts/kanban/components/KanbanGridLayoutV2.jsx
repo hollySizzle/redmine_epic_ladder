@@ -1,37 +1,32 @@
-import React, { useState, useEffect, useMemo, useReducer, useCallback } from 'react';
 import {
+  closestCenter,
   DndContext,
   DragOverlay,
-  closestCenter,
-  PointerSensor,
   KeyboardSensor,
-  useSensors,
-  useSensor
+  PointerSensor,
+  useSensor,
+  useSensors
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 // 設計書準拠のコンポーネントインポート
-import { GridHeader } from './grid/GridHeader';
-import { GridBody } from './grid/GridBody';
-import { EpicRow } from './grid/EpicRow';
-import { NoEpicRow } from './grid/NoEpicRow';
-import { NewEpicRow } from './grid/NewEpicRow';
-import { GridCell } from './grid/GridCell';
-import { FeatureCard } from './grid/FeatureCard';
-import { DragIndicator } from './grid/DragIndicator';
-import { GridStatistics } from './grid/GridStatistics';
 import { GridV2API } from '../services/GridV2API';
 import { GridWebSocketService } from '../services/GridWebSocketService.js';
+import { getOptimisticUpdateService } from '../services/OptimisticUpdateService.js';
 import {
-  applyRemoteGridUpdate,
-  applyRemoteFeatureMove,
   addRemoteEpic,
   addRemoteVersion,
   applyPollingUpdate,
-  rollbackOptimisticUpdate,
-  applyRealTimeUpdate
+  applyRealTimeUpdate,
+  applyRemoteFeatureMove,
+  applyRemoteGridUpdate,
+  rollbackOptimisticUpdate
 } from '../utils/realTimeUpdateHelpers.js';
-import { getOptimisticUpdateService } from '../services/OptimisticUpdateService.js';
+import { FeatureCard } from './grid/FeatureCard';
+import { GridBody } from './grid/GridBody';
+import { GridHeader } from './grid/GridHeader';
+import { GridStatistics } from './grid/GridStatistics';
 
 // 設計書準拠のグリッド状態管理
 const gridReducer = (state, action) => {
