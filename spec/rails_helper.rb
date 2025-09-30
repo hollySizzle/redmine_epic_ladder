@@ -70,6 +70,9 @@ RSpec.configure do |config|
 
   # Redmine default data をテスト前にロード
   config.before(:suite) do
+    # i18n バックエンドを初期化
+    I18n.backend.load_translations
+
     # Group が存在しない場合のみ default data をロード
     if defined?(Group) && Group.count == 0
       puts "\n[INFO] Loading Redmine default data..."
