@@ -1,28 +1,66 @@
-# カンバンテスト戦略（RSpec + Playwright）
+# カンバンテスト戦略
 
-## 🔗 関連ドキュメント
+## 関連ドキュメント
 - @vibes/rules/technical_architecture_standards.md
 - @vibes/rules/testing/test_automation_strategy.md
 
-## 1. テスト技術スタック
+## 1. 技術スタック
 
-### 1.1 採用フレームワーク
+### 1.1 採用技術
 - **RSpec 6.x** - BDD テストフレームワーク
-- **FactoryBot 6.x** - テストデータビルダー
-- **Playwright Ruby Client** - E2E/ビジュアルテスト
-- **Capybara** - システムテスト補助
-- **SimpleCov** - カバレッジ計測
+- **FactoryBot 6.x** - テストデータビルダー（factory_girl 4.9.0 無効化）
+- **Playwright 1.55+** - E2E/ビジュアルテスト
+- **Capybara 3.x** - システムテスト補助
+- **SimpleCov 0.22+** - カバレッジ計測
 
-### 1.2 選択理由
-```
-✅ モダンな BDD 開発手法
-✅ Playwright による強力な CSS/UI 測定
-✅ テストデータ管理の柔軟性（FactoryBot）
-✅ ビジュアルリグレッションテスト対応
-✅ 業界標準スタック（Rails コミュニティ）
+### 1.2 環境構築
+
+**自動セットアップ**
+```bash
+./bin/setup_test_env.sh
 ```
 
-### 1.3 Test::Unit からの移行理由
+**手動セットアップ**
+```bash
+# Ruby gem インストール
+cd /usr/src/redmine
+bundle install
+
+# Node.js パッケージインストール
+cd plugins/redmine_release_kanban
+npm install
+npx playwright install chromium
+npx playwright install-deps chromium
+
+# テストDB作成（オプション）
+cd /usr/src/redmine
+RAILS_ENV=test bundle exec rake db:create
+```
+
+### 1.3 factory_girl 無効化
+
+**背景**
+- 他プラグイン（redmine_app_notifications, easy_gantt）が factory_girl 4.9.0 使用
+- factory_girl は非推奨、Rails 7.2+ で `ActiveSupport::Deprecation.warn` エラー
+- 本プラグインでは FactoryBot 6.x のみ使用
+
+**実装**
+```ruby
+# spec/rails_helper.rb（冒頭）
+ENV['DISABLE_FACTORY_GIRL'] = '1'
+
+begin
+  Object.send(:remove_const, :FactoryGirl) if defined?(FactoryGirl)
+rescue => e
+  # 無視
+end
+```
+
+**制約**
+- 他プラグインテスト実行不可（本プラグイン開発では不要）
+- マイグレーション時に factory_girl エラー発生可能性（セットアップスクリプトでスキップ）
+
+### 1.4 Test::Unit からの移行理由
 ```
 ❌ Test::Unit - Redmine 依存で柔軟性低い
 ❌ Fixtures - データ管理が硬直的
@@ -95,45 +133,67 @@
 
 ### 5.1 コマンド体系
 
+**RSpec テスト（Redmine ルートから実行）**
 ```bash
-# RSpec テスト
-bundle exec rspec                           # 全テスト
-bundle exec rspec spec/models               # Model テスト
-bundle exec rspec spec/services             # Service テスト
-bundle exec rspec spec/requests             # Request テスト
-bundle exec rspec spec/integration          # Integration テスト
-bundle exec rspec spec/system               # System テスト
+cd /usr/src/redmine
 
-# Playwright テスト
-npx playwright test                         # 全 E2E テスト
-npx playwright test --headed                # ブラウザ表示付き
-npx playwright test --project=chromium      # ブラウザ指定
-npx playwright test grid-layout             # Grid レイアウト専用
+# 全テスト
+bundle exec rspec plugins/redmine_release_kanban/spec
 
-# カバレッジ
-COVERAGE=true bundle exec rspec             # カバレッジ計測付き
+# レイヤー別
+bundle exec rspec plugins/redmine_release_kanban/spec/models
+bundle exec rspec plugins/redmine_release_kanban/spec/services
+bundle exec rspec plugins/redmine_release_kanban/spec/requests
+bundle exec rspec plugins/redmine_release_kanban/spec/integration
+bundle exec rspec plugins/redmine_release_kanban/spec/system
 
-# 開発用高速テスト
+# 個別ファイル
+bundle exec rspec plugins/redmine_release_kanban/spec/models/kanban/tracker_hierarchy_spec.rb
+
+# オプション
 bundle exec rspec --tag ~slow               # 遅いテスト除外
 bundle exec rspec --fail-fast               # 最初の失敗で停止
+COVERAGE=true bundle exec rspec             # カバレッジ計測
+```
+
+**Playwright テスト（プラグインルートから実行）**
+```bash
+cd /usr/src/redmine/plugins/redmine_release_kanban
+
+# 全 E2E テスト
+npx playwright test
+
+# オプション
+npx playwright test --headed                # ブラウザ表示
+npx playwright test --project=chromium      # ブラウザ指定
+npx playwright test grid-layout             # Grid レイアウト専用
+npx playwright test --debug                 # デバッグモード
 ```
 
 ### 5.2 開発ワークフロー
 
 ```bash
-# 開発前チェック
-bundle exec rspec spec/models spec/services  # 高速テスト
+# 環境セットアップ（初回のみ）
+cd /usr/src/redmine/plugins/redmine_release_kanban
+./bin/setup_test_env.sh
 
-# 機能開発中
-bundle exec rspec spec/models/kanban/tracker_hierarchy_spec.rb  # 関連テスト
+# 開発前チェック（高速）
+cd /usr/src/redmine
+bundle exec rspec plugins/redmine_release_kanban/spec/models \
+                  plugins/redmine_release_kanban/spec/services
 
-# コミット前チェック
-bundle exec rspec                             # 全 RSpec テスト
-npx playwright test --project=chromium        # E2E テスト
+# 機能開発中（関連テスト）
+bundle exec rspec plugins/redmine_release_kanban/spec/models/kanban/tracker_hierarchy_spec.rb
 
-# リリース前チェック
-COVERAGE=true bundle exec rspec               # カバレッジ付き全テスト
-npx playwright test --project=chromium --project=firefox --project=webkit  # 全ブラウザ
+# コミット前チェック（全テスト）
+bundle exec rspec plugins/redmine_release_kanban/spec
+cd plugins/redmine_release_kanban && npx playwright test
+
+# リリース前チェック（カバレッジ + 全ブラウザ）
+cd /usr/src/redmine
+COVERAGE=true bundle exec rspec plugins/redmine_release_kanban/spec
+cd plugins/redmine_release_kanban
+npx playwright test --project=chromium --project=firefox
 ```
 
 ## 6. Playwright Grid レイアウトテスト
@@ -297,16 +357,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2
+          ruby-version: 3.3
           bundler-cache: true
 
-      - name: Setup Database
+      - name: Setup Test Environment
         run: |
-          bundle exec rails db:create RAILS_ENV=test
-          bundle exec rails db:migrate RAILS_ENV=test
+          cd plugins/redmine_release_kanban
+          ./bin/setup_test_env.sh
 
       - name: Run RSpec
-        run: COVERAGE=true bundle exec rspec
+        run: |
+          cd /usr/src/redmine
+          COVERAGE=true bundle exec rspec plugins/redmine_release_kanban/spec
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
@@ -319,22 +381,26 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Playwright
         run: |
+          cd plugins/redmine_release_kanban
           npm install
           npx playwright install chromium
+          npx playwright install-deps chromium
 
       - name: Run Playwright Tests
-        run: npx playwright test
+        run: |
+          cd plugins/redmine_release_kanban
+          npx playwright test
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-results
-          path: playwright-report/
+          path: plugins/redmine_release_kanban/playwright-report/
 ```
 
 ## 9. テストデータ管理
@@ -401,6 +467,67 @@ RSpec.describe 'Kanban Performance', type: :request do
 end
 ```
 
+## 11. トラブルシューティング
+
+### 11.1 factory_girl エラー
+
+**症状**
+```
+NoMethodError: private method `warn' called for class ActiveSupport::Deprecation
+```
+
+**原因**
+- 他プラグインが factory_girl 4.9.0 使用
+- Rails 7.2+ で非推奨メソッド使用
+
+**解決**
+- `spec/rails_helper.rb` で自動無効化済み
+- セットアップスクリプトでマイグレーションスキップ
+
+### 11.2 テストDB マイグレーションエラー
+
+**症状**
+- `rake db:migrate` 実行時に factory_girl エラー
+
+**解決**
+```bash
+# マイグレーションは手動実行不要
+# テストDB作成のみで RSpec 実行可能
+cd /usr/src/redmine
+RAILS_ENV=test bundle exec rake db:create
+bundle exec rspec plugins/redmine_release_kanban/spec
+```
+
+### 11.3 RSpec 実行時に gem not found
+
+**症状**
+```
+can't find executable rspec for gem rspec-core
+```
+
+**原因**
+- プラグインディレクトリから実行
+
+**解決**
+```bash
+# 必ず Redmine ルートから実行
+cd /usr/src/redmine
+bundle exec rspec plugins/redmine_release_kanban/spec
+```
+
+### 11.4 Playwright ブラウザが起動しない
+
+**症状**
+- ヘッドレスブラウザエラー
+
+**解決**
+```bash
+# ブラウザと依存関係を再インストール
+cd /usr/src/redmine/plugins/redmine_release_kanban
+npx playwright install chromium
+npx playwright install-deps chromium
+```
+
 ---
 
-*RSpec + Playwright によるモダンで強力なテスト環境*
+**Vibes準拠 - RSpec + Playwright テスト戦略**
