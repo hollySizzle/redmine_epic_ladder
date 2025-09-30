@@ -28,6 +28,12 @@ export const EpicRow = ({
   onCellInteraction,
   isValidDropTarget
 }) => {
+  console.log('[EpicRow] 🎯 受信Epic詳細:', epic);
+  console.log('[EpicRow] 📝 Epic ID:', epic.id);
+  console.log('[EpicRow] 📝 Epic name:', epic.name);
+  console.log('[EpicRow] 📝 Epic.data:', epic.data);
+  console.log('[EpicRow] 📝 Epic.data.issue:', epic.data?.issue);
+  console.log('[EpicRow] 📝 Epic.data.issue.subject:', epic.data?.issue?.subject);
   // Epic行の展開状態管理
   const [isExpanded, setIsExpanded] = useState(
     epic.ui_state?.expanded !== undefined ? epic.ui_state.expanded : true
@@ -36,8 +42,8 @@ export const EpicRow = ({
   // Epic編集状態
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
-    subject: epic.issue?.subject || '',
-    description: epic.issue?.description || ''
+    subject: epic.data?.issue?.subject || '',
+    description: epic.data?.issue?.description || ''
   });
 
   // Epic統計情報（メモ化）
@@ -99,20 +105,20 @@ export const EpicRow = ({
   // Epic編集開始
   const startEditing = useCallback(() => {
     setEditData({
-      subject: epic.issue?.subject || '',
-      description: epic.issue?.description || ''
+      subject: epic.data?.issue?.subject || '',
+      description: epic.data?.issue?.description || ''
     });
     setIsEditing(true);
-  }, [epic.issue]);
+  }, [epic.data?.issue]);
 
   // Epic編集キャンセル
   const cancelEditing = useCallback(() => {
     setIsEditing(false);
     setEditData({
-      subject: epic.issue?.subject || '',
-      description: epic.issue?.description || ''
+      subject: epic.data?.issue?.subject || '',
+      description: epic.data?.issue?.description || ''
     });
-  }, [epic.issue]);
+  }, [epic.data?.issue]);
 
   // Epic更新処理
   const handleUpdateEpic = useCallback(async () => {
@@ -164,17 +170,17 @@ export const EpicRow = ({
               <div className="epic-display">
                 <h4
                   className="epic-title"
-                  title={epic.issue?.description}
+                  title={epic.data?.issue?.description}
                   onDoubleClick={startEditing}
                 >
-                  {epic.issue?.subject || 'Untitled Epic'}
+                  {epic.data?.issue?.subject || 'Untitled Epic'}
                 </h4>
 
                 <div className="epic-metadata">
-                  <span className="epic-id">#{epic.issue?.id}</span>
-                  {epic.issue?.status && (
-                    <span className={`epic-status ${epic.issue.status.toLowerCase()}`}>
-                      {epic.issue.status}
+                  <span className="epic-id">#{epic.data?.issue?.id}</span>
+                  {epic.data?.issue?.status && (
+                    <span className={`epic-status ${epic.data.issue.status.toLowerCase()}`}>
+                      {epic.data.issue.status}
                     </span>
                   )}
                 </div>

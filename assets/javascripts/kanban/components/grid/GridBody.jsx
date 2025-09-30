@@ -100,21 +100,27 @@ export const GridBody = ({
       }}
     >
       {/* 通常Epic行群（設計書73-78行目準拠） */}
-      {normalEpics.map((epicRow, index) => (
-        <EpicRow
-          key={epicRow.id}
-          epic={epicRow}
-          versionColumns={versionColumns}
-          getCellFeatures={getCellFeatures}
-          getCellStatistics={getCellStatistics}
-          draggedCard={draggedCard}
-          hoveredCell={hoveredCell}
-          compactMode={compactMode}
-          rowIndex={index}
-          onCellInteraction={handleCellInteraction}
-          isValidDropTarget={isValidDropTarget}
+      {normalEpics.map((epicRow, index) => {
+        console.log('[GridBody] 🚀 EpicRowに渡すepicRow:', epicRow);
+        console.log('[GridBody] 🚀 epicRow.id:', epicRow.id);
+        console.log('[GridBody] 🚀 epicRow.name:', epicRow.name);
+        console.log('[GridBody] 🚀 epicRow.data:', epicRow.data);
+        return (
+          <EpicRow
+            key={epicRow.id}
+            epic={epicRow}
+            versionColumns={versionColumns}
+            getCellFeatures={getCellFeatures}
+            getCellStatistics={getCellStatistics}
+            draggedCard={draggedCard}
+            hoveredCell={hoveredCell}
+            compactMode={compactMode}
+            rowIndex={index}
+            onCellInteraction={handleCellInteraction}
+            isValidDropTarget={isValidDropTarget}
         />
-      ))}
+      );
+      })}
 
       {/* No Epic行（設計書74-75行目準拠） */}
       {noEpicRow && (
