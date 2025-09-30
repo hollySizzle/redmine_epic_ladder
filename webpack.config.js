@@ -72,14 +72,7 @@ module.exports = {
           noErrorOnMissing: false,
           force: true
         },
-        // GridStatistics.css のコピー
-        {
-          from: path.resolve(__dirname, "assets/stylesheets/kanban/components/GridStatistics.css"),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/components/GridStatistics.css",
-          noErrorOnMissing: false,
-          force: true
-        },
-        // grid_v2.css のコピー
+        // grid_v2.css のコピー (GridStatistics.css統合済み)
         {
           from: path.resolve(__dirname, "assets/stylesheets/kanban/grid_v2.css"),
           to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/grid_v2.css",

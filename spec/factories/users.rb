@@ -12,6 +12,13 @@ FactoryBot.define do
     admin { false }
     language { 'en' }
 
+    # セキュリティ通知メールを送信しない
+    after(:build) do |user|
+      def user.deliver_security_notification
+        # メール送信をスキップ
+      end
+    end
+
     trait :admin do
       admin { true }
     end

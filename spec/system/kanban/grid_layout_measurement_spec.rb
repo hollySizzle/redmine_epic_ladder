@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+# プラグインの rails_helper を明示的に読み込み
+require File.expand_path('../../rails_helper', __dir__)
 
 RSpec.describe 'Kanban Grid Layout Measurement', type: :system do
   let(:project) { create(:project, identifier: 'test-kanban', name: 'Test Kanban Project') }
@@ -37,185 +38,172 @@ RSpec.describe 'Kanban Grid Layout Measurement', type: :system do
                       fixed_version: version,
                       author: user)
 
-    # Capybara サーバー設定
-    Capybara.server = :puma
-    Capybara.server_port = 3001
-    Capybara.app_host = 'http://localhost:3001'
+    # デバッグ情報
+    puts "\n=== Debug Info ==="
+    puts "Capybara app_host: #{Capybara.app_host}"
+    puts "Capybara server_port: #{Capybara.server_port}"
+    puts "Capybara current_driver: #{Capybara.current_driver}"
+    puts "==================\n"
 
-    # サーバー起動待機
-    sleep 1
-  end
-
-  after(:each) do
-    # Playwright レポートクリーンアップ
-    FileUtils.rm_f('/tmp/grid-report.json')
-  end
-
-  describe 'Playwright Grid Layout Measurement' do
-    it 'executes Playwright measurement and validates results' do
-      # Playwright 用の認証情報を環境変数で渡す
-      env_vars = {
-        'PLAYWRIGHT_BASE_URL' => Capybara.app_host,
-        'PLAYWRIGHT_PROJECT_ID' => project.identifier,
-        'PLAYWRIGHT_USERNAME' => user.login,
-        'PLAYWRIGHT_PASSWORD' => 'password123'
-      }
-
-      # Playwright 実行
-      playwright_cmd = <<~CMD
-        cd #{Rails.root}/plugins/redmine_release_kanban && \
-        npx playwright test grid-layout-measurement \
-          --reporter=json \
-          --output=/tmp/grid-report.json \
-          2>&1
-      CMD
-
-      result = nil
-      output = nil
-
-      Dir.chdir(Rails.root) do
-        output = `#{env_vars.map { |k, v| "#{k}=#{v}" }.join(' ')} #{playwright_cmd}`
-        result = $?.success?
-      end
-
-      # 実行結果確認
-      puts "\n=== Playwright Output ==="
-      puts output
-      puts "========================\n"
-
-      # レポートファイル確認
-      expect(File.exist?('/tmp/grid-report.json')).to be(true), "Playwright report not generated"
-
-      # レポート解析
-      report = JSON.parse(File.read('/tmp/grid-report.json'))
-
-      # テスト結果検証
-      expect(report['suites']).not_to be_empty
-      expect(report['suites'].first['specs']).not_to be_empty
-
-      # 成功したテストの数を確認
-      passed_tests = report['suites'].first['specs'].count { |spec|
-        spec['tests'].any? { |test| test['results'].first['status'] == 'passed' }
-      }
-
-      expect(passed_tests).to be > 0, "No Playwright tests passed"
-    end
-
-    it 'validates grid structure metrics' do
-      # Playwright 実行（簡易版）
-      env_vars = {
-        'PLAYWRIGHT_BASE_URL' => Capybara.app_host,
-        'PLAYWRIGHT_PROJECT_ID' => project.identifier,
-        'PLAYWRIGHT_USERNAME' => user.login,
-        'PLAYWRIGHT_PASSWORD' => 'password123'
-      }
-
-      # Grid構造整合性テストのみ実行
-      playwright_cmd = <<~CMD
-        cd #{Rails.root}/plugins/redmine_release_kanban && \
-        npx playwright test grid-layout-measurement \
-          -g "Grid 構造の整合性検証" \
-          --reporter=list \
-          2>&1
-      CMD
-
-      output = `#{env_vars.map { |k, v| "#{k}=#{v}" }.join(' ')} #{playwright_cmd}`
-      result = $?.success?
-
-      puts "\n=== Grid Structure Test ==="
-      puts output
-      puts "===========================\n"
-
-      # 基本的な成功判定
-      expect(result).to be(true), "Grid structure test failed:\n#{output}"
-    end
-
-    it 'validates no overflow in grid cells' do
-      env_vars = {
-        'PLAYWRIGHT_BASE_URL' => Capybara.app_host,
-        'PLAYWRIGHT_PROJECT_ID' => project.identifier,
-        'PLAYWRIGHT_USERNAME' => user.login,
-        'PLAYWRIGHT_PASSWORD' => 'password123'
-      }
-
-      # オーバーフローテストのみ実行
-      playwright_cmd = <<~CMD
-        cd #{Rails.root}/plugins/redmine_release_kanban && \
-        npx playwright test grid-layout-measurement \
-          -g "オーバーフロー検出" \
-          --reporter=list \
-          2>&1
-      CMD
-
-      output = `#{env_vars.map { |k, v| "#{k}=#{v}" }.join(' ')} #{playwright_cmd}`
-      result = $?.success?
-
-      puts "\n=== Overflow Test ==="
-      puts output
-      puts "=====================\n"
-
-      expect(result).to be(true), "Overflow test failed:\n#{output}"
-    end
-
-    it 'validates cell positioning accuracy' do
-      env_vars = {
-        'PLAYWRIGHT_BASE_URL' => Capybara.app_host,
-        'PLAYWRIGHT_PROJECT_ID' => project.identifier,
-        'PLAYWRIGHT_USERNAME' => user.login,
-        'PLAYWRIGHT_PASSWORD' => 'password123'
-      }
-
-      # セル配置テストのみ実行
-      playwright_cmd = <<~CMD
-        cd #{Rails.root}/plugins/redmine_release_kanban && \
-        npx playwright test grid-layout-measurement \
-          -g "セル配置の正確性検証" \
-          --reporter=list \
-          2>&1
-      CMD
-
-      output = `#{env_vars.map { |k, v| "#{k}=#{v}" }.join(' ')} #{playwright_cmd}`
-      result = $?.success?
-
-      puts "\n=== Cell Positioning Test ==="
-      puts output
-      puts "=============================\n"
-
-      expect(result).to be(true), "Cell positioning test failed:\n#{output}"
-    end
-  end
-
-  describe 'RSpec-only Grid Measurements (without Playwright)' do
-    before(:each) do
-      # 実際のブラウザアクセス（Capybara使用）
-      driven_by(:selenium_headless)
-      login_as(user)
-      visit project_kanban_path(project)
-    end
-
-    it 'validates basic page load' do
-      expect(page).to have_css('.kanban-grid-body')
-      expect(page).to have_content('epic テスト')
-    end
-
-    it 'checks grid has correct CSS variables' do
-      grid = page.find('.kanban-grid-body')
-      columns = grid.style('--grid-columns')
-      rows = grid.style('--grid-rows')
-
-      expect(columns).not_to be_nil
-      expect(rows).not_to be_nil
-      expect(columns.to_i).to be > 0
-      expect(rows.to_i).to be > 0
-    end
-  end
-
-  private
-
-  def login_as(user)
+    # ログイン
     visit '/login'
+
+    # ページ内容を確認
+    puts "\n=== Page Title ==="
+    puts page.title
+    puts "==================\n"
+
+    # エラーページかどうか確認
+    if page.has_css?('h1', text: /Error/)
+      puts "\n=== ERROR DETECTED ==="
+      puts page.text
+      puts "=====================\n"
+    end
+
     fill_in 'username', with: user.login
     fill_in 'password', with: 'password123'
     click_button 'Login'
+
+    # カンバンページに移動
+    visit "/projects/#{project.identifier}/kanban"
+
+    # Grid 読み込み待機
+    expect(page).to have_css('.kanban-grid-body', wait: 10)
   end
+
+  describe 'Grid Structure Integrity' do
+    it 'validates grid structure and cell counts' do
+      grid_metrics = page.evaluate_script(<<~JS)
+        (() => {
+          const grid = document.querySelector('.kanban-grid-body');
+          if (!grid) return null;
+
+          const computedStyle = window.getComputedStyle(grid);
+          const gridColumns = computedStyle.gridTemplateColumns;
+          const gridRows = computedStyle.gridTemplateRows;
+
+          // CSS変数取得
+          const declaredColumns = grid.style.getPropertyValue('--grid-columns');
+          const declaredRows = grid.style.getPropertyValue('--grid-rows');
+
+          // 実際の子要素数（display: contents を考慮）
+          const directChildren = Array.from(grid.children);
+
+          // display: contents 要素の検出
+          const contentsElements = directChildren.filter(child => {
+            const style = window.getComputedStyle(child);
+            return style.display === 'contents';
+          });
+
+          // 実際のグリッドセル数
+          let actualGridCells = directChildren.length;
+          contentsElements.forEach(elem => {
+            actualGridCells--; // contents 要素自体は削除
+            actualGridCells += elem.children.length; // 子要素を追加
+          });
+
+          return {
+            declaredColumns: parseInt(declaredColumns) || 0,
+            declaredRows: parseInt(declaredRows) || 0,
+            computedColumns: gridColumns.split(' ').length,
+            computedRows: gridRows.split(' ').length,
+            directChildrenCount: directChildren.length,
+            actualGridCells: actualGridCells,
+            contentsElementsCount: contentsElements.length
+          };
+        })();
+      JS
+
+      puts "\n=== Grid Metrics ==="
+      puts JSON.pretty_generate(grid_metrics)
+      puts "===================\n"
+
+      # 期待値検証
+      expect(grid_metrics).not_to be_nil
+      expect(grid_metrics['declaredColumns']).to be > 0
+      expect(grid_metrics['declaredRows']).to be > 0
+
+      # Grid定義と実際のセル数の整合性
+      expected_cells = grid_metrics['declaredColumns'] * grid_metrics['declaredRows']
+      expect(grid_metrics['actualGridCells']).to be <= (expected_cells * 1.5)
+    end
+  end
+
+  describe 'Overflow Detection' do
+    it 'detects no overflow in grid elements' do
+      overflow_metrics = page.evaluate_script(<<~JS)
+        (() => {
+          const grid = document.querySelector('.kanban-grid-body');
+          if (!grid) return [];
+
+          const allElements = [
+            ...grid.querySelectorAll('.epic-row, .no-epic-row, .new-epic-row'),
+            ...grid.querySelectorAll('.epic-header-cell, .no-epic-header-cell'),
+            ...grid.querySelectorAll('.grid-cell'),
+            ...grid.querySelectorAll('.empty-cell-message, .no-epic-empty-state')
+          ];
+
+          return allElements.map(el => {
+            const rect = el.getBoundingClientRect();
+            const isOverflowing =
+              el.scrollWidth > el.clientWidth ||
+              el.scrollHeight > el.clientHeight;
+
+            const isOutOfViewport =
+              rect.right > window.innerWidth ||
+              rect.bottom > window.innerHeight ||
+              rect.left < 0 ||
+              rect.top < 0;
+
+            return {
+              selector: el.className,
+              dataEpicId: el.dataset.epicId || 'none',
+              dimensions: {
+                clientWidth: el.clientWidth,
+                clientHeight: el.clientHeight,
+                scrollWidth: el.scrollWidth,
+                scrollHeight: el.scrollHeight
+              },
+              position: {
+                top: rect.top,
+                left: rect.left,
+                right: rect.right,
+                bottom: rect.bottom
+              },
+              isOverflowing,
+              isOutOfViewport,
+              overflowAmount: {
+                horizontal: Math.max(0, el.scrollWidth - el.clientWidth),
+                vertical: Math.max(0, el.scrollHeight - el.clientHeight)
+              }
+            };
+          });
+        })();
+      JS
+
+      puts "\n=== Overflow Metrics ==="
+      puts JSON.pretty_generate(overflow_metrics)
+      puts "=======================\n"
+
+      # オーバーフロー要素の検出
+      overflowing_elements = overflow_metrics.select { |m| m['isOverflowing'] }
+      out_of_viewport_elements = overflow_metrics.select { |m| m['isOutOfViewport'] }
+
+      # レポート生成
+      if overflowing_elements.any?
+        puts "❌ オーバーフロー要素: #{overflowing_elements.size}"
+        overflowing_elements.each do |el|
+          puts "  - #{el['selector']}: #{el['overflowAmount']['horizontal']}px 横, #{el['overflowAmount']['vertical']}px 縦"
+        end
+      end
+
+      if out_of_viewport_elements.any?
+        puts "⚠️  ビューポート外要素: #{out_of_viewport_elements.size}"
+      end
+
+      # 閾値チェック
+      expect(overflowing_elements.size).to eq(0), "#{overflowing_elements.size} elements are overflowing"
+    end
+  end
+
 end

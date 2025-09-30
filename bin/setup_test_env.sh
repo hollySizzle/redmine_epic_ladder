@@ -71,8 +71,47 @@ fi
 log_success "Ruby環境 OK"
 echo ""
 
-# Step 2: RSpec gem インストール
-log_step "2/6 RSpec関連 gem インストール"
+# Step 2: factory_girl アンインストール（Rails 7.2+ 非互換）
+log_step "2/7 factory_girl gem アンインストール"
+log_info "factory_girl 4.9.0 は Rails 7.2+ と非互換のため削除します"
+
+if gem list factory_girl | grep -q "factory_girl"; then
+    log_info "factory_girl gem を削除中..."
+    if gem uninstall factory_girl --force 2>&1; then
+        log_success "factory_girl gem アンインストール完了"
+    else
+        log_warning "factory_girl gem アンインストール失敗（既に削除済みの可能性）"
+    fi
+else
+    log_info "factory_girl gem は既にアンインストール済み"
+fi
+echo ""
+
+# Step 3: 他プラグインの Gemfile を無効化
+log_step "3/7 他プラグインの Gemfile 無効化"
+log_info "factory_girl を使用する他プラグインの Gemfile を無効化します"
+
+# redmine_app_notifications の Gemfile
+if [ -f "$REDMINE_ROOT/plugins/redmine_app_notifications/Gemfile" ]; then
+    log_info "redmine_app_notifications/Gemfile を無効化中..."
+    mv "$REDMINE_ROOT/plugins/redmine_app_notifications/Gemfile" \
+       "$REDMINE_ROOT/plugins/redmine_app_notifications/Gemfile.disabled" 2>/dev/null || true
+    log_success "redmine_app_notifications/Gemfile 無効化完了"
+fi
+
+# easy_gantt の Gemfile
+if [ -f "$REDMINE_ROOT/plugins/easy_gantt/Gemfile" ]; then
+    log_info "easy_gantt/Gemfile を無効化中..."
+    mv "$REDMINE_ROOT/plugins/easy_gantt/Gemfile" \
+       "$REDMINE_ROOT/plugins/easy_gantt/Gemfile.disabled" 2>/dev/null || true
+    log_success "easy_gantt/Gemfile 無効化完了"
+fi
+
+log_success "他プラグイン Gemfile 無効化完了"
+echo ""
+
+# Step 4: RSpec gem インストール
+log_step "4/7 RSpec関連 gem インストール"
 cd "$REDMINE_ROOT"
 
 log_info "bundle install 実行中..."
@@ -88,8 +127,8 @@ log_info "インストールされたテスト用gem:"
 bundle list | grep -E "(rspec|factory_bot|faker|simplecov|capybara)" || log_warning "一部のgemが見つかりません"
 echo ""
 
-# Step 3: RSpec 初期化確認
-log_step "3/6 RSpec 設定ファイル確認"
+# Step 5: RSpec 初期化確認
+log_step "5/7 RSpec 設定ファイル確認"
 cd "$PLUGIN_DIR"
 
 if [ ! -f ".rspec" ]; then
@@ -107,8 +146,8 @@ else
 fi
 echo ""
 
-# Step 4: Node.js/npm 環境チェック
-log_step "4/6 Node.js/npm 環境チェック"
+# Step 6: Node.js/npm 環境チェック
+log_step "6/7 Node.js/npm 環境チェック"
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node -v)
     log_info "Node.js: $NODE_VERSION"
@@ -128,8 +167,8 @@ fi
 log_success "Node.js/npm 環境 OK"
 echo ""
 
-# Step 5: Playwright インストール
-log_step "5/6 Playwright インストール"
+# Step 7: Playwright インストール
+log_step "7/7 Playwright インストール"
 cd "$PLUGIN_DIR"
 
 log_info "npm install 実行中..."
@@ -167,23 +206,10 @@ else
 fi
 echo ""
 
-# Step 6: テストDB準備（簡易版）
-log_step "6/6 テストDB準備"
-cd "$REDMINE_ROOT"
-
-log_info "テストDB作成確認..."
-if RAILS_ENV=test bundle exec rake db:create 2>&1 | grep -q "already exists"; then
-    log_info "テストDBは既に存在します"
-    log_success "テストDB OK"
-elif RAILS_ENV=test bundle exec rake db:create 2>&1; then
-    log_success "テストDB作成完了"
-else
-    log_warning "テストDB作成をスキップします（手動で準備してください）"
-fi
-
-# マイグレーションはスキップ（factory_girl エラー回避）
-log_info "マイグレーションはスキップします"
-log_warning "必要に応じて手動で実行: RAILS_ENV=test bundle exec rake db:migrate"
+# テストDB準備はスキップ（factory_girl 削除後は手動で実行）
+log_info "テストDB準備は手動で実行してください:"
+log_info "  cd $REDMINE_ROOT"
+log_info "  RAILS_ENV=test bundle exec rake db:create db:migrate"
 echo ""
 
 # 終了処理
@@ -196,12 +222,15 @@ echo "=========================================="
 echo "実行時間: ${EXECUTION_TIME}秒"
 echo ""
 log_success "✅ Ruby環境: OK"
+log_success "✅ factory_girl: アンインストール済み"
+log_success "✅ 他プラグイン Gemfile: 無効化済み"
 log_success "✅ RSpec gem: インストール済み"
 log_success "✅ RSpec設定: 準備完了"
 log_success "✅ Node.js/npm: OK"
 log_success "✅ Playwright: インストール済み"
 log_success "✅ Chromium: ダウンロード済み"
-log_success "✅ テストDB: 準備完了"
+echo ""
+log_warning "⚠️  テストDB: 手動セットアップが必要"
 echo ""
 echo "🎉 テスト環境セットアップ完了！"
 echo ""

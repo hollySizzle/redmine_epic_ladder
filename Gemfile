@@ -43,6 +43,12 @@ group :test do
   rescue Gem::LoadError
     gem 'selenium-webdriver', '~> 4.15'
   end
+
+  begin
+    Gem::Specification.find_by_name('capybara-playwright-driver')
+  rescue Gem::LoadError
+    gem 'capybara-playwright-driver', '~> 0.5'
+  end
 end
 
 group :development, :test do

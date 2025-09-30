@@ -3,11 +3,20 @@
 # factory_girl を無効化（他プラグインのテストは実行しないため）
 ENV['DISABLE_FACTORY_GIRL'] = '1'
 
-# factory_girl の読み込みをブロック
-begin
-  Object.send(:remove_const, :FactoryGirl) if defined?(FactoryGirl)
-rescue => e
-  # 無視 - factory_girl が定義されていない場合もある
+# FactoryBot を先に読み込む（Redmine rails_helper より前）
+require 'factory_bot_rails'
+
+# factory_girl の ActiveSupport::Deprecation.warn をパッチ（Rails 7.2+ では private method）
+module ActiveSupport
+  class Deprecation
+    class << self
+      def warn(message = nil, callstack = nil)
+        return if @silenced
+        # 警告をログに出力（エラーにしない）
+        Rails.logger.warn("[DEPRECATION] #{message}") if Rails.logger && message
+      end
+    end
+  end
 end
 
 # SimpleCov設定（カバレッジ測定）
@@ -31,30 +40,51 @@ rescue LoadError
   require 'rspec/rails'
 end
 
+# FactoryBot ファクトリー読み込み（Redmine rails_helper の後）
+FactoryBot.definition_file_paths = [
+  File.expand_path('factories', __dir__)
+]
+FactoryBot.reload
+
 # プラグイン固有の設定
 RSpec.configure do |config|
+  # FactoryBot サポート（明示的にinclude）
+  config.include FactoryBot::Syntax::Methods
+
   # プラグインのフィクスチャパスを追加
-  config.fixture_path = File.expand_path('fixtures', __dir__)
-  
-  # トランザクショナルテスト
-  config.use_transactional_fixtures = true
-  
-  # データベースクリーナー設定
+  config.fixture_paths ||= []
+  config.fixture_paths << File.expand_path('fixtures', __dir__)
+
+  # メール送信を無効化（テスト高速化・i18nエラー回避）
   config.before(:suite) do
-    require 'database_cleaner/active_record' if defined?(DatabaseCleaner)
-    DatabaseCleaner.strategy = :transaction if defined?(DatabaseCleaner)
-    DatabaseCleaner.clean_with(:truncation) if defined?(DatabaseCleaner)
+    ActionMailer::Base.perform_deliveries = false
+    ActionMailer::Base.raise_delivery_errors = false
   end
-  
-  config.around(:each) do |example|
-    if defined?(DatabaseCleaner)
-      DatabaseCleaner.cleaning do
-        example.run
-      end
-    else
-      example.run
+
+  config.before(:each) do
+    ActionMailer::Base.perform_deliveries = false
+    ActionMailer::Base.raise_delivery_errors = false
+    # Redmine設定でもメール通知を無効化
+    Setting.notified_events = []
+  end
+
+  # Redmine default data をテスト前にロード
+  config.before(:suite) do
+    # Group が存在しない場合のみ default data をロード
+    if defined?(Group) && Group.count == 0
+      puts "\n[INFO] Loading Redmine default data..."
+      # 言語を環境変数で指定（対話式入力を回避）
+      ENV['REDMINE_LANG'] = 'en'
+      # Rake task を直接実行
+      require 'rake'
+      Rails.application.load_tasks
+      Rake::Task['redmine:load_default_data'].invoke
+      puts "[INFO] Default data loaded successfully\n"
     end
   end
+
+  # トランザクショナルテスト（default data を保護）
+  config.use_transactional_fixtures = true
   
   # パフォーマンステスト用の設定
   config.before(:each, :performance) do
@@ -136,14 +166,31 @@ if defined?(Shoulda::Matchers)
   end
 end
 
-# Factory Bot設定
-if defined?(FactoryBot)
-  RSpec.configure do |config|
-    config.include FactoryBot::Syntax::Methods
-    
-    config.before(:suite) do
-      FactoryBot.find_definitions
-    end
+# Factory Bot 初期化（重複だが明示的に）
+RSpec.configure do |config|
+  config.before(:suite) do
+    FactoryBot.definition_file_paths = [
+      File.expand_path('factories', __dir__)
+    ]
+    FactoryBot.reload
+  end
+end
+
+# Capybara Playwright driver 設定
+require 'capybara/playwright'
+Capybara.register_driver(:playwright) do |app|
+  Capybara::Playwright::Driver.new(
+    app,
+    browser_type: :chromium,
+    headless: true,
+    playwright_cli_executable_path: File.expand_path('../node_modules/.bin/playwright', __dir__)
+  )
+end
+
+# System テストで Playwright を使用
+RSpec.configure do |config|
+  config.before(:each, type: :system) do
+    driven_by :playwright
   end
 end
 

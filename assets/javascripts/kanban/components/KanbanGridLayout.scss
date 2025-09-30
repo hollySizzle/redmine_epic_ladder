@@ -121,7 +121,7 @@
     .grid_body {
       height: calc(100vh - 200px);
       overflow-y: auto;
-      overflow-x: hidden;
+      overflow-x: auto;
 
       .grid_row {
         display: flex;
