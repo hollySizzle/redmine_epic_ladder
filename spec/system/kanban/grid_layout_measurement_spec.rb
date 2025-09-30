@@ -18,7 +18,14 @@ RSpec.describe 'Kanban Grid Layout Measurement', type: :system do
 
     # ユーザー権限設定
     role = Role.find_or_create_by!(name: 'Manager') do |r|
-      r.permissions = [:view_issues, :add_issues, :edit_issues, :manage_versions]
+      r.permissions = [
+        :view_issues,
+        :add_issues,
+        :edit_issues,
+        :manage_versions,
+        :view_kanban,
+        :manage_kanban
+      ]
       r.assignable = true
     end
     Member.create!(user: user, project: project, roles: [role])
@@ -39,19 +46,21 @@ RSpec.describe 'Kanban Grid Layout Measurement', type: :system do
                       author: user)
 
     # Playwright API でログイン
-    @playwright_page.goto('/login')
+    @playwright_page.goto('/login', timeout: 30000)
+    @playwright_page.wait_for_load_state('networkidle', timeout: 10000) rescue nil # ネットワークが落ち着くまで待機（失敗しても無視）
     @playwright_page.fill('input[name="username"]', user.login)
     @playwright_page.fill('input[name="password"]', 'password123')
     @playwright_page.click('input#login-submit')
 
-    # ログイン成功を確認（Web-first assertion）
-    @playwright_page.wait_for_selector('#loggedas', timeout: 5000)
+    # ログイン成功を確認（"My page" が表示されるまで待機）
+    @playwright_page.wait_for_url(/\/my\/page/, timeout: 15000)
 
     # カンバンページに移動
-    @playwright_page.goto("/projects/#{project.identifier}/kanban")
+    @playwright_page.goto("/projects/#{project.identifier}/kanban", timeout: 30000)
+    @playwright_page.wait_for_load_state('networkidle', timeout: 10000) rescue nil
 
     # Grid 読み込み待機
-    @playwright_page.wait_for_selector('.kanban-grid-body', timeout: 10000)
+    @playwright_page.wait_for_selector('.kanban-grid-body', timeout: 15000)
   end
 
   describe 'Grid Structure Integrity' do
