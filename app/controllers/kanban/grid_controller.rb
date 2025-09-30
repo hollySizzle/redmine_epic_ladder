@@ -140,7 +140,7 @@ module Kanban
 
     # Version作成 (設計書準拠API)
     def create_version
-      version_params = params.require(:version).permit(:name, :description, :due_date, :status)
+      version_params = params.require(:version).permit(:name, :description, :effective_date, :status)
 
       Rails.logger.info "Creating version for project #{@project.id}: #{version_params.inspect}"
 
@@ -150,7 +150,7 @@ module Kanban
       end
 
       # バージョンインスタンス作成
-      version = @project.versions.build(version_params.merge(effective_date: version_params[:due_date]))
+      version = @project.versions.build(version_params)
 
       # 重複名チェック
       if @project.versions.where(name: version_params[:name]).exists?
@@ -169,7 +169,7 @@ module Kanban
         grid_impact = calculate_grid_impact_for_new_version(version)
 
         render_success({
-          version: serialize_version(version),
+          created_version: serialize_version(version),
           grid_updates: {
             new_column_added: true,
             column_position: version.id,

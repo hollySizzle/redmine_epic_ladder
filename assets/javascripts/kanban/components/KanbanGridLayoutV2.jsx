@@ -232,6 +232,9 @@ export const KanbanGridLayoutV2 = ({
   dragEnabled = true,
   dropConstraints = {}
 }) => {
+  // トップレベルタブ状態管理
+  const [activeTab, setActiveTab] = React.useState('grid');
+
   // 設計書準拠の状態管理
   const [gridState, gridDispatch] = useReducer(gridReducer, {
     ...initialGridState,
@@ -624,48 +627,69 @@ export const KanbanGridLayoutV2 = ({
   // メインレンダリング
   return (
     <div className={`kanban-grid-layout-v2 ${compactMode ? 'compact' : ''}`}>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <GridHeader
-          projectTitle={gridMatrix?.metadata?.project?.name}
-          versionColumns={versionColumns}
-          onNewVersion={handleNewVersion}
-          showStatistics={showStatistics}
-          enableFiltering={enableFiltering}
-          onFiltersChange={loadGridData}
-          compactMode={compactMode}
-        />
+      {/* トップレベルタブナビゲーション */}
+      <div className="kanban-top-tabs">
+        <button
+          className={`kanban-top-tab ${activeTab === 'grid' ? 'active' : ''}`}
+          onClick={() => setActiveTab('grid')}
+        >
+          <span className="tab-icon">📋</span>
+          <span className="tab-label">Grid</span>
+        </button>
+        <button
+          className={`kanban-top-tab ${activeTab === 'statistics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('statistics')}
+        >
+          <span className="tab-icon">📊</span>
+          <span className="tab-label">Statistics</span>
+        </button>
+      </div>
 
-        <GridBody
-          epicRows={epicRows}
-          versionColumns={versionColumns}
-          getCellFeatures={getCellFeatures}
-          getCellStatistics={getCellStatistics}
-          draggedCard={gridState.ui.draggedCard}
-          hoveredCell={gridState.ui.hoveredCell}
-          compactMode={compactMode}
-          onNewEpic={handleNewEpic}
-        />
+      {/* Gridタブコンテンツ */}
+      {activeTab === 'grid' && (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <GridHeader
+            projectTitle={gridMatrix?.metadata?.project?.name}
+            versionColumns={versionColumns}
+            onNewVersion={handleNewVersion}
+            showStatistics={showStatistics}
+            enableFiltering={enableFiltering}
+            onFiltersChange={loadGridData}
+            compactMode={compactMode}
+          />
 
-        <DragOverlay>
-          {gridState.ui.draggedCard && (
-            <FeatureCard
-              feature={gridState.ui.draggedCard.feature}
-              expanded={false}
-              isDragging={true}
-              compactMode={compactMode}
-            />
-          )}
-        </DragOverlay>
-      </DndContext>
+          <GridBody
+            epicRows={epicRows}
+            versionColumns={versionColumns}
+            getCellFeatures={getCellFeatures}
+            getCellStatistics={getCellStatistics}
+            draggedCard={gridState.ui.draggedCard}
+            hoveredCell={gridState.ui.hoveredCell}
+            compactMode={compactMode}
+            onNewEpic={handleNewEpic}
+          />
 
-      {/* 統計情報パネル */}
-      {showStatistics && gridMatrix && gridMatrix.statistics && (
+          <DragOverlay>
+            {gridState.ui.draggedCard && (
+              <FeatureCard
+                feature={gridState.ui.draggedCard.feature}
+                expanded={false}
+                isDragging={true}
+                compactMode={compactMode}
+              />
+            )}
+          </DragOverlay>
+        </DndContext>
+      )}
+
+      {/* Statisticsタブコンテンツ */}
+      {activeTab === 'statistics' && showStatistics && gridMatrix && gridMatrix.statistics && (
         <GridStatistics
           statistics={gridMatrix.statistics}
           compactMode={compactMode}
@@ -689,7 +713,7 @@ function buildGridMatrix(data) {
   // ドキュメント準拠: サーバーからversionsは直接送られてくる
   const result = {
     grid: data.grid?.grid || data.grid || { rows: [] },  // 二重ネスト対応
-    versions: data.versions || data.grid?.versions || [],
+    versions: data.versions || data.grid?.grid?.versions || data.grid?.versions || [],
     orphan_features: data.orphan_features || [],
     metadata: data.metadata || {},
     statistics: data.statistics || {}
@@ -697,6 +721,7 @@ function buildGridMatrix(data) {
 
   console.log('[buildGridMatrix] ✅ 出力result:', result);
   console.log('[buildGridMatrix] ✅ result.grid.rows:', result.grid.rows);
+  console.log('[buildGridMatrix] ✅ result.versions:', result.versions);
   return result;
 }
 
