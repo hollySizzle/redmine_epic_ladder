@@ -173,7 +173,13 @@ export const EpicRow = ({
                   title={epic.data?.issue?.description}
                   onDoubleClick={startEditing}
                 >
-                  {epic.data?.issue?.subject || 'Untitled Epic'}
+                  {(() => {
+                    console.log('[EpicRow] 🎨 レンダリング時のepic.data?.issue?.subject:', epic.data?.issue?.subject);
+                    console.log('[EpicRow] 🎨 レンダリング時のepic全体:', epic);
+                    const subject = epic.data?.issue?.subject || 'Untitled Epic';
+                    console.log('[EpicRow] 🎨 最終表示subject:', subject);
+                    return subject;
+                  })()}
                 </h4>
 
                 <div className="epic-metadata">
