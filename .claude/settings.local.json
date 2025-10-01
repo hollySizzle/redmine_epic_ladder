@@ -34,7 +34,9 @@
       "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/**)",
       "Bash(git mv:*)",
       "Bash(git add:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": [],

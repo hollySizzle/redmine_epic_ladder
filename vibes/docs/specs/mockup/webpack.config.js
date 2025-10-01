@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: 'development',
-  entry: './src/nested_grid_test.js',
+  entry: './src/index.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
@@ -21,13 +21,10 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(ts|tsx)$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-          },
+          loader: 'ts-loader',
         },
       },
       {
@@ -47,6 +44,6 @@ module.exports = {
     }),
   ],
   resolve: {
-    extensions: ['.js'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
 };
