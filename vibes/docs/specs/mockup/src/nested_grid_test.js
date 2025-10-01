@@ -68,6 +68,30 @@ function ensureAddButtonsAtEnd() {
         }
     });
 
+    // Task の Add ボタンを末尾に移動
+    document.querySelectorAll('[data-add-button="task"]').forEach(button => {
+        const parent = button.parentElement;
+        if (parent && parent.lastElementChild !== button) {
+            parent.appendChild(button);
+        }
+    });
+
+    // Test の Add ボタンを末尾に移動
+    document.querySelectorAll('[data-add-button="test"]').forEach(button => {
+        const parent = button.parentElement;
+        if (parent && parent.lastElementChild !== button) {
+            parent.appendChild(button);
+        }
+    });
+
+    // Bug の Add ボタンを末尾に移動
+    document.querySelectorAll('[data-add-button="bug"]').forEach(button => {
+        const parent = button.parentElement;
+        if (parent && parent.lastElementChild !== button) {
+            parent.appendChild(button);
+        }
+    });
+
     // Epic/Version の Add ボタンは .epic-version-wrapper 内に固定されているため移動不要
     // これらを移動させると wrapper 構造が崩れる
 }
@@ -158,7 +182,25 @@ function setupDragAndDrop() {
     // Level 4: Tasks
     document.querySelectorAll('.task-item').forEach(el => {
         const taskId = el.dataset.task;
+        const isAddButton = el.dataset.addButton;
 
+        // Addボタンは dropTarget のみ (draggable にはしない)
+        if (isAddButton) {
+            dropTargetForElements({
+                element: el,
+                getData: () => ({ taskId: 'add-button' }),
+                getIsSticky: () => true,
+                canDrop: ({ source }) =>
+                    source.data.instanceId === instanceId &&
+                    source.data.type === 'task',
+                onDragEnter: () => el.classList.add('over'),
+                onDragLeave: () => el.classList.remove('over'),
+                onDrop: () => el.classList.remove('over'),
+            });
+            return;
+        }
+
+        // 通常のTaskカードは draggable + dropTarget
         combine(
             draggable({
                 element: el,
@@ -188,7 +230,25 @@ function setupDragAndDrop() {
     // Level 4: Tests
     document.querySelectorAll('.test-item').forEach(el => {
         const testId = el.dataset.test;
+        const isAddButton = el.dataset.addButton;
 
+        // Addボタンは dropTarget のみ (draggable にはしない)
+        if (isAddButton) {
+            dropTargetForElements({
+                element: el,
+                getData: () => ({ testId: 'add-button' }),
+                getIsSticky: () => true,
+                canDrop: ({ source }) =>
+                    source.data.instanceId === instanceId &&
+                    source.data.type === 'test',
+                onDragEnter: () => el.classList.add('over'),
+                onDragLeave: () => el.classList.remove('over'),
+                onDrop: () => el.classList.remove('over'),
+            });
+            return;
+        }
+
+        // 通常のTestカードは draggable + dropTarget
         combine(
             draggable({
                 element: el,
@@ -218,7 +278,25 @@ function setupDragAndDrop() {
     // Level 4: Bugs
     document.querySelectorAll('.bug-item').forEach(el => {
         const bugId = el.dataset.bug;
+        const isAddButton = el.dataset.addButton;
 
+        // Addボタンは dropTarget のみ (draggable にはしない)
+        if (isAddButton) {
+            dropTargetForElements({
+                element: el,
+                getData: () => ({ bugId: 'add-button' }),
+                getIsSticky: () => true,
+                canDrop: ({ source }) =>
+                    source.data.instanceId === instanceId &&
+                    source.data.type === 'bug',
+                onDragEnter: () => el.classList.add('over'),
+                onDragLeave: () => el.classList.remove('over'),
+                onDrop: () => el.classList.remove('over'),
+            });
+            return;
+        }
+
+        // 通常のBugカードは draggable + dropTarget
         combine(
             draggable({
                 element: el,
