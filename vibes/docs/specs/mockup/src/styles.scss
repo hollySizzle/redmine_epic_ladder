@@ -195,6 +195,7 @@ body {
   min-height: 11.25rem;
   cursor: move;
   transition: all 150ms ease-in-out;
+  user-select: none; // テキスト選択を無効化してドラッグを容易に
 
   &:hover {
     box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
@@ -247,6 +248,7 @@ body {
   padding: var(--user-story-padding);
   cursor: move;
   transition: all 150ms ease-in-out;
+  user-select: none; // テキスト選択を無効化してドラッグを容易に
 
   &:hover {
     background: #f0f0f0;
@@ -354,6 +356,7 @@ body {
   cursor: move;
   transition: all 150ms ease-in-out;
   border-radius: var(--border-radius-sm);
+  user-select: none; // テキスト選択を無効化してドラッグを容易に
 
   &.dragging {
     opacity: 0.5;
