@@ -20,7 +20,7 @@ export const useDropTarget = ({
   onDragLeave,
   onDrop
 }: UseDropTargetOptions) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const element = ref.current;

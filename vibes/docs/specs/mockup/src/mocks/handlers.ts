@@ -42,7 +42,7 @@ export const handlers = [
       // グリッドインデックスも更新
       Object.keys(responseData.grid.index).forEach(key => {
         responseData.grid.index[key] = responseData.grid.index[key].filter(
-          featureId => responseData.entities.features[featureId]
+          (featureId: string) => responseData.entities.features[featureId]
         );
       });
     }

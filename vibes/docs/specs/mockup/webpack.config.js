@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'development',
@@ -10,19 +11,38 @@ module.exports = {
     clean: true,
   },
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'dist'),
-    },
+    static: [
+      {
+        directory: path.join(__dirname, 'dist'),
+      },
+      {
+        directory: path.join(__dirname, 'public'),
+        publicPath: '/',
+      }
+    ],
     compress: true,
     port: 9000,
     open: true,
     hot: true,
+    client: {
+      overlay: {
+        warnings: false,
+        errors: true,
+      },
+    },
   },
   module: {
     rules: [
       {
         test: /\.(ts|tsx)$/,
-        exclude: /node_modules/,
+        exclude: [
+          /node_modules/,
+          /\.test\.(ts|tsx)$/,
+          /\.spec\.(ts|tsx)$/,
+          /mockData\.ts$/,
+          /setupTests\.ts$/,
+          /mocks\/server\.ts$/,
+        ],
         use: {
           loader: 'ts-loader',
         },
@@ -32,7 +52,12 @@ module.exports = {
         use: [
           'style-loader',
           'css-loader',
-          'sass-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              implementation: require('sass-embedded'),
+            },
+          },
         ],
       },
     ],
@@ -41,6 +66,11 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './nested_grid_test_template.html',
       filename: 'index.html',
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'public', to: '.' }
+      ]
     }),
   ],
   resolve: {

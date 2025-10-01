@@ -9,10 +9,16 @@ if (process.env.NODE_ENV === 'development') {
   import('./mocks/browser').then(({ worker }) => {
     worker.start({
       onUnhandledRequest: 'warn',
-      quiet: false
+      quiet: false,
+      serviceWorker: {
+        url: '/mockServiceWorker.js'
+      }
     }).then(() => {
       console.log('[MSW] Mock Service Worker started');
       mountApp();
+    }).catch((error) => {
+      console.error('[MSW] Failed to start:', error);
+      mountApp(); // エラーでもアプリは起動する
     });
   });
 } else {

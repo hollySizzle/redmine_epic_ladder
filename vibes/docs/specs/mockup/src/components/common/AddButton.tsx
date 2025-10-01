@@ -30,7 +30,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     id: `add-button-${type}-${epicId || 'none'}-${versionId || 'none'}`,
     data: { isAddButton: true, epicId, versionId },
     canDrop: (sourceData) => sourceData.type === dropTargetType,
-  });
+  }) as unknown as React.RefObject<HTMLButtonElement>;
 
   const handleClick = () => {
     if (onClick) {
