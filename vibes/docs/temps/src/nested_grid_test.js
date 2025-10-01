@@ -7,6 +7,37 @@ console.log('✅ Pragmatic Drag and Drop loaded');
 // ユニークなインスタンスID
 const instanceId = Symbol('nested-grid-test');
 
+// DOM要素をスワップする汎用関数
+function swapElements(sourceEl, targetEl) {
+    // 同じ親要素内でのみスワップを許可
+    if (sourceEl.parentElement !== targetEl.parentElement) {
+        console.warn('⚠️ Cannot swap elements with different parents');
+        return false;
+    }
+
+    const parent = sourceEl.parentElement;
+    const sourceIndex = Array.from(parent.children).indexOf(sourceEl);
+    const targetIndex = Array.from(parent.children).indexOf(targetEl);
+
+    if (sourceIndex === targetIndex) {
+        return false;
+    }
+
+    // 位置関係に応じて挿入
+    if (sourceIndex < targetIndex) {
+        // source が target より前にある場合
+        parent.insertBefore(targetEl, sourceEl);
+        parent.insertBefore(sourceEl, parent.children[targetIndex]);
+    } else {
+        // source が target より後にある場合
+        parent.insertBefore(sourceEl, targetEl);
+        parent.insertBefore(targetEl, parent.children[sourceIndex]);
+    }
+
+    console.log('✨ Elements swapped successfully');
+    return true;
+}
+
 // 各レベルのドラッグ可能要素とドロップターゲットを設定
 function setupDragAndDrop() {
     // Level 2: Feature Cards
@@ -166,13 +197,30 @@ function setupDragAndDrop() {
         },
         onDrop({ source, location }) {
             const destination = location.current.dropTargets[0];
-            if (!destination) return;
+            if (!destination) {
+                console.log('❌ No drop target found');
+                return;
+            }
+
+            // ソース要素とターゲット要素を取得
+            const sourceEl = source.element;
+            const targetEl = destination.element;
 
             console.log('✅ Drop detected:', {
                 type: source.data.type,
                 source: source.data,
                 destination: destination.data
             });
+
+            // DOM要素をスワップ
+            const swapped = swapElements(sourceEl, targetEl);
+
+            if (swapped) {
+                console.log('🎉 Swap complete!', {
+                    sourceId: sourceEl.dataset.feature || sourceEl.dataset.story || sourceEl.dataset.task || sourceEl.dataset.test || sourceEl.dataset.bug,
+                    targetId: targetEl.dataset.feature || targetEl.dataset.story || targetEl.dataset.task || targetEl.dataset.test || targetEl.dataset.bug
+                });
+            }
         }
     });
 }
