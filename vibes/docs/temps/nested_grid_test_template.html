@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ネストGrid検証 - Pragmatic Drag and Drop</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .test-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        /* レベル1: Epic × Version Grid (最上位) */
+        .epic-version-grid {
+            display: grid;
+            grid-template-columns: 200px repeat(3, 280px) 240px;
+            grid-template-rows: auto;
+            gap: 10px;
+            background: #e0e0e0;
+            padding: 10px;
+        }
+
+        .epic-header {
+            background: #dae8fc;
+            border: 2px solid #6c8ebf;
+            padding: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+        }
+
+        .version-header {
+            background: #e1d5e7;
+            border: 2px solid #9673a6;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .epic-version-cell {
+            background: #f0ebf7;
+            border: 2px solid #9673a6;
+            padding: 10px;
+            min-height: 120px;
+        }
+
+        /* レベル2: FeatureCardGrid (Epic × Version セル内) */
+        .feature-card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            height: 100%;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+            min-height: 100px;
+            cursor: move;
+            transition: all 150ms ease-in-out;
+        }
+
+        .feature-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .feature-card.dragging {
+            opacity: 0.5;
+            filter: grayscale(0.8);
+        }
+
+        .feature-card.over {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .feature-header {
+            background: #e1f5fe;
+            border: 1px solid #01579b;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        /* レベル3: UserStoryGrid (Feature Card内) */
+        .user-story-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .user-story {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 6px;
+            cursor: move;
+            transition: all 150ms ease-in-out;
+        }
+
+        .user-story:hover {
+            background: #f0f0f0;
+        }
+
+        .user-story.dragging {
+            opacity: 0.5;
+        }
+
+        .user-story.over {
+            transform: scale(1.03);
+            border-color: #2196f3;
+        }
+
+        .user-story-header {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        /* レベル4: Task/Test/BugGrid (UserStory内) */
+        .task-test-bug-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 3px;
+        }
+
+        .task-container,
+        .test-container,
+        .bug-container {
+            background: #ffffff;
+            border: 1px solid #d0d0d0;
+            border-radius: 2px;
+            padding: 3px;
+        }
+
+        .task-container-header,
+        .test-container-header,
+        .bug-container-header {
+            font-size: 8px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            padding: 2px;
+            background: #f0f0f0;
+        }
+
+        .task-item-grid,
+        .test-item-grid,
+        .bug-item-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2px;
+        }
+
+        .task-item,
+        .test-item,
+        .bug-item {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            padding: 2px 4px;
+            font-size: 8px;
+            cursor: move;
+            transition: all 150ms ease-in-out;
+        }
+
+        .task-item:hover,
+        .test-item:hover,
+        .bug-item:hover {
+            background: #e3f2fd;
+        }
+
+        .task-item.dragging,
+        .test-item.dragging,
+        .bug-item.dragging {
+            opacity: 0.5;
+        }
+
+        .task-item.over,
+        .test-item.over,
+        .bug-item.over {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+
+        .status-todo { background: #9e9e9e; }
+        .status-progress { background: #2196f3; }
+        .status-done { background: #4caf50; }
+
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .legend h3 {
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔬 ネストGrid検証 - 4層Grid構造テスト</h1>
+
+    <div class="test-info">
+        <strong>検証目的:</strong> Epic×Version Grid の中に FeatureCardGrid → UserStoryGrid → TaskGrid が4層ネストできるかを検証<br>
+        <strong>技術:</strong> CSS Grid + Pragmatic Drag and Drop<br>
+        <strong>操作:</strong> 各レベルのカード（Feature/UserStory/Task/Test/Bug）をドラッグ&ドロップしてみてください<br>
+        <strong>✅ Webpack Dev Server 経由でバンドル済み</strong>
+    </div>
+
+    <div class="epic-version-grid">
+        <!-- ヘッダー行 -->
+        <div class="version-header" style="grid-column: 1;">Epic \ Version</div>
+        <div class="version-header">Version-1</div>
+        <div class="version-header">Version-2</div>
+        <div class="version-header">Version-3</div>
+        <div class="version-header">No Version</div>
+
+        <!-- Epic 1: 施設・ユーザー管理 -->
+        <div class="epic-header">施設・ユーザー管理</div>
+
+        <div class="epic-version-cell" data-epic="epic1" data-version="v1">
+            <div class="feature-card-grid">
+                <div class="feature-card" data-feature="f1">
+                    <div class="feature-header">登録画面</div>
+                    <div class="user-story-grid">
+                        <div class="user-story" data-story="us1">
+                            <div class="user-story-header">US#101 ユーザー登録フォーム</div>
+                            <div class="task-test-bug-grid">
+                                <div class="task-container">
+                                    <div class="task-container-header">Task</div>
+                                    <div class="task-item-grid">
+                                        <div class="task-item" data-task="t1">
+                                            <span class="status-indicator status-progress"></span>バリデーション実装
+                                        </div>
+                                        <div class="task-item" data-task="t2">
+                                            <span class="status-indicator status-done"></span>UI設計完了
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="test-container">
+                                    <div class="test-container-header">Test</div>
+                                    <div class="test-item-grid">
+                                        <div class="test-item" data-test="test1">
+                                            <span class="status-indicator status-todo"></span>単体テスト作成
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bug-container">
+                                    <div class="bug-container-header">Bug</div>
+                                    <div class="bug-item-grid">
+                                        <div class="bug-item" data-bug="b1">
+                                            <span class="status-indicator status-progress"></span>バリデーションエラー修正
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card" data-feature="f2">
+                    <div class="feature-header">一覧画面</div>
+                    <div class="user-story-grid">
+                        <div class="user-story" data-story="us2">
+                            <div class="user-story-header">US#102 ユーザー一覧表示</div>
+                            <div class="task-test-bug-grid">
+                                <div class="task-container">
+                                    <div class="task-container-header">Task</div>
+                                    <div class="task-item-grid">
+                                        <div class="task-item" data-task="t3">
+                                            <span class="status-indicator status-progress"></span>一覧API実装
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="epic-version-cell" data-epic="epic1" data-version="v2">
+            <div class="feature-card-grid">
+                <div class="feature-card" data-feature="f3">
+                    <div class="feature-header">編集画面</div>
+                    <div class="user-story-grid">
+                        <div class="user-story" data-story="us3">
+                            <div class="user-story-header">US#103 ユーザー編集機能</div>
+                            <div class="task-test-bug-grid">
+                                <div class="task-container">
+                                    <div class="task-container-header">Task</div>
+                                    <div class="task-item-grid">
+                                        <div class="task-item" data-task="t4">
+                                            <span class="status-indicator status-todo"></span>編集フォーム作成
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="epic-version-cell" data-epic="epic1" data-version="v3"></div>
+        <div class="epic-version-cell" data-epic="epic1" data-version="none"></div>
+
+        <!-- Epic 2: 開診スケジュール -->
+        <div class="epic-header">開診スケジュール</div>
+        <div class="epic-version-cell" data-epic="epic2" data-version="v1"></div>
+        <div class="epic-version-cell" data-epic="epic2" data-version="v2">
+            <div class="feature-card-grid">
+                <div class="feature-card" data-feature="f4">
+                    <div class="feature-header">スケジュール登録</div>
+                    <div class="user-story-grid">
+                        <div class="user-story" data-story="us4">
+                            <div class="user-story-header">US#201 スケジュール登録画面</div>
+                            <div class="task-test-bug-grid">
+                                <div class="task-container">
+                                    <div class="task-container-header">Task</div>
+                                    <div class="task-item-grid">
+                                        <div class="task-item" data-task="t5">
+                                            <span class="status-indicator status-progress"></span>カレンダーUI実装
+                                        </div>
+                                        <div class="task-item" data-task="t6">
+                                            <span class="status-indicator status-todo"></span>繰り返し設定機能
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="epic-version-cell" data-epic="epic2" data-version="v3"></div>
+        <div class="epic-version-cell" data-epic="epic2" data-version="none"></div>
+    </div>
+
+    <div class="legend">
+        <h3>Grid階層構造</h3>
+        <div class="legend-item">📊 <strong>レベル1:</strong> Epic × Version Grid (最上位グリッド)</div>
+        <div class="legend-item">📦 <strong>レベル2:</strong> FeatureCardGrid (各セル内に配置)</div>
+        <div class="legend-item">📝 <strong>レベル3:</strong> UserStoryGrid (Feature Card内)</div>
+        <div class="legend-item">✅ <strong>レベル4:</strong> TaskGrid / TestGrid / BugGrid (UserStory内)</div>
+        <br>
+        <div class="legend-item"><span class="status-indicator status-todo"></span> 未着手</div>
+        <div class="legend-item"><span class="status-indicator status-progress"></span> 進行中</div>
+        <div class="legend-item"><span class="status-indicator status-done"></span> 完了</div>
+    </div>
+</body>
+</html>

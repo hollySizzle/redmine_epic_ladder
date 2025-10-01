@@ -48,7 +48,7 @@ RAILS_ENV=test bundle exec rake redmine:load_default_data
 cd /usr/src/redmine && AILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system
 
 # 特定のテスト実行
-cd /usr/src/redmine && RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/grid_layout_measurement_spec.rb:59 --format documentation
+cd /usr/src/redmine/plugins/redmine_release_kanban && RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/grid_layout_measurement_spec.rb:59 --format documentation
 
 # 失敗時のスクリーンショット確認
 ls -lt tmp/playwright_screenshots/

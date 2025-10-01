@@ -22,7 +22,9 @@
       "Bash(awk:*)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(./bin/setup_test_env.sh:*)"
+      "Bash(./bin/setup_test_env.sh:*)",
+      "Bash(npm install:*)",
+      "Bash(npx webpack serve:*)"
     ],
     "deny": [],
     "ask": [],
