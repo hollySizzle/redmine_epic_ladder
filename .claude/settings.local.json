@@ -21,7 +21,8 @@
       "Bash(RAILS_ENV=development bundle exec rails runner \"\nputs ''=== Login form structure ===''\nrequire ''nokogiri''\nhtml = File.read(''app/views/account/login.html.erb'')\ndoc = Nokogiri::HTML(html)\nputs html\n\")",
       "Bash(awk:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(./bin/setup_test_env.sh:*)"
     ],
     "deny": [],
     "ask": [],

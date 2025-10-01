@@ -3,22 +3,62 @@
 ## 関連ドキュメント
 - @vibes/rules/technical_architecture_standards.md
 - @vibes/rules/testing/test_automation_strategy.md
+- @vibes/docs/temps/playwright-rspec-setup.md
 
 ## 1. 技術スタック
 
 ### 1.1 採用技術
-- **RSpec 6.x** - BDD テストフレームワーク
-- **FactoryBot 6.x** - テストデータビルダー（factory_girl 4.9.0 無効化）
-- **Playwright 1.55+** - E2E/ビジュアルテスト
-- **Capybara 3.x** - システムテスト補助
-- **SimpleCov 0.22+** - カバレッジ計測
 
-### 1.2 環境構築
+| 技術 | バージョン | 用途 | 備考 |
+|------|-----------|------|------|
+| **RSpec** | 6.x+ | BDD テストフレームワーク | Rails 統合 |
+| **FactoryBot** | 6.x+ | テストデータビルダー | factory_girl 非推奨 |
+| **Playwright** | 1.55+ | E2E/システムテスト | Pure Playwright 方式 |
+| **playwright-ruby-client** | 1.55+ | Ruby バインディング | Capybara 不使用 |
+| **DatabaseCleaner** | 2.1+ | DB トランザクション管理 | `:truncation` 戦略 |
+| **SimpleCov** | 0.22+ | カバレッジ計測 | JSON レポート出力 |
 
-**自動セットアップ**
+### 1.2 アーキテクチャ選択：Pure Playwright 方式
+
+**❌ 不採用：Capybara + Playwright Driver**
+```ruby
+# Capybara DSL を使うと i18n エラーが発生
+visit '/login'
+fill_in 'username', with: 'testuser'
+# => I18n::ArgumentError: Object must be a Date, DateTime or Time object
+```
+
+**✅ 採用：Pure Playwright（Capybara 不使用）**
+```ruby
+# Rails サーバーを手動管理、Playwright API 直接使用
+@playwright_page.goto('/login')
+@playwright_page.fill('input[name="username"]', 'testuser')
+# => i18n 問題なし、通常の HTTP リクエストとして処理
+```
+
+**理由**：
+- Capybara サーバー（別プロセス）で `Redmine::I18n` が正しく読み込まれない
+- ビューの `l(:field_login)` が `I18n.localize`（日付フォーマット）として誤解釈される
+- Pure Playwright なら通常の Rails リクエストとして処理され、i18n が正常動作
+
+### 1.3 環境構築
+
+**自動セットアップ（推奨）**
 ```bash
+cd /usr/src/redmine/plugins/redmine_release_kanban
 ./bin/setup_test_env.sh
 ```
+
+**実行内容**：
+1. Ruby/Bundler チェック
+2. factory_girl アンインストール
+3. 他プラグイン Gemfile 無効化
+4. RSpec gem インストール
+5. RSpec 設定ファイル確認
+6. Node.js/npm チェック
+7. Playwright インストール（Chromium）
+8. **テストDB 自動セットアップ**
+9. **ポート 3001 クリーンアップ**
 
 **手動セットアップ**
 ```bash
@@ -26,66 +66,64 @@
 cd /usr/src/redmine
 bundle install
 
-# Node.js パッケージインストール
+# Playwright インストール
 cd plugins/redmine_release_kanban
 npm install
 npx playwright install chromium
-npx playwright install-deps chromium
 
-# テストDB作成（オプション）
+# テストDB 準備
 cd /usr/src/redmine
-RAILS_ENV=test bundle exec rake db:create
+RAILS_ENV=test bundle exec rake db:create db:migrate
+RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data
 ```
 
-### 1.3 factory_girl 無効化
+### 1.4 factory_girl 無効化
 
 **背景**
 - 他プラグイン（redmine_app_notifications, easy_gantt）が factory_girl 4.9.0 使用
-- factory_girl は非推奨、Rails 7.2+ で `ActiveSupport::Deprecation.warn` エラー
+- Rails 7.2+ で `ActiveSupport::Deprecation.warn` が private になり非互換
 - 本プラグインでは FactoryBot 6.x のみ使用
 
 **実装**
 ```ruby
 # spec/rails_helper.rb（冒頭）
 ENV['DISABLE_FACTORY_GIRL'] = '1'
+require 'factory_bot_rails'
 
-begin
-  Object.send(:remove_const, :FactoryGirl) if defined?(FactoryGirl)
-rescue => e
-  # 無視
+# factory_girl の ActiveSupport::Deprecation.warn をパッチ
+module ActiveSupport
+  class Deprecation
+    class << self
+      def warn(message = nil, callstack = nil)
+        return if @silenced
+        Rails.logger.warn("[DEPRECATION] #{message}") if Rails.logger && message
+      end
+    end
+  end
 end
 ```
 
 **制約**
 - 他プラグインテスト実行不可（本プラグイン開発では不要）
-- マイグレーション時に factory_girl エラー発生可能性（セットアップスクリプトでスキップ）
-
-### 1.4 Test::Unit からの移行理由
-```
-❌ Test::Unit - Redmine 依存で柔軟性低い
-❌ Fixtures - データ管理が硬直的
-❌ Capybara 単独 - CSS 測定機能が弱い
-✅ RSpec + Playwright - モダンで強力
-```
+- setup_test_env.sh で自動処理済み
 
 ## 2. テストピラミッド
 
 ```
-      /\      E2E (Playwright) 10%
+      /\      System (Playwright) 10%
      /  \     Integration 25%
     /    \    Request 20%
    /      \   Service 20%
   /________\  Model 25%
 ```
 
-| タイプ | 配置 | 実行コマンド | 対象 |
-|--------|------|-------------|------|
-| Model | `spec/models/` | `rspec spec/models` | モデル・バリデーション |
-| Service | `spec/services/` | `rspec spec/services` | ビジネスロジック |
-| Request | `spec/requests/` | `rspec spec/requests` | API・コントローラー |
-| Integration | `spec/integration/` | `rspec spec/integration` | 機能統合 |
-| E2E | `spec/system/` | `rspec spec/system` | UI/ブラウザ操作 |
-| Visual | `playwright/tests/` | `npx playwright test` | CSS/レイアウト測定 |
+| タイプ | 配置 | 実行コマンド | 対象 | 推奨度 |
+|--------|------|-------------|------|-------|
+| Model | `spec/models/` | `rspec spec/models` | モデル・バリデーション | ★★★★★ |
+| Service | `spec/services/` | `rspec spec/services` | ビジネスロジック | ★★★★★ |
+| Request | `spec/requests/` | `rspec spec/requests` | API・コントローラー | ★★★★☆ |
+| Integration | `spec/integration/` | `rspec spec/integration` | 機能統合 | ★★★☆☆ |
+| System | `spec/system/` | `rspec spec/system` | E2E/UI 操作 | ★★★★☆ |
 
 ## 3. カンバン機能別テスト要件
 
@@ -106,34 +144,209 @@ end
 - **PermissionControl** - ロール別制限
 - **SearchFilter** - 検索・フィルタリング
 
-## 4. 品質基準
+## 4. Pure Playwright System テスト実装
 
-### 4.1 カバレッジ
-- Critical: 100%、High: 90%、Medium: 80%
-- 全体平均: 85%以上
-- SimpleCov による自動計測
+### 4.1 rails_helper.rb 設定
 
-### 4.2 パフォーマンス
-- API応答: <200ms
-- N+1問題: 禁止（bullet gem 使用）
-- UI反応: <16ms（Playwright 測定）
-- Grid レイアウト: オーバーフロー 0件
+```ruby
+# Pure Playwright Ruby Client（Capybara 不使用）
+require 'playwright'
 
-### 4.3 データ管理
-- **FactoryBot** でテストデータ生成
-- **Database Cleaner** でトランザクション制御
-- **Faker** でリアルなダミーデータ
+RSpec.configure do |config|
+  # サーバーを全テストで共有（高速化）
+  config.before(:suite) do
+    if RSpec.configuration.files_to_run.any? { |f| f.include?('spec/system') }
+      @shared_server_port = ENV['TEST_PORT'] || 3001
 
-### 4.4 ビジュアル品質
-- **Playwright Screenshot** 比較
-- **CSS Grid Metrics** 定量測定
-- **Responsive Design** チェック（モバイル/タブレット/デスクトップ）
+      # 既存プロセスクリーンアップ
+      system("lsof -ti:#{@shared_server_port} | xargs kill -9 2>/dev/null")
+      sleep 0.5
+
+      puts "\n[INFO] 共有 Rails サーバーを起動中（ポート: #{@shared_server_port}）..."
+
+      @shared_server_pid = fork do
+        ENV['RAILS_ENV'] = 'test'
+        exec("bundle exec rails s -p #{@shared_server_port} -e test > log/test_server.log 2>&1")
+      end
+
+      # サーバー起動待機
+      max_wait = 30
+      start_time = Time.now
+      loop do
+        break if system("curl -s http://localhost:#{@shared_server_port} > /dev/null 2>&1")
+        if Time.now - start_time > max_wait
+          Process.kill('TERM', @shared_server_pid) rescue nil
+          raise "Rails server failed to start within #{max_wait} seconds"
+        end
+        sleep 0.5
+      end
+
+      puts "[INFO] ✅ Rails サーバー起動完了（PID: #{@shared_server_pid}）\n"
+
+      $shared_server_port = @shared_server_port
+      $shared_server_pid = @shared_server_pid
+    end
+  end
+
+  config.after(:suite) do
+    if $shared_server_pid
+      puts "\n[INFO] 共有 Rails サーバーを停止中..."
+      Process.kill('TERM', $shared_server_pid) rescue nil
+      Process.wait($shared_server_pid) rescue nil
+      puts "[INFO] ✅ Rails サーバー停止完了\n"
+    end
+  end
+
+  config.around(:each, type: :system) do |example|
+    server_port = $shared_server_port || 3001
+
+    Playwright.create(playwright_cli_executable_path: File.expand_path('../node_modules/.bin/playwright', __dir__)) do |playwright|
+      playwright.chromium.launch(headless: true) do |browser|
+        @playwright_page = browser.new_page(baseURL: "http://localhost:#{server_port}")
+        @playwright_page.context.set_default_timeout(10000)
+
+        begin
+          example.run
+        ensure
+          # 失敗時スクリーンショット
+          if example.exception
+            screenshot_dir = Rails.root.join('tmp', 'playwright_screenshots')
+            FileUtils.mkdir_p(screenshot_dir)
+            screenshot_path = screenshot_dir.join("#{example.full_description.parameterize}_#{Time.now.to_i}.png")
+            @playwright_page.screenshot(path: screenshot_path.to_s)
+            puts "\n[Screenshot] #{screenshot_path}"
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+### 4.2 DatabaseCleaner 設定
+
+```ruby
+require 'database_cleaner/active_record'
+
+RSpec.configure do |config|
+  config.use_transactional_fixtures = false
+
+  config.before(:suite) do
+    DatabaseCleaner.allow_remote_database_url = true
+
+    # Redmine default data を保護
+    protected_tables = %w[
+      roles trackers issue_statuses enumerations
+      workflows custom_fields settings groups_users
+    ]
+
+    DatabaseCleaner.strategy = :truncation, { except: protected_tables }
+    DatabaseCleaner.clean_with(:truncation, { except: protected_tables })
+  end
+
+  config.around(:each) do |example|
+    protected_tables = %w[
+      roles trackers issue_statuses enumerations
+      workflows custom_fields settings groups_users
+    ]
+
+    if example.metadata[:type] == :system
+      # System spec: 別プロセスから見えるように truncation
+      DatabaseCleaner.strategy = :truncation, { except: protected_tables }
+    else
+      # 通常の spec: 高速な transaction
+      DatabaseCleaner.strategy = :transaction
+    end
+
+    DatabaseCleaner.cleaning do
+      example.run
+    end
+  end
+end
+```
+
+### 4.3 System テスト例
+
+```ruby
+RSpec.describe 'Kanban Grid Layout Measurement', type: :system do
+  let(:project) { create(:project, identifier: 'test-kanban') }
+  let(:user) { create(:user, login: 'testuser', password: 'password123', admin: true) }
+
+  before(:each) do
+    # プロジェクト・権限設定
+    project.trackers << epic_tracker
+    project.enabled_modules.create!(name: 'kanban')
+
+    role = Role.find_or_create_by!(name: 'Manager') do |r|
+      r.permissions = [:view_issues, :add_issues, :view_kanban]
+      r.assignable = true
+    end
+    Member.create!(user: user, project: project, roles: [role])
+
+    # テストデータ作成
+    @epic = create(:issue, project: project, tracker: epic_tracker)
+
+    # Playwright API でログイン
+    @playwright_page.goto('/login', timeout: 30000)
+    @playwright_page.wait_for_load_state('networkidle', timeout: 10000) rescue nil
+    @playwright_page.fill('input[name="username"]', user.login)
+    @playwright_page.fill('input[name="password"]', 'password123')
+    @playwright_page.click('input#login-submit')
+
+    # ログイン成功確認
+    @playwright_page.wait_for_url(/\/my\/page/, timeout: 15000)
+
+    # カンバンページ遷移
+    @playwright_page.goto("/projects/#{project.identifier}/kanban", timeout: 30000)
+    @playwright_page.wait_for_load_state('networkidle', timeout: 10000) rescue nil
+    @playwright_page.wait_for_selector('.kanban-grid-body', timeout: 15000)
+  end
+
+  it 'validates grid structure and cell counts' do
+    grid_metrics = @playwright_page.evaluate(<<~JS)
+      (() => {
+        const grid = document.querySelector('.kanban-grid-body');
+        if (!grid) return null;
+
+        const computedStyle = window.getComputedStyle(grid);
+        return {
+          declaredColumns: parseInt(grid.style.getPropertyValue('--grid-columns')) || 0,
+          declaredRows: parseInt(grid.style.getPropertyValue('--grid-rows')) || 0,
+          computedColumns: computedStyle.gridTemplateColumns.split(' ').length,
+          computedRows: computedStyle.gridTemplateRows.split(' ').length
+        };
+      })();
+    JS
+
+    expect(grid_metrics).not_to be_nil
+    expect(grid_metrics['declaredColumns']).to be > 0
+    expect(grid_metrics['declaredRows']).to be > 0
+  end
+end
+```
 
 ## 5. 実行戦略
 
 ### 5.1 コマンド体系
 
-**RSpec テスト（Redmine ルートから実行）**
+**System テスト（Playwright）**
+```bash
+cd /usr/src/redmine
+
+# 全 System テスト
+RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system --format documentation
+
+# 特定のテスト
+RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/grid_layout_measurement_spec.rb:59
+
+# スクリーンショット確認
+ls -lt tmp/playwright_screenshots/
+
+# ポートクリーンアップ（失敗時）
+lsof -ti:3001 | xargs kill -9
+```
+
+**RSpec テスト（その他）**
 ```bash
 cd /usr/src/redmine
 
@@ -144,11 +357,6 @@ bundle exec rspec plugins/redmine_release_kanban/spec
 bundle exec rspec plugins/redmine_release_kanban/spec/models
 bundle exec rspec plugins/redmine_release_kanban/spec/services
 bundle exec rspec plugins/redmine_release_kanban/spec/requests
-bundle exec rspec plugins/redmine_release_kanban/spec/integration
-bundle exec rspec plugins/redmine_release_kanban/spec/system
-
-# 個別ファイル
-bundle exec rspec plugins/redmine_release_kanban/spec/models/kanban/tracker_hierarchy_spec.rb
 
 # オプション
 bundle exec rspec --tag ~slow               # 遅いテスト除外
@@ -156,106 +364,31 @@ bundle exec rspec --fail-fast               # 最初の失敗で停止
 COVERAGE=true bundle exec rspec             # カバレッジ計測
 ```
 
-**Playwright テスト（プラグインルートから実行）**
-```bash
-cd /usr/src/redmine/plugins/redmine_release_kanban
-
-# 全 E2E テスト
-npx playwright test
-
-# オプション
-npx playwright test --headed                # ブラウザ表示
-npx playwright test --project=chromium      # ブラウザ指定
-npx playwright test grid-layout             # Grid レイアウト専用
-npx playwright test --debug                 # デバッグモード
-```
-
 ### 5.2 開発ワークフロー
 
 ```bash
-# 環境セットアップ（初回のみ）
+# 1. 環境セットアップ（初回のみ）
 cd /usr/src/redmine/plugins/redmine_release_kanban
 ./bin/setup_test_env.sh
 
-# 開発前チェック（高速）
+# 2. 開発前チェック（高速）
 cd /usr/src/redmine
 bundle exec rspec plugins/redmine_release_kanban/spec/models \
                   plugins/redmine_release_kanban/spec/services
 
-# 機能開発中（関連テスト）
+# 3. 機能開発中（関連テスト）
 bundle exec rspec plugins/redmine_release_kanban/spec/models/kanban/tracker_hierarchy_spec.rb
 
-# コミット前チェック（全テスト）
+# 4. コミット前チェック（全テスト）
 bundle exec rspec plugins/redmine_release_kanban/spec
-cd plugins/redmine_release_kanban && npx playwright test
 
-# リリース前チェック（カバレッジ + 全ブラウザ）
-cd /usr/src/redmine
+# 5. リリース前チェック（カバレッジ）
 COVERAGE=true bundle exec rspec plugins/redmine_release_kanban/spec
-cd plugins/redmine_release_kanban
-npx playwright test --project=chromium --project=firefox
 ```
 
-## 6. Playwright Grid レイアウトテスト
+## 6. RSpec テストパターン
 
-### 6.1 CSS 測定テスト例
-
-```javascript
-// playwright/tests/grid-layout.spec.js
-import { test, expect } from '@playwright/test';
-
-test('grid要素がオーバーフローしていない', async ({ page }) => {
-  await page.goto('http://localhost:3000/kanban');
-
-  const metrics = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('.grid-item')).map(el => ({
-      id: el.id,
-      className: el.className,
-      clientWidth: el.clientWidth,
-      scrollWidth: el.scrollWidth,
-      clientHeight: el.clientHeight,
-      scrollHeight: el.scrollHeight,
-      isOverflowing: el.scrollWidth > el.clientWidth ||
-                     el.scrollHeight > el.clientHeight
-    }));
-  });
-
-  const overflowing = metrics.filter(m => m.isOverflowing);
-  expect(overflowing).toHaveLength(0);
-});
-
-test('レスポンシブデザイン検証', async ({ page }) => {
-  // デスクトップ
-  await page.setViewportSize({ width: 1920, height: 1080 });
-  await page.goto('http://localhost:3000/kanban');
-  await expect(page.locator('.kanban-board')).toBeVisible();
-
-  // タブレット
-  await page.setViewportSize({ width: 768, height: 1024 });
-  await expect(page.locator('.kanban-board')).toBeVisible();
-
-  // モバイル
-  await page.setViewportSize({ width: 375, height: 667 });
-  await expect(page.locator('.kanban-board')).toBeVisible();
-});
-```
-
-### 6.2 Visual Regression テスト
-
-```javascript
-test('カンバンボードのビジュアル回帰テスト', async ({ page }) => {
-  await page.goto('http://localhost:3000/kanban');
-
-  // スクリーンショット比較
-  await expect(page).toHaveScreenshot('kanban-board.png', {
-    maxDiffPixels: 100  // 許容ピクセル差分
-  });
-});
-```
-
-## 7. RSpec テストパターン
-
-### 7.1 Model Spec
+### 6.1 Model Spec
 
 ```ruby
 # spec/models/kanban/tracker_hierarchy_spec.rb
@@ -278,7 +411,7 @@ RSpec.describe Kanban::TrackerHierarchy, type: :model do
 end
 ```
 
-### 7.2 Service Spec
+### 6.2 Service Spec
 
 ```ruby
 # spec/services/kanban/auto_generation_service_spec.rb
@@ -303,7 +436,7 @@ RSpec.describe Kanban::AutoGenerationService do
 end
 ```
 
-### 7.3 Request Spec
+### 6.3 Request Spec
 
 ```ruby
 # spec/requests/kanban/kanban_controller_spec.rb
@@ -323,91 +456,40 @@ RSpec.describe 'Kanban API', type: :request do
       expect(response.body).to include('Kanban Board')
     end
   end
-
-  describe 'POST /projects/:project_id/kanban/move_card' do
-    let(:issue) { create(:issue, project: project) }
-
-    it 'カードを移動する' do
-      post move_card_project_kanban_path(project), params: {
-        issue_id: issue.id,
-        column: 'in_progress'
-      }
-
-      expect(response).to have_http_status(:ok)
-      expect(issue.reload.status.name).to eq('In Progress')
-    end
-  end
 end
 ```
 
-## 8. CI/CD 統合
+## 7. テストデータ管理
 
-### 8.1 GitHub Actions 設定
-
-```yaml
-# .github/workflows/test.yml
-name: RSpec + Playwright Tests
-
-on: [push, pull_request]
-
-jobs:
-  rspec:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.3
-          bundler-cache: true
-
-      - name: Setup Test Environment
-        run: |
-          cd plugins/redmine_release_kanban
-          ./bin/setup_test_env.sh
-
-      - name: Run RSpec
-        run: |
-          cd /usr/src/redmine
-          COVERAGE=true bundle exec rspec plugins/redmine_release_kanban/spec
-
-      - name: Upload Coverage
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/coverage.json
-
-  playwright:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install Playwright
-        run: |
-          cd plugins/redmine_release_kanban
-          npm install
-          npx playwright install chromium
-          npx playwright install-deps chromium
-
-      - name: Run Playwright Tests
-        run: |
-          cd plugins/redmine_release_kanban
-          npx playwright test
-
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-results
-          path: plugins/redmine_release_kanban/playwright-report/
-```
-
-## 9. テストデータ管理
-
-### 9.1 FactoryBot 定義
+### 7.1 FactoryBot 定義
 
 ```ruby
+# spec/factories/users.rb
+FactoryBot.define do
+  factory :user do
+    sequence(:login) { |n| "user#{n}" }
+    sequence(:firstname) { |n| "First#{n}" }
+    sequence(:lastname) { |n| "Last#{n}" }
+    sequence(:mail) { |n| "user#{n}@example.com" }
+    password { 'password123' }
+    password_confirmation { 'password123' }
+    status { User::STATUS_ACTIVE }
+    admin { false }
+    language { 'en' }
+
+    # セキュリティ通知メール無効化
+    after(:build) do |user|
+      def user.deliver_security_notification
+        # スキップ
+      end
+    end
+
+    trait :admin do
+      admin { true }
+    end
+  end
+end
+
 # spec/factories/issues.rb
 FactoryBot.define do
   factory :issue do
@@ -416,97 +498,84 @@ FactoryBot.define do
     author { create(:user) }
     subject { Faker::Lorem.sentence }
     description { Faker::Lorem.paragraph }
-    status { IssueStatus.first || create(:issue_status) }
+    status { IssueStatus.first }
 
     trait :epic do
-      tracker { create(:tracker, name: 'Epic') }
+      tracker { Tracker.find_or_create_by!(name: 'Epic') }
     end
 
     trait :feature do
-      tracker { create(:tracker, name: 'Feature') }
+      tracker { Tracker.find_or_create_by!(name: 'Feature') }
       association :parent, factory: [:issue, :epic]
     end
-
-    trait :user_story do
-      tracker { create(:tracker, name: 'User Story') }
-      association :parent, factory: [:issue, :feature]
-    end
   end
 end
 ```
 
-## 10. パフォーマンステスト
+## 8. 品質基準
 
-### 10.1 N+1 検出
+### 8.1 カバレッジ
+- Critical: 100%、High: 90%、Medium: 80%
+- 全体平均: 85%以上
+- SimpleCov による自動計測
 
-```ruby
-# spec/requests/kanban/performance_spec.rb
-require 'rails_helper'
+### 8.2 パフォーマンス
+- API応答: <200ms
+- N+1問題: 禁止（bullet gem 使用）
+- UI反応: <16ms（Playwright 測定）
+- Grid レイアウト: オーバーフロー 0件
 
-RSpec.describe 'Kanban Performance', type: :request do
-  let(:project) { create(:project) }
-  let(:user) { create(:user) }
+### 8.3 データ整合性
+- **FactoryBot** でテストデータ生成
+- **DatabaseCleaner** でトランザクション制御
+- **Redmine default data** を保護（roles, trackers, issue_statuses など）
 
-  before do
-    create_list(:issue, 20, project: project)
-    sign_in user
-  end
+## 9. トラブルシューティング
 
-  it 'N+1クエリが発生しない', :bullet do
-    get project_kanban_path(project, format: :json)
-    expect(response).to have_http_status(:ok)
-  end
+### 9.1 i18n エラー
 
-  it 'API応答が200ms以内' do
-    start_time = Time.current
-    get project_kanban_path(project, format: :json)
-    response_time = Time.current - start_time
-
-    expect(response_time).to be < 0.2
-  end
-end
+**症状**
+```
+I18n::ArgumentError: Object must be a Date, DateTime or Time object. :field_login given.
 ```
 
-## 11. トラブルシューティング
+**原因**
+- Capybara を使用している
+- Capybara サーバー（別プロセス）で `Redmine::I18n` が正しく読み込まれない
 
-### 11.1 factory_girl エラー
+**解決**
+- ✅ Pure Playwright 方式を使用（本戦略で採用済み）
+- ❌ Capybara は使わない
+
+### 9.2 factory_girl エラー
 
 **症状**
 ```
 NoMethodError: private method `warn' called for class ActiveSupport::Deprecation
 ```
 
-**原因**
-- 他プラグインが factory_girl 4.9.0 使用
-- Rails 7.2+ で非推奨メソッド使用
-
 **解決**
-- `spec/rails_helper.rb` で自動無効化済み
-- セットアップスクリプトでマイグレーションスキップ
+- rails_helper.rb で自動パッチ済み
+- setup_test_env.sh で自動処理済み
 
-### 11.2 テストDB マイグレーションエラー
+### 9.3 ポート衝突
 
 **症状**
-- `rake db:migrate` 実行時に factory_girl エラー
+```
+Address already in use - bind(2) for "0.0.0.0" port 3001
+```
 
 **解決**
 ```bash
-# マイグレーションは手動実行不要
-# テストDB作成のみで RSpec 実行可能
-cd /usr/src/redmine
-RAILS_ENV=test bundle exec rake db:create
-bundle exec rspec plugins/redmine_release_kanban/spec
+lsof -ti:3001 | xargs kill -9
 ```
 
-### 11.3 RSpec 実行時に gem not found
+### 9.4 RSpec 実行時に gem not found
 
 **症状**
 ```
 can't find executable rspec for gem rspec-core
 ```
-
-**原因**
-- プラグインディレクトリから実行
 
 **解決**
 ```bash
@@ -515,19 +584,25 @@ cd /usr/src/redmine
 bundle exec rspec plugins/redmine_release_kanban/spec
 ```
 
-### 11.4 Playwright ブラウザが起動しない
+### 9.5 スクリーンショットが見つからない
 
-**症状**
-- ヘッドレスブラウザエラー
-
-**解決**
+**場所**
 ```bash
-# ブラウザと依存関係を再インストール
-cd /usr/src/redmine/plugins/redmine_release_kanban
-npx playwright install chromium
-npx playwright install-deps chromium
+ls -lt /usr/src/redmine/tmp/playwright_screenshots/
 ```
+
+**確認**
+- テストが失敗した場合のみ保存
+- `[Screenshot]` で出力パスが表示される
+
+## 10. 参考資料
+
+- [Playwright Ruby Client](https://github.com/YusukeIwaki/playwright-ruby-client)
+- [RSpec Rails](https://rspec.info/features/6-0/rspec-rails/)
+- [FactoryBot](https://github.com/thoughtbot/factory_bot)
+- [DatabaseCleaner](https://github.com/DatabaseCleaner/database_cleaner)
+- [SimpleCov](https://github.com/simplecov-ruby/simplecov)
 
 ---
 
-**Vibes準拠 - RSpec + Playwright テスト戦略**
+**Vibes準拠 - Pure Playwright + RSpec テスト戦略 v2.0**

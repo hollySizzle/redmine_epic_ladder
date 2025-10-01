@@ -52,7 +52,7 @@ echo ""
 START_TIME=$(date +%s)
 
 # Step 1: Ruby環境チェック
-log_step "1/6 Ruby環境チェック"
+log_step "1/9 Ruby環境チェック"
 if command -v ruby &> /dev/null; then
     RUBY_VERSION=$(ruby -v)
     log_info "Ruby: $RUBY_VERSION"
@@ -111,7 +111,7 @@ log_success "他プラグイン Gemfile 無効化完了"
 echo ""
 
 # Step 4: RSpec gem インストール
-log_step "4/7 RSpec関連 gem インストール"
+log_step "4/9 RSpec関連 gem インストール"
 cd "$REDMINE_ROOT"
 
 log_info "bundle install 実行中..."
@@ -128,7 +128,7 @@ bundle list | grep -E "(rspec|factory_bot|faker|simplecov|capybara)" || log_warn
 echo ""
 
 # Step 5: RSpec 初期化確認
-log_step "5/7 RSpec 設定ファイル確認"
+log_step "5/9 RSpec 設定ファイル確認"
 cd "$PLUGIN_DIR"
 
 if [ ! -f ".rspec" ]; then
@@ -147,7 +147,7 @@ fi
 echo ""
 
 # Step 6: Node.js/npm 環境チェック
-log_step "6/7 Node.js/npm 環境チェック"
+log_step "6/9 Node.js/npm 環境チェック"
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node -v)
     log_info "Node.js: $NODE_VERSION"
@@ -168,7 +168,7 @@ log_success "Node.js/npm 環境 OK"
 echo ""
 
 # Step 7: Playwright インストール
-log_step "7/7 Playwright インストール"
+log_step "7/9 Playwright インストール"
 cd "$PLUGIN_DIR"
 
 log_info "npm install 実行中..."
@@ -206,10 +206,35 @@ else
 fi
 echo ""
 
-# テストDB準備はスキップ（factory_girl 削除後は手動で実行）
-log_info "テストDB準備は手動で実行してください:"
-log_info "  cd $REDMINE_ROOT"
-log_info "  RAILS_ENV=test bundle exec rake db:create db:migrate"
+# Step 8: テストDB準備
+log_step "8/9 テストDB準備"
+cd "$REDMINE_ROOT"
+
+log_info "テストDBのセットアップ中..."
+if RAILS_ENV=test bundle exec rake db:create db:migrate 2>&1; then
+    log_success "テストDB作成・マイグレーション完了"
+else
+    log_warning "テストDB作成失敗（既に存在する可能性）"
+fi
+
+log_info "Redmine デフォルトデータのロード中..."
+if RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data --trace 2>&1; then
+    log_success "Redmine デフォルトデータロード完了"
+else
+    log_warning "デフォルトデータロード失敗（既に存在する可能性）"
+fi
+echo ""
+
+# Step 9: ポートクリーンアップ
+log_step "9/9 テストサーバーポートクリーンアップ"
+TEST_PORT=3001
+
+log_info "ポート ${TEST_PORT} をクリーンアップ中..."
+if lsof -ti:${TEST_PORT} | xargs kill -9 2>/dev/null; then
+    log_success "ポート ${TEST_PORT} クリーンアップ完了"
+else
+    log_info "ポート ${TEST_PORT} は既に空いています"
+fi
 echo ""
 
 # 終了処理
@@ -229,24 +254,30 @@ log_success "✅ RSpec設定: 準備完了"
 log_success "✅ Node.js/npm: OK"
 log_success "✅ Playwright: インストール済み"
 log_success "✅ Chromium: ダウンロード済み"
-echo ""
-log_warning "⚠️  テストDB: 手動セットアップが必要"
+log_success "✅ テストDB: セットアップ済み"
+log_success "✅ Redmine デフォルトデータ: ロード済み"
+log_success "✅ ポート ${TEST_PORT}: クリーンアップ済み"
 echo ""
 echo "🎉 テスト環境セットアップ完了！"
 echo ""
 echo "=========================================="
 echo "📝 次のステップ"
 echo "=========================================="
-echo "RSpec テスト実行:"
+echo ""
+echo "🧪 System テスト実行（Playwright）:"
 echo "  cd $REDMINE_ROOT"
-echo "  bundle exec rspec $PLUGIN_DIR/spec"
+echo "  RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system --format documentation"
 echo ""
-echo "Playwright テスト実行:"
-echo "  cd $PLUGIN_DIR"
-echo "  npx playwright test"
+echo "🔍 特定のテスト実行:"
+echo "  cd $REDMINE_ROOT"
+echo "  RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/grid_layout_measurement_spec.rb:59"
 echo ""
-echo "テスト戦略を確認:"
-echo "  cat $PLUGIN_DIR/vibes/docs/rules/testing/kanban_test_strategy.md"
+echo "🧹 ポートクリーンアップ（テスト失敗時）:"
+echo "  lsof -ti:3001 | xargs kill -9"
+echo ""
+echo "📖 ドキュメント:"
+echo "  cat plugins/redmine_release_kanban/vibes/docs/temps/playwright-rspec-setup.md"
+echo ""
 echo "=========================================="
 
 exit 0

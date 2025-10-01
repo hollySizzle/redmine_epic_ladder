@@ -256,38 +256,60 @@ end
 # Pure Playwright Ruby Client（Capybara 不使用）
 require 'playwright'
 
-# System テストで Pure Playwright を使用
+# System テストで Pure Playwright を使用（サーバー共有モード）
 RSpec.configure do |config|
-  config.around(:each, type: :system) do |example|
-    # Rails サーバーを起動
-    @server_port = ENV['TEST_PORT'] || 3001
+  # サーバーを全テストで共有（高速化）
+  config.before(:suite) do
+    if RSpec.configuration.files_to_run.any? { |f| f.include?('spec/system') }
+      @shared_server_port = ENV['TEST_PORT'] || 3001
 
-    # 既存のプロセスをクリーンアップ
-    system("lsof -ti:#{@server_port} | xargs kill -9 2>/dev/null")
-    sleep 0.5
-
-    @server_pid = fork do
-      # 子プロセスで Rails サーバー起動
-      ENV['RAILS_ENV'] = 'test'
-      exec("bundle exec rails s -p #{@server_port} -e test > log/test_server.log 2>&1")
-    end
-
-    # サーバー起動待機
-    max_wait = 30
-    start_time = Time.now
-    loop do
-      break if system("curl -s http://localhost:#{@server_port} > /dev/null 2>&1")
-      if Time.now - start_time > max_wait
-        Process.kill('TERM', @server_pid) rescue nil
-        raise "Rails server failed to start within #{max_wait} seconds"
-      end
+      # 既存のプロセスをクリーンアップ
+      system("lsof -ti:#{@shared_server_port} | xargs kill -9 2>/dev/null")
       sleep 0.5
-    end
 
-    # Playwright でブラウザ起動
+      puts "\n[INFO] 共有 Rails サーバーを起動中（ポート: #{@shared_server_port}）..."
+
+      @shared_server_pid = fork do
+        ENV['RAILS_ENV'] = 'test'
+        exec("bundle exec rails s -p #{@shared_server_port} -e test > log/test_server.log 2>&1")
+      end
+
+      # サーバー起動待機
+      max_wait = 30
+      start_time = Time.now
+      loop do
+        break if system("curl -s http://localhost:#{@shared_server_port} > /dev/null 2>&1")
+        if Time.now - start_time > max_wait
+          Process.kill('TERM', @shared_server_pid) rescue nil
+          raise "Rails server failed to start within #{max_wait} seconds"
+        end
+        sleep 0.5
+      end
+
+      puts "[INFO] ✅ Rails サーバー起動完了（PID: #{@shared_server_pid}）\n"
+
+      # グローバル変数に保存
+      $shared_server_port = @shared_server_port
+      $shared_server_pid = @shared_server_pid
+    end
+  end
+
+  config.after(:suite) do
+    if $shared_server_pid
+      puts "\n[INFO] 共有 Rails サーバーを停止中（PID: #{$shared_server_pid}）..."
+      Process.kill('TERM', $shared_server_pid) rescue nil
+      Process.wait($shared_server_pid) rescue nil
+      puts "[INFO] ✅ Rails サーバー停止完了\n"
+    end
+  end
+
+  config.around(:each, type: :system) do |example|
+    server_port = $shared_server_port || 3001
+
+    # Playwright でブラウザ起動（サーバーは共有）
     Playwright.create(playwright_cli_executable_path: File.expand_path('../node_modules/.bin/playwright', __dir__)) do |playwright|
       playwright.chromium.launch(headless: true) do |browser|
-        @playwright_page = browser.new_page(baseURL: "http://localhost:#{@server_port}")
+        @playwright_page = browser.new_page(baseURL: "http://localhost:#{server_port}")
         @playwright_page.context.set_default_timeout(10000)
 
         begin
@@ -305,10 +327,6 @@ RSpec.configure do |config|
         end
       end
     end
-
-    # Rails サーバー停止
-    Process.kill('TERM', @server_pid) rescue nil
-    Process.wait(@server_pid) rescue nil
   end
 
   # @playwright_page をテストから参照できるようにする

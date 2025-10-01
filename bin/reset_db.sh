@@ -82,6 +82,51 @@ else
     print_warning "（初回実行時やdb:dropが必要な場合は正常な挙動です）"
 fi
 
+# ステップ0.5: データベース接続を強制終了
+print_step "0.5. データベース接続の強制終了"
+echo "データベース接続中のプロセスを確認中..."
+
+# データベース設定を読み込み
+DB_NAME="redmine_dev"
+DB_CONFIG="/usr/src/redmine/config/database.yml"
+
+# PostgreSQL経由でプロセス一覧を取得
+echo "PostgreSQL側から接続プロセスを確認します..."
+PSQL_OUTPUT=$(RAILS_ENV=development rails runner "
+  conn = ActiveRecord::Base.connection
+  results = conn.execute(\"
+    SELECT pid, usename, application_name, client_addr, state, query_start
+    FROM pg_stat_activity
+    WHERE datname = 'redmine_dev' AND pid <> pg_backend_pid()
+  \")
+  puts '接続プロセス一覧:'
+  results.each do |row|
+    puts \"  PID: #{row['pid']}, User: #{row['usename']}, App: #{row['application_name']}, State: #{row['state']}\"
+  end
+  puts \"Total: #{results.count}件\"
+" 2>&1)
+
+echo "$PSQL_OUTPUT"
+
+# PostgreSQL経由でプロセスを終了
+TERMINATE_OUTPUT=$(RAILS_ENV=development rails runner "
+  conn = ActiveRecord::Base.connection
+  results = conn.execute(\"
+    SELECT pg_terminate_backend(pid)
+    FROM pg_stat_activity
+    WHERE datname = 'redmine_dev' AND pid <> pg_backend_pid()
+  \")
+  terminated_count = results.count
+  puts \"#{terminated_count}個の接続を終了しました\"
+" 2>&1)
+
+echo "$TERMINATE_OUTPUT"
+
+# プロセス終了を待つ
+sleep 2
+
+print_success "データベース接続プロセスの終了処理完了"
+
 # ステップ1: データベース削除
 print_step "1. データベース削除 (db:drop)"
 if RAILS_ENV=development rake db:drop; then
