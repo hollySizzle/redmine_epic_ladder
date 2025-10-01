@@ -172,6 +172,18 @@
             margin-bottom: 6px;
         }
 
+        /* クローズ状態のスタイル */
+        .feature-card.closed {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+
+        .feature-card.closed .feature-header {
+            background: #e0e0e0;
+            border-color: #9e9e9e;
+            color: #757575;
+        }
+
         /* レベル3: UserStoryGrid (Feature Card内) */
         .user-story-grid {
             display: grid;
@@ -205,6 +217,15 @@
             font-size: 10px;
             font-weight: bold;
             margin-bottom: 4px;
+        }
+
+        .user-story.closed {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+
+        .user-story.closed .user-story-header {
+            color: #9e9e9e;
         }
 
         /* レベル4: Task/Test/BugGrid (UserStory内) */
@@ -330,6 +351,14 @@
             background: #ef9a9a;
         }
 
+        .task-item.closed,
+        .test-item.closed,
+        .bug-item.closed {
+            opacity: 0.6;
+            filter: grayscale(0.7);
+            text-decoration: line-through;
+        }
+
         .status-indicator {
             display: inline-block;
             width: 8px;
@@ -435,10 +464,14 @@
             <div class="epic-version-cell" data-epic="epic1" data-version="v1">
                 <div class="feature-card-grid">
                     <div class="feature-card" data-feature="f1">
-                        <div class="feature-header">登録画面</div>
+                        <div class="feature-header">
+                            <span class="status-indicator status-open"></span>登録画面
+                        </div>
                         <div class="user-story-grid">
                             <div class="user-story" data-story="us1">
-                                <div class="user-story-header">US#101 ユーザー登録フォーム</div>
+                                <div class="user-story-header">
+                                    <span class="status-indicator status-open"></span>US#101 ユーザー登録フォーム
+                                </div>
                                 <div class="task-test-bug-grid">
                                     <div class="task-container">
                                         <div class="task-container-header">Task</div>
@@ -482,10 +515,14 @@
                     </div>
 
                     <div class="feature-card" data-feature="f2">
-                        <div class="feature-header">一覧画面</div>
+                        <div class="feature-header">
+                            <span class="status-indicator status-open"></span>一覧画面
+                        </div>
                         <div class="user-story-grid">
                             <div class="user-story" data-story="us2">
-                                <div class="user-story-header">US#102 ユーザー一覧表示</div>
+                                <div class="user-story-header">
+                                    <span class="status-indicator status-open"></span>US#102 ユーザー一覧表示
+                                </div>
                                 <div class="task-test-bug-grid">
                                     <div class="task-container">
                                         <div class="task-container-header">Task</div>
@@ -513,17 +550,21 @@
 
             <div class="epic-version-cell" data-epic="epic1" data-version="v2">
                 <div class="feature-card-grid">
-                    <div class="feature-card" data-feature="f3">
-                        <div class="feature-header">編集画面</div>
+                    <div class="feature-card closed" data-feature="f3">
+                        <div class="feature-header">
+                            <span class="status-indicator status-closed"></span>編集画面
+                        </div>
                         <div class="user-story-grid">
-                            <div class="user-story" data-story="us3">
-                                <div class="user-story-header">US#103 ユーザー編集機能</div>
+                            <div class="user-story closed" data-story="us3">
+                                <div class="user-story-header">
+                                    <span class="status-indicator status-closed"></span>US#103 ユーザー編集機能
+                                </div>
                                 <div class="task-test-bug-grid">
                                     <div class="task-container">
                                         <div class="task-container-header">Task</div>
                                         <div class="task-item-grid">
-                                            <div class="task-item" data-task="t4">
-                                                <span class="status-indicator status-open"></span>編集フォーム作成
+                                            <div class="task-item closed" data-task="t4">
+                                                <span class="status-indicator status-closed"></span>編集フォーム作成
                                             </div>
                                             <button class="task-item add-button add-task-btn" data-add-button="task">
                                                 + Add Task
@@ -576,10 +617,14 @@
             <div class="epic-version-cell" data-epic="epic2" data-version="v2">
                 <div class="feature-card-grid">
                     <div class="feature-card" data-feature="f4">
-                        <div class="feature-header">スケジュール登録</div>
+                        <div class="feature-header">
+                            <span class="status-indicator status-open"></span>スケジュール登録
+                        </div>
                         <div class="user-story-grid">
                             <div class="user-story" data-story="us4">
-                                <div class="user-story-header">US#201 スケジュール登録画面</div>
+                                <div class="user-story-header">
+                                    <span class="status-indicator status-open"></span>US#201 スケジュール登録画面
+                                </div>
                                 <div class="task-test-bug-grid">
                                     <div class="task-container">
                                         <div class="task-container-header">Task</div>
