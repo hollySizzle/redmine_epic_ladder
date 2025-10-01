@@ -1,22 +1,26 @@
-# ネストGrid検証 - 技術検証環境
+# ネストGrid検証 - HTML/JS/SCSS版
 
 ## 概要
 
-Atlassian Pragmatic Drag and Drop を使用した4層ネストGrid構造の技術検証プロジェクト。
+Atlassian Pragmatic Drag and Drop を使用した4層ネストGrid構造の技術検証プロジェクト（HTML/Vanilla JS版）。
 
 **検証目的**: Epic×Version Grid の中に FeatureCardGrid → UserStoryGrid → TaskGrid が4層ネストできるかを検証
+
+**このバージョンについて**: React/TypeScript版に移行する前のプロトタイプ版です。HTML + Vanilla JavaScript + SCSS で実装されています。
 
 ## プロジェクト構成
 
 ```
-vibes/docs/temps/
+vibes/docs/specs/mockup/htmlVersion/
 ├── README.md                           # このファイル
+├── package.json                        # 依存関係定義
 ├── webpack.config.js                   # Webpack設定
-├── package.json                        # 依存関係（親ディレクトリ参照）
 ├── nested_grid_test_template.html      # HTMLテンプレート
 ├── src/
-│   └── nested_grid_test.js            # メインJavaScript（Pragmatic D&D実装）
-└── dist/                               # ビルド出力（自動生成）
+│   ├── nested_grid_test.js            # メインJavaScript（Pragmatic D&D実装）
+│   └── styles.scss                     # スタイルシート（SCSS）
+├── node_modules/                       # npm依存パッケージ（npm install後に生成）
+└── dist/                               # ビルド出力（webpack実行後に自動生成）
     ├── index.html
     └── bundle.js
 ```
@@ -27,41 +31,50 @@ vibes/docs/temps/
 - Node.js 18.x以上
 - npm
 
-### 依存パッケージ
+### 依存パッケージのインストール
 
 ```bash
-# プラグインルートディレクトリでインストール済み
-cd /usr/src/redmine/plugins/redmine_release_kanban
+# htmlVersionディレクトリに移動
+cd /usr/src/redmine/plugins/redmine_release_kanban/vibes/docs/specs/mockup/htmlVersion
+
+# 依存パッケージをインストール
 npm install
 ```
 
 **主要パッケージ**:
-- `@atlaskit/pragmatic-drag-and-drop@1.26.0`
-- `@atlaskit/tokens`
-- `@atlaskit/motion`
-- `webpack@5.102.0`
-- `webpack-dev-server`
+- `@atlaskit/pragmatic-drag-and-drop@^1.1.0` - ドラッグ&ドロップライブラリ
+- `webpack@^5.89.0` - モジュールバンドラー
+- `webpack-dev-server@^4.15.1` - 開発サーバー
+- `sass@^1.69.0` - SCSSコンパイラ
+- `babel-loader@^9.1.3` - ES6+トランスパイラ
 
 ## 開発サーバー起動
 
 ### 起動コマンド
 
 ```bash
-cd /usr/src/redmine/plugins/redmine_release_kanban/vibes/docs/specs/mockup/htmlVersion/
-npx webpack serve --config webpack.config.js --open
+cd /usr/src/redmine/plugins/redmine_release_kanban/vibes/docs/specs/mockup/htmlVersion
+npm run dev
+```
+
+または
+
+```bash
+cd /usr/src/redmine/plugins/redmine_release_kanban/vibes/docs/specs/mockup/htmlVersion
+npx webpack serve --config webpack.config.js
 ```
 
 ### アクセスURL
 
-- **ローカル**: http://localhost:9000/
-- **ネットワーク**: http://172.20.0.2:9000/ (コンテナ内)
+- **ローカル**: http://localhost:9500/
+- **ネットワーク**: http://172.20.0.2:9500/ (コンテナ内)
 
 ### サーバー停止
 
 ```bash
 # Ctrl+C でプロセス終了
 # または、ポートをkillする場合
-lsof -ti:9000 | xargs kill -9
+lsof -ti:9500 | xargs kill -9
 ```
 
 ## 機能一覧
@@ -236,6 +249,12 @@ npx webpack serve --config webpack.config.js
 - [Atlassian Design System](https://atlassian.design/)
 - [CSS Grid Layout](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Grid_Layout)
 
+## React/TypeScript版への移行
+
+このHTML/Vanilla JS版での検証成功を受けて、React/TypeScript版が `vibes/docs/specs/mockup/` 配下に実装されています。
+
+本番実装には React/TypeScript版を使用してください。
+
 ## ライセンス
 
 このプロジェクトはRedmine Release Kanbanプラグインの一部であり、技術検証目的で作成されています。
@@ -243,4 +262,5 @@ npx webpack serve --config webpack.config.js
 ---
 
 **最終更新**: 2025-10-01
-**検証環境**: Node.js 18.x + Webpack 5 + Pragmatic Drag and Drop 1.26.0
+**バージョン**: HTML/Vanilla JS 版（プロトタイプ）
+**検証環境**: Node.js 18.x + Webpack 5 + Pragmatic Drag and Drop 1.1.0
