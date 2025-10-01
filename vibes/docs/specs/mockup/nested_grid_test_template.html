@@ -60,7 +60,7 @@
         /* Epic × Version Grid */
         .epic-version-grid {
             display: grid;
-            grid-template-columns: 200px repeat(3, 280px) 240px;
+            grid-template-columns: 150px repeat(3, 280px) 240px;
             grid-template-rows: auto;
             gap: 10px;
             background: #e0e0e0;
@@ -75,7 +75,7 @@
             text-align: center;
             cursor: pointer;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 0.75rem;
             font-weight: bold;
             transition: all 150ms ease-in-out;
             /* marginは危険なため使用しない｡調整が必要ならばpadding */
@@ -108,19 +108,21 @@
         .epic-header {
             background: #dae8fc;
             border: 2px solid #6c8ebf;
-            padding: 10px;
+            padding: 8px;
             font-weight: bold;
+            font-size: 0.8125rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 120px;
+            min-height: 60px;
         }
 
         .version-header {
             background: #e1d5e7;
             border: 2px solid #9673a6;
-            padding: 10px;
+            padding: 8px;
             font-weight: bold;
+            font-size: 0.8125rem;
             text-align: center;
         }
 
@@ -128,7 +130,7 @@
             background: #fafafa;
             border: 2px solid #bdbdbd;
             padding: 10px;
-            min-height: 120px;
+            min-height: 200px;
         }
 
         /* レベル2: FeatureCardGrid (Epic × Version セル内) */
@@ -143,8 +145,8 @@
             background: #ffffff;
             border: 2px solid #dee2e6;
             border-radius: 4px;
-            padding: 8px;
-            min-height: 100px;
+            padding: 12px;
+            min-height: 150px;
             cursor: move;
             transition: all 150ms ease-in-out;
         }
@@ -166,10 +168,10 @@
         .feature-header {
             background: #fff9c4;
             border: 1px solid #f57f17;
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 6px 10px;
+            font-size: 0.8125rem;
             font-weight: bold;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         /* クローズ状態のスタイル */
@@ -188,14 +190,14 @@
         .user-story-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 6px;
+            gap: 8px;
         }
 
         .user-story {
             background: #f9f9f9;
             border: 1px solid #e0e0e0;
             border-radius: 3px;
-            padding: 6px;
+            padding: 8px;
             cursor: move;
             transition: all 150ms ease-in-out;
         }
@@ -214,9 +216,9 @@
         }
 
         .user-story-header {
-            font-size: 10px;
+            font-size: 0.6875rem;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .user-story.closed {
@@ -232,55 +234,58 @@
         .task-test-bug-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 3px;
+            gap: 5px;
         }
 
         .task-container {
             background: #e3f2fd;
             border: 1px solid #1976d2;
-            border-radius: 2px;
-            padding: 3px;
+            border-radius: 3px;
+            padding: 5px;
         }
 
         .test-container {
             background: #e8f5e9;
             border: 1px solid #388e3c;
-            border-radius: 2px;
-            padding: 3px;
+            border-radius: 3px;
+            padding: 5px;
         }
 
         .bug-container {
             background: #ffebee;
             border: 1px solid #c62828;
-            border-radius: 2px;
-            padding: 3px;
+            border-radius: 3px;
+            padding: 5px;
         }
 
         .task-container-header {
-            font-size: 8px;
+            font-size: 0.5625rem;
             font-weight: bold;
-            margin-bottom: 2px;
-            padding: 2px;
+            margin-bottom: 3px;
+            padding: 3px 5px;
             background: #bbdefb;
             color: #0d47a1;
+            border-radius: 2px;
         }
 
         .test-container-header {
-            font-size: 8px;
+            font-size: 0.5625rem;
             font-weight: bold;
-            margin-bottom: 2px;
-            padding: 2px;
+            margin-bottom: 3px;
+            padding: 3px 5px;
             background: #c8e6c9;
             color: #1b5e20;
+            border-radius: 2px;
         }
 
         .bug-container-header {
-            font-size: 8px;
+            font-size: 0.5625rem;
             font-weight: bold;
-            margin-bottom: 2px;
-            padding: 2px;
+            margin-bottom: 3px;
+            padding: 3px 5px;
             background: #ffcdd2;
             color: #b71c1c;
+            border-radius: 2px;
         }
 
         .task-item-grid,
@@ -288,34 +293,37 @@
         .bug-item-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 2px;
+            gap: 3px;
         }
 
         .task-item {
             background: #fff;
             border: 1px solid #90caf9;
-            padding: 2px 4px;
-            font-size: 8px;
+            padding: 4px 6px;
+            font-size: 0.625rem;
             cursor: move;
             transition: all 150ms ease-in-out;
+            border-radius: 2px;
         }
 
         .test-item {
             background: #fff;
             border: 1px solid #81c784;
-            padding: 2px 4px;
-            font-size: 8px;
+            padding: 4px 6px;
+            font-size: 0.625rem;
             cursor: move;
             transition: all 150ms ease-in-out;
+            border-radius: 2px;
         }
 
         .bug-item {
             background: #fff;
             border: 1px solid #ef5350;
-            padding: 2px 4px;
-            font-size: 8px;
+            padding: 4px 6px;
+            font-size: 0.625rem;
             cursor: move;
             transition: all 150ms ease-in-out;
+            border-radius: 2px;
         }
 
         .task-item:hover {
@@ -389,7 +397,7 @@
 
         .legend-item {
             margin: 5px 0;
-            font-size: 14px;
+            font-size: 0.875rem;
         }
 
         /* Add ボタンスタイル */
@@ -400,7 +408,7 @@
             text-align: center;
             cursor: pointer;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 0.6875rem;
             font-weight: bold;
             transition: all 150ms ease-in-out;
             order: 9999;
@@ -454,12 +462,12 @@
         /* レベル別のAddボタン */
         .add-feature-btn {
             min-height: 60px;
-            font-size: 12px;
+            font-size: 0.75rem;
         }
 
         .add-user-story-btn {
             min-height: 40px;
-            font-size: 10px;
+            font-size: 0.625rem;
             margin-top: 6px;
         }
 
@@ -467,7 +475,7 @@
         .add-test-btn,
         .add-bug-btn {
             min-height: 25px;
-            font-size: 8px;
+            font-size: 0.5rem;
             margin-top: 2px;
         }
     </style>
