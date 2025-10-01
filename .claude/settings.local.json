@@ -38,7 +38,11 @@
       "WebFetch(domain:github.com)",
       "Bash(npm run dev:*)",
       "WebFetch(domain:blog.logrocket.com)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "WebFetch(domain:puckeditor.com)",
+      "WebFetch(domain:www.purplesquirrels.com.au)",
+      "WebFetch(domain:www.developerway.com)",
+      "WebFetch(domain:medium.com)"
     ],
     "deny": [],
     "ask": [],
