@@ -125,8 +125,8 @@
         }
 
         .epic-version-cell {
-            background: #f0ebf7;
-            border: 2px solid #9673a6;
+            background: #fafafa;
+            border: 2px solid #bdbdbd;
             padding: 10px;
             min-height: 120px;
         }
@@ -164,8 +164,8 @@
         }
 
         .feature-header {
-            background: #e1f5fe;
-            border: 1px solid #01579b;
+            background: #fff9c4;
+            border: 1px solid #f57f17;
             padding: 4px 8px;
             font-size: 11px;
             font-weight: bold;
@@ -214,23 +214,52 @@
             gap: 3px;
         }
 
-        .task-container,
-        .test-container,
-        .bug-container {
-            background: #ffffff;
-            border: 1px solid #d0d0d0;
+        .task-container {
+            background: #e3f2fd;
+            border: 1px solid #1976d2;
             border-radius: 2px;
             padding: 3px;
         }
 
-        .task-container-header,
-        .test-container-header,
+        .test-container {
+            background: #e8f5e9;
+            border: 1px solid #388e3c;
+            border-radius: 2px;
+            padding: 3px;
+        }
+
+        .bug-container {
+            background: #ffebee;
+            border: 1px solid #c62828;
+            border-radius: 2px;
+            padding: 3px;
+        }
+
+        .task-container-header {
+            font-size: 8px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            padding: 2px;
+            background: #bbdefb;
+            color: #0d47a1;
+        }
+
+        .test-container-header {
+            font-size: 8px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            padding: 2px;
+            background: #c8e6c9;
+            color: #1b5e20;
+        }
+
         .bug-container-header {
             font-size: 8px;
             font-weight: bold;
             margin-bottom: 2px;
             padding: 2px;
-            background: #f0f0f0;
+            background: #ffcdd2;
+            color: #b71c1c;
         }
 
         .task-item-grid,
@@ -241,21 +270,43 @@
             gap: 2px;
         }
 
-        .task-item,
-        .test-item,
-        .bug-item {
+        .task-item {
             background: #fff;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #90caf9;
             padding: 2px 4px;
             font-size: 8px;
             cursor: move;
             transition: all 150ms ease-in-out;
         }
 
-        .task-item:hover,
-        .test-item:hover,
+        .test-item {
+            background: #fff;
+            border: 1px solid #81c784;
+            padding: 2px 4px;
+            font-size: 8px;
+            cursor: move;
+            transition: all 150ms ease-in-out;
+        }
+
+        .bug-item {
+            background: #fff;
+            border: 1px solid #ef5350;
+            padding: 2px 4px;
+            font-size: 8px;
+            cursor: move;
+            transition: all 150ms ease-in-out;
+        }
+
+        .task-item:hover {
+            background: #bbdefb;
+        }
+
+        .test-item:hover {
+            background: #c8e6c9;
+        }
+
         .bug-item:hover {
-            background: #e3f2fd;
+            background: #ffcdd2;
         }
 
         .task-item.dragging,
@@ -264,11 +315,19 @@
             opacity: 0.5;
         }
 
-        .task-item.over,
-        .test-item.over,
+        .task-item.over {
+            border-color: #1565c0;
+            background: #90caf9;
+        }
+
+        .test-item.over {
+            border-color: #2e7d32;
+            background: #a5d6a7;
+        }
+
         .bug-item.over {
-            border-color: #4caf50;
-            background: #e8f5e9;
+            border-color: #c62828;
+            background: #ef9a9a;
         }
 
         .status-indicator {
@@ -279,16 +338,12 @@
             margin-right: 4px;
         }
 
-        .status-todo {
-            background: #9e9e9e;
-        }
-
-        .status-progress {
-            background: #2196f3;
-        }
-
-        .status-done {
+        .status-open {
             background: #4caf50;
+        }
+
+        .status-closed {
+            background: #9e9e9e;
         }
 
         .legend {
@@ -389,10 +444,10 @@
                                         <div class="task-container-header">Task</div>
                                         <div class="task-item-grid">
                                             <div class="task-item" data-task="t1">
-                                                <span class="status-indicator status-progress"></span>バリデーション実装
+                                                <span class="status-indicator status-open"></span>バリデーション実装
                                             </div>
                                             <div class="task-item" data-task="t2">
-                                                <span class="status-indicator status-done"></span>UI設計完了
+                                                <span class="status-indicator status-closed"></span>UI設計完了
                                             </div>
                                             <button class="task-item add-button add-task-btn" data-add-button="task">
                                                 + Add Task
@@ -403,7 +458,7 @@
                                         <div class="test-container-header">Test</div>
                                         <div class="test-item-grid">
                                             <div class="test-item" data-test="test1">
-                                                <span class="status-indicator status-todo"></span>単体テスト作成
+                                                <span class="status-indicator status-open"></span>単体テスト作成
                                             </div>
                                             <button class="test-item add-button add-test-btn" data-add-button="test">
                                                 + Add Test
@@ -414,7 +469,7 @@
                                         <div class="bug-container-header">Bug</div>
                                         <div class="bug-item-grid">
                                             <div class="bug-item" data-bug="b1">
-                                                <span class="status-indicator status-progress"></span>バリデーションエラー修正
+                                                <span class="status-indicator status-open"></span>バリデーションエラー修正
                                             </div>
                                             <button class="bug-item add-button add-bug-btn" data-add-button="bug">
                                                 + Add Bug
@@ -436,7 +491,7 @@
                                         <div class="task-container-header">Task</div>
                                         <div class="task-item-grid">
                                             <div class="task-item" data-task="t3">
-                                                <span class="status-indicator status-progress"></span>一覧API実装
+                                                <span class="status-indicator status-open"></span>一覧API実装
                                             </div>
                                             <button class="task-item add-button add-task-btn" data-add-button="task">
                                                 + Add Task
@@ -468,7 +523,7 @@
                                         <div class="task-container-header">Task</div>
                                         <div class="task-item-grid">
                                             <div class="task-item" data-task="t4">
-                                                <span class="status-indicator status-todo"></span>編集フォーム作成
+                                                <span class="status-indicator status-open"></span>編集フォーム作成
                                             </div>
                                             <button class="task-item add-button add-task-btn" data-add-button="task">
                                                 + Add Task
@@ -530,10 +585,10 @@
                                         <div class="task-container-header">Task</div>
                                         <div class="task-item-grid">
                                             <div class="task-item" data-task="t5">
-                                                <span class="status-indicator status-progress"></span>カレンダーUI実装
+                                                <span class="status-indicator status-open"></span>カレンダーUI実装
                                             </div>
                                             <div class="task-item" data-task="t6">
-                                                <span class="status-indicator status-todo"></span>繰り返し設定機能
+                                                <span class="status-indicator status-open"></span>繰り返し設定機能
                                             </div>
                                             <button class="task-item add-button add-task-btn" data-add-button="task">
                                                 + Add Task
@@ -593,9 +648,8 @@
         <div class="legend-item">📝 <strong>レベル3:</strong> UserStoryGrid (Feature Card内)</div>
         <div class="legend-item">✅ <strong>レベル4:</strong> TaskGrid / TestGrid / BugGrid (UserStory内)</div>
         <br>
-        <div class="legend-item"><span class="status-indicator status-todo"></span> 未着手</div>
-        <div class="legend-item"><span class="status-indicator status-progress"></span> 進行中</div>
-        <div class="legend-item"><span class="status-indicator status-done"></span> 完了</div>
+        <div class="legend-item"><span class="status-indicator status-open"></span> 未完了（オープン）</div>
+        <div class="legend-item"><span class="status-indicator status-closed"></span> 完了（クローズ）</div>
     </div>
 </body>
 
