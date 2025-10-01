@@ -7,11 +7,10 @@ console.log('✅ Pragmatic Drag and Drop loaded');
 // ユニークなインスタンスID
 const instanceId = Symbol('nested-grid-test');
 
-// DOM要素をスワップする汎用関数
+// DOM要素をスワップする汎用関数（同じ親要素内のみ）
 function swapElements(sourceEl, targetEl) {
     // 同じ親要素内でのみスワップを許可
     if (sourceEl.parentElement !== targetEl.parentElement) {
-        console.warn('⚠️ Cannot swap elements with different parents');
         return false;
     }
 
@@ -35,6 +34,27 @@ function swapElements(sourceEl, targetEl) {
     }
 
     console.log('✨ Elements swapped successfully');
+    return true;
+}
+
+// DOM要素を別の親要素に移動する関数
+function moveElement(sourceEl, targetEl) {
+    // targetEl と同じ親に移動
+    const targetParent = targetEl.parentElement;
+
+    if (!targetParent) {
+        console.warn('⚠️ Target element has no parent');
+        return false;
+    }
+
+    // targetEl の直後に挿入
+    if (targetEl.nextSibling) {
+        targetParent.insertBefore(sourceEl, targetEl.nextSibling);
+    } else {
+        targetParent.appendChild(sourceEl);
+    }
+
+    console.log('🚀 Element moved to different parent successfully');
     return true;
 }
 
@@ -212,7 +232,7 @@ function setupDragAndDrop() {
                 destination: destination.data
             });
 
-            // DOM要素をスワップ
+            // 同じ親要素内ならスワップ、異なる親ならば移動
             const swapped = swapElements(sourceEl, targetEl);
 
             if (swapped) {
@@ -220,6 +240,19 @@ function setupDragAndDrop() {
                     sourceId: sourceEl.dataset.feature || sourceEl.dataset.story || sourceEl.dataset.task || sourceEl.dataset.test || sourceEl.dataset.bug,
                     targetId: targetEl.dataset.feature || targetEl.dataset.story || targetEl.dataset.task || targetEl.dataset.test || targetEl.dataset.bug
                 });
+            } else {
+                // スワップできなかった場合は移動を試みる
+                const moved = moveElement(sourceEl, targetEl);
+
+                if (moved) {
+                    console.log('🎉 Move complete!', {
+                        sourceId: sourceEl.dataset.feature || sourceEl.dataset.story || sourceEl.dataset.task || sourceEl.dataset.test || sourceEl.dataset.bug,
+                        targetId: targetEl.dataset.feature || targetEl.dataset.story || targetEl.dataset.task || targetEl.dataset.test || targetEl.dataset.bug,
+                        newParent: targetEl.parentElement
+                    });
+                } else {
+                    console.warn('⚠️ Neither swap nor move was possible');
+                }
             }
         }
     });
