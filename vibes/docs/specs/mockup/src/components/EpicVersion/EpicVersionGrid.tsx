@@ -9,9 +9,15 @@ export const EpicVersionGrid: React.FC = () => {
   const epics = useStore(state => state.entities.epics);
   const versions = useStore(state => state.entities.versions);
 
+  // versionの数を動的に取得（'none'を除く）
+  const versionCount = grid.version_order.filter(vId => vId !== 'none').length;
+
+  // grid-template-columnsを動的に生成
+  const gridTemplateColumns = `var(--epic-width) repeat(${versionCount}, var(--version-width))`;
+
   return (
     <div className="epic-version-wrapper">
-      <div className="epic-version-grid">
+      <div className="epic-version-grid" style={{ gridTemplateColumns }}>
         {/* ヘッダー行 */}
         <div className="epic-version-label">Epic \ Version</div>
         {grid.version_order
