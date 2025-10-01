@@ -60,16 +60,65 @@ function moveElement(sourceEl, targetEl) {
 
 // Addボタンを常に末尾に移動する関数
 function ensureAddButtonsAtEnd() {
-    document.querySelectorAll('[data-add-button]').forEach(button => {
+    // Feature の Add ボタンを末尾に移動
+    document.querySelectorAll('[data-add-button="feature"]').forEach(button => {
         const parent = button.parentElement;
         if (parent && parent.lastElementChild !== button) {
             parent.appendChild(button);
         }
     });
+
+    // Epic の Add ボタンを Grid の末尾に移動
+    const epicButton = document.querySelector('[data-add-button="epic"]');
+    const grid = document.querySelector('.epic-version-grid');
+
+    if (epicButton && grid && grid.lastElementChild !== epicButton) {
+        grid.appendChild(epicButton);
+    }
+
+    // Version の Add ボタンは No Version セル内に固定されているため、移動不要
 }
 
 // 各レベルのドラッグ可能要素とドロップターゲットを設定
 function setupDragAndDrop() {
+    // Level 1: Epic Headers (dropTarget only, not draggable)
+    document.querySelectorAll('.epic-header').forEach(el => {
+        const isAddButton = el.dataset.addButton;
+
+        // Epic追加ボタンは dropTarget のみ (draggable にしない)
+        if (isAddButton === 'epic') {
+            dropTargetForElements({
+                element: el,
+                getData: () => ({ epicId: 'add-epic-button' }),
+                getIsSticky: () => true,
+                canDrop: ({ source }) =>
+                    source.data.instanceId === instanceId &&
+                    source.data.type === 'feature-card',
+                onDragEnter: () => el.classList.add('over'),
+                onDragLeave: () => el.classList.remove('over'),
+                onDrop: () => el.classList.remove('over'),
+            });
+            return;
+        }
+
+        // 通常の Epic Header は現状 draggable にしない（将来的に実装可能）
+    });
+
+    // Level 1: Version Add Button (No Versionセル内に配置)
+    document.querySelectorAll('[data-add-button="version"]').forEach(el => {
+        dropTargetForElements({
+            element: el,
+            getData: () => ({ versionId: 'add-version-button' }),
+            getIsSticky: () => true,
+            canDrop: ({ source }) =>
+                source.data.instanceId === instanceId &&
+                source.data.type === 'feature-card',
+            onDragEnter: () => el.classList.add('over'),
+            onDragLeave: () => el.classList.remove('over'),
+            onDrop: () => el.classList.remove('over'),
+        });
+    });
+
     // Level 2: Feature Cards
     document.querySelectorAll('.feature-card').forEach(el => {
         const featureId = el.dataset.feature;
