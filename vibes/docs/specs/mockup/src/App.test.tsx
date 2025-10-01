@@ -3,11 +3,12 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { App } from './App';
 import { useStore } from './store/useStore';
+import { mockCells } from './mockData';
 
 describe('App - Integration Tests', () => {
   beforeEach(() => {
-    // テスト前にストアをリセット
-    useStore.setState({ cells: useStore.getState().cells });
+    // テスト前にストアを初期データでリセット (deep copy)
+    useStore.setState({ cells: JSON.parse(JSON.stringify(mockCells)) });
   });
 
   it('should render Epic × Version grid structure', () => {

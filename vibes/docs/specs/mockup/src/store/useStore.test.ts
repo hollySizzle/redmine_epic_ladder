@@ -176,3 +176,220 @@ describe('useStore - Task reordering', () => {
     expect(updatedTargetStory?.tasks[1].id).toBe('t2');
   });
 });
+
+describe('useStore - Test reordering', () => {
+  beforeEach(() => {
+    // ストアを初期データでリセット
+    useStore.setState({ cells: JSON.parse(JSON.stringify(mockCells)) });
+  });
+
+  it('should reorder tests within the same user story', () => {
+    const store = useStore.getState();
+
+    // us1にはtest1が1つあるので、テスト用にもう1つ追加
+    const story = store.cells
+      .flatMap(c => c.features)
+      .flatMap(f => f.stories)
+      .find(s => s.id === 'us1');
+
+    story?.tests.push({
+      id: 'test2',
+      title: 'E2Eテスト作成',
+      status: 'open'
+    });
+
+    expect(story?.tests[0].id).toBe('test1');
+    expect(story?.tests[1].id).toBe('test2');
+
+    // test2 を test1 の位置に移動
+    store.reorderTests('test2', 'test1');
+
+    const updatedStory = useStore.getState().cells
+      .flatMap(c => c.features)
+      .flatMap(f => f.stories)
+      .find(s => s.id === 'us1');
+
+    expect(updatedStory?.tests[0].id).toBe('test2');
+    expect(updatedStory?.tests[1].id).toBe('test1');
+  });
+
+  it('should move test to different user story', () => {
+    const store = useStore.getState();
+
+    const sourceStory = store.cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us1');
+    const targetStory = store.cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us2');
+
+    // us2にもtestを追加
+    targetStory?.tests.push({
+      id: 'test3',
+      title: '一覧画面テスト',
+      status: 'open'
+    });
+
+    expect(sourceStory?.tests.length).toBe(1); // test1
+    expect(targetStory?.tests.length).toBe(1); // test3
+
+    // test1 を us2 の test3 の後に移動
+    store.reorderTests('test1', 'test3');
+
+    const updatedSourceStory = useStore.getState().cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us1');
+    const updatedTargetStory = useStore.getState().cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us2');
+
+    expect(updatedSourceStory?.tests.length).toBe(0); // 空になった
+    expect(updatedTargetStory?.tests.length).toBe(2); // test3, test1
+    expect(updatedTargetStory?.tests[1].id).toBe('test1');
+  });
+});
+
+describe('useStore - Bug reordering', () => {
+  beforeEach(() => {
+    // ストアを初期データでリセット
+    useStore.setState({ cells: JSON.parse(JSON.stringify(mockCells)) });
+  });
+
+  it('should reorder bugs within the same user story', () => {
+    const store = useStore.getState();
+
+    // us1にはb1が1つあるので、テスト用にもう1つ追加
+    const story = store.cells
+      .flatMap(c => c.features)
+      .flatMap(f => f.stories)
+      .find(s => s.id === 'us1');
+
+    story?.bugs.push({
+      id: 'b2',
+      title: 'UI表示崩れ修正',
+      status: 'open'
+    });
+
+    expect(story?.bugs[0].id).toBe('b1');
+    expect(story?.bugs[1].id).toBe('b2');
+
+    // b2 を b1 の位置に移動
+    store.reorderBugs('b2', 'b1');
+
+    const updatedStory = useStore.getState().cells
+      .flatMap(c => c.features)
+      .flatMap(f => f.stories)
+      .find(s => s.id === 'us1');
+
+    expect(updatedStory?.bugs[0].id).toBe('b2');
+    expect(updatedStory?.bugs[1].id).toBe('b1');
+  });
+
+  it('should move bug to different user story', () => {
+    const store = useStore.getState();
+
+    const sourceStory = store.cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us1');
+    const targetStory = store.cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us2');
+
+    // us2にもbugを追加
+    targetStory?.bugs.push({
+      id: 'b3',
+      title: 'データ取得エラー',
+      status: 'open'
+    });
+
+    expect(sourceStory?.bugs.length).toBe(1); // b1
+    expect(targetStory?.bugs.length).toBe(1); // b3
+
+    // b1 を us2 の b3 の後に移動
+    store.reorderBugs('b1', 'b3');
+
+    const updatedSourceStory = useStore.getState().cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us1');
+    const updatedTargetStory = useStore.getState().cells.flatMap(c => c.features).flatMap(f => f.stories).find(s => s.id === 'us2');
+
+    expect(updatedSourceStory?.bugs.length).toBe(0); // 空になった
+    expect(updatedTargetStory?.bugs.length).toBe(2); // b3, b1
+    expect(updatedTargetStory?.bugs[1].id).toBe('b1');
+  });
+});
+
+describe('useStore - Error cases', () => {
+  beforeEach(() => {
+    // ストアを初期データでリセット
+    useStore.setState({ cells: JSON.parse(JSON.stringify(mockCells)) });
+  });
+
+  it('should not fail when moving non-existent feature', () => {
+    const store = useStore.getState();
+    const initialState = JSON.stringify(store.cells);
+
+    // 存在しないfeatureを移動しようとする
+    store.reorderFeatures('non-existent-feature', 'f1');
+
+    // ストアの状態が変わっていないことを確認
+    expect(JSON.stringify(useStore.getState().cells)).toBe(initialState);
+  });
+
+  it('should not fail when moving to non-existent target feature', () => {
+    const store = useStore.getState();
+    const cell = store.cells.find(c => c.epicId === 'epic1' && c.versionId === 'v1');
+    const initialFeatureCount = cell?.features.length;
+
+    // 存在しないターゲットに移動しようとする
+    store.reorderFeatures('f1', 'non-existent-target');
+
+    const updatedCell = useStore.getState().cells.find(c => c.epicId === 'epic1' && c.versionId === 'v1');
+
+    // セル内のfeature数が変わっていないことを確認
+    expect(updatedCell?.features.length).toBe(initialFeatureCount);
+  });
+
+  it('should not fail when moving non-existent user story', () => {
+    const store = useStore.getState();
+    const initialState = JSON.stringify(store.cells);
+
+    // 存在しないstoryを移動しようとする
+    store.reorderUserStories('non-existent-story', 'us1');
+
+    // ストアの状態が変わっていないことを確認
+    expect(JSON.stringify(useStore.getState().cells)).toBe(initialState);
+  });
+
+  it('should not fail when moving non-existent task', () => {
+    const store = useStore.getState();
+    const initialState = JSON.stringify(store.cells);
+
+    // 存在しないtaskを移動しようとする
+    store.reorderTasks('non-existent-task', 't1');
+
+    // ストアの状態が変わっていないことを確認
+    expect(JSON.stringify(useStore.getState().cells)).toBe(initialState);
+  });
+
+  it('should handle empty arrays gracefully', () => {
+    const store = useStore.getState();
+
+    // 空のセルを作成
+    const emptyCell = store.cells.find(c => c.epicId === 'epic1' && c.versionId === 'v3');
+    expect(emptyCell?.features.length).toBe(0);
+
+    // 空のセルに対して操作しても問題ないことを確認
+    store.reorderFeatures('f1', 'add-button', {
+      isAddButton: true,
+      epicId: 'epic1',
+      versionId: 'v3'
+    });
+
+    const updatedCell = useStore.getState().cells.find(c => c.epicId === 'epic1' && c.versionId === 'v3');
+
+    // f1が移動していることを確認
+    expect(updatedCell?.features.length).toBe(1);
+    expect(updatedCell?.features[0].id).toBe('f1');
+  });
+
+  it('should preserve other cells when moving features', () => {
+    const store = useStore.getState();
+
+    const otherCell = store.cells.find(c => c.epicId === 'epic2' && c.versionId === 'v2');
+    const initialOtherCellState = JSON.stringify(otherCell);
+
+    // epic1のfeatureを移動
+    store.reorderFeatures('f1', 'f2');
+
+    // 他のセル(epic2)が影響を受けていないことを確認
+    const updatedOtherCell = useStore.getState().cells.find(c => c.epicId === 'epic2' && c.versionId === 'v2');
+    expect(JSON.stringify(updatedOtherCell)).toBe(initialOtherCellState);
+  });
+});
