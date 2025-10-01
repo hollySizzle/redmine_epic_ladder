@@ -34,23 +34,24 @@
         /* 最上位 Grid */
         .epic-version-wrapper {
             display: grid;
-            grid-template-rows: auto;
-            grid-template-columns: auto;
+            grid-template-rows: 1fr auto;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
         }
 
         .epic-version-grid {
-            grid-row: 1/1;
-            grid-column: 1/1;
+            grid-row: 1;
+            grid-column: 1;
         }
 
         .new-version-wrapper {
             grid-row: 1;
-            grid-column: -1;
+            grid-column: 2;
         }
 
         .new-epic-wrapper {
-            grid-row: -1;
-            grid-column: auto;
+            grid-row: 2;
+            grid-column: 1 / -1;  /* 全幅 */
         }
 
         /* Epic × Version Grid */
