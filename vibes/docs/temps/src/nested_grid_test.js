@@ -70,13 +70,28 @@ function ensureAddButtonsAtEnd() {
 
 // 各レベルのドラッグ可能要素とドロップターゲットを設定
 function setupDragAndDrop() {
-    // Level 2: Feature Cards (Addボタンは除外)
+    // Level 2: Feature Cards
     document.querySelectorAll('.feature-card').forEach(el => {
-        // Addボタンはスキップ
-        if (el.dataset.addButton) return;
-
         const featureId = el.dataset.feature;
+        const isAddButton = el.dataset.addButton;
 
+        // Addボタンは dropTarget のみ (draggable にはしない)
+        if (isAddButton) {
+            dropTargetForElements({
+                element: el,
+                getData: () => ({ featureId: 'add-button' }),
+                getIsSticky: () => true,
+                canDrop: ({ source }) =>
+                    source.data.instanceId === instanceId &&
+                    source.data.type === 'feature-card',
+                onDragEnter: () => el.classList.add('over'),
+                onDragLeave: () => el.classList.remove('over'),
+                onDrop: () => el.classList.remove('over'),
+            });
+            return;
+        }
+
+        // 通常のFeatureカードは draggable + dropTarget
         combine(
             draggable({
                 element: el,
