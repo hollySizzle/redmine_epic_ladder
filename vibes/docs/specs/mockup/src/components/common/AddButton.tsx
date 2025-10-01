@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDropTarget } from '../../hooks/useDropTarget';
 
 interface AddButtonProps {
   type: 'epic' | 'version' | 'feature' | 'user-story' | 'task' | 'test' | 'bug';
@@ -6,6 +7,8 @@ interface AddButtonProps {
   onClick?: () => void;
   dataAddButton?: string;
   className?: string;
+  epicId?: string;
+  versionId?: string;
 }
 
 export const AddButton: React.FC<AddButtonProps> = ({
@@ -13,10 +16,21 @@ export const AddButton: React.FC<AddButtonProps> = ({
   label,
   onClick,
   dataAddButton,
-  className = ''
+  className = '',
+  epicId,
+  versionId
 }) => {
   const baseClass = `add-button add-${type}-btn`;
   const fullClass = className ? `${baseClass} ${className}` : baseClass;
+
+  // Addボタンをドロップターゲットとして登録
+  const dropTargetType = type === 'feature' ? 'feature-card' : type;
+  const ref = useDropTarget({
+    type: dropTargetType,
+    id: `add-button-${type}-${epicId || 'none'}-${versionId || 'none'}`,
+    data: { isAddButton: true, epicId, versionId },
+    canDrop: (sourceData) => sourceData.type === dropTargetType,
+  });
 
   const handleClick = () => {
     if (onClick) {
@@ -28,6 +42,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
 
   return (
     <button
+      ref={ref}
       className={fullClass}
       data-add-button={dataAddButton}
       onClick={handleClick}

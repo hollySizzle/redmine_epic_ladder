@@ -6,7 +6,7 @@ import { mockCells } from '../mockData';
 
 interface StoreState {
   cells: EpicVersionCellData[];
-  reorderFeatures: (sourceId: string, targetId: string) => void;
+  reorderFeatures: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderUserStories: (sourceId: string, targetId: string) => void;
   reorderTasks: (sourceId: string, targetId: string) => void;
   reorderTests: (sourceId: string, targetId: string) => void;
@@ -18,14 +18,13 @@ export const useStore = create<StoreState>()(
     immer((set) => ({
       cells: mockCells,
 
-      // Feature カードの並び替え
-      reorderFeatures: (sourceId: string, targetId: string) =>
+      // Feature カードの並び替え (targetDataを受け取れるようにオーバーロード)
+      reorderFeatures: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
-          console.log('🔍 reorderFeatures START:', { sourceId, targetId, cellsCount: state.cells.length });
+          console.log('🔍 reorderFeatures START:', { sourceId, targetId, targetData, cellsCount: state.cells.length });
 
-          // 1. sourceとtargetが存在するcellを探す
+          // 1. source cellを探す
           let sourceCell = null;
-          let targetCell = null;
           let sourceFeature = null;
 
           for (const cell of state.cells) {
@@ -33,20 +32,56 @@ export const useStore = create<StoreState>()(
             if (sourceIndex !== -1) {
               sourceCell = cell;
               sourceFeature = cell.features[sourceIndex];
-            }
-
-            const targetIndex = cell.features.findIndex(f => f.id === targetId);
-            if (targetIndex !== -1) {
-              targetCell = cell;
+              break;
             }
           }
 
-          if (!sourceCell || !targetCell || !sourceFeature) {
-            console.warn('⚠️ Source or target not found');
+          if (!sourceCell || !sourceFeature) {
+            console.warn('⚠️ Source not found');
             return;
           }
 
-          // 2. 同じcell内の並び替え
+          // 2. Addボタンへのドロップの場合
+          if (targetData?.isAddButton) {
+            const targetEpicId = targetData.epicId;
+            const targetVersionId = targetData.versionId;
+            const targetCell = state.cells.find(c => c.epicId === targetEpicId && c.versionId === targetVersionId);
+
+            if (!targetCell) {
+              console.warn('⚠️ Target cell not found for add button');
+              return;
+            }
+
+            // source cellから削除
+            const sourceIndex = sourceCell.features.findIndex(f => f.id === sourceId);
+            const [removed] = sourceCell.features.splice(sourceIndex, 1);
+
+            // target cellの末尾に追加
+            targetCell.features.push(removed);
+            console.log('✅ Moved feature to empty cell (add button):', {
+              sourceId,
+              from: `${sourceCell.epicId}×${sourceCell.versionId}`,
+              to: `${targetCell.epicId}×${targetCell.versionId}`
+            });
+            return;
+          }
+
+          // 3. target cellを探す (通常のFeatureカード)
+          let targetCell = null;
+          for (const cell of state.cells) {
+            const targetIndex = cell.features.findIndex(f => f.id === targetId);
+            if (targetIndex !== -1) {
+              targetCell = cell;
+              break;
+            }
+          }
+
+          if (!targetCell) {
+            console.warn('⚠️ Target not found');
+            return;
+          }
+
+          // 4. 同じcell内の並び替え
           if (sourceCell === targetCell) {
             const sourceIndex = sourceCell.features.findIndex(f => f.id === sourceId);
             const targetIndex = sourceCell.features.findIndex(f => f.id === targetId);
@@ -55,7 +90,7 @@ export const useStore = create<StoreState>()(
             sourceCell.features.splice(newTargetIndex, 0, removed);
             console.log('✅ Reordered features (same cell):', { sourceId, targetId });
           }
-          // 3. 異なるcell間の移動
+          // 5. 異なるcell間の移動
           else {
             // source cellから削除
             const sourceIndex = sourceCell.features.findIndex(f => f.id === sourceId);

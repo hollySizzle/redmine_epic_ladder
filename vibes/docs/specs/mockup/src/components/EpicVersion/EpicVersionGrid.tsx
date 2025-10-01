@@ -57,7 +57,11 @@ export const EpicVersionGrid: React.FC<EpicVersionGridProps> = ({
                 data-epic={epic.id}
                 data-version={version.id}
               >
-                <FeatureCardGrid features={getCellData(epic.id, version.id)} />
+                <FeatureCardGrid
+                  features={getCellData(epic.id, version.id)}
+                  epicId={epic.id}
+                  versionId={version.id}
+                />
               </div>
             ))}
           </React.Fragment>

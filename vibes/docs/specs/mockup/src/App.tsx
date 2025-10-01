@@ -33,7 +33,7 @@ export const App: React.FC = () => {
         const targetType = targetData.type as string;
         const targetId = targetData.id as string;
 
-        console.log('🎯 Reordering:', { sourceType, sourceId, targetType, targetId });
+        console.log('🎯 Reordering:', { sourceType, sourceId, targetType, targetId, targetData });
 
         // 同じタイプ同士のみ並び替え可能
         if (sourceType !== targetType) {
@@ -45,7 +45,7 @@ export const App: React.FC = () => {
         console.log('🔍 About to call reorder function:', { sourceType, sourceId, targetId });
         if (sourceType === 'feature-card') {
           console.log('🔍 Calling reorderFeatures...');
-          reorderFeatures(sourceId, targetId);
+          reorderFeatures(sourceId, targetId, targetData);
           console.log('🔍 reorderFeatures called');
         } else if (sourceType === 'user-story') {
           console.log('🔍 Calling reorderUserStories...');

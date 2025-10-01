@@ -4,9 +4,11 @@ import { AddButton } from '../common/AddButton';
 
 interface FeatureCardGridProps {
   features: FeatureCardData[];
+  epicId: string;
+  versionId: string;
 }
 
-export const FeatureCardGrid: React.FC<FeatureCardGridProps> = ({ features }) => {
+export const FeatureCardGrid: React.FC<FeatureCardGridProps> = ({ features, epicId, versionId }) => {
   return (
     <div className="feature-card-grid">
       {features.map(feature => (
@@ -17,6 +19,8 @@ export const FeatureCardGrid: React.FC<FeatureCardGridProps> = ({ features }) =>
         label="+ Add Feature"
         dataAddButton="feature"
         className="feature-card"
+        epicId={epicId}
+        versionId={versionId}
       />
     </div>
   );
