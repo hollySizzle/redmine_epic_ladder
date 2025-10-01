@@ -24,7 +24,9 @@
       "Bash(xargs kill:*)",
       "Bash(./bin/setup_test_env.sh:*)",
       "Bash(npm install:*)",
-      "Bash(npx webpack serve:*)"
+      "Bash(npx webpack serve:*)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/grid_layout_measurement_spec.rb:59 --format documentation --fail-fast)",
+      "Bash(RAILS_ENV=test bundle exec rails s -p 3001 -d)"
     ],
     "deny": [],
     "ask": [],

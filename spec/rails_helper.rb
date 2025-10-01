@@ -39,7 +39,8 @@ begin
   require File.expand_path('../../../spec/rails_helper', __dir__)
 rescue LoadError
   # Redmineのrails_helperがない場合の基本設定
-  require 'rails/test_help'
+  # Railsアプリケーションが確実にロードされるようにする
+  require File.expand_path('../../../config/environment', __dir__)
   require 'rspec/rails'
 end
 
