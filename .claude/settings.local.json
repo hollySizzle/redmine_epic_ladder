@@ -26,7 +26,11 @@
       "Bash(npm install:*)",
       "Bash(npx webpack serve:*)",
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/grid_layout_measurement_spec.rb:59 --format documentation --fail-fast)",
-      "Bash(RAILS_ENV=test bundle exec rails s -p 3001 -d)"
+      "Bash(RAILS_ENV=test bundle exec rails s -p 3001 -d)",
+      "WebFetch(domain:marmelab.com)",
+      "WebFetch(domain:atlassian.design)",
+      "Bash(timeout 10 npx webpack serve:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],

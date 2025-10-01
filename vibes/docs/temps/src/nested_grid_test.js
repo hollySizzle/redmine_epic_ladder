@@ -58,10 +58,23 @@ function moveElement(sourceEl, targetEl) {
     return true;
 }
 
+// Addボタンを常に末尾に移動する関数
+function ensureAddButtonsAtEnd() {
+    document.querySelectorAll('[data-add-button]').forEach(button => {
+        const parent = button.parentElement;
+        if (parent && parent.lastElementChild !== button) {
+            parent.appendChild(button);
+        }
+    });
+}
+
 // 各レベルのドラッグ可能要素とドロップターゲットを設定
 function setupDragAndDrop() {
-    // Level 2: Feature Cards
+    // Level 2: Feature Cards (Addボタンは除外)
     document.querySelectorAll('.feature-card').forEach(el => {
+        // Addボタンはスキップ
+        if (el.dataset.addButton) return;
+
         const featureId = el.dataset.feature;
 
         combine(
@@ -254,6 +267,9 @@ function setupDragAndDrop() {
                     console.warn('⚠️ Neither swap nor move was possible');
                 }
             }
+
+            // ドロップ完了後、すべてのAddボタンを末尾に移動
+            ensureAddButtonsAtEnd();
         }
     });
 }

@@ -234,6 +234,51 @@
             margin: 5px 0;
             font-size: 14px;
         }
+
+        /* Add ボタンスタイル */
+        .add-button {
+            border: 2px dashed #9e9e9e;
+            background: #fafafa;
+            color: #666;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 150ms ease-in-out;
+            order: 9999; /* 常に末尾に配置 */
+        }
+
+        .add-button:hover {
+            background: #f0f0f0;
+            border-color: #2196f3;
+            color: #2196f3;
+        }
+
+        .add-button:active {
+            transform: scale(0.98);
+        }
+
+        /* レベル別のAddボタン */
+        .add-feature-btn {
+            min-height: 60px;
+            font-size: 12px;
+        }
+
+        .add-user-story-btn {
+            min-height: 40px;
+            font-size: 10px;
+            margin-top: 6px;
+        }
+
+        .add-task-btn,
+        .add-test-btn,
+        .add-bug-btn {
+            min-height: 25px;
+            font-size: 8px;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -315,6 +360,11 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Add Feature Button (末尾固定) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
             </div>
         </div>
 
@@ -338,15 +388,41 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Add Feature Button (末尾固定) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
             </div>
         </div>
 
-        <div class="epic-version-cell" data-epic="epic1" data-version="v3"></div>
-        <div class="epic-version-cell" data-epic="epic1" data-version="none"></div>
+        <div class="epic-version-cell" data-epic="epic1" data-version="v3">
+            <div class="feature-card-grid">
+                <!-- Add Feature Button (空のグリッド) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
+            </div>
+        </div>
+        <div class="epic-version-cell" data-epic="epic1" data-version="none">
+            <div class="feature-card-grid">
+                <!-- Add Feature Button (空のグリッド) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
+            </div>
+        </div>
 
         <!-- Epic 2: 開診スケジュール -->
         <div class="epic-header">開診スケジュール</div>
-        <div class="epic-version-cell" data-epic="epic2" data-version="v1"></div>
+        <div class="epic-version-cell" data-epic="epic2" data-version="v1">
+            <div class="feature-card-grid">
+                <!-- Add Feature Button (空のグリッド) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
+            </div>
+        </div>
         <div class="epic-version-cell" data-epic="epic2" data-version="v2">
             <div class="feature-card-grid">
                 <div class="feature-card" data-feature="f4">
@@ -370,10 +446,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Add Feature Button (末尾固定) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
             </div>
         </div>
-        <div class="epic-version-cell" data-epic="epic2" data-version="v3"></div>
-        <div class="epic-version-cell" data-epic="epic2" data-version="none"></div>
+        <div class="epic-version-cell" data-epic="epic2" data-version="v3">
+            <div class="feature-card-grid">
+                <!-- Add Feature Button (空のグリッド) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
+            </div>
+        </div>
+        <div class="epic-version-cell" data-epic="epic2" data-version="none">
+            <div class="feature-card-grid">
+                <!-- Add Feature Button (空のグリッド) -->
+                <button class="add-button add-feature-btn" data-add-button="feature" onclick="alert('+ Add Feature clicked!')">
+                    + Add Feature
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="legend">
