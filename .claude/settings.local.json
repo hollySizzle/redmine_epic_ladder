@@ -33,7 +33,8 @@
       "Bash(curl:*)",
       "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/**)",
       "Bash(git mv:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": [],

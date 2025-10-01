@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ネストGrid検証 - Pragmatic Drag and Drop</title>
     <style>
+        :root {
+            --epic-width: 100px;
+            --version-width: 300px;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -60,7 +65,7 @@
         /* Epic × Version Grid */
         .epic-version-grid {
             display: grid;
-            grid-template-columns: 150px repeat(3, 280px) 240px;
+            grid-template-columns: var(--epic-width) repeat(4, var(--version-width));
             grid-template-rows: auto;
             gap: 10px;
             background: #e0e0e0;
@@ -126,6 +131,16 @@
             text-align: center;
         }
 
+        .epic-version-label {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            padding: 8px;
+            font-weight: bold;
+            font-size: 0.8125rem;
+            text-align: center;
+            color: #e65100;
+        }
+
         .epic-version-cell {
             background: #fafafa;
             border: 2px solid #bdbdbd;
@@ -136,7 +151,7 @@
         /* レベル2: FeatureCardGrid (Epic × Version セル内) */
         .feature-card-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr;
             gap: 8px;
             height: 100%;
         }
@@ -493,7 +508,7 @@
     <div class="epic-version-wrapper">
         <div class="epic-version-grid">
             <!-- ヘッダー行 -->
-            <div class="version-header" style="grid-column: 1;">Epic \ Version</div>
+            <div class="epic-version-label">Epic \ Version</div>
             <div class="version-header">Version-1</div>
             <div class="version-header">Version-2</div>
             <div class="version-header">Version-3</div>
