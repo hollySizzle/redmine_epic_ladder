@@ -2,18 +2,26 @@ import React, { useEffect } from 'react';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
 import { Legend } from './components/Legend';
-import { mockEpics, mockVersions } from './mockData';
 import { useStore } from './store/useStore';
+import { useGridData } from './hooks/useGridData';
 import './styles.scss';
 
 export const App: React.FC = () => {
-  // Zustand storeから状態とアクションを取得
-  const cells = useStore(state => state.cells);
+  // 正規化APIデータをビューモデルに変換
+  const { epics, versions, cells, isLoading, error } = useGridData();
+
+  // Zustand storeからアクションを取得
+  const fetchGridData = useStore(state => state.fetchGridData);
   const reorderFeatures = useStore(state => state.reorderFeatures);
   const reorderUserStories = useStore(state => state.reorderUserStories);
   const reorderTasks = useStore(state => state.reorderTasks);
   const reorderTests = useStore(state => state.reorderTests);
   const reorderBugs = useStore(state => state.reorderBugs);
+
+  // 初期データ取得
+  useEffect(() => {
+    fetchGridData('1'); // projectId = 1
+  }, [fetchGridData]);
 
   // グローバルなドロップイベント監視
   useEffect(() => {
@@ -68,20 +76,28 @@ export const App: React.FC = () => {
     });
   }, [reorderFeatures, reorderUserStories, reorderTasks, reorderTests, reorderBugs]);
 
+  if (isLoading) {
+    return <div className="loading">Loading grid data...</div>;
+  }
+
+  if (error) {
+    return <div className="error">Error: {error}</div>;
+  }
+
   return (
     <>
-      <h1>🔬 ネストGrid検証 - 4層Grid構造テスト</h1>
+      <h1>🔬 ネストGrid検証 - 4層Grid構造テスト (正規化API対応)</h1>
 
       <div className="test-info">
         <strong>検証目的:</strong> Epic×Version Grid の中に FeatureCardGrid → UserStoryGrid → TaskGrid が4層ネストできるかを検証<br />
-        <strong>技術:</strong> CSS Grid + Pragmatic Drag and Drop<br />
+        <strong>技術:</strong> CSS Grid + Pragmatic Drag and Drop + Normalized API + MSW<br />
         <strong>操作:</strong> 各レベルのカード（Feature/UserStory/Task/Test/Bug）をドラッグ&ドロップしてみてください<br />
-        <strong>✅ React + TypeScript + Zustand + Pragmatic Drag and Drop で実装</strong>
+        <strong>✅ React + TypeScript + Zustand + Pragmatic Drag and Drop + MSW で実装</strong>
       </div>
 
       <EpicVersionGrid
-        epics={mockEpics}
-        versions={mockVersions}
+        epics={epics}
+        versions={versions}
         cells={cells}
       />
 

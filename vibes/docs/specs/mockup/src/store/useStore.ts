@@ -1,11 +1,45 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { devtools } from 'zustand/middleware';
-import type { EpicVersionCellData } from '../components/EpicVersion/EpicVersionGrid';
-import { mockCells } from '../mockData';
+import type {
+  NormalizedAPIResponse,
+  Epic,
+  Version,
+  Feature,
+  UserStory,
+  Task,
+  Test,
+  Bug
+} from '../types/normalized-api';
 
 interface StoreState {
-  cells: EpicVersionCellData[];
+  // 正規化されたエンティティ
+  entities: {
+    epics: Record<string, Epic>;
+    versions: Record<string, Version>;
+    features: Record<string, Feature>;
+    user_stories: Record<string, UserStory>;
+    tasks: Record<string, Task>;
+    tests: Record<string, Test>;
+    bugs: Record<string, Bug>;
+  };
+
+  // グリッドインデックス
+  grid: {
+    index: Record<string, string[]>; // "epicId:versionId" => feature IDs
+    epic_order: string[];
+    version_order: string[];
+  };
+
+  // データ取得・初期化
+  fetchGridData: (projectId: string) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+
+  // Feature移動
+  moveFeature: (featureId: string, targetEpicId: string, targetVersionId: string | null) => Promise<void>;
+
+  // ドラッグ&ドロップ操作
   reorderFeatures: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderUserStories: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderTasks: (sourceId: string, targetId: string, targetData?: any) => void;
@@ -13,313 +47,322 @@ interface StoreState {
   reorderBugs: (sourceId: string, targetId: string, targetData?: any) => void;
 }
 
-// 型定義: コンテナとアイテムの検索結果
-interface FindResult<Container, Item> {
-  container: Container | null;
-  item: Item | null;
-  index: number;
-}
-
-// 共通ヘルパー関数: ネストされた構造から要素を探す
-function findItemInContainers<Container, Item>(
-  containers: Container[],
-  getItems: (container: Container) => Item[],
-  predicate: (item: Item) => boolean
-): FindResult<Container, Item> {
-  for (const container of containers) {
-    const items = getItems(container);
-    const index = items.findIndex(predicate);
-    if (index !== -1) {
-      return { container, item: items[index], index };
-    }
-  }
-  return { container: null, item: null, index: -1 };
-}
-
-// 共通ヘルパー関数: 同一コンテナ内での並び替え
-function reorderInSameContainer<Item>(
-  items: Item[],
-  sourceIndex: number,
-  targetIndex: number
-): void {
-  const [removed] = items.splice(sourceIndex, 1);
-  const newTargetIndex = items.findIndex((_, i) => i === targetIndex);
-  items.splice(newTargetIndex, 0, removed);
-}
-
-// 共通ヘルパー関数: 異なるコンテナ間での移動
-function moveBetweenContainers<Item>(
-  sourceItems: Item[],
-  targetItems: Item[],
-  sourceIndex: number,
-  targetIndex: number
-): void {
-  const [removed] = sourceItems.splice(sourceIndex, 1);
-  targetItems.splice(targetIndex + 1, 0, removed);
-}
-
 export const useStore = create<StoreState>()(
   devtools(
-    immer((set) => ({
-      cells: mockCells,
+    immer((set, get) => ({
+      entities: {
+        epics: {},
+        versions: {},
+        features: {},
+        user_stories: {},
+        tasks: {},
+        tests: {},
+        bugs: {}
+      },
 
-      // Feature カードの並び替え
+      grid: {
+        index: {},
+        epic_order: [],
+        version_order: []
+      },
+
+      isLoading: false,
+      error: null,
+
+      // グリッドデータ取得
+      fetchGridData: async (projectId: string) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await fetch(`/api/kanban/projects/${projectId}/grid`);
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch grid data: ${response.statusText}`);
+          }
+
+          const data: NormalizedAPIResponse = await response.json();
+
+          set({
+            entities: data.entities,
+            grid: data.grid,
+            isLoading: false
+          });
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      },
+
+      // Feature移動API呼び出し
+      moveFeature: async (featureId: string, targetEpicId: string, targetVersionId: string | null) => {
+        try {
+          const response = await fetch(`/api/kanban/projects/1/grid/move_feature`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              feature_id: featureId,
+              target_epic_id: targetEpicId,
+              target_version_id: targetVersionId
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to move feature: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+
+          // 更新されたエンティティとグリッドインデックスを反映
+          set((state) => {
+            if (result.updated_entities.features) {
+              Object.assign(state.entities.features, result.updated_entities.features);
+            }
+            if (result.updated_grid_index) {
+              Object.assign(state.grid.index, result.updated_grid_index);
+            }
+          });
+        } catch (error) {
+          console.error('Failed to move feature:', error);
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+      },
+
+      // Feature カードの並び替え (ローカル操作)
       reorderFeatures: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
-          // 1. sourceを探す
-          const sourceResult = findItemInContainers(
-            state.cells,
-            (cell) => cell.features,
-            (f) => f.id === sourceId
-          );
-
-          if (!sourceResult.container || !sourceResult.item) {
-            return;
-          }
-
-          // 2. Addボタンへのドロップの場合
+          // Addボタンへのドロップの場合
           if (targetData?.isAddButton) {
-            const targetCell = state.cells.find(
-              (c) => c.epicId === targetData.epicId && c.versionId === targetData.versionId
-            );
+            const sourceFeature = state.entities.features[sourceId];
+            if (!sourceFeature) return;
 
-            if (!targetCell) {
-              return;
+            const oldCellKey = `${sourceFeature.parent_epic_id}:${sourceFeature.fixed_version_id || 'none'}`;
+            const newCellKey = `${targetData.epicId}:${targetData.versionId || 'none'}`;
+
+            // 古いセルから削除
+            const oldCell = state.grid.index[oldCellKey];
+            if (oldCell) {
+              const index = oldCell.indexOf(sourceId);
+              if (index !== -1) {
+                oldCell.splice(index, 1);
+              }
             }
 
-            // source cellから削除してtarget cellに追加
-            sourceResult.container.features.splice(sourceResult.index, 1);
-            targetCell.features.push(sourceResult.item);
+            // 新しいセルに追加
+            if (!state.grid.index[newCellKey]) {
+              state.grid.index[newCellKey] = [];
+            }
+            state.grid.index[newCellKey].push(sourceId);
+
+            // Featureエンティティ更新
+            sourceFeature.parent_epic_id = targetData.epicId;
+            sourceFeature.fixed_version_id = targetData.versionId || null;
+
             return;
           }
 
-          // 3. targetを探す
-          const targetResult = findItemInContainers(
-            state.cells,
-            (cell) => cell.features,
-            (f) => f.id === targetId
-          );
+          // Feature間のドロップ
+          const sourceFeature = state.entities.features[sourceId];
+          const targetFeature = state.entities.features[targetId];
 
-          if (!targetResult.container) {
-            return;
-          }
+          if (!sourceFeature || !targetFeature) return;
 
-          // 4. 同じcell内の並び替え
-          if (sourceResult.container === targetResult.container) {
-            reorderInSameContainer(
-              sourceResult.container.features,
-              sourceResult.index,
-              targetResult.index
-            );
+          const sourceCellKey = `${sourceFeature.parent_epic_id}:${sourceFeature.fixed_version_id || 'none'}`;
+          const targetCellKey = `${targetFeature.parent_epic_id}:${targetFeature.fixed_version_id || 'none'}`;
+
+          // 同じセル内での並び替え
+          if (sourceCellKey === targetCellKey) {
+            const cell = state.grid.index[sourceCellKey];
+            if (cell) {
+              const sourceIndex = cell.indexOf(sourceId);
+              const targetIndex = cell.indexOf(targetId);
+
+              if (sourceIndex !== -1 && targetIndex !== -1) {
+                cell.splice(sourceIndex, 1);
+                const newTargetIndex = cell.indexOf(targetId);
+                cell.splice(newTargetIndex + 1, 0, sourceId);
+              }
+            }
           }
-          // 5. 異なるcell間の移動
+          // 異なるセル間の移動
           else {
-            moveBetweenContainers(
-              sourceResult.container.features,
-              targetResult.container.features,
-              sourceResult.index,
-              targetResult.index
-            );
+            const sourceCell = state.grid.index[sourceCellKey];
+            const targetCell = state.grid.index[targetCellKey];
+
+            if (sourceCell && targetCell) {
+              const sourceIndex = sourceCell.indexOf(sourceId);
+              if (sourceIndex !== -1) {
+                sourceCell.splice(sourceIndex, 1);
+              }
+
+              const targetIndex = targetCell.indexOf(targetId);
+              targetCell.splice(targetIndex + 1, 0, sourceId);
+
+              // Featureエンティティ更新
+              sourceFeature.parent_epic_id = targetFeature.parent_epic_id;
+              sourceFeature.fixed_version_id = targetFeature.fixed_version_id;
+            }
           }
         }, false, 'reorderFeatures'),
 
       // UserStory の並び替え
       reorderUserStories: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
-          // 1. sourceを探す
-          const allFeatures = state.cells.flatMap((c) => c.features);
-          const sourceResult = findItemInContainers(
-            allFeatures,
-            (feature) => feature.stories,
-            (s) => s.id === sourceId
-          );
+          const sourceStory = state.entities.user_stories[sourceId];
+          const targetStory = state.entities.user_stories[targetId];
 
-          if (!sourceResult.container || !sourceResult.item) {
-            return;
+          if (!sourceStory || !targetStory) return;
+
+          const sourceFeature = state.entities.features[sourceStory.parent_feature_id];
+          const targetFeature = state.entities.features[targetStory.parent_feature_id];
+
+          if (!sourceFeature || !targetFeature) return;
+
+          // 同じFeature内の並び替え
+          if (sourceStory.parent_feature_id === targetStory.parent_feature_id) {
+            const stories = sourceFeature.user_story_ids;
+            const sourceIndex = stories.indexOf(sourceId);
+            const targetIndex = stories.indexOf(targetId);
+
+            if (sourceIndex !== -1 && targetIndex !== -1) {
+              stories.splice(sourceIndex, 1);
+              const newTargetIndex = stories.indexOf(targetId);
+              stories.splice(newTargetIndex + 1, 0, sourceId);
+            }
           }
-
-          // 2. Addボタンへのドロップ（将来の拡張用）
-          if (targetData?.isAddButton) {
-            return;
-          }
-
-          // 3. targetを探す
-          const targetResult = findItemInContainers(
-            allFeatures,
-            (feature) => feature.stories,
-            (s) => s.id === targetId
-          );
-
-          if (!targetResult.container) {
-            return;
-          }
-
-          // 4. 同じfeature内の並び替え
-          if (sourceResult.container === targetResult.container) {
-            reorderInSameContainer(
-              sourceResult.container.stories,
-              sourceResult.index,
-              targetResult.index
-            );
-          }
-          // 5. 異なるfeature間の移動
+          // 異なるFeature間の移動
           else {
-            moveBetweenContainers(
-              sourceResult.container.stories,
-              targetResult.container.stories,
-              sourceResult.index,
-              targetResult.index
-            );
+            const sourceIndex = sourceFeature.user_story_ids.indexOf(sourceId);
+            if (sourceIndex !== -1) {
+              sourceFeature.user_story_ids.splice(sourceIndex, 1);
+            }
+
+            const targetIndex = targetFeature.user_story_ids.indexOf(targetId);
+            targetFeature.user_story_ids.splice(targetIndex + 1, 0, sourceId);
+
+            // UserStoryの親Feature更新
+            sourceStory.parent_feature_id = targetStory.parent_feature_id;
           }
         }, false, 'reorderUserStories'),
 
       // Task の並び替え
       reorderTasks: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
-          // 1. sourceを探す
-          const allStories = state.cells.flatMap((c) => c.features).flatMap((f) => f.stories);
-          const sourceResult = findItemInContainers(
-            allStories,
-            (story) => story.tasks,
-            (t) => t.id === sourceId
-          );
+          const sourceTask = state.entities.tasks[sourceId];
+          const targetTask = state.entities.tasks[targetId];
 
-          if (!sourceResult.container || !sourceResult.item) {
-            return;
+          if (!sourceTask || !targetTask) return;
+
+          const sourceStory = state.entities.user_stories[sourceTask.parent_user_story_id];
+          const targetStory = state.entities.user_stories[targetTask.parent_user_story_id];
+
+          if (!sourceStory || !targetStory) return;
+
+          // 同じStory内の並び替え
+          if (sourceTask.parent_user_story_id === targetTask.parent_user_story_id) {
+            const tasks = sourceStory.task_ids;
+            const sourceIndex = tasks.indexOf(sourceId);
+            const targetIndex = tasks.indexOf(targetId);
+
+            if (sourceIndex !== -1 && targetIndex !== -1) {
+              tasks.splice(sourceIndex, 1);
+              const newTargetIndex = tasks.indexOf(targetId);
+              tasks.splice(newTargetIndex + 1, 0, sourceId);
+            }
           }
-
-          // 2. Addボタンへのドロップ（将来の拡張用）
-          if (targetData?.isAddButton) {
-            return;
-          }
-
-          // 3. targetを探す
-          const targetResult = findItemInContainers(
-            allStories,
-            (story) => story.tasks,
-            (t) => t.id === targetId
-          );
-
-          if (!targetResult.container) {
-            return;
-          }
-
-          // 4. 同じstory内の並び替え
-          if (sourceResult.container === targetResult.container) {
-            reorderInSameContainer(
-              sourceResult.container.tasks,
-              sourceResult.index,
-              targetResult.index
-            );
-          }
-          // 5. 異なるstory間の移動
+          // 異なるStory間の移動
           else {
-            moveBetweenContainers(
-              sourceResult.container.tasks,
-              targetResult.container.tasks,
-              sourceResult.index,
-              targetResult.index
-            );
+            const sourceIndex = sourceStory.task_ids.indexOf(sourceId);
+            if (sourceIndex !== -1) {
+              sourceStory.task_ids.splice(sourceIndex, 1);
+            }
+
+            const targetIndex = targetStory.task_ids.indexOf(targetId);
+            targetStory.task_ids.splice(targetIndex + 1, 0, sourceId);
+
+            // Taskの親Story更新
+            sourceTask.parent_user_story_id = targetTask.parent_user_story_id;
           }
         }, false, 'reorderTasks'),
 
       // Test の並び替え
       reorderTests: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
-          // 1. sourceを探す
-          const allStories = state.cells.flatMap((c) => c.features).flatMap((f) => f.stories);
-          const sourceResult = findItemInContainers(
-            allStories,
-            (story) => story.tests,
-            (t) => t.id === sourceId
-          );
+          const sourceTest = state.entities.tests[sourceId];
+          const targetTest = state.entities.tests[targetId];
 
-          if (!sourceResult.container || !sourceResult.item) {
-            return;
+          if (!sourceTest || !targetTest) return;
+
+          const sourceStory = state.entities.user_stories[sourceTest.parent_user_story_id];
+          const targetStory = state.entities.user_stories[targetTest.parent_user_story_id];
+
+          if (!sourceStory || !targetStory) return;
+
+          // 同じStory内の並び替え
+          if (sourceTest.parent_user_story_id === targetTest.parent_user_story_id) {
+            const tests = sourceStory.test_ids;
+            const sourceIndex = tests.indexOf(sourceId);
+            const targetIndex = tests.indexOf(targetId);
+
+            if (sourceIndex !== -1 && targetIndex !== -1) {
+              tests.splice(sourceIndex, 1);
+              const newTargetIndex = tests.indexOf(targetId);
+              tests.splice(newTargetIndex + 1, 0, sourceId);
+            }
           }
-
-          // 2. Addボタンへのドロップ（将来の拡張用）
-          if (targetData?.isAddButton) {
-            return;
-          }
-
-          // 3. targetを探す
-          const targetResult = findItemInContainers(
-            allStories,
-            (story) => story.tests,
-            (t) => t.id === targetId
-          );
-
-          if (!targetResult.container) {
-            return;
-          }
-
-          // 4. 同じstory内の並び替え
-          if (sourceResult.container === targetResult.container) {
-            reorderInSameContainer(
-              sourceResult.container.tests,
-              sourceResult.index,
-              targetResult.index
-            );
-          }
-          // 5. 異なるstory間の移動
+          // 異なるStory間の移動
           else {
-            moveBetweenContainers(
-              sourceResult.container.tests,
-              targetResult.container.tests,
-              sourceResult.index,
-              targetResult.index
-            );
+            const sourceIndex = sourceStory.test_ids.indexOf(sourceId);
+            if (sourceIndex !== -1) {
+              sourceStory.test_ids.splice(sourceIndex, 1);
+            }
+
+            const targetIndex = targetStory.test_ids.indexOf(targetId);
+            targetStory.test_ids.splice(targetIndex + 1, 0, sourceId);
+
+            // Testの親Story更新
+            sourceTest.parent_user_story_id = targetTest.parent_user_story_id;
           }
         }, false, 'reorderTests'),
 
       // Bug の並び替え
       reorderBugs: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
-          // 1. sourceを探す
-          const allStories = state.cells.flatMap((c) => c.features).flatMap((f) => f.stories);
-          const sourceResult = findItemInContainers(
-            allStories,
-            (story) => story.bugs,
-            (b) => b.id === sourceId
-          );
+          const sourceBug = state.entities.bugs[sourceId];
+          const targetBug = state.entities.bugs[targetId];
 
-          if (!sourceResult.container || !sourceResult.item) {
-            return;
+          if (!sourceBug || !targetBug) return;
+
+          const sourceStory = state.entities.user_stories[sourceBug.parent_user_story_id];
+          const targetStory = state.entities.user_stories[targetBug.parent_user_story_id];
+
+          if (!sourceStory || !targetStory) return;
+
+          // 同じStory内の並び替え
+          if (sourceBug.parent_user_story_id === targetBug.parent_user_story_id) {
+            const bugs = sourceStory.bug_ids;
+            const sourceIndex = bugs.indexOf(sourceId);
+            const targetIndex = bugs.indexOf(targetId);
+
+            if (sourceIndex !== -1 && targetIndex !== -1) {
+              bugs.splice(sourceIndex, 1);
+              const newTargetIndex = bugs.indexOf(targetId);
+              bugs.splice(newTargetIndex + 1, 0, sourceId);
+            }
           }
-
-          // 2. Addボタンへのドロップ（将来の拡張用）
-          if (targetData?.isAddButton) {
-            return;
-          }
-
-          // 3. targetを探す
-          const targetResult = findItemInContainers(
-            allStories,
-            (story) => story.bugs,
-            (b) => b.id === targetId
-          );
-
-          if (!targetResult.container) {
-            return;
-          }
-
-          // 4. 同じstory内の並び替え
-          if (sourceResult.container === targetResult.container) {
-            reorderInSameContainer(
-              sourceResult.container.bugs,
-              sourceResult.index,
-              targetResult.index
-            );
-          }
-          // 5. 異なるstory間の移動
+          // 異なるStory間の移動
           else {
-            moveBetweenContainers(
-              sourceResult.container.bugs,
-              targetResult.container.bugs,
-              sourceResult.index,
-              targetResult.index
-            );
+            const sourceIndex = sourceStory.bug_ids.indexOf(sourceId);
+            if (sourceIndex !== -1) {
+              sourceStory.bug_ids.splice(sourceIndex, 1);
+            }
+
+            const targetIndex = targetStory.bug_ids.indexOf(targetId);
+            targetStory.bug_ids.splice(targetIndex + 1, 0, sourceId);
+
+            // Bugの親Story更新
+            sourceBug.parent_user_story_id = targetBug.parent_user_story_id;
           }
         }, false, 'reorderBugs'),
     }))
