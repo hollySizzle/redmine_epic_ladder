@@ -30,7 +30,10 @@
       "WebFetch(domain:marmelab.com)",
       "WebFetch(domain:atlassian.design)",
       "Bash(timeout 10 npx webpack serve:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_release_kanban/**)",
+      "Bash(git mv:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": [],
