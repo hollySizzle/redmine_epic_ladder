@@ -81,43 +81,8 @@ function ensureAddButtonsAtEnd() {
 
 // 各レベルのドラッグ可能要素とドロップターゲットを設定
 function setupDragAndDrop() {
-    // Level 1: Epic Headers (dropTarget only, not draggable)
-    document.querySelectorAll('.epic-header').forEach(el => {
-        const isAddButton = el.dataset.addButton;
-
-        // Epic追加ボタンは dropTarget のみ (draggable にしない)
-        if (isAddButton === 'epic') {
-            dropTargetForElements({
-                element: el,
-                getData: () => ({ epicId: 'add-epic-button' }),
-                getIsSticky: () => true,
-                canDrop: ({ source }) =>
-                    source.data.instanceId === instanceId &&
-                    source.data.type === 'feature-card',
-                onDragEnter: () => el.classList.add('over'),
-                onDragLeave: () => el.classList.remove('over'),
-                onDrop: () => el.classList.remove('over'),
-            });
-            return;
-        }
-
-        // 通常の Epic Header は現状 draggable にしない（将来的に実装可能）
-    });
-
-    // Level 1: Version Add Button (No Versionセル内に配置)
-    document.querySelectorAll('[data-add-button="version"]').forEach(el => {
-        dropTargetForElements({
-            element: el,
-            getData: () => ({ versionId: 'add-version-button' }),
-            getIsSticky: () => true,
-            canDrop: ({ source }) =>
-                source.data.instanceId === instanceId &&
-                source.data.type === 'feature-card',
-            onDragEnter: () => el.classList.add('over'),
-            onDragLeave: () => el.classList.remove('over'),
-            onDrop: () => el.classList.remove('over'),
-        });
-    });
+    // Level 1: Epic/Version Add Buttons は dropTarget として登録しない
+    // これらは新規作成用ボタンであり、既存カードのドロップ先ではない
 
     // Level 2: Feature Cards
     document.querySelectorAll('.feature-card').forEach(el => {
