@@ -9,6 +9,25 @@
         :root {
             --epic-width: 100px;
             --version-width: 300px;
+
+            /* フォントサイズ */
+            --font-feature-header: 0.975rem;        /* 13px * 1.2 ≈ 15.6px */
+            --font-user-story-header: 0.825rem;     /* 11px * 1.2 ≈ 13.2px */
+            --font-task-header: 0.675rem;           /* 9px * 1.2 ≈ 10.8px */
+            --font-task-item: 0.75rem;              /* 10px * 1.2 = 12px */
+
+            /* パディング・マージン */
+            --feature-padding: 14.4px;              /* 12px * 1.2 */
+            --user-story-padding: 9.6px;            /* 8px * 1.2 */
+            --task-container-padding: 6px;          /* 5px * 1.2 */
+            --task-item-padding-v: 4.8px;           /* 4px * 1.2 */
+            --task-item-padding-h: 7.2px;           /* 6px * 1.2 */
+
+            /* ギャップ */
+            --feature-gap: 9.6px;                   /* 8px * 1.2 */
+            --user-story-gap: 9.6px;                /* 8px * 1.2 */
+            --task-container-gap: 6px;              /* 5px * 1.2 */
+            --task-item-gap: 3.6px;                 /* 3px * 1.2 */
         }
 
         * {
@@ -152,7 +171,7 @@
         .feature-card-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 8px;
+            gap: var(--feature-gap);
             height: 100%;
         }
 
@@ -160,8 +179,8 @@
             background: #ffffff;
             border: 2px solid #dee2e6;
             border-radius: 4px;
-            padding: 12px;
-            min-height: 150px;
+            padding: var(--feature-padding);
+            min-height: 180px;
             cursor: move;
             transition: all 150ms ease-in-out;
         }
@@ -183,10 +202,10 @@
         .feature-header {
             background: #fff9c4;
             border: 1px solid #f57f17;
-            padding: 6px 10px;
-            font-size: 0.8125rem;
+            padding: 7.2px 12px;
+            font-size: var(--font-feature-header);
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 9.6px;
         }
 
         /* クローズ状態のスタイル */
@@ -205,14 +224,14 @@
         .user-story-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 8px;
+            gap: var(--user-story-gap);
         }
 
         .user-story {
             background: #f9f9f9;
             border: 1px solid #e0e0e0;
             border-radius: 3px;
-            padding: 8px;
+            padding: var(--user-story-padding);
             cursor: move;
             transition: all 150ms ease-in-out;
         }
@@ -231,9 +250,9 @@
         }
 
         .user-story-header {
-            font-size: 0.6875rem;
+            font-size: var(--font-user-story-header);
             font-weight: bold;
-            margin-bottom: 6px;
+            margin-bottom: 7.2px;
         }
 
         .user-story.closed {
@@ -249,55 +268,55 @@
         .task-test-bug-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 5px;
+            gap: var(--task-container-gap);
         }
 
         .task-container {
             background: #e3f2fd;
             border: 1px solid #1976d2;
             border-radius: 3px;
-            padding: 5px;
+            padding: var(--task-container-padding);
         }
 
         .test-container {
             background: #e8f5e9;
             border: 1px solid #388e3c;
             border-radius: 3px;
-            padding: 5px;
+            padding: var(--task-container-padding);
         }
 
         .bug-container {
             background: #ffebee;
             border: 1px solid #c62828;
             border-radius: 3px;
-            padding: 5px;
+            padding: var(--task-container-padding);
         }
 
         .task-container-header {
-            font-size: 0.5625rem;
+            font-size: var(--font-task-header);
             font-weight: bold;
-            margin-bottom: 3px;
-            padding: 3px 5px;
+            margin-bottom: 3.6px;
+            padding: 3.6px 6px;
             background: #bbdefb;
             color: #0d47a1;
             border-radius: 2px;
         }
 
         .test-container-header {
-            font-size: 0.5625rem;
+            font-size: var(--font-task-header);
             font-weight: bold;
-            margin-bottom: 3px;
-            padding: 3px 5px;
+            margin-bottom: 3.6px;
+            padding: 3.6px 6px;
             background: #c8e6c9;
             color: #1b5e20;
             border-radius: 2px;
         }
 
         .bug-container-header {
-            font-size: 0.5625rem;
+            font-size: var(--font-task-header);
             font-weight: bold;
-            margin-bottom: 3px;
-            padding: 3px 5px;
+            margin-bottom: 3.6px;
+            padding: 3.6px 6px;
             background: #ffcdd2;
             color: #b71c1c;
             border-radius: 2px;
@@ -308,14 +327,14 @@
         .bug-item-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 3px;
+            gap: var(--task-item-gap);
         }
 
         .task-item {
             background: #fff;
             border: 1px solid #90caf9;
-            padding: 4px 6px;
-            font-size: 0.625rem;
+            padding: var(--task-item-padding-v) var(--task-item-padding-h);
+            font-size: var(--font-task-item);
             cursor: move;
             transition: all 150ms ease-in-out;
             border-radius: 2px;
@@ -324,8 +343,8 @@
         .test-item {
             background: #fff;
             border: 1px solid #81c784;
-            padding: 4px 6px;
-            font-size: 0.625rem;
+            padding: var(--task-item-padding-v) var(--task-item-padding-h);
+            font-size: var(--font-task-item);
             cursor: move;
             transition: all 150ms ease-in-out;
             border-radius: 2px;
@@ -334,8 +353,8 @@
         .bug-item {
             background: #fff;
             border: 1px solid #ef5350;
-            padding: 4px 6px;
-            font-size: 0.625rem;
+            padding: var(--task-item-padding-v) var(--task-item-padding-h);
+            font-size: var(--font-task-item);
             cursor: move;
             transition: all 150ms ease-in-out;
             border-radius: 2px;
