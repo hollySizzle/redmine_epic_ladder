@@ -1,18 +1,18 @@
 import React from 'react';
-import { FeatureCard, FeatureCardData } from './FeatureCard';
+import { FeatureCard } from './FeatureCard';
 import { AddButton } from '../common/AddButton';
 
 interface FeatureCardGridProps {
-  features: FeatureCardData[];
+  featureIds: string[];
   epicId: string;
   versionId: string;
 }
 
-export const FeatureCardGrid: React.FC<FeatureCardGridProps> = ({ features, epicId, versionId }) => {
+export const FeatureCardGrid: React.FC<FeatureCardGridProps> = ({ featureIds, epicId, versionId }) => {
   return (
     <div className="feature-card-grid">
-      {features.map(feature => (
-        <FeatureCard key={feature.id} feature={feature} />
+      {featureIds.map(featureId => (
+        <FeatureCard key={featureId} featureId={featureId} />
       ))}
       <AddButton
         type="feature"

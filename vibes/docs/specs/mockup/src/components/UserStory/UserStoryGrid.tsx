@@ -1,15 +1,15 @@
 import React from 'react';
-import { UserStory, UserStoryData } from './UserStory';
+import { UserStory } from './UserStory';
 
 interface UserStoryGridProps {
-  stories: UserStoryData[];
+  storyIds: string[];
 }
 
-export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ stories }) => {
+export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ storyIds }) => {
   return (
     <div className="user-story-grid">
-      {stories.map(story => (
-        <UserStory key={story.id} story={story} />
+      {storyIds.map(storyId => (
+        <UserStory key={storyId} storyId={storyId} />
       ))}
     </div>
   );

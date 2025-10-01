@@ -1,18 +1,18 @@
 import React from 'react';
-import { BugItem, BugItemData } from './BugItem';
+import { BugItem } from './BugItem';
 import { AddButton } from '../common/AddButton';
 
 interface BugContainerProps {
-  bugs: BugItemData[];
+  bugIds: string[];
 }
 
-export const BugContainer: React.FC<BugContainerProps> = ({ bugs }) => {
+export const BugContainer: React.FC<BugContainerProps> = ({ bugIds }) => {
   return (
     <div className="bug-container">
       <div className="bug-container-header">Bug</div>
       <div className="bug-item-grid">
-        {bugs.map(bug => (
-          <BugItem key={bug.id} bug={bug} />
+        {bugIds.map(bugId => (
+          <BugItem key={bugId} bugId={bugId} />
         ))}
         <AddButton
           type="bug"

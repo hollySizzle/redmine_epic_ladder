@@ -1,25 +1,19 @@
 import React from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { TaskTestBugGrid } from '../TaskTestBug/TaskTestBugGrid';
-import { TaskItemData } from '../TaskTestBug/TaskItem';
-import { TestItemData } from '../TaskTestBug/TestItem';
-import { BugItemData } from '../TaskTestBug/BugItem';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
-
-export interface UserStoryData {
-  id: string;
-  title: string;
-  status: 'open' | 'closed';
-  tasks: TaskItemData[];
-  tests: TestItemData[];
-  bugs: BugItemData[];
-}
+import { useStore } from '../../store/useStore';
 
 interface UserStoryProps {
-  story: UserStoryData;
+  storyId: string;
 }
 
-export const UserStory: React.FC<UserStoryProps> = ({ story }) => {
+export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
+  // ストアから直接UserStoryを取得
+  const story = useStore(state => state.entities.user_stories[storyId]);
+
+  if (!story) return null;
+
   const className = story.status === 'closed' ? 'user-story closed' : 'user-story';
 
   const ref = useDraggableAndDropTarget({
@@ -37,9 +31,9 @@ export const UserStory: React.FC<UserStoryProps> = ({ story }) => {
         {story.title}
       </div>
       <TaskTestBugGrid
-        tasks={story.tasks}
-        tests={story.tests}
-        bugs={story.bugs}
+        taskIds={story.task_ids}
+        testIds={story.test_ids}
+        bugIds={story.bug_ids}
       />
     </div>
   );

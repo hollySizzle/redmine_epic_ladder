@@ -3,15 +3,13 @@ import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/ad
 import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
 import { Legend } from './components/Legend';
 import { useStore } from './store/useStore';
-import { useGridData } from './hooks/useGridData';
 import './styles.scss';
 
 export const App: React.FC = () => {
-  // 正規化APIデータをビューモデルに変換
-  const { epics, versions, cells, isLoading, error } = useGridData();
-
-  // Zustand storeからアクションを取得
+  // Zustand storeから状態とアクションを取得
   const fetchGridData = useStore(state => state.fetchGridData);
+  const isLoading = useStore(state => state.isLoading);
+  const error = useStore(state => state.error);
   const reorderFeatures = useStore(state => state.reorderFeatures);
   const reorderUserStories = useStore(state => state.reorderUserStories);
   const reorderTasks = useStore(state => state.reorderTasks);
@@ -95,11 +93,7 @@ export const App: React.FC = () => {
         <strong>✅ React + TypeScript + Zustand + Pragmatic Drag and Drop + MSW で実装</strong>
       </div>
 
-      <EpicVersionGrid
-        epics={epics}
-        versions={versions}
-        cells={cells}
-      />
+      <EpicVersionGrid />
 
       <Legend />
     </>

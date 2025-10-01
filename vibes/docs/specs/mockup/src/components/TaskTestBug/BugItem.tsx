@@ -1,18 +1,17 @@
 import React from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
-
-export interface BugItemData {
-  id: string;
-  title: string;
-  status: 'open' | 'closed';
-}
+import { useStore } from '../../store/useStore';
 
 interface BugItemProps {
-  bug: BugItemData;
+  bugId: string;
 }
 
-export const BugItem: React.FC<BugItemProps> = ({ bug }) => {
+export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
+  const bug = useStore(state => state.entities.bugs[bugId]);
+
+  if (!bug) return null;
+
   const className = bug.status === 'closed' ? 'bug-item closed' : 'bug-item';
 
   const ref = useDraggableAndDropTarget({

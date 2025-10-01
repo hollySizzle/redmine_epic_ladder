@@ -1,18 +1,18 @@
 import React from 'react';
-import { TestItem, TestItemData } from './TestItem';
+import { TestItem } from './TestItem';
 import { AddButton } from '../common/AddButton';
 
 interface TestContainerProps {
-  tests: TestItemData[];
+  testIds: string[];
 }
 
-export const TestContainer: React.FC<TestContainerProps> = ({ tests }) => {
+export const TestContainer: React.FC<TestContainerProps> = ({ testIds }) => {
   return (
     <div className="test-container">
       <div className="test-container-header">Test</div>
       <div className="test-item-grid">
-        {tests.map(test => (
-          <TestItem key={test.id} test={test} />
+        {testIds.map(testId => (
+          <TestItem key={testId} testId={testId} />
         ))}
         <AddButton
           type="test"

@@ -1,18 +1,17 @@
 import React from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
-
-export interface TaskItemData {
-  id: string;
-  title: string;
-  status: 'open' | 'closed';
-}
+import { useStore } from '../../store/useStore';
 
 interface TaskItemProps {
-  task: TaskItemData;
+  taskId: string;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ taskId }) => {
+  const task = useStore(state => state.entities.tasks[taskId]);
+
+  if (!task) return null;
+
   const className = task.status === 'closed' ? 'task-item closed' : 'task-item';
 
   const ref = useDraggableAndDropTarget({

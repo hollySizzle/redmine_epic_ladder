@@ -1,21 +1,19 @@
 import React from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { UserStoryGrid } from '../UserStory/UserStoryGrid';
-import { UserStoryData } from '../UserStory/UserStory';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
-
-export interface FeatureCardData {
-  id: string;
-  title: string;
-  status: 'open' | 'closed';
-  stories: UserStoryData[];
-}
+import { useStore } from '../../store/useStore';
 
 interface FeatureCardProps {
-  feature: FeatureCardData;
+  featureId: string;
 }
 
-export const FeatureCard: React.FC<FeatureCardProps> = ({ feature }) => {
+export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
+  // ストアから直接Featureを取得
+  const feature = useStore(state => state.entities.features[featureId]);
+
+  if (!feature) return null;
+
   const className = feature.status === 'closed' ? 'feature-card closed' : 'feature-card';
 
   const ref = useDraggableAndDropTarget({
@@ -32,7 +30,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ feature }) => {
         <StatusIndicator status={feature.status} />
         {feature.title}
       </div>
-      <UserStoryGrid stories={feature.stories} />
+      <UserStoryGrid storyIds={feature.user_story_ids} />
     </div>
   );
 };
