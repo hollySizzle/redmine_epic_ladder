@@ -7,10 +7,10 @@ import { mockCells } from '../mockData';
 interface StoreState {
   cells: EpicVersionCellData[];
   reorderFeatures: (sourceId: string, targetId: string, targetData?: any) => void;
-  reorderUserStories: (sourceId: string, targetId: string) => void;
-  reorderTasks: (sourceId: string, targetId: string) => void;
-  reorderTests: (sourceId: string, targetId: string) => void;
-  reorderBugs: (sourceId: string, targetId: string) => void;
+  reorderUserStories: (sourceId: string, targetId: string, targetData?: any) => void;
+  reorderTasks: (sourceId: string, targetId: string, targetData?: any) => void;
+  reorderTests: (sourceId: string, targetId: string, targetData?: any) => void;
+  reorderBugs: (sourceId: string, targetId: string, targetData?: any) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -109,84 +109,240 @@ export const useStore = create<StoreState>()(
         }, false, 'reorderFeatures'),
 
       // UserStory の並び替え
-      reorderUserStories: (sourceId: string, targetId: string) =>
+      reorderUserStories: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
+          // 1. sourceとtargetが存在するfeatureを探す
+          let sourceFeature = null;
+          let targetFeature = null;
+          let sourceStory = null;
+
           for (const cell of state.cells) {
             for (const feature of cell.features) {
               const sourceIndex = feature.stories.findIndex(s => s.id === sourceId);
-              const targetIndex = feature.stories.findIndex(s => s.id === targetId);
+              if (sourceIndex !== -1) {
+                sourceFeature = feature;
+                sourceStory = feature.stories[sourceIndex];
+              }
 
-              if (sourceIndex !== -1 && targetIndex !== -1) {
-                const [removed] = feature.stories.splice(sourceIndex, 1);
-                const newTargetIndex = feature.stories.findIndex(s => s.id === targetId);
-                feature.stories.splice(newTargetIndex, 0, removed);
-                console.log('✅ Reordered stories:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
-                return;
+              const targetIndex = feature.stories.findIndex(s => s.id === targetId);
+              if (targetIndex !== -1) {
+                targetFeature = feature;
               }
             }
+          }
+
+          if (!sourceFeature || !sourceStory) {
+            console.warn('⚠️ Source user story not found');
+            return;
+          }
+
+          // 2. Addボタンへのドロップの場合（将来の拡張用）
+          if (targetData?.isAddButton) {
+            console.log('🔍 Add button drop for user story - not yet implemented');
+            return;
+          }
+
+          if (!targetFeature) {
+            console.warn('⚠️ Target user story not found');
+            return;
+          }
+
+          // 3. 同じfeature内の並び替え
+          if (sourceFeature === targetFeature) {
+            const sourceIndex = sourceFeature.stories.findIndex(s => s.id === sourceId);
+            const targetIndex = sourceFeature.stories.findIndex(s => s.id === targetId);
+            const [removed] = sourceFeature.stories.splice(sourceIndex, 1);
+            const newTargetIndex = sourceFeature.stories.findIndex(s => s.id === targetId);
+            sourceFeature.stories.splice(newTargetIndex, 0, removed);
+            console.log('✅ Reordered user stories (same feature):', { sourceId, targetId });
+          }
+          // 4. 異なるfeature間の移動
+          else {
+            const sourceIndex = sourceFeature.stories.findIndex(s => s.id === sourceId);
+            const [removed] = sourceFeature.stories.splice(sourceIndex, 1);
+            const targetIndex = targetFeature.stories.findIndex(s => s.id === targetId);
+            targetFeature.stories.splice(targetIndex + 1, 0, removed);
+            console.log('✅ Moved user story (different feature):', { sourceId, targetId });
           }
         }, false, 'reorderUserStories'),
 
       // Task の並び替え
-      reorderTasks: (sourceId: string, targetId: string) =>
+      reorderTasks: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
+          // 1. sourceとtargetが存在するstoryを探す
+          let sourceStory = null;
+          let targetStory = null;
+          let sourceTask = null;
+
           for (const cell of state.cells) {
             for (const feature of cell.features) {
               for (const story of feature.stories) {
                 const sourceIndex = story.tasks.findIndex(t => t.id === sourceId);
-                const targetIndex = story.tasks.findIndex(t => t.id === targetId);
+                if (sourceIndex !== -1) {
+                  sourceStory = story;
+                  sourceTask = story.tasks[sourceIndex];
+                }
 
-                if (sourceIndex !== -1 && targetIndex !== -1) {
-                  const [removed] = story.tasks.splice(sourceIndex, 1);
-                  const newTargetIndex = story.tasks.findIndex(t => t.id === targetId);
-                  story.tasks.splice(newTargetIndex, 0, removed);
-                  console.log('✅ Reordered tasks:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
-                  return;
+                const targetIndex = story.tasks.findIndex(t => t.id === targetId);
+                if (targetIndex !== -1) {
+                  targetStory = story;
                 }
               }
             }
+          }
+
+          if (!sourceStory || !sourceTask) {
+            console.warn('⚠️ Source task not found');
+            return;
+          }
+
+          // 2. Addボタンへのドロップの場合（将来の拡張用）
+          if (targetData?.isAddButton) {
+            console.log('🔍 Add button drop for task - not yet implemented');
+            return;
+          }
+
+          if (!targetStory) {
+            console.warn('⚠️ Target task not found');
+            return;
+          }
+
+          // 3. 同じstory内の並び替え
+          if (sourceStory === targetStory) {
+            const sourceIndex = sourceStory.tasks.findIndex(t => t.id === sourceId);
+            const targetIndex = sourceStory.tasks.findIndex(t => t.id === targetId);
+            const [removed] = sourceStory.tasks.splice(sourceIndex, 1);
+            const newTargetIndex = sourceStory.tasks.findIndex(t => t.id === targetId);
+            sourceStory.tasks.splice(newTargetIndex, 0, removed);
+            console.log('✅ Reordered tasks (same story):', { sourceId, targetId });
+          }
+          // 4. 異なるstory間の移動
+          else {
+            const sourceIndex = sourceStory.tasks.findIndex(t => t.id === sourceId);
+            const [removed] = sourceStory.tasks.splice(sourceIndex, 1);
+            const targetIndex = targetStory.tasks.findIndex(t => t.id === targetId);
+            targetStory.tasks.splice(targetIndex + 1, 0, removed);
+            console.log('✅ Moved task (different story):', { sourceId, targetId });
           }
         }, false, 'reorderTasks'),
 
       // Test の並び替え
-      reorderTests: (sourceId: string, targetId: string) =>
+      reorderTests: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
+          // 1. sourceとtargetが存在するstoryを探す
+          let sourceStory = null;
+          let targetStory = null;
+          let sourceTest = null;
+
           for (const cell of state.cells) {
             for (const feature of cell.features) {
               for (const story of feature.stories) {
                 const sourceIndex = story.tests.findIndex(t => t.id === sourceId);
-                const targetIndex = story.tests.findIndex(t => t.id === targetId);
+                if (sourceIndex !== -1) {
+                  sourceStory = story;
+                  sourceTest = story.tests[sourceIndex];
+                }
 
-                if (sourceIndex !== -1 && targetIndex !== -1) {
-                  const [removed] = story.tests.splice(sourceIndex, 1);
-                  const newTargetIndex = story.tests.findIndex(t => t.id === targetId);
-                  story.tests.splice(newTargetIndex, 0, removed);
-                  console.log('✅ Reordered tests:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
-                  return;
+                const targetIndex = story.tests.findIndex(t => t.id === targetId);
+                if (targetIndex !== -1) {
+                  targetStory = story;
                 }
               }
             }
           }
+
+          if (!sourceStory || !sourceTest) {
+            console.warn('⚠️ Source test not found');
+            return;
+          }
+
+          // 2. Addボタンへのドロップの場合（将来の拡張用）
+          if (targetData?.isAddButton) {
+            console.log('🔍 Add button drop for test - not yet implemented');
+            return;
+          }
+
+          if (!targetStory) {
+            console.warn('⚠️ Target test not found');
+            return;
+          }
+
+          // 3. 同じstory内の並び替え
+          if (sourceStory === targetStory) {
+            const sourceIndex = sourceStory.tests.findIndex(t => t.id === sourceId);
+            const targetIndex = sourceStory.tests.findIndex(t => t.id === targetId);
+            const [removed] = sourceStory.tests.splice(sourceIndex, 1);
+            const newTargetIndex = sourceStory.tests.findIndex(t => t.id === targetId);
+            sourceStory.tests.splice(newTargetIndex, 0, removed);
+            console.log('✅ Reordered tests (same story):', { sourceId, targetId });
+          }
+          // 4. 異なるstory間の移動
+          else {
+            const sourceIndex = sourceStory.tests.findIndex(t => t.id === sourceId);
+            const [removed] = sourceStory.tests.splice(sourceIndex, 1);
+            const targetIndex = targetStory.tests.findIndex(t => t.id === targetId);
+            targetStory.tests.splice(targetIndex + 1, 0, removed);
+            console.log('✅ Moved test (different story):', { sourceId, targetId });
+          }
         }, false, 'reorderTests'),
 
       // Bug の並び替え
-      reorderBugs: (sourceId: string, targetId: string) =>
+      reorderBugs: (sourceId: string, targetId: string, targetData?: any) =>
         set((state) => {
+          // 1. sourceとtargetが存在するstoryを探す
+          let sourceStory = null;
+          let targetStory = null;
+          let sourceBug = null;
+
           for (const cell of state.cells) {
             for (const feature of cell.features) {
               for (const story of feature.stories) {
                 const sourceIndex = story.bugs.findIndex(b => b.id === sourceId);
-                const targetIndex = story.bugs.findIndex(b => b.id === targetId);
+                if (sourceIndex !== -1) {
+                  sourceStory = story;
+                  sourceBug = story.bugs[sourceIndex];
+                }
 
-                if (sourceIndex !== -1 && targetIndex !== -1) {
-                  const [removed] = story.bugs.splice(sourceIndex, 1);
-                  const newTargetIndex = story.bugs.findIndex(b => b.id === targetId);
-                  story.bugs.splice(newTargetIndex, 0, removed);
-                  console.log('✅ Reordered bugs:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
-                  return;
+                const targetIndex = story.bugs.findIndex(b => b.id === targetId);
+                if (targetIndex !== -1) {
+                  targetStory = story;
                 }
               }
             }
+          }
+
+          if (!sourceStory || !sourceBug) {
+            console.warn('⚠️ Source bug not found');
+            return;
+          }
+
+          // 2. Addボタンへのドロップの場合（将来の拡張用）
+          if (targetData?.isAddButton) {
+            console.log('🔍 Add button drop for bug - not yet implemented');
+            return;
+          }
+
+          if (!targetStory) {
+            console.warn('⚠️ Target bug not found');
+            return;
+          }
+
+          // 3. 同じstory内の並び替え
+          if (sourceStory === targetStory) {
+            const sourceIndex = sourceStory.bugs.findIndex(b => b.id === sourceId);
+            const targetIndex = sourceStory.bugs.findIndex(b => b.id === targetId);
+            const [removed] = sourceStory.bugs.splice(sourceIndex, 1);
+            const newTargetIndex = sourceStory.bugs.findIndex(b => b.id === targetId);
+            sourceStory.bugs.splice(newTargetIndex, 0, removed);
+            console.log('✅ Reordered bugs (same story):', { sourceId, targetId });
+          }
+          // 4. 異なるstory間の移動
+          else {
+            const sourceIndex = sourceStory.bugs.findIndex(b => b.id === sourceId);
+            const [removed] = sourceStory.bugs.splice(sourceIndex, 1);
+            const targetIndex = targetStory.bugs.findIndex(b => b.id === targetId);
+            targetStory.bugs.splice(targetIndex + 1, 0, removed);
+            console.log('✅ Moved bug (different story):', { sourceId, targetId });
           }
         }, false, 'reorderBugs'),
     }))

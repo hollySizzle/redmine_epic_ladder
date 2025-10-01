@@ -49,19 +49,19 @@ export const App: React.FC = () => {
           console.log('🔍 reorderFeatures called');
         } else if (sourceType === 'user-story') {
           console.log('🔍 Calling reorderUserStories...');
-          reorderUserStories(sourceId, targetId);
+          reorderUserStories(sourceId, targetId, targetData);
           console.log('🔍 reorderUserStories called');
         } else if (sourceType === 'task') {
           console.log('🔍 Calling reorderTasks...');
-          reorderTasks(sourceId, targetId);
+          reorderTasks(sourceId, targetId, targetData);
           console.log('🔍 reorderTasks called');
         } else if (sourceType === 'test') {
           console.log('🔍 Calling reorderTests...');
-          reorderTests(sourceId, targetId);
+          reorderTests(sourceId, targetId, targetData);
           console.log('🔍 reorderTests called');
         } else if (sourceType === 'bug') {
           console.log('🔍 Calling reorderBugs...');
-          reorderBugs(sourceId, targetId);
+          reorderBugs(sourceId, targetId, targetData);
           console.log('🔍 reorderBugs called');
         }
       }
