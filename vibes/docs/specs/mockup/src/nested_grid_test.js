@@ -2,7 +2,11 @@
 import { draggable, dropTargetForElements, monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 
+// SCSS のインポート
+import './styles.scss';
+
 console.log('✅ Pragmatic Drag and Drop loaded');
+console.log('✅ SCSS styles loaded');
 
 // ユニークなインスタンスID
 const instanceId = Symbol('nested-grid-test');
