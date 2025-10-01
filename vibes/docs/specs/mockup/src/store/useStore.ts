@@ -13,6 +13,19 @@ interface StoreState {
   reorderBugs: (sourceId: string, targetId: string, targetData?: any) => void;
 }
 
+// 共通ヘルパー関数: 配列内でアイテムを並び替え
+function reorderInArray<T>(array: T[], sourceIndex: number, targetIndex: number): void {
+  const [removed] = array.splice(sourceIndex, 1);
+  const newTargetIndex = array.findIndex((_, i) => i === targetIndex - (sourceIndex < targetIndex ? 1 : 0));
+  array.splice(newTargetIndex === -1 ? targetIndex : newTargetIndex, 0, removed);
+}
+
+// 共通ヘルパー関数: 異なる配列間でアイテムを移動
+function moveItemBetweenArrays<T>(sourceArray: T[], targetArray: T[], sourceIndex: number, targetIndex: number): void {
+  const [removed] = sourceArray.splice(sourceIndex, 1);
+  targetArray.splice(targetIndex + 1, 0, removed);
+}
+
 export const useStore = create<StoreState>()(
   devtools(
     immer((set) => ({
