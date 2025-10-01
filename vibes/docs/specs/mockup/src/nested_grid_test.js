@@ -68,15 +68,8 @@ function ensureAddButtonsAtEnd() {
         }
     });
 
-    // Epic の Add ボタンを Grid の末尾に移動
-    const epicButton = document.querySelector('[data-add-button="epic"]');
-    const grid = document.querySelector('.epic-version-grid');
-
-    if (epicButton && grid && grid.lastElementChild !== epicButton) {
-        grid.appendChild(epicButton);
-    }
-
-    // Version の Add ボタンは No Version セル内に固定されているため、移動不要
+    // Epic/Version の Add ボタンは .epic-version-wrapper 内に固定されているため移動不要
+    // これらを移動させると wrapper 構造が崩れる
 }
 
 // 各レベルのドラッグ可能要素とドロップターゲットを設定
