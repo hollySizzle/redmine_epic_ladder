@@ -21,16 +21,55 @@ export const useStore = create<StoreState>()(
       // Feature カードの並び替え
       reorderFeatures: (sourceId: string, targetId: string) =>
         set((state) => {
+          console.log('🔍 reorderFeatures START:', { sourceId, targetId, cellsCount: state.cells.length });
+
+          // 1. sourceとtargetが存在するcellを探す
+          let sourceCell = null;
+          let targetCell = null;
+          let sourceFeature = null;
+
           for (const cell of state.cells) {
             const sourceIndex = cell.features.findIndex(f => f.id === sourceId);
-            const targetIndex = cell.features.findIndex(f => f.id === targetId);
-
-            if (sourceIndex !== -1 && targetIndex !== -1) {
-              const [removed] = cell.features.splice(sourceIndex, 1);
-              cell.features.splice(targetIndex, 0, removed);
-              console.log('✅ Reordered features:', { sourceId, targetId });
-              break;
+            if (sourceIndex !== -1) {
+              sourceCell = cell;
+              sourceFeature = cell.features[sourceIndex];
             }
+
+            const targetIndex = cell.features.findIndex(f => f.id === targetId);
+            if (targetIndex !== -1) {
+              targetCell = cell;
+            }
+          }
+
+          if (!sourceCell || !targetCell || !sourceFeature) {
+            console.warn('⚠️ Source or target not found');
+            return;
+          }
+
+          // 2. 同じcell内の並び替え
+          if (sourceCell === targetCell) {
+            const sourceIndex = sourceCell.features.findIndex(f => f.id === sourceId);
+            const targetIndex = sourceCell.features.findIndex(f => f.id === targetId);
+            const [removed] = sourceCell.features.splice(sourceIndex, 1);
+            const newTargetIndex = sourceCell.features.findIndex(f => f.id === targetId);
+            sourceCell.features.splice(newTargetIndex, 0, removed);
+            console.log('✅ Reordered features (same cell):', { sourceId, targetId });
+          }
+          // 3. 異なるcell間の移動
+          else {
+            // source cellから削除
+            const sourceIndex = sourceCell.features.findIndex(f => f.id === sourceId);
+            const [removed] = sourceCell.features.splice(sourceIndex, 1);
+
+            // target cellの target の直後に挿入
+            const targetIndex = targetCell.features.findIndex(f => f.id === targetId);
+            targetCell.features.splice(targetIndex + 1, 0, removed);
+            console.log('✅ Moved feature (different cell):', {
+              sourceId,
+              targetId,
+              from: `${sourceCell.epicId}×${sourceCell.versionId}`,
+              to: `${targetCell.epicId}×${targetCell.versionId}`
+            });
           }
         }, false, 'reorderFeatures'),
 
@@ -44,8 +83,9 @@ export const useStore = create<StoreState>()(
 
               if (sourceIndex !== -1 && targetIndex !== -1) {
                 const [removed] = feature.stories.splice(sourceIndex, 1);
-                feature.stories.splice(targetIndex, 0, removed);
-                console.log('✅ Reordered stories:', { sourceId, targetId });
+                const newTargetIndex = feature.stories.findIndex(s => s.id === targetId);
+                feature.stories.splice(newTargetIndex, 0, removed);
+                console.log('✅ Reordered stories:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
                 return;
               }
             }
@@ -63,8 +103,9 @@ export const useStore = create<StoreState>()(
 
                 if (sourceIndex !== -1 && targetIndex !== -1) {
                   const [removed] = story.tasks.splice(sourceIndex, 1);
-                  story.tasks.splice(targetIndex, 0, removed);
-                  console.log('✅ Reordered tasks:', { sourceId, targetId });
+                  const newTargetIndex = story.tasks.findIndex(t => t.id === targetId);
+                  story.tasks.splice(newTargetIndex, 0, removed);
+                  console.log('✅ Reordered tasks:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
                   return;
                 }
               }
@@ -83,8 +124,9 @@ export const useStore = create<StoreState>()(
 
                 if (sourceIndex !== -1 && targetIndex !== -1) {
                   const [removed] = story.tests.splice(sourceIndex, 1);
-                  story.tests.splice(targetIndex, 0, removed);
-                  console.log('✅ Reordered tests:', { sourceId, targetId });
+                  const newTargetIndex = story.tests.findIndex(t => t.id === targetId);
+                  story.tests.splice(newTargetIndex, 0, removed);
+                  console.log('✅ Reordered tests:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
                   return;
                 }
               }
@@ -103,8 +145,9 @@ export const useStore = create<StoreState>()(
 
                 if (sourceIndex !== -1 && targetIndex !== -1) {
                   const [removed] = story.bugs.splice(sourceIndex, 1);
-                  story.bugs.splice(targetIndex, 0, removed);
-                  console.log('✅ Reordered bugs:', { sourceId, targetId });
+                  const newTargetIndex = story.bugs.findIndex(b => b.id === targetId);
+                  story.bugs.splice(newTargetIndex, 0, removed);
+                  console.log('✅ Reordered bugs:', { sourceId, targetId, sourceIndex, targetIndex, newTargetIndex });
                   return;
                 }
               }

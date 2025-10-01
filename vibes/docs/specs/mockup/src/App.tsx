@@ -42,16 +42,27 @@ export const App: React.FC = () => {
         }
 
         // タイプ別に並び替え処理（Zustandのアクションを呼び出し）
+        console.log('🔍 About to call reorder function:', { sourceType, sourceId, targetId });
         if (sourceType === 'feature-card') {
+          console.log('🔍 Calling reorderFeatures...');
           reorderFeatures(sourceId, targetId);
+          console.log('🔍 reorderFeatures called');
         } else if (sourceType === 'user-story') {
+          console.log('🔍 Calling reorderUserStories...');
           reorderUserStories(sourceId, targetId);
+          console.log('🔍 reorderUserStories called');
         } else if (sourceType === 'task') {
+          console.log('🔍 Calling reorderTasks...');
           reorderTasks(sourceId, targetId);
+          console.log('🔍 reorderTasks called');
         } else if (sourceType === 'test') {
+          console.log('🔍 Calling reorderTests...');
           reorderTests(sourceId, targetId);
+          console.log('🔍 reorderTests called');
         } else if (sourceType === 'bug') {
+          console.log('🔍 Calling reorderBugs...');
           reorderBugs(sourceId, targetId);
+          console.log('🔍 reorderBugs called');
         }
       }
     });
