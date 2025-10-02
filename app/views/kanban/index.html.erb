@@ -1,6 +1,6 @@
 <%# app/views/kanban/index.html.erb %>
 <% content_for :header_tags do %>
-  <%= javascript_include_tag 'kanban/dist/kanban_bundle.js', plugin: 'redmine_release_kanban' %>
+  <%= javascript_include_tag 'kanban/dist/kanban_bundle.js', plugin: 'redmine_release_kanban', defer: true %>
 <% end %>
 
 <div class="contextual">
