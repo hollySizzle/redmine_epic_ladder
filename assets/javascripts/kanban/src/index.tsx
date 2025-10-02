@@ -1,30 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
+import { worker } from './mocks/browser';
 
 console.log('✅ React application starting...');
 
 // MSWを強制的に有効化（Redmine統合テスト用）
 // TODO: 本番APIが完成したら process.env.NODE_ENV === 'development' に戻す
-if (true) {
-  import('./mocks/browser').then(({ worker }) => {
-    worker.start({
-      onUnhandledRequest: 'warn',
-      quiet: false,
-      serviceWorker: {
-        url: '/mockServiceWorker.js'
-      }
-    }).then(() => {
-      console.log('[MSW] Mock Service Worker started');
-      mountApp();
-    }).catch((error) => {
-      console.error('[MSW] Failed to start:', error);
-      mountApp(); // エラーでもアプリは起動する
-    });
-  });
-} else {
+worker.start({
+  onUnhandledRequest: 'warn',
+  quiet: false,
+  serviceWorker: {
+    url: '/mockServiceWorker.js'
+  }
+}).then(() => {
+  console.log('[MSW] Mock Service Worker started');
   mountApp();
-}
+}).catch((error) => {
+  console.error('[MSW] Failed to start:', error);
+  mountApp(); // エラーでもアプリは起動する
+});
 
 function mountApp() {
   const rootElement = document.getElementById('kanban-root');

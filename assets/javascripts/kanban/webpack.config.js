@@ -10,6 +10,9 @@ module.exports = {
     filename: 'kanban_bundle.js',
     clean: true,
   },
+  optimization: {
+    splitChunks: false, // コード分割を無効化（Redmineアセットパイプライン対応）
+  },
   devServer: {
     static: [
       {
