@@ -1,5 +1,15 @@
-// 正規化API型定義
-// 仕様書: @vibes/logics/api_integration/normalized_api_specification.md
+/**
+ * Normalized API Type Definitions (Single Source of Truth)
+ *
+ * このファイルが全API仕様の型定義を管理します。
+ * エンドポイント定義: api-endpoints.ts
+ *
+ * 使用例:
+ * ```typescript
+ * import { NormalizedAPIResponse } from './types/normalized-api';
+ * const data: NormalizedAPIResponse = await response.json();
+ * ```
+ */
 
 // ========================================
 // 共通型定義
@@ -413,3 +423,45 @@ export interface ErrorResponse {
     request_id: string;
   };
 }
+
+// ========================================
+// 型インデックス（エクスポート確認用）
+// ========================================
+
+/**
+ * 全エクスポート型のリスト
+ * 
+ * Common Types:
+ * - IssueStatus
+ * - VersionStatus
+ * - VersionSource
+ * - TestResult
+ * - BugSeverity
+ * 
+ * Entity Types:
+ * - Epic
+ * - Version
+ * - Feature
+ * - UserStory
+ * - Task
+ * - Test
+ * - Bug
+ * 
+ * Grid Types:
+ * - GridIndex
+ * 
+ * Metadata Types:
+ * - ColumnConfig
+ * - Metadata
+ * - VersionStats
+ * - Statistics
+ * 
+ * API Types:
+ * - NormalizedAPIResponse
+ * - GridDataRequest
+ * - MoveFeatureRequest
+ * - MoveFeatureResponse
+ * - UpdatesRequest
+ * - UpdatesResponse
+ * - ErrorResponse
+ */
