@@ -3,6 +3,9 @@
 # ClaudeCodeがこれらのファイルを編集する際に、規約確認を促します
 
 rules:
+  # ===========================================
+  # ドキュメント規約
+  # ===========================================
   - name: "Vibesドキュメント規約"
     patterns:
       - "**/docs/**/*.md"
@@ -12,197 +15,30 @@ rules:
       - "docs/**/*.md"
     severity: "block" # block: 完全ブロック, warn: 警告のみ
     token_threshold: 15000 # 重要なドキュメント規約は低い閾値
-    # 基本メッセージ（簡潔版）
     message: |
-      このファイルを変更する場合は､  @vibes/docs/rules/vibes_documentation_standards.md をよく確認し従うこと
-      作業を続けるためには､上記ドキュメントを確認したことを示してください
+      📋 このファイルを変更する場合は、以下のドキュメント規約を確認してください
+      必読: @vibes/docs/rules/vibes_documentation_standards.md
+      必読: @vibes/docs/rules/INDEX.md (規約インデックス)
+      Code as Document原則に従い、作業を続けてください
 
-  # TrackerHierarchy実装規約
-  - name: "TrackerHierarchy実装規約"
-    patterns:
-      - "**/app/models/kanban/tracker_hierarchy.rb"
-      - "**/app/models/concerns/kanban/issue_hierarchy.rb"
-      - "**/app/controllers/kanban/hierarchy_controller.rb"
-      - "**/db/migrate/*_create_kanban_trackers.rb"
-      - "**/assets/javascripts/kanban/utils/TrackerHierarchy.js"
-      - "**/assets/javascripts/kanban/components/HierarchyTree.jsx"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 TrackerHierarchy実装前に技術仕様書と既存規約を確認してください
-      必読: @vibes/logics/tracker_hierarchy_implementation.md
-      追加確認: @vibes/docs/rules/controller_standards.md (Controller実装時)
-      追加確認: @vibes/docs/rules/service_standards.md (Service実装時)
-      Epic→Feature→UserStory→Task/Test階層制約の実装要件を理解してから作業を続けてください
-
-  # VersionManagement実装規約
-  - name: "VersionManagement実装規約"
-    patterns:
-      - "**/app/services/kanban/version_propagation_service.rb"
-      - "**/app/models/concerns/kanban/version_management.rb"
-      - "**/app/controllers/kanban/versions_controller.rb"
-      - "**/assets/javascripts/kanban/components/VersionBar.jsx"
-      - "**/assets/javascripts/kanban/utils/VersionAPI.js"
-      - "**/assets/javascripts/kanban/components/VersionAssignmentModal.jsx"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 VersionManagement実装前に技術仕様書を確認してください
-      必読: @vibes/logics/version_management_implementation.md
-      UserStoryへのバージョン割当と子要素自動伝播の実装要件を理解してから作業を続けてください
-
-  # AutoGeneration実装規約
-  - name: "AutoGeneration実装規約"
-    patterns:
-      - "**/app/services/kanban/test_generation_service.rb"
-      - "**/app/services/kanban/bug_relation_service.rb"
-      - "**/app/models/concerns/kanban/auto_generation.rb"
-      - "**/app/jobs/kanban/test_generation_job.rb"
-      - "**/app/jobs/kanban/bug_relation_job.rb"
-      - "**/app/controllers/kanban/auto_generation_controller.rb"
-      - "**/assets/javascripts/kanban/components/TestGenerationButton.jsx"
-      - "**/assets/javascripts/kanban/utils/AutoGenerationAPI.js"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 AutoGeneration実装前に技術仕様書を確認してください
-      必読: @vibes/logics/auto_generation_implementation.md
-      Test自動生成とblocks関係作成の実装要件を理解してから作業を続けてください
-
-  # KanbanUI実装規約
-  - name: "KanbanUI実装規約"
-    patterns:
-      - "**/assets/javascripts/kanban/KanbanApp.jsx"
-      - "**/assets/javascripts/kanban/components/KanbanBoard.jsx"
-      - "**/assets/javascripts/kanban/components/EpicSwimlane.jsx"
-      - "**/assets/javascripts/kanban/components/KanbanColumn.jsx"
-      - "**/assets/javascripts/kanban/components/IssueCard.jsx"
-      - "**/assets/javascripts/kanban/utils/KanbanAPI.js"
-      - "**/assets/javascripts/kanban/utils/KeyboardShortcuts.js"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 KanbanUI実装前に技術仕様書を確認してください
-      必読: @vibes/logics/kanban_ui_implementation.md
-      React+@dnd-kit活用カンバンUIの実装要件を理解してから作業を続けてください
-
-  # StateTransition実装規約
-  - name: "StateTransition実装規約"
-    patterns:
-      - "**/app/models/kanban/column_status_mapping.rb"
-      - "**/app/services/kanban/state_transition_service.rb"
-      - "**/app/models/concerns/kanban/state_transition.rb"
-      - "**/app/controllers/kanban/state_transitions_controller.rb"
-      - "**/assets/javascripts/kanban/utils/StateTransitionAPI.js"
-      - "**/assets/javascripts/kanban/components/TransitionPreviewModal.jsx"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 StateTransition実装前に技術仕様書を確認してください
-      必読: @vibes/logics/state_transition_implementation.md
-      カラム移動時の状態遷移制御の実装要件を理解してから作業を続けてください
-
-  # ValidationGuard実装規約
-  - name: "ValidationGuard実装規約"
-    patterns:
-      - "**/app/models/kanban/release_guard_rules.rb"
-      - "**/app/services/kanban/release_guard_service.rb"
-      - "**/app/models/concerns/kanban/validation_guard.rb"
-      - "**/app/controllers/kanban/validations_controller.rb"
-      - "**/assets/javascripts/kanban/components/ValidationStatusBadge.jsx"
-      - "**/assets/javascripts/kanban/components/ValidationDetailModal.jsx"
-      - "**/assets/javascripts/kanban/utils/ValidationAPI.js"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 ValidationGuard実装前に技術仕様書を確認してください
-      必読: @vibes/logics/validation_guard_implementation.md
-      リリース前3層ガード検証システムの実装要件を理解してから作業を続けてください
-
-  # APIIntegration実装規約
-  - name: "APIIntegration実装規約"
-    patterns:
-      - "**/app/controllers/kanban/cards_controller.rb"
-      - "**/app/controllers/concerns/kanban_api_concern.rb"
-      - "**/app/services/kanban/kanban_data_builder.rb"
-      - "**/assets/javascripts/kanban/services/KanbanAPIService.js"
-      - "**/assets/javascripts/kanban/hooks/useKanbanAPI.js"
-      - "**/assets/javascripts/kanban/utils/ErrorHandler.js"
-      - "**/config/routes.rb"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 APIIntegration実装前に技術仕様書を確認してください
-      必読: @vibes/logics/api_integration_implementation.md
-      Redmine標準API統合とプラグイン専用APIの実装要件を理解してから作業を続けてください
-
-  # Kanban Plugin Hook実装規約
-  - name: "KanbanHook実装規約"
-    patterns:
-      - "**/lib/kanban/hooks/**/*.rb"
-      - "**/lib/redmine_release_kanban/hooks/**/*.rb"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 KanbanHook実装前に関連する技術仕様書を確認してください
-      必読: @vibes/logics/tracker_hierarchy_implementation.md
-      必読: @vibes/logics/auto_generation_implementation.md
-      Redmine Hookシステムでの自動化実装要件を理解してから作業を続けてください
-
-  # Kanban Plugin テスト規約（Redmine標準test/ディレクトリ）
-  - name: "KanbanTest実装規約（Redmine標準）"
-    patterns:
-      - "**/test/**/*.rb"
-      - "**/test/unit/**/*.rb"
-      - "**/test/functional/**/*.rb"
-      - "**/test/integration/**/*.rb"
-      - "**/test/system/**/*.rb"
-      - "**/test/fixtures/**/*.yml"
-      - "**/test/test_helper.rb"
-      - "**/plugins/redmine_release_kanban/test/**/*"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      Redmine Release Kanban テストファイル編集前に必ずテスト規約を確認してください
-      必読ドキュメント:
-      - @vibes/docs/rules/testing/kanban_test_strategy.md (全体戦略)
-      - @vibes/docs/rules/testing/redmine_test_implementation_guide.md (実装ガイド)
-      - @vibes/docs/rules/testing/test_automation_strategy.md (自動化戦略)
-      Redmine標準テスト手法と品質基準を理解してから作業を続けてください
-
-  # Kanban Plugin テスト規約（RSpec系は参考用）
-  - name: "KanbanTest実装規約（RSpec系参考）"
-    patterns:
-      - "**/spec/services/kanban/**/*.rb"
-      - "**/spec/models/kanban/**/*.rb"
-      - "**/spec/controllers/kanban/**/*.rb"
-      - "**/spec/requests/kanban/**/*.rb"
-      - "**/spec/integration/kanban/**/*.rb"
-      - "**/spec/system/kanban/**/*.rb"
-      - "**/spec/javascript/kanban/**/*.test.js"
-      - "**/spec/javascript/kanban/**/*.test.jsx"
-      - "**/vibes/scripts/testing/**/*.sh"
-      - "**/bin/test_runner.sh"
-    severity: "warn"
-    token_threshold: 15000
-    message: |
-      ⚠️ 注意: このプロジェクトではRedmine標準Test::Unitを使用します
-      RSpec系のテストではなく、test/ディレクトリでRedmine標準テストを実装してください
-      参考: @vibes/docs/rules/testing/kanban_test_strategy.md
-      参考: @vibes/docs/rules/testing/redmine_test_implementation_guide.md
+  # ===========================================
+  # バックエンド実装規約
+  # ===========================================
 
   # Kanban専用Controller規約
   - name: "KanbanController実装規約"
     patterns:
       - "**/app/controllers/kanban/**/*.rb"
+      - "**/app/controllers/concerns/kanban_api_concern.rb"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 KanbanController実装前に技術仕様書と基本規約を確認してください
-      必読: @vibes/docs/rules/controller_standards.md
-      必読: @vibes/logics/api_integration_implementation.md
-      必読: 対応する機能の@vibes/logics/*_implementation.mdファイル
-      KanbanApiConcernの活用と権限制御・エラーハンドリングを理解してから作業を続けてください
+      📋 KanbanController実装前に規約とSSoTを確認してください
+      必読: @vibes/rules/backend_standards.md (Controller原則)
+      必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @kanban/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
+      Controller層の責務・権限制御・パフォーマンス要件を理解してから作業を続けてください
 
   # Kanban専用Service規約
   - name: "KanbanService実装規約"
@@ -211,131 +47,298 @@ rules:
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 KanbanService実装前に技術仕様書と基本規約を確認してください
-      必読: @vibes/docs/rules/service_standards.md
-      必読: 対応する機能の@vibes/logics/*_implementation.mdファイル
-      単一責任原則・戻り値統一・エラーハンドリング規約を理解してから作業を続けてください
+      📋 KanbanService実装前に規約を確認してください
+      必読: @vibes/rules/backend_standards.md (Service原則)
+      必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      単一責任原則・戻り値統一・トランザクション制御・冪等性を理解してから作業を続けてください
 
-  # Kanban テスト戦略規約
-  - name: "Kanbanテスト戦略規約"
+  # Kanban専用Model規約
+  - name: "KanbanModel実装規約"
     patterns:
-      - "**/vibes/docs/rules/kanban_test_strategy.md"
-      - "**/vibes/docs/rules/*test*.md"
-      - "**/TESTING_GUIDE.md"
-      - "**/TESTING.md"
+      - "**/app/models/kanban/**/*.rb"
+      - "**/app/models/concerns/kanban/**/*.rb"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 KanbanModel実装前に規約を確認してください
+      必読: @vibes/rules/technical_architecture_quickstart.md (4層階層定義)
+      必読: @vibes/rules/backend_standards.md (Service原則)
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      TrackerHierarchy (Epic→Feature→UserStory→Task/Test) の階層制約を理解してから作業を続けてください
+
+  # ===========================================
+  # フロントエンド実装規約
+  # ===========================================
+
+  # フロントエンド全体（包括的テスト要求）
+  - name: "フロントエンド実装規約（包括的）"
+    patterns:
+      - "**/assets/javascripts/kanban/src/**/*.ts"
+      - "**/assets/javascripts/kanban/src/**/*.tsx"
+      - "**/assets/javascripts/kanban/src/**/*.js"
+      - "**/assets/javascripts/kanban/src/**/*.jsx"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      ⚠️ フロントエンドファイル変更検出
+
+      フロントエンドコード変更後は、必ず単体テストを実行してください。
+      テストなしでの完了報告は禁止です。
+
+      ✅ 必須作業（変更完了後すぐに実行）:
+      1. cd assets/javascripts/kanban
+      2. npm test  # 全テスト実行（38 tests）
+      3. テスト全通過を確認
+      4. 失敗がある場合は修正してから完了報告
+
+      📋 関連規約:
+      - @vibes/rules/testing_strategy.md (テスト戦略)
+      - @vibes/docs/INDEX.md (Code as Document原則)
+
+  # TypeScript型定義（SSoT）
+  - name: "TypeScript型定義（SSoT）"
+    patterns:
+      - "**/assets/javascripts/kanban/src/types/**/*.ts"
+      - "**/assets/javascripts/kanban/src/types/normalized-api.ts"
+      - "**/assets/javascripts/kanban/src/types/api-endpoints.ts"
     severity: "block"
     token_threshold: 12000
     message: |
-      📋 Kanbanテスト戦略ドキュメント編集前に既存規約を確認してください
-      必読: @vibes/docs/rules/vibes_documentation_standards.md
-      必読: @vibes/docs/rules/kanban_test_strategy.md
-      テストピラミッド構造・4フェーズ戦略・品質基準の整合性を保ってから作業を続けてください
+      ⚠️ CRITICAL: このファイルは Single Source of Truth (SSoT) です
+      必読: @vibes/rules/technical_architecture_quickstart.md (API仕様管理)
+      必読: @vibes/rules/ai_collaboration_redmine.md (SSoT厳守原則)
+      必読: @vibes/docs/INDEX.md (Code as Document原則)
 
-  # Feature Card関連
-  - name: "Feature Card関連スケルトンコード規約"
+      型定義変更は全システムに影響します。必ずプロジェクトオーナーに確認してから作業を続けてください
+
+      ✅ 変更後の必須作業:
+      1. cd assets/javascripts/kanban
+      2. npm test  # 全テスト実行（38 tests）
+      3. テスト全通過を確認してから完了報告
+
+  # Reactコンポーネント実装
+  - name: "Reactコンポーネント実装規約"
     patterns:
-      - "**/assets/javascripts/kanban/components/FeatureCard.jsx"
-      - "**/assets/javascripts/kanban/components/FeatureCard.scss"
-      - "**/assets/javascripts/kanban/components/FeatureHeader.jsx"
-      - "**/assets/javascripts/kanban/components/UserStoryList.jsx"
-      - "**/assets/javascripts/kanban/components/UserStoryItem.jsx"
-      - "**/assets/javascripts/kanban/components/UserStoryItem.scss"
-      - "**/assets/javascripts/kanban/components/BaseItemCard.jsx"
-      - "**/assets/javascripts/kanban/components/BaseItemCard.scss"
-      - "**/assets/javascripts/kanban/components/TaskContainer.jsx"
-      - "**/assets/javascripts/kanban/components/TestContainer.jsx"
-      - "**/assets/javascripts/kanban/components/BugContainer.jsx"
+      - "**/assets/javascripts/kanban/src/components/**/*.tsx"
+      - "**/assets/javascripts/kanban/src/components/**/*.jsx"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 Feature Card関連スケルトンコード編集前に仕様書を確認してください
+      📋 Reactコンポーネント実装前にSSoTを確認してください
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @vibes/rules/technical_architecture_quickstart.md (技術スタック)
+      参考: @vibes/specs/ui/kanban_ui_design_spec.md (UI設計)
 
-      必読: @vibes/docs/logics/feature_card/feature_card_component_specification.md
-      必読: @vibes/docs/logics/feature_card/feature_card_server_specification.md
+      React 18、Zustand、Pragmatic D&Dの使用を推奨します
 
-      Feature Cardコンポーネント・UserStoryアイテム・BaseItemCardのワイヤーフレーム準拠実装です
+      ✅ 変更後の必須作業:
+      1. cd assets/javascripts/kanban
+      2. npm test  # 全テスト実行（38 tests）
+      3. テスト全通過を確認してから完了報告
 
-  # Kanban Grid関連
-  - name: "Kanban Grid関連スケルトンコード規約"
+  # Zustandストア実装
+  - name: "Zustandストア実装規約"
     patterns:
-      - "**/assets/javascripts/kanban/components/KanbanGridLayout.jsx"
-      - "**/assets/javascripts/kanban/components/KanbanGridLayout.scss"
-      - "**/assets/javascripts/kanban/components/GridCell.jsx"
-      - "**/assets/javascripts/kanban/components/VersionBar.jsx"
+      - "**/assets/javascripts/kanban/src/store/**/*.ts"
+      - "**/assets/javascripts/kanban/src/store/useStore.ts"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 Kanban Grid関連スケルトンコード編集前に仕様書を確認してください
+      📋 Zustandストア実装前にSSoTを確認してください
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @vibes/rules/technical_architecture_quickstart.md (State管理)
 
-      必読: @vibes/docs/logics/kanban_grid/kanban_grid_layout_specification.md
-      必読: @vibes/docs/logics/kanban_grid/kanban_grid_server_specification.md
+      Normalized State構造（entities + grid index）を維持してから作業を続けてください
 
-      Epic×Versionの2次元グリッドレイアウト・ドラッグ&ドロップのワイヤーフレーム準拠実装です
+      ✅ 変更後の必須作業:
+      1. cd assets/javascripts/kanban
+      2. npm test  # 全テスト実行（38 tests）
+      3. テスト全通過を確認してから完了報告
 
-  # 共通コンポーネント関連
-  - name: "共通コンポーネント関連スケルトンコード規約"
+  # MSWモックハンドラ
+  - name: "MSWモックハンドラ実装規約"
     patterns:
-      - "**/assets/javascripts/kanban/components/shared/Modal.jsx"
-      - "**/assets/javascripts/kanban/components/shared/Modal.scss"
-      - "**/assets/javascripts/kanban/components/shared/Tooltip.jsx"
-      - "**/assets/javascripts/kanban/components/shared/Button.jsx"
+      - "**/assets/javascripts/kanban/src/mocks/**/*.ts"
+      - "**/assets/javascripts/kanban/src/mocks/handlers.ts"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 共通コンポーネント関連スケルトンコード編集前に仕様書を確認してください
+      📋 MSWモックハンドラ実装前にSSoTを確認してください
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @kanban/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
+      必読: @vibes/rules/testing_strategy.md (MSW + Vitest戦略)
 
-      必読: @vibes/docs/logics/shared_components/shared_components_specification.md
-      必読: @vibes/docs/logics/shared_components/shared_services_server_specification.md
+      モックレスポンスは型定義に完全準拠させてください
 
-      Modal・Tooltip・Button等の共通コンポーネントのワイヤーフレーム準拠実装です
+      ✅ 変更後の必須作業:
+      1. cd assets/javascripts/kanban
+      2. npm test  # 全テスト実行（38 tests）
+      3. テスト全通過を確認してから完了報告
 
-  # API・サービス関連
-  - name: "API・サービス関連スケルトンコード規約"
+  # ===========================================
+  # テスト実装規約
+  # ===========================================
+
+  # フロントエンドテスト（Vitest）
+  - name: "フロントエンドテスト実装規約（Vitest）"
     patterns:
-      - "**/assets/javascripts/kanban/services/KanbanAPI.js"
-      - "**/assets/javascripts/kanban/hooks/useKanbanAPI.js"
-      - "**/assets/javascripts/kanban/hooks/useKanbanData.js"
-      - "**/assets/javascripts/kanban/hooks/useModal.js"
-      - "**/assets/javascripts/kanban/hooks/useRealtimeUpdates.js"
+      - "**/assets/javascripts/kanban/src/**/*.test.tsx"
+      - "**/assets/javascripts/kanban/src/**/*.test.ts"
+      - "**/assets/javascripts/kanban/vitest.config.ts"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 API・サービス関連スケルトンコード編集前に仕様書を確認してください
+      📋 フロントエンドテスト実装前に規約を確認してください
+      必読: @vibes/rules/testing_strategy.md (Vitest + MSW戦略)
+      必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
 
-      必読: @vibes/docs/logics/api_integration/api_integration_specification.md
-      必読: @vibes/docs/logics/api_integration/api_controller_server_specification.md
+      テストコードが仕様書です。カバレッジ要件（Critical 100%, 全体85%）を維持してください
 
-      KanbanAPIサービス・Reactフック類のワイヤーフレーム準拠実装です
+      ✅ 変更後の必須作業:
+      1. cd assets/javascripts/kanban
+      2. npm test  # 全テスト実行（38 tests）
+      3. テスト全通過を確認してから完了報告
 
-      ワイヤーフレーム準拠（GROUP_*構造）とコンポーネント仕様を理解してから作業を続けてください
-
-  # Wireframe実装ドキュメント規約
-  - name: "Wireframe実装ドキュメント規約"
+  # バックエンドテスト（RSpec）
+  - name: "バックエンドテスト実装規約（RSpec）"
     patterns:
-      # Feature Card仕様書
-      - "**/vibes/docs/logics/feature_card/**/*.md"
-      # Kanban Grid仕様書
-      - "**/vibes/docs/logics/kanban_grid/**/*.md"
-      # 共通コンポーネント仕様書
-      - "**/vibes/docs/logics/shared_components/**/*.md"
-      # API統合仕様書
-      - "**/vibes/docs/logics/api_integration/**/*.md"
-      # データ構造仕様書
-      - "**/vibes/docs/logics/data_structures/**/*.md"
-      # 自動化仕様書
-      - "**/vibes/docs/logics/automation/**/*.md"
+      - "**/spec/**/*_spec.rb"
+      - "**/spec/models/kanban/**/*.rb"
+      - "**/spec/services/kanban/**/*.rb"
+      - "**/spec/requests/kanban/**/*.rb"
+      - "**/spec/integration/kanban/**/*.rb"
+      - "**/spec/system/kanban/**/*.rb"
+      - "**/spec/rails_helper.rb"
+      - "**/spec/spec_helper.rb"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 バックエンドテスト実装前に規約を確認してください
+      必読: @vibes/rules/testing_strategy.md (Pure Playwright + RSpec戦略)
+      必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      Pure Playwright方式（Capybara不使用）、FactoryBot、DatabaseCleanerの使用を徹底してください
+
+  # E2Eテスト（Playwright）
+  - name: "E2Eテスト実装規約（Playwright）"
+    patterns:
+      - "**/spec/system/**/*_spec.rb"
+      - "**/playwright/**/*.spec.js"
+      - "**/playwright.config.js"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 E2Eテスト実装前に規約を確認してください
+      必読: @vibes/rules/testing_strategy.md (Pure Playwright戦略)
+      必読: @vibes/specs/technical/grid_measurement_strategy.md (Grid測定)
+      Pure Playwright方式（Capybara不使用）でi18nエラーを回避してください
+
+  # FactoryBot定義
+  - name: "FactoryBot定義規約"
+    patterns:
+      - "**/spec/factories/**/*.rb"
+    severity: "warn"
+    token_threshold: 15000
+    message: |
+      📋 FactoryBot定義実装前に規約を確認してください
+      参考: @vibes/rules/testing_strategy.md (テストデータ管理)
+      参考: @vibes/rules/technical_architecture_quickstart.md (4層階層)
+      TrackerHierarchy（Epic→Feature→UserStory→Task/Test）に準拠した定義を推奨します
+
+  # ===========================================
+  # AI協働規約
+  # ===========================================
+
+  # AI協働規約ドキュメント
+  - name: "AI協働規約ドキュメント"
+    patterns:
+      - "**/vibes/docs/rules/ai_collaboration_redmine.md"
+      - "**/vibes/scripts/rules/file_conventions.yaml"
     severity: "block"
     token_threshold: 12000
     message: |
-      📋 Wireframe実装仕様書編集前に関連ドキュメントを確認してください
+      📋 AI協働規約編集前に関連規約を確認してください
       必読: @vibes/docs/rules/vibes_documentation_standards.md
-      必読: @vibes/docs/specs/ui/kanban_ui_feature_card_component.drawio (ワイヤーフレーム)
-      必読: @vibes/docs/specs/ui/kanban_ui_grid_layout.drawio (グリッドレイアウト)
+      必読: @vibes/docs/rules/INDEX.md (規約インデックス)
+      権限規定（自立実行可/要相談/絶対禁止）の整合性を保ってください
 
-      ワイヤーフレーム準拠のコンポーネント分解設計とサーバー連携仕様の整合性を保ってから作業を続けてください
+  # ===========================================
+  # アーキテクチャ規約ドキュメント
+  # ===========================================
 
+  # アーキテクチャ規約
+  - name: "アーキテクチャ規約ドキュメント"
+    patterns:
+      - "**/vibes/docs/rules/technical_architecture_quickstart.md"
+      - "**/vibes/docs/rules/backend_standards.md"
+      - "**/vibes/docs/rules/testing_strategy.md"
+    severity: "block"
+    token_threshold: 12000
+    message: |
+      📋 アーキテクチャ規約編集前に関連規約を確認してください
+      必読: @vibes/docs/rules/vibes_documentation_standards.md
+      必読: @vibes/docs/rules/INDEX.md (規約インデックス)
+      必読: @vibes/docs/rules/ai_collaboration_redmine.md (協働規約)
+      Code as Document原則に従い、規約は最小限に保ってください
+
+  # ===========================================
+  # 廃止された規約（参考用コメント）
+  # ===========================================
+
+  # 以下の規約は Code as Document 移行により廃止されました：
+  # - logics/ 配下のAPI仕様書 → @kanban/src/types/normalized-api.ts (SSoT) に統合
+  # - logics/ 配下の機能設計書 → テストコード (*.test.tsx, *_spec.rb) に統合
+  # - 個別機能のドキュメント規約 → backend_standards.md に統合
+
+# ===========================================
 # メタ情報
+# ===========================================
 meta:
-  version: "1.2.0"
-  updated_at: "2025-01-25"
-  description: "ファイルパターンと編集規約の紐付け定義（Wireframe実装スケルトンコード・ドキュメント規約追加）"
+  version: "2.1.0"
+  updated_at: "2025-10-02"
+  description: "Code as Document移行後の新規約構成対応（SSoT強化、規約統合、89%ドキュメント削減） + フロントエンド変更後の強制テスト実行規約"
+  migration_notes: |
+    ## 主な変更点（v1.3.0 → v2.1.0）
+
+    ### v2.1.0 新機能（2025-10-02）
+    - **フロントエンド変更後の強制テスト実行規約** 追加
+      - 全フロントエンドファイル (*.ts, *.tsx, *.js, *.jsx) 変更時に `npm test` 実行を必須化
+      - TypeScript型定義、React、Zustand、MSW、テストファイル全てに適用
+      - テスト失敗時は修正してから完了報告を強制
+      - severity: "block" で徹底（warn → block に変更）
+
+    ### v2.0.0 主要変更（2025-10-02）
+
+    ### 削除された規約
+    - TrackerHierarchy実装規約 → backend_standards.md (Model原則) に統合
+    - データ構造統計システム → backend_standards.md (Service原則) に統合
+    - VersionManagement実装規約 → backend_standards.md (Service原則) に統合
+    - AutoGeneration実装規約 → backend_standards.md (Service原則) に統合
+    - KanbanUI実装規約 → 削除（実装済みコード参照）
+    - StateTransition実装規約 → backend_standards.md (Service原則) に統合
+    - ValidationGuard実装規約 → backend_standards.md (Service原則) に統合
+    - APIIntegration実装規約 → backend_standards.md (Controller原則) に統合
+    - KanbanHook実装規約 → 削除（実装済みコード参照）
+    - Feature Card関連 → 削除（実装済みコード参照）
+    - Kanban Grid関連 → 削除（実装済みコード参照）
+    - 共通コンポーネント関連 → 削除（実装済みコード参照）
+    - ハイブリッド詳細設計書 → 削除（logics/ ディレクトリ廃止）
+
+    ### 新規追加された規約
+    - TypeScript型定義（SSoT） - API仕様の唯一の真実
+    - Zustandストア実装規約 - Normalized State構造
+    - MSWモックハンドラ実装規約 - API型定義準拠
+    - フロントエンドテスト規約（Vitest） - Code as Document
+    - バックエンドテスト規約（RSpec） - Code as Document
+
+    ### 統合された規約
+    - Controller + Service → backend_standards.md (170行)
+    - 全テスト戦略 → testing_strategy.md (180行)
+    - AI協働規約 → ai_collaboration_redmine.md (120行)
+
+    ### 結果
+    - 規約ドキュメント: 1,856行 → 1,028行 (44%削減)
+    - 全体（規約+API仕様）: 9,477行 → 1,496行 (84%削減)
+    - Code as Document化により、型定義とテストコードが仕様書として機能

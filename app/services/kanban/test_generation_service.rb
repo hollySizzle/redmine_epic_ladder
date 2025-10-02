@@ -13,7 +13,8 @@ module Kanban
 
     # UserStoryに対応するTestを自動生成
     def self.generate_test_for_user_story(user_story, options = {})
-      return { error: 'UserStoryではありません' } unless user_story.tracker.name == 'UserStory'
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+      return { error: 'UserStoryではありません' } unless user_story.tracker.name == user_story_tracker_name
 
       existing_test = find_existing_test(user_story)
       return { test_issue: existing_test, existing: true } if existing_test && !options[:force_recreate]
@@ -34,7 +35,8 @@ module Kanban
 
     # Ready for Test状態移動時のTest存在確認
     def self.ensure_test_exists_for_ready_state(user_story)
-      return { error: 'UserStoryではありません' } unless user_story.tracker.name == 'UserStory'
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+      return { error: 'UserStoryではありません' } unless user_story.tracker.name == user_story_tracker_name
       return { test_issue: find_existing_test(user_story), existing: true } if find_existing_test(user_story)
 
       generate_test_for_user_story(user_story, auto_generated: true)
@@ -42,7 +44,8 @@ module Kanban
 
     # 既存Testの検索
     def self.find_existing_test(user_story)
-      user_story.children.joins(:tracker).find_by(trackers: { name: 'Test' })
+      test_tracker_name = Kanban::TrackerHierarchy.tracker_names[:test]
+      user_story.children.joins(:tracker).find_by(trackers: { name: test_tracker_name })
     end
 
     private

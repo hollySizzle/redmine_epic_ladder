@@ -25,10 +25,11 @@ module Kanban
       private
 
       def trigger_creation_hooks(issue)
+        tracker_names = Kanban::TrackerHierarchy.tracker_names
         case issue.tracker.name
-        when 'UserStory'
+        when tracker_names[:user_story]
           trigger_user_story_creation(issue)
-        when 'Bug'
+        when tracker_names[:bug]
           trigger_bug_creation(issue)
         end
       end
@@ -42,7 +43,8 @@ module Kanban
 
       def trigger_bug_creation(bug)
         # Bug関連付け処理
-        if bug.parent&.tracker&.name == 'UserStory'
+        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+        if bug.parent&.tracker&.name == user_story_tracker_name
           create_bug_blocks_relation(bug, bug.parent)
         end
 
@@ -50,13 +52,15 @@ module Kanban
       end
 
       def handle_status_change(issue)
-        if issue.tracker.name == 'UserStory' && moved_to_ready_for_test?(issue)
+        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+        if issue.tracker.name == user_story_tracker_name && moved_to_ready_for_test?(issue)
           TestGenerationService.ensure_test_exists_for_ready_state(issue)
         end
       end
 
       def handle_version_change(issue)
-        if issue.tracker.name == 'UserStory'
+        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+        if issue.tracker.name == user_story_tracker_name
           version = issue.fixed_version
           VersionPropagationService.propagate_to_children(issue, version)
         end

@@ -6,7 +6,8 @@ module Kanban
   class ValidationGuardService
     # 3層ガード検証の実行
     def self.validate_release_readiness(user_story)
-      return { error: 'UserStoryではありません' } unless user_story.tracker.name == 'UserStory'
+      user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+      return { error: 'UserStoryではありません' } unless user_story.tracker.name == user_story_tracker_name
 
       results = {
         task_completion: validate_task_completion(user_story),
@@ -28,8 +29,9 @@ module Kanban
 
     # レイヤー1: 子Taskの完了検証
     def self.validate_task_completion(user_story)
+      task_tracker_name = Kanban::TrackerHierarchy.tracker_names[:task]
       incomplete_tasks = user_story.children.joins(:tracker, :status)
-                                  .where(trackers: { name: 'Task' })
+                                  .where(trackers: { name: task_tracker_name })
                                   .where.not(issue_statuses: { name: ['Resolved', 'Closed'] })
 
       {
@@ -43,7 +45,8 @@ module Kanban
 
     # レイヤー2: Test合格検証
     def self.validate_test_success(user_story)
-      tests = user_story.children.joins(:tracker).where(trackers: { name: 'Test' })
+      test_tracker_name = Kanban::TrackerHierarchy.tracker_names[:test]
+      tests = user_story.children.joins(:tracker).where(trackers: { name: test_tracker_name })
       failed_tests = tests.joins(:status).where.not(issue_statuses: { name: ['Resolved', 'Closed', 'Passed'] })
 
       {
@@ -58,8 +61,9 @@ module Kanban
 
     # レイヤー3: 重大Bug解決検証
     def self.validate_critical_bugs(user_story)
+      bug_tracker_name = Kanban::TrackerHierarchy.tracker_names[:bug]
       critical_bugs = user_story.children.joins(:tracker, :priority, :status)
-                               .where(trackers: { name: 'Bug' })
+                               .where(trackers: { name: bug_tracker_name })
                                .where(enumerations: { name: ['High', 'Urgent', 'Immediate'] })
                                .where.not(issue_statuses: { name: ['Resolved', 'Closed'] })
 
@@ -95,12 +99,14 @@ module Kanban
     private
 
     def self.count_child_tasks(user_story)
-      user_story.children.joins(:tracker).where(trackers: { name: 'Task' }).count
+      task_tracker_name = Kanban::TrackerHierarchy.tracker_names[:task]
+      user_story.children.joins(:tracker).where(trackers: { name: task_tracker_name }).count
     end
 
     def self.count_critical_bugs(user_story)
+      bug_tracker_name = Kanban::TrackerHierarchy.tracker_names[:bug]
       user_story.children.joins(:tracker, :priority)
-               .where(trackers: { name: 'Bug' })
+               .where(trackers: { name: bug_tracker_name })
                .where(enumerations: { name: ['High', 'Urgent', 'Immediate'] }).count
     end
 

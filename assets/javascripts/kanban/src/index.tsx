@@ -1,0 +1,38 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { App } from './App';
+import { worker } from './mocks/browser';
+
+console.log('✅ React application starting...');
+
+// MSWを強制的に有効化（Redmine統合テスト用）
+// TODO: 本番APIが完成したら process.env.NODE_ENV === 'development' に戻す
+worker.start({
+  onUnhandledRequest: 'warn',
+  quiet: false,
+  serviceWorker: {
+    url: '/mockServiceWorker.js'
+  }
+}).then(() => {
+  console.log('[MSW] Mock Service Worker started');
+  mountApp();
+}).catch((error) => {
+  console.error('[MSW] Failed to start:', error);
+  mountApp(); // エラーでもアプリは起動する
+});
+
+function mountApp() {
+  const rootElement = document.getElementById('kanban-root');
+
+  if (rootElement) {
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+    console.log('🎯 React application mounted successfully!');
+  } else {
+    console.error('❌ Root element not found! Looking for #kanban-root');
+  }
+}

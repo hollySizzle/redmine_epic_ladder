@@ -1,24 +1,25 @@
 # frozen_string_literal: true
 
 module Kanban
-  # APIコントローラー
-  # React-バックエンド間効率的データ交換とRedmine標準API統合
-  class ApiController < ApplicationController
-    before_action :require_login
-    before_action :find_project, except: [:test_connection]
-    before_action :authorize_kanban, except: [:test_connection]
+  # APIコントローラー（既存互換性維持）
+  # BaseApiController継承による統一応答形式対応
+  class ApiController < BaseApiController
+    # 統一応答形式のテスト用にBaseApiControllerを継承
+    # 既存エンドポイントの後方互換性を維持
 
-    # カンバンデータの取得
+    # カンバンデータの取得（既存API互換）
     def kanban_data
-      begin
-        data = build_kanban_response
-        render json: data
-      rescue => e
-        render json: { error: e.message }, status: :internal_server_error
-      end
+      grid_data = Kanban::GridDataBuilderService.new(@project, User.current).build
+
+      # 既存形式での応答（後方互換性のため）
+      legacy_data = build_legacy_response(grid_data)
+      render_success(legacy_data)
+    rescue => e
+      Rails.logger.error "Kanban data error: #{e.message}"
+      render_error('カンバンデータの取得に失敗しました', :internal_server_error)
     end
 
-    # イシューの状態遷移
+    # イシューの状態遷移（既存API互換）
     def transition_issue
       issue = Issue.find(params[:issue_id])
       target_column = params[:target_column]
@@ -26,19 +27,18 @@ module Kanban
       result = Kanban::StateTransitionService.transition_to_column(issue, target_column)
 
       if result[:error]
-        render json: { error: result[:error] }, status: :unprocessable_entity
+        render_error(result[:error], :unprocessable_entity, result[:details])
       else
-        render json: {
-          success: true,
-          issue: issue_json(issue.reload),
+        render_success({
+          issue: serialize_issue(issue.reload),
           transition: result
-        }
+        })
       end
     rescue ActiveRecord::RecordNotFound
-      render json: { error: 'イシューが見つかりません' }, status: :not_found
+      render_error('イシューが見つかりません', :not_found)
     end
 
-    # バージョン割当
+    # バージョン割当（既存API互換）
     def assign_version
       issue = Issue.find(params[:issue_id])
       version_id = params[:version_id]
@@ -47,19 +47,18 @@ module Kanban
       result = Kanban::VersionPropagationService.propagate_to_children(issue, version)
 
       if result[:error]
-        render json: { error: result[:error] }, status: :unprocessable_entity
+        render_error(result[:error], :unprocessable_entity, result[:details])
       else
-        render json: {
-          success: true,
-          issue: issue_json(issue.reload),
+        render_success({
+          issue: serialize_issue(issue.reload),
           propagation: result
-        }
+        })
       end
     rescue ActiveRecord::RecordNotFound
-      render json: { error: 'リソースが見つかりません' }, status: :not_found
+      render_error('リソースが見つかりません', :not_found)
     end
 
-    # Test自動生成
+    # Test自動生成（既存API互換）
     def generate_test
       user_story = Issue.find(params[:user_story_id])
       force = params[:force] == true
@@ -67,65 +66,60 @@ module Kanban
       result = Kanban::TestGenerationService.generate_test_for_user_story(user_story, force_recreate: force)
 
       if result[:error]
-        render json: { error: result[:error] }, status: :unprocessable_entity
+        render_error(result[:error], :unprocessable_entity, result[:details])
       else
-        render json: {
-          success: true,
-          test_issue: issue_json(result[:test_issue]),
+        render_success({
+          test_issue: serialize_issue(result[:test_issue]),
           relation_created: result[:relation_created]
-        }
+        })
       end
     rescue ActiveRecord::RecordNotFound
-      render json: { error: 'UserStoryが見つかりません' }, status: :not_found
+      render_error('UserStoryが見つかりません', :not_found)
     end
 
-    # リリース準備検証
+    # リリース準備検証（既存API互換）
     def validate_release
       user_story = Issue.find(params[:user_story_id])
 
       result = Kanban::ValidationGuardService.validate_release_readiness(user_story)
-
-      render json: result
+      render_success(result)
     rescue ActiveRecord::RecordNotFound
-      render json: { error: 'UserStoryが見つかりません' }, status: :not_found
+      render_error('UserStoryが見つかりません', :not_found)
     end
 
-    # 接続テスト
+    # 接続テスト（既存API互換）
     def test_connection
-      render json: {
+      render_success({
         status: 'ok',
         timestamp: Time.current.iso8601,
         user: User.current&.name,
-        version: '1.0.0-skeleton'
-      }
+        version: '2.0.0-api-integrated',
+        api_features: {
+          unified_response: true,
+          realtime_communication: true,
+          batch_operations: true,
+          optimistic_updates: true
+        }
+      })
     end
 
     private
 
-    def build_kanban_response
+    # 既存形式レスポンス構築（後方互換性）
+    def build_legacy_response(grid_data)
       issues = @project.issues.includes(:tracker, :status, :assigned_to, :fixed_version, :parent)
 
       {
-        project: project_json(@project),
-        columns: kanban_columns,
-        issues: issues.map { |issue| issue_json(issue) },
+        project: project_metadata,
+        columns: grid_data[:columns],
+        issues: issues.map { |issue| serialize_issue(issue) },
         statistics: build_statistics(issues),
         metadata: {
           last_updated: Time.current.iso8601,
-          total_issues: issues.count
+          total_issues: issues.count,
+          api_version: '2.0.0-legacy-compatible'
         }
       }
-    end
-
-    def kanban_columns
-      [
-        { id: 'backlog', title: 'バックログ', statuses: ['New', 'Open'] },
-        { id: 'ready', title: '準備完了', statuses: ['Ready'] },
-        { id: 'in_progress', title: '進行中', statuses: ['In Progress', 'Assigned'] },
-        { id: 'review', title: 'レビュー', statuses: ['Review', 'Ready for Test'] },
-        { id: 'testing', title: 'テスト中', statuses: ['Testing', 'QA'] },
-        { id: 'done', title: '完了', statuses: ['Resolved', 'Closed'] }
-      ]
     end
 
     def build_statistics(issues)
@@ -136,16 +130,18 @@ module Kanban
       }
     end
 
-    def project_json(project)
+    def project_metadata
       {
-        id: project.id,
-        name: project.name,
-        identifier: project.identifier,
-        description: project.description
+        id: @project.id,
+        name: @project.name,
+        identifier: @project.identifier,
+        description: @project.description,
+        trackers: @project.trackers.pluck(:id, :name),
+        versions: @project.versions.pluck(:id, :name)
       }
     end
 
-    def issue_json(issue)
+    def serialize_issue(issue)
       {
         id: issue.id,
         subject: issue.subject,
@@ -153,29 +149,37 @@ module Kanban
         status: issue.status.name,
         priority: issue.priority.name,
         assigned_to: issue.assigned_to&.name,
+        assigned_to_id: issue.assigned_to_id,
         fixed_version: issue.fixed_version&.name,
+        fixed_version_id: issue.fixed_version_id,
         parent_id: issue.parent_id,
         hierarchy_level: Kanban::TrackerHierarchy.level(issue.tracker.name),
         created_on: issue.created_on.iso8601,
         updated_on: issue.updated_on.iso8601,
-        column: determine_column_for_issue(issue)
+        lock_version: issue.lock_version,
+        column: determine_column_for_issue(issue),
+        can_edit: User.current.allowed_to?(:edit_issues, @project)
       }
     end
 
     def determine_column_for_issue(issue)
       status_name = issue.status.name
-      kanban_columns.each do |column|
-        return column[:id] if column[:statuses].include?(status_name)
+      case status_name
+      when 'New', 'Open'
+        'backlog'
+      when 'Ready'
+        'ready'
+      when 'In Progress', 'Assigned'
+        'in_progress'
+      when 'Review', 'Ready for Test'
+        'review'
+      when 'Testing', 'QA'
+        'testing'
+      when 'Resolved', 'Closed'
+        'done'
+      else
+        'backlog'
       end
-      'backlog'
-    end
-
-    def find_project
-      @project = Project.find(params[:project_id]) if params[:project_id]
-    end
-
-    def authorize_kanban
-      deny_access unless User.current.allowed_to?(:view_issues, @project)
     end
   end
 end

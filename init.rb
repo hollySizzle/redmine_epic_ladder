@@ -1,4 +1,6 @@
 # plugins/redmine_release_kanban/init.rb
+
+
 Redmine::Plugin.register :redmine_release_kanban do
   name 'Redmine Release Kanban Plugin'
   author 'holly'

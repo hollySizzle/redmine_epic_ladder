@@ -136,7 +136,7 @@ class LogCapture
 
   def find_rails_process_pid
     # pumaプロセスを探す（Railsサーバーの実体）
-    output = `ps aux | grep -E 'puma.*3000' | grep -v grep`
+    output = `ps aux | grep -E 'puma.*8500' | grep -v grep`
     if output && !output.empty?
       return output.split[1] # PID列を取得
     end
@@ -146,7 +146,7 @@ class LogCapture
     if output && !output.empty?
       return output.split[1]
     end
-    
+
     nil
   end
 

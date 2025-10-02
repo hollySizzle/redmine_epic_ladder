@@ -261,9 +261,9 @@ end
 
 RSpec.configure do |config|
   config.include GanttTestHelpers
-  
-  # テスト後のクリーンアップ
-  config.after(:each) do
+
+  # テスト後のクリーンアップ（Gantt テストのみ）
+  config.after(:each, type: :gantt) do
     cleanup_test_data if respond_to?(:cleanup_test_data)
   end
 end

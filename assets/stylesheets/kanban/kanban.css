@@ -1,5 +1,9 @@
 /* assets/stylesheets/kanban/kanban.css */
 
+/* Component-specific styles */
+@import url('./components/GridStatistics.css');
+@import url('./grid_v2.css');
+
 .kanban-app {
   display: flex;
   flex-direction: column;

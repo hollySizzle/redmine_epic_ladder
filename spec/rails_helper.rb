@@ -1,5 +1,24 @@
 # frozen_string_literal: true
 
+# factory_girl を無効化（他プラグインのテストは実行しないため）
+ENV['DISABLE_FACTORY_GIRL'] = '1'
+
+# FactoryBot を先に読み込む（Redmine rails_helper より前）
+require 'factory_bot_rails'
+
+# factory_girl の ActiveSupport::Deprecation.warn をパッチ（Rails 7.2+ では private method）
+module ActiveSupport
+  class Deprecation
+    class << self
+      def warn(message = nil, callstack = nil)
+        return if @silenced
+        # 警告をログに出力（エラーにしない）
+        Rails.logger.warn("[DEPRECATION] #{message}") if Rails.logger && message
+      end
+    end
+  end
+end
+
 # SimpleCov設定（カバレッジ測定）
 if ENV['COVERAGE']
   require 'simplecov'
@@ -12,36 +31,135 @@ if ENV['COVERAGE']
   end
 end
 
+# DatabaseCleaner 設定（system spec で別プロセスからデータを見えるようにする）
+require 'database_cleaner/active_record'
+
 # Redmineのrails_helperまたは標準のrails_helper設定
 begin
   require File.expand_path('../../../spec/rails_helper', __dir__)
 rescue LoadError
   # Redmineのrails_helperがない場合の基本設定
-  require 'rails/test_help'
+  # Railsアプリケーションが確実にロードされるようにする
+  require File.expand_path('../../../config/environment', __dir__)
   require 'rspec/rails'
 end
 
+# FactoryBot ファクトリー読み込み（Redmine rails_helper の後）
+FactoryBot.definition_file_paths = [
+  File.expand_path('factories', __dir__)
+]
+FactoryBot.reload
+
 # プラグイン固有の設定
 RSpec.configure do |config|
+  # FactoryBot サポート（明示的にinclude）
+  config.include FactoryBot::Syntax::Methods
+
   # プラグインのフィクスチャパスを追加
-  config.fixture_path = File.expand_path('fixtures', __dir__)
-  
-  # トランザクショナルテスト
-  config.use_transactional_fixtures = true
-  
-  # データベースクリーナー設定
+  config.fixture_paths ||= []
+  config.fixture_paths << File.expand_path('fixtures', __dir__)
+
+  # メール送信を無効化（テスト高速化・i18nエラー回避）
   config.before(:suite) do
-    require 'database_cleaner/active_record' if defined?(DatabaseCleaner)
-    DatabaseCleaner.strategy = :transaction if defined?(DatabaseCleaner)
-    DatabaseCleaner.clean_with(:truncation) if defined?(DatabaseCleaner)
+    ActionMailer::Base.perform_deliveries = false
+    ActionMailer::Base.raise_delivery_errors = false
   end
-  
-  config.around(:each) do |example|
-    if defined?(DatabaseCleaner)
-      DatabaseCleaner.cleaning do
-        example.run
-      end
+
+  config.before(:each) do
+    ActionMailer::Base.perform_deliveries = false
+    ActionMailer::Base.raise_delivery_errors = false
+    # Redmine設定でもメール通知を無効化
+    Setting.notified_events = []
+  end
+
+  # Redmine default data をテスト前にロード
+  config.before(:suite) do
+    # i18n バックエンドを初期化
+    I18n.backend.load_translations
+
+    # Group が存在しない場合のみ default data をロード
+    if defined?(Group) && Group.count == 0
+      puts "\n[INFO] Loading Redmine default data..."
+      # 言語を環境変数で指定（対話式入力を回避）
+      ENV['REDMINE_LANG'] = 'en'
+      # Rake task を直接実行
+      require 'rake'
+      Rails.application.load_tasks
+      Rake::Task['redmine:load_default_data'].invoke
+      puts "[INFO] Default data loaded successfully\n"
+    end
+
+    # === 選択肢A: Eager loading で Redmine::I18n を強制的に読み込む ===
+    puts "\n[INFO] Forcing Redmine::I18n to be included in ActionView::Base..."
+
+    # Redmine コアの Helper を確実にロード
+    require 'application_helper'
+
+    # ActionView::Base に Redmine::I18n を強制的に include
+    unless ActionView::Base.included_modules.include?(Redmine::I18n)
+      ActionView::Base.send(:include, Redmine::I18n)
+      puts "[INFO] ✅ Redmine::I18n included in ActionView::Base"
     else
+      puts "[INFO] ✅ Redmine::I18n already included in ActionView::Base"
+    end
+
+    # ApplicationHelper にも確認
+    unless ApplicationHelper.included_modules.include?(Redmine::I18n)
+      ApplicationHelper.send(:include, Redmine::I18n)
+      puts "[INFO] ✅ Redmine::I18n included in ApplicationHelper"
+    else
+      puts "[INFO] ✅ Redmine::I18n already included in ApplicationHelper"
+    end
+
+    puts "[INFO] Redmine::I18n setup completed\n"
+  end
+
+  # DatabaseCleaner 設定
+  config.use_transactional_fixtures = false
+
+  config.before(:suite) do
+    # DATABASE_URL が設定されている環境でも許可
+    DatabaseCleaner.allow_remote_database_url = true
+
+    # Redmine default data を保護しながら truncation
+    # users, projects, issues などは削除するが、roles, trackers, issue_statuses は保護
+    protected_tables = %w[
+      roles
+      trackers
+      issue_statuses
+      enumerations
+      workflows
+      custom_fields
+      settings
+      groups_users
+    ]
+
+    DatabaseCleaner.strategy = :truncation, { except: protected_tables }
+    DatabaseCleaner.clean_with(:truncation, { except: protected_tables })
+  end
+
+  config.around(:each) do |example|
+    protected_tables = %w[
+      roles
+      trackers
+      issue_statuses
+      enumerations
+      workflows
+      custom_fields
+      settings
+      groups_users
+    ]
+
+    if example.metadata[:type] == :system
+      # System spec: 別プロセス（Railsサーバー）から見えるように truncation 使用
+      # default data テーブルは保護
+      DatabaseCleaner.strategy = :truncation, { except: protected_tables }
+    else
+      # 通常の spec: 高速な transaction 使用
+      DatabaseCleaner.strategy = :transaction
+    end
+
+    DatabaseCleaner.cleaning do
       example.run
     end
   end
@@ -126,14 +244,95 @@ if defined?(Shoulda::Matchers)
   end
 end
 
-# Factory Bot設定
-if defined?(FactoryBot)
-  RSpec.configure do |config|
-    config.include FactoryBot::Syntax::Methods
-    
-    config.before(:suite) do
-      FactoryBot.find_definitions
+# Factory Bot 初期化（重複だが明示的に）
+RSpec.configure do |config|
+  config.before(:suite) do
+    FactoryBot.definition_file_paths = [
+      File.expand_path('factories', __dir__)
+    ]
+    FactoryBot.reload
+  end
+end
+
+# Pure Playwright Ruby Client（Capybara 不使用）
+require 'playwright'
+
+# System テストで Pure Playwright を使用（サーバー共有モード）
+RSpec.configure do |config|
+  # サーバーを全テストで共有（高速化）
+  config.before(:suite) do
+    if RSpec.configuration.files_to_run.any? { |f| f.include?('spec/system') }
+      @shared_server_port = ENV['TEST_PORT'] || 3001
+
+      # 既存のプロセスをクリーンアップ
+      system("lsof -ti:#{@shared_server_port} | xargs kill -9 2>/dev/null")
+      sleep 0.5
+
+      puts "\n[INFO] 共有 Rails サーバーを起動中（ポート: #{@shared_server_port}）..."
+
+      @shared_server_pid = fork do
+        ENV['RAILS_ENV'] = 'test'
+        exec("bundle exec rails s -p #{@shared_server_port} -e test > log/test_server.log 2>&1")
+      end
+
+      # サーバー起動待機
+      max_wait = 30
+      start_time = Time.now
+      loop do
+        break if system("curl -s http://localhost:#{@shared_server_port} > /dev/null 2>&1")
+        if Time.now - start_time > max_wait
+          Process.kill('TERM', @shared_server_pid) rescue nil
+          raise "Rails server failed to start within #{max_wait} seconds"
+        end
+        sleep 0.5
+      end
+
+      puts "[INFO] ✅ Rails サーバー起動完了（PID: #{@shared_server_pid}）\n"
+
+      # グローバル変数に保存
+      $shared_server_port = @shared_server_port
+      $shared_server_pid = @shared_server_pid
     end
+  end
+
+  config.after(:suite) do
+    if $shared_server_pid
+      puts "\n[INFO] 共有 Rails サーバーを停止中（PID: #{$shared_server_pid}）..."
+      Process.kill('TERM', $shared_server_pid) rescue nil
+      Process.wait($shared_server_pid) rescue nil
+      puts "[INFO] ✅ Rails サーバー停止完了\n"
+    end
+  end
+
+  config.around(:each, type: :system) do |example|
+    server_port = $shared_server_port || 3001
+
+    # Playwright でブラウザ起動（サーバーは共有）
+    Playwright.create(playwright_cli_executable_path: File.expand_path('../node_modules/.bin/playwright', __dir__)) do |playwright|
+      playwright.chromium.launch(headless: true) do |browser|
+        @playwright_page = browser.new_page(baseURL: "http://localhost:#{server_port}")
+        @playwright_page.context.set_default_timeout(10000)
+
+        begin
+          # テスト実行
+          example.run
+        ensure
+          # スクリーンショット保存（失敗時）
+          if example.exception
+            screenshot_dir = Rails.root.join('tmp', 'playwright_screenshots')
+            FileUtils.mkdir_p(screenshot_dir)
+            screenshot_path = screenshot_dir.join("#{example.full_description.parameterize}_#{Time.now.to_i}.png")
+            @playwright_page.screenshot(path: screenshot_path.to_s)
+            puts "\n[Screenshot] #{screenshot_path}"
+          end
+        end
+      end
+    end
+  end
+
+  # @playwright_page をテストから参照できるようにする
+  config.before(:each, type: :system) do
+    # @playwright_page は around ブロックで設定される
   end
 end
 
