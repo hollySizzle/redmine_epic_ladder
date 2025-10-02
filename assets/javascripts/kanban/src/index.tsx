@@ -4,8 +4,9 @@ import { App } from './App';
 
 console.log('✅ React application starting...');
 
-// 開発モードでMSWを起動
-if (process.env.NODE_ENV === 'development') {
+// MSWを強制的に有効化（Redmine統合テスト用）
+// TODO: 本番APIが完成したら process.env.NODE_ENV === 'development' に戻す
+if (true) {
   import('./mocks/browser').then(({ worker }) => {
     worker.start({
       onUnhandledRequest: 'warn',
