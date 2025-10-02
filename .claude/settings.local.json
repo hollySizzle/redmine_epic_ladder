@@ -56,7 +56,11 @@
       "Bash(git clean:*)",
       "Bash(npm run build:*)",
       "Bash(npm test)",
-      "Bash(NODE_ENV=production npm run build)"
+      "Bash(NODE_ENV=production npm run build)",
+      "Bash(for:*)",
+      "Bash(wc:*)",
+      "Bash(done)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": [],
