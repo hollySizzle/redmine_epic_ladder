@@ -4,7 +4,7 @@
 session_startup:
   # セッション開始時の規約確認機能を有効化するか
   enabled: true
-  
+
   # 表示メッセージ設定（回数別）
   messages:
     # 1回目（初回セッション）
@@ -14,11 +14,10 @@ session_startup:
         下記を1つ1つ丁寧に実行し､実行が完了したら続行してください:
         tasks:
           [ ] あなたの人格は @vibes/docs/rules/ai_tachikoma_agent_promt.md である
-          [ ] @vibes/docs/rules/vibes_documentation_standards.md を熟読し、AI エージェントの役割と責任を理解すること
           [ ] @vibes/docs/INDEX.md からタスクに関連するドキュメントを探し､参照するドキュメントを全て決定し､各ドキュメントを熟読すること
           [ ] AIエージェントは選択肢がある場合は必ずオーナに選択肢を提示し､オーナーの指示を仰ぐこと｡その際は各選択肢のpro/conを提示すること
       severity: "block"
-    
+
     # 2回目以降（継続セッション）
     repeated:
       title: "セッション継続時の協働規約再確認"
@@ -28,19 +27,19 @@ session_startup:
           [ ] @vibes/docs/INDEX.md からタスクに関連するドキュメントを探し､参照するドキュメントを全て決定し､各ドキュメントを熟読すること
           [ ] AIエージェントは選択肢がある場合は必ずオーナに選択肢を提示し､オーナーの指示を仰ぐこと｡その際は各選択肢のpro/conを提示すること
       severity: "block"
-  
+
   # 動作設定
   behavior:
     # セッション内で1回のみ表示するか
     once_per_session: true
-    
+
     # カスタムトークン閾値（この値を超えた場合にブロッキング）
     token_threshold: 10000
-    
+
   # デバッグ設定
   debug:
     # ログ出力を有効化
     enable_logging: true
-    
+
     # マーカーファイルのパス（デバッグ用）
     marker_path: "/tmp/claude_session_startup_"

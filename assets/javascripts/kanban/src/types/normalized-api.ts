@@ -401,6 +401,188 @@ export interface UpdatesResponse {
 }
 
 // ========================================
+// CRUD操作 リクエスト/レスポンス型定義
+// ========================================
+
+// Feature作成
+export interface CreateFeatureRequest {
+  subject: string;
+  description?: string;
+  parent_epic_id: string;
+  fixed_version_id: string | null;
+  assigned_to_id?: number;
+  priority_id?: number;
+}
+
+export interface CreateFeatureResponse {
+  success: true;
+  data: {
+    created_entity: Feature;
+    updated_entities: {
+      epics?: Record<string, Epic>;
+      features?: Record<string, Feature>;
+      versions?: Record<string, Version>;
+    };
+    grid_updates: {
+      index: Record<string, string[]>;
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+// UserStory作成
+export interface CreateUserStoryRequest {
+  subject: string;
+  description?: string;
+  parent_feature_id: string;
+  assigned_to_id?: number;
+  estimated_hours?: number;
+}
+
+export interface CreateUserStoryResponse {
+  success: true;
+  data: {
+    created_entity: UserStory;
+    updated_entities: {
+      features?: Record<string, Feature>;
+      user_stories?: Record<string, UserStory>;
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+// Task作成
+export interface CreateTaskRequest {
+  subject: string;
+  description?: string;
+  parent_user_story_id: string;
+  assigned_to_id?: number;
+  estimated_hours?: number;
+}
+
+export interface CreateTaskResponse {
+  success: true;
+  data: {
+    created_entity: Task;
+    updated_entities: {
+      user_stories?: Record<string, UserStory>;
+      tasks?: Record<string, Task>;
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+// Test作成
+export interface CreateTestRequest {
+  subject: string;
+  description?: string;
+  parent_user_story_id: string;
+  assigned_to_id?: number;
+}
+
+export interface CreateTestResponse {
+  success: true;
+  data: {
+    created_entity: Test;
+    updated_entities: {
+      user_stories?: Record<string, UserStory>;
+      tests?: Record<string, Test>;
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+// Bug作成
+export interface CreateBugRequest {
+  subject: string;
+  description?: string;
+  parent_user_story_id: string;
+  assigned_to_id?: number;
+  severity?: BugSeverity;
+}
+
+export interface CreateBugResponse {
+  success: true;
+  data: {
+    created_entity: Bug;
+    updated_entities: {
+      user_stories?: Record<string, UserStory>;
+      bugs?: Record<string, Bug>;
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+// 更新操作 (共通パターン)
+export interface UpdateEntityRequest {
+  id: string;
+  subject?: string;
+  description?: string;
+  status?: IssueStatus;
+  assigned_to_id?: number;
+  estimated_hours?: number;
+  done_ratio?: number;
+}
+
+export interface UpdateEntityResponse<T> {
+  success: true;
+  data: {
+    updated_entity: T;
+    updated_entities: {
+      epics?: Record<string, Epic>;
+      features?: Record<string, Feature>;
+      user_stories?: Record<string, UserStory>;
+      tasks?: Record<string, Task>;
+      tests?: Record<string, Test>;
+      bugs?: Record<string, Bug>;
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+// 削除操作 (共通パターン)
+export interface DeleteEntityRequest {
+  id: string;
+}
+
+export interface DeleteEntityResponse {
+  success: true;
+  data: {
+    deleted_id: string;
+    updated_entities: {
+      epics?: Record<string, Epic>;
+      features?: Record<string, Feature>;
+      user_stories?: Record<string, UserStory>;
+    };
+    grid_updates?: {
+      index: Record<string, string[]>;
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+// ========================================
 // エラーレスポンス型定義
 // ========================================
 
@@ -430,14 +612,14 @@ export interface ErrorResponse {
 
 /**
  * 全エクスポート型のリスト
- * 
+ *
  * Common Types:
  * - IssueStatus
  * - VersionStatus
  * - VersionSource
  * - TestResult
  * - BugSeverity
- * 
+ *
  * Entity Types:
  * - Epic
  * - Version
@@ -446,16 +628,16 @@ export interface ErrorResponse {
  * - Task
  * - Test
  * - Bug
- * 
+ *
  * Grid Types:
  * - GridIndex
- * 
+ *
  * Metadata Types:
  * - ColumnConfig
  * - Metadata
  * - VersionStats
  * - Statistics
- * 
+ *
  * API Types:
  * - NormalizedAPIResponse
  * - GridDataRequest
@@ -464,4 +646,13 @@ export interface ErrorResponse {
  * - UpdatesRequest
  * - UpdatesResponse
  * - ErrorResponse
+ *
+ * CRUD Types:
+ * - CreateFeatureRequest / CreateFeatureResponse
+ * - CreateUserStoryRequest / CreateUserStoryResponse
+ * - CreateTaskRequest / CreateTaskResponse
+ * - CreateTestRequest / CreateTestResponse
+ * - CreateBugRequest / CreateBugResponse
+ * - UpdateEntityRequest / UpdateEntityResponse<T>
+ * - DeleteEntityRequest / DeleteEntityResponse
  */

@@ -230,9 +230,15 @@ rules:
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 E2Eテスト実装前に規約を確認してください
+      📋 E2Eテスト実装前に規約とReference Testを確認してください
+      必読: @vibes/docs/rules/backend_testing.md (E2Eテスト詳細ガイド)
       必読: @vibes/rules/testing_strategy.md (Pure Playwright戦略)
-      必読: @vibes/specs/technical/grid_measurement_strategy.md (Grid測定)
+      参考: @vibes/specs/technical/grid_measurement_strategy.md (Grid測定)
+      参考: spec/system/kanban/simple_e2e_spec.rb (Reference Test)
+
+      🎯 新規テスト作成: simple_e2e_spec.rb をコピーして編集
+      🔍 テスト失敗時: backend_testing.md の「デバッグ手順」参照
+
       Pure Playwright方式（Capybara不使用）でi18nエラーを回避してください
 
   # FactoryBot定義

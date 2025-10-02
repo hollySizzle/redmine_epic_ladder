@@ -9,8 +9,14 @@ import type {
   UserStory,
   Task,
   Test,
-  Bug
+  Bug,
+  CreateFeatureRequest,
+  CreateUserStoryRequest,
+  CreateTaskRequest,
+  CreateTestRequest,
+  CreateBugRequest
 } from '../types/normalized-api';
+import * as API from '../api/kanban-api';
 
 interface StoreState {
   // 正規化されたエンティティ
@@ -35,6 +41,14 @@ interface StoreState {
   fetchGridData: (projectId: string) => Promise<void>;
   isLoading: boolean;
   error: string | null;
+  projectId: string | null;
+
+  // CRUD操作
+  createFeature: (data: CreateFeatureRequest) => Promise<void>;
+  createUserStory: (featureId: string, data: CreateUserStoryRequest) => Promise<void>;
+  createTask: (userStoryId: string, data: CreateTaskRequest) => Promise<void>;
+  createTest: (userStoryId: string, data: CreateTestRequest) => Promise<void>;
+  createBug: (userStoryId: string, data: CreateBugRequest) => Promise<void>;
 
   // Feature移動
   moveFeature: (featureId: string, targetEpicId: string, targetVersionId: string | null) => Promise<void>;
@@ -68,19 +82,14 @@ export const useStore = create<StoreState>()(
 
       isLoading: false,
       error: null,
+      projectId: null,
 
       // グリッドデータ取得
       fetchGridData: async (projectId: string) => {
-        set({ isLoading: true, error: null });
+        set({ isLoading: true, error: null, projectId });
 
         try {
-          const response = await fetch(`/api/kanban/projects/${projectId}/grid`);
-
-          if (!response.ok) {
-            throw new Error(`Failed to fetch grid data: ${response.statusText}`);
-          }
-
-          const data: NormalizedAPIResponse = await response.json();
+          const data = await API.fetchGridData(projectId);
 
           set({
             entities: data.entities,
@@ -95,24 +104,110 @@ export const useStore = create<StoreState>()(
         }
       },
 
+      // Feature作成
+      createFeature: async (data: CreateFeatureRequest) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.createFeature(projectId, data);
+
+          set((state) => {
+            // 正規化データをマージ
+            Object.assign(state.entities.epics, result.data.updated_entities.epics || {});
+            Object.assign(state.entities.features, result.data.updated_entities.features || {});
+            Object.assign(state.entities.versions, result.data.updated_entities.versions || {});
+            Object.assign(state.grid.index, result.data.grid_updates.index);
+          });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // UserStory作成
+      createUserStory: async (featureId: string, data: CreateUserStoryRequest) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.createUserStory(projectId, featureId, data);
+
+          set((state) => {
+            Object.assign(state.entities.features, result.data.updated_entities.features || {});
+            Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
+          });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // Task作成
+      createTask: async (userStoryId: string, data: CreateTaskRequest) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.createTask(projectId, userStoryId, data);
+
+          set((state) => {
+            Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
+            Object.assign(state.entities.tasks, result.data.updated_entities.tasks || {});
+          });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // Test作成
+      createTest: async (userStoryId: string, data: CreateTestRequest) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.createTest(projectId, userStoryId, data);
+
+          set((state) => {
+            Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
+            Object.assign(state.entities.tests, result.data.updated_entities.tests || {});
+          });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // Bug作成
+      createBug: async (userStoryId: string, data: CreateBugRequest) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.createBug(projectId, userStoryId, data);
+
+          set((state) => {
+            Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
+            Object.assign(state.entities.bugs, result.data.updated_entities.bugs || {});
+          });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
       // Feature移動API呼び出し
       moveFeature: async (featureId: string, targetEpicId: string, targetVersionId: string | null) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
         try {
-          const response = await fetch(`/api/kanban/projects/1/grid/move_feature`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              feature_id: featureId,
-              target_epic_id: targetEpicId,
-              target_version_id: targetVersionId
-            })
+          const result = await API.moveFeature(projectId, {
+            feature_id: featureId,
+            target_epic_id: targetEpicId,
+            target_version_id: targetVersionId
           });
-
-          if (!response.ok) {
-            throw new Error(`Failed to move feature: ${response.statusText}`);
-          }
-
-          const result = await response.json();
 
           // 更新されたエンティティとグリッドインデックスを反映
           set((state) => {
@@ -126,6 +221,7 @@ export const useStore = create<StoreState>()(
         } catch (error) {
           console.error('Failed to move feature:', error);
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
         }
       },
 

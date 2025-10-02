@@ -80,8 +80,12 @@ RSpec.configure do |config|
     # i18n バックエンドを初期化
     I18n.backend.load_translations
 
+    # 組み込みグループを作成（User.current.roles で必須）
+    GroupAnonymous.load_instance rescue nil
+    GroupNonMember.load_instance rescue nil
+
     # Group が存在しない場合のみ default data をロード
-    if defined?(Group) && Group.count == 0
+    if defined?(Group) && Group.count == 2  # 組み込みグループのみ存在
       puts "\n[INFO] Loading Redmine default data..."
       # 言語を環境変数で指定（対話式入力を回避）
       ENV['REDMINE_LANG'] = 'en'
@@ -162,6 +166,12 @@ RSpec.configure do |config|
       DatabaseCleaner.strategy = :transaction
     end
 
+    # 組み込みグループを再作成（truncation 前に必須 - サーバーが参照する）
+    if example.metadata[:type] == :system
+      GroupAnonymous.load_instance rescue nil
+      GroupNonMember.load_instance rescue nil
+    end
+
     DatabaseCleaner.cleaning do
       example.run
     end
@@ -231,7 +241,6 @@ RSpec.configure do |config|
   
   # Include custom helpers
   config.include PerformanceHelpers
-  config.include GanttTestHelpers
   
   # RSpec Benchmark設定
   config.include RSpec::Benchmark::Matchers if defined?(RSpec::Benchmark)
@@ -278,11 +287,11 @@ RSpec.configure do |config|
         exec("bundle exec rails s -p #{@shared_server_port} -e test > log/test_server.log 2>&1")
       end
 
-      # サーバー起動待機
+      # サーバー起動待機（/login は User.current なしでレンダリング可能）
       max_wait = 30
       start_time = Time.now
       loop do
-        break if system("curl -s http://localhost:#{@shared_server_port} > /dev/null 2>&1")
+        break if system("curl -s http://localhost:#{@shared_server_port}/login > /dev/null 2>&1")
         if Time.now - start_time > max_wait
           Process.kill('TERM', @shared_server_pid) rescue nil
           raise "Rails server failed to start within #{max_wait} seconds"

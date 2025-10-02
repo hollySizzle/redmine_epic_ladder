@@ -8,6 +8,21 @@ unless Rails.env.development?
   exit
 end
 
+# ===== デフォルトadminユーザーのパスワード変更強制を無効化 =====
+puts "\n👤 デフォルトadminユーザーの設定を更新中..."
+
+admin = User.find_by(login: 'admin')
+if admin
+  admin.must_change_passwd = false
+  if admin.save(validate: false)
+    puts "  ✅ adminユーザーのパスワード変更強制を無効化しました"
+  else
+    puts "  ⚠️  adminユーザーの更新に失敗: #{admin.errors.full_messages.join(', ')}"
+  end
+else
+  puts "  ⚠️  adminユーザーが見つかりません（Redmineのデフォルトデータ投入が必要です）"
+end
+
 # ===== Redmine基本ステータス投入 =====
 puts "\n🏷️ Redmine基本ステータスを投入中..."
 

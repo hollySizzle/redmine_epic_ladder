@@ -4,7 +4,22 @@ import type {
   MoveFeatureRequest,
   MoveFeatureResponse,
   UpdatesResponse,
-  ErrorResponse
+  ErrorResponse,
+  CreateFeatureRequest,
+  CreateFeatureResponse,
+  CreateUserStoryRequest,
+  CreateUserStoryResponse,
+  CreateTaskRequest,
+  CreateTaskResponse,
+  CreateTestRequest,
+  CreateTestResponse,
+  CreateBugRequest,
+  CreateBugResponse,
+  Feature,
+  UserStory,
+  Task,
+  Test,
+  Bug
 } from '../types/normalized-api';
 import { normalizedMockData } from './normalized-mock-data';
 
@@ -217,6 +232,426 @@ export const handlers = [
       success: true,
       message: 'Mock data has been reset'
     });
+  }),
+
+  // ========================================
+  // CRUD操作: Feature
+  // ========================================
+
+  // POST /api/kanban/projects/:projectId/cards
+  // Feature作成
+  http.post('/api/kanban/projects/:projectId/cards', async ({ request }) => {
+    await delay(200);
+
+    const body = (await request.json()) as CreateFeatureRequest;
+    const { subject, description, parent_epic_id, fixed_version_id, assigned_to_id, priority_id } = body;
+
+    // Epic存在確認
+    const parentEpic = currentData.entities.epics[parent_epic_id];
+    if (!parentEpic) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `Epic ${parent_epic_id} not found`,
+          details: { field: 'parent_epic_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // 新規Feature作成
+    const newFeatureId = `f-new-${Date.now()}`;
+    const newFeature: Feature = {
+      id: newFeatureId,
+      title: subject,
+      description: description || '',
+      status: 'open',
+      parent_epic_id,
+      user_story_ids: [],
+      fixed_version_id,
+      version_source: fixed_version_id ? 'direct' : 'none',
+      statistics: {
+        total_user_stories: 0,
+        completed_user_stories: 0,
+        total_child_items: 0,
+        child_items_by_type: { tasks: 0, tests: 0, bugs: 0 },
+        completion_percentage: 0
+      },
+      assigned_to_id,
+      priority_id,
+      created_on: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
+      tracker_id: 2
+    };
+
+    // エンティティ追加
+    currentData.entities.features[newFeatureId] = newFeature;
+
+    // グリッドインデックス更新
+    const cellKey = `${parent_epic_id}:${fixed_version_id || 'none'}`;
+    if (!currentData.grid.index[cellKey]) {
+      currentData.grid.index[cellKey] = [];
+    }
+    currentData.grid.index[cellKey].push(newFeatureId);
+
+    // 親Epic更新
+    parentEpic.feature_ids.push(newFeatureId);
+    parentEpic.statistics.total_features += 1;
+    parentEpic.updated_on = new Date().toISOString();
+
+    // Version統計更新
+    if (fixed_version_id && currentData.entities.versions[fixed_version_id]) {
+      const version = currentData.entities.versions[fixed_version_id];
+      version.issue_count += 1;
+      version.statistics.total_issues += 1;
+      version.updated_on = new Date().toISOString();
+    }
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: CreateFeatureResponse = {
+      success: true,
+      data: {
+        created_entity: newFeature,
+        updated_entities: {
+          epics: { [parent_epic_id]: parentEpic },
+          features: { [newFeatureId]: newFeature },
+          ...(fixed_version_id && currentData.entities.versions[fixed_version_id] ? {
+            versions: { [fixed_version_id]: currentData.entities.versions[fixed_version_id] }
+          } : {})
+        },
+        grid_updates: {
+          index: { [cellKey]: currentData.grid.index[cellKey] }
+        }
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response, { status: 201 });
+  }),
+
+  // ========================================
+  // CRUD操作: UserStory
+  // ========================================
+
+  // POST /api/kanban/projects/:projectId/cards/:featureId/user_stories
+  // UserStory作成
+  http.post('/api/kanban/projects/:projectId/cards/:featureId/user_stories', async ({ params, request }) => {
+    await delay(200);
+
+    const { featureId } = params;
+    const body = (await request.json()) as CreateUserStoryRequest;
+    const { subject, description, assigned_to_id, estimated_hours } = body;
+
+    // Feature存在確認
+    const parentFeature = currentData.entities.features[featureId as string];
+    if (!parentFeature) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `Feature ${featureId} not found`,
+          details: { field: 'parent_feature_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // 新規UserStory作成
+    const newStoryId = `us-new-${Date.now()}`;
+    const newUserStory: UserStory = {
+      id: newStoryId,
+      title: subject,
+      description: description || '',
+      status: 'open',
+      parent_feature_id: featureId as string,
+      task_ids: [],
+      test_ids: [],
+      bug_ids: [],
+      fixed_version_id: parentFeature.fixed_version_id,
+      version_source: 'inherited',
+      expansion_state: true,
+      statistics: {
+        total_tasks: 0,
+        completed_tasks: 0,
+        total_tests: 0,
+        passed_tests: 0,
+        total_bugs: 0,
+        resolved_bugs: 0,
+        completion_percentage: 0
+      },
+      assigned_to_id,
+      estimated_hours,
+      created_on: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
+      tracker_id: 3
+    };
+
+    // エンティティ追加
+    currentData.entities.user_stories[newStoryId] = newUserStory;
+
+    // 親Feature更新
+    parentFeature.user_story_ids.push(newStoryId);
+    parentFeature.statistics.total_user_stories += 1;
+    parentFeature.updated_on = new Date().toISOString();
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: CreateUserStoryResponse = {
+      success: true,
+      data: {
+        created_entity: newUserStory,
+        updated_entities: {
+          features: { [featureId as string]: parentFeature },
+          user_stories: { [newStoryId]: newUserStory }
+        }
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response, { status: 201 });
+  }),
+
+  // ========================================
+  // CRUD操作: Task
+  // ========================================
+
+  // POST /api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tasks
+  // Task作成
+  http.post('/api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tasks', async ({ params, request }) => {
+    await delay(200);
+
+    const { userStoryId } = params;
+    const body = (await request.json()) as CreateTaskRequest;
+    const { subject, description, assigned_to_id, estimated_hours } = body;
+
+    // UserStory存在確認
+    const parentStory = currentData.entities.user_stories[userStoryId as string];
+    if (!parentStory) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `UserStory ${userStoryId} not found`,
+          details: { field: 'parent_user_story_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // 新規Task作成
+    const newTaskId = `task-new-${Date.now()}`;
+    const newTask: Task = {
+      id: newTaskId,
+      title: subject,
+      description: description || '',
+      status: 'open',
+      parent_user_story_id: userStoryId as string,
+      fixed_version_id: parentStory.fixed_version_id,
+      assigned_to_id,
+      estimated_hours,
+      spent_hours: 0,
+      done_ratio: 0,
+      created_on: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
+      tracker_id: 4
+    };
+
+    // エンティティ追加
+    currentData.entities.tasks[newTaskId] = newTask;
+
+    // 親UserStory更新
+    parentStory.task_ids.push(newTaskId);
+    parentStory.statistics.total_tasks += 1;
+    parentStory.updated_on = new Date().toISOString();
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: CreateTaskResponse = {
+      success: true,
+      data: {
+        created_entity: newTask,
+        updated_entities: {
+          user_stories: { [userStoryId as string]: parentStory },
+          tasks: { [newTaskId]: newTask }
+        }
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response, { status: 201 });
+  }),
+
+  // ========================================
+  // CRUD操作: Test
+  // ========================================
+
+  // POST /api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tests
+  // Test作成
+  http.post('/api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tests', async ({ params, request }) => {
+    await delay(200);
+
+    const { userStoryId } = params;
+    const body = (await request.json()) as CreateTestRequest;
+    const { subject, description, assigned_to_id } = body;
+
+    // UserStory存在確認
+    const parentStory = currentData.entities.user_stories[userStoryId as string];
+    if (!parentStory) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `UserStory ${userStoryId} not found`,
+          details: { field: 'parent_user_story_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // 新規Test作成
+    const newTestId = `test-new-${Date.now()}`;
+    const newTest: Test = {
+      id: newTestId,
+      title: subject,
+      description: description || '',
+      status: 'open',
+      parent_user_story_id: userStoryId as string,
+      fixed_version_id: parentStory.fixed_version_id,
+      test_result: 'pending',
+      assigned_to_id,
+      created_on: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
+      tracker_id: 5
+    };
+
+    // エンティティ追加
+    currentData.entities.tests[newTestId] = newTest;
+
+    // 親UserStory更新
+    parentStory.test_ids.push(newTestId);
+    parentStory.statistics.total_tests += 1;
+    parentStory.updated_on = new Date().toISOString();
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: CreateTestResponse = {
+      success: true,
+      data: {
+        created_entity: newTest,
+        updated_entities: {
+          user_stories: { [userStoryId as string]: parentStory },
+          tests: { [newTestId]: newTest }
+        }
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response, { status: 201 });
+  }),
+
+  // ========================================
+  // CRUD操作: Bug
+  // ========================================
+
+  // POST /api/kanban/projects/:projectId/cards/user_stories/:userStoryId/bugs
+  // Bug作成
+  http.post('/api/kanban/projects/:projectId/cards/user_stories/:userStoryId/bugs', async ({ params, request }) => {
+    await delay(200);
+
+    const { userStoryId } = params;
+    const body = (await request.json()) as CreateBugRequest;
+    const { subject, description, assigned_to_id, severity } = body;
+
+    // UserStory存在確認
+    const parentStory = currentData.entities.user_stories[userStoryId as string];
+    if (!parentStory) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `UserStory ${userStoryId} not found`,
+          details: { field: 'parent_user_story_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // 新規Bug作成
+    const newBugId = `bug-new-${Date.now()}`;
+    const newBug: Bug = {
+      id: newBugId,
+      title: subject,
+      description: description || '',
+      status: 'open',
+      parent_user_story_id: userStoryId as string,
+      fixed_version_id: parentStory.fixed_version_id,
+      severity: severity || 'minor',
+      assigned_to_id,
+      created_on: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
+      tracker_id: 6
+    };
+
+    // エンティティ追加
+    currentData.entities.bugs[newBugId] = newBug;
+
+    // 親UserStory更新
+    parentStory.bug_ids.push(newBugId);
+    parentStory.statistics.total_bugs += 1;
+    parentStory.updated_on = new Date().toISOString();
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: CreateBugResponse = {
+      success: true,
+      data: {
+        created_entity: newBug,
+        updated_entities: {
+          user_stories: { [userStoryId as string]: parentStory },
+          bugs: { [newBugId]: newBug }
+        }
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response, { status: 201 });
   })
 ];
 
