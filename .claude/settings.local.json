@@ -60,7 +60,11 @@
       "Bash(for:*)",
       "Bash(wc:*)",
       "Bash(done)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(tree:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Read(//workspace/containers/202501_redmine/app/**)"
     ],
     "deny": [],
     "ask": [],

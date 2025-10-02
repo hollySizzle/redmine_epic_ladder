@@ -1,11 +1,30 @@
+# Dependencies
 node_modules/**
-!.gitkeep
+node_modules
+assets/javascripts/kanban/node_modules/
+
+# Build outputs
+assets/javascripts/kanban/dist/
+assets/build/
+
+# Test coverage
+coverage/
+
+# OS files
 .DS_Store
+!.gitkeep
+
+# Temporary files
+temp.html
+*.backup
+*.bak
+*.old
+
+# Vibes scripts
 vibes/scripts/.env
 vibes/scripts/hooks/.env
 vibes/scripts/hooks/lib/discord_users.json
 vibes/scripts/hooks/log
-node_modules
 
 # Environment files
 .env
