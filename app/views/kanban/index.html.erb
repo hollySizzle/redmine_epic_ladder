@@ -1,8 +1,6 @@
 <%# app/views/kanban/index.html.erb %>
 <% content_for :header_tags do %>
-  <script src="/plugin_assets/redmine_release_kanban/kanban_bundle.js"></script>
-  <link rel="stylesheet" href="/plugin_assets/redmine_release_kanban/kanban.css" media="screen" />
-  <link rel="stylesheet" href="/plugin_assets/redmine_release_kanban/grid_v2.css" media="screen" />
+  <%= javascript_include_tag 'kanban/dist/kanban_bundle.js', plugin: 'redmine_release_kanban' %>
 <% end %>
 
 <div class="contextual">
