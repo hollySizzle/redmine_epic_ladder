@@ -7,8 +7,10 @@ assets/javascripts/kanban/node_modules/
 assets/javascripts/kanban/dist/
 assets/build/
 
-# Test coverage
-coverage/
+# Test artifacts (all in Redmine's tmp/)
+# Note: tmp/ is already ignored by Redmine core .gitignore
+# Including these for clarity:
+tmp/test_artifacts/
 
 # OS files
 .DS_Store

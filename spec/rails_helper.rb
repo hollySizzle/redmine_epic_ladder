@@ -23,6 +23,9 @@ end
 if ENV['COVERAGE']
   require 'simplecov'
   SimpleCov.start 'rails' do
+    # Coverage output to tmp/test_artifacts/coverage
+    coverage_dir File.expand_path('../../../tmp/test_artifacts/coverage', __dir__)
+
     add_filter '/spec/'
     add_filter '/test/'
     add_group 'Controllers', 'app/controllers'
@@ -319,7 +322,7 @@ RSpec.configure do |config|
         ensure
           # スクリーンショット保存（失敗時）
           if example.exception
-            screenshot_dir = Rails.root.join('tmp', 'playwright_screenshots')
+            screenshot_dir = Rails.root.join('tmp', 'test_artifacts', 'screenshots')
             FileUtils.mkdir_p(screenshot_dir)
             screenshot_path = screenshot_dir.join("#{example.full_description.parameterize}_#{Time.now.to_i}.png")
             @playwright_page.screenshot(path: screenshot_path.to_s)
