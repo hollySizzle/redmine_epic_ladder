@@ -8,21 +8,58 @@ module Kanban
 
     # Grid Data取得 (API001)
     def show
-      grid_data = Kanban::GridDataBuilder.new(@project, User.current).build
-      statistics = Kanban::StatisticsCalculator.new(@project).calculate
-
+      # 最小スタブ実装: MSW仕様に準拠した空のレスポンス
       render_success({
-        project: project_metadata,
-        grid: grid_data,
-        statistics: statistics,
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          index: {},
+          epic_order: [],
+          version_order: []
+        },
         metadata: {
-          last_updated: Time.current.iso8601,
-          cache_version: calculate_cache_version,
-          user_permissions: user_permissions
+          project: {
+            id: @project.id,
+            name: @project.name,
+            identifier: @project.identifier,
+            description: @project.description,
+            created_on: @project.created_on.iso8601
+          },
+          user_permissions: user_permissions,
+          grid_configuration: {
+            default_expanded: true,
+            show_statistics: true,
+            show_closed_issues: false,
+            columns: []
+          },
+          api_version: 'v1',
+          timestamp: Time.current.iso8601,
+          request_id: request.uuid
+        },
+        statistics: {
+          overview: {
+            total_issues: 0,
+            completed_issues: 0,
+            completion_rate: 0,
+            total_epics: 0,
+            total_features: 0,
+            total_user_stories: 0
+          },
+          by_version: {},
+          by_status: {},
+          by_tracker: {}
         }
       })
     rescue => e
       Rails.logger.error "Grid data error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
       render_error('グリッドデータの取得に失敗しました', :internal_server_error)
     end
 
