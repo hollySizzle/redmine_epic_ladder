@@ -2,6 +2,9 @@ import React, { useEffect } from 'react';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
 import { Legend } from './components/Legend';
+import { SplitLayout } from './components/IssueDetail/SplitLayout';
+import { IssueDetailPane } from './components/IssueDetail/IssueDetailPane';
+import { DetailPaneToggle } from './components/common/DetailPaneToggle';
 import { useStore } from './store/useStore';
 import './styles.scss';
 
@@ -10,6 +13,9 @@ export const App: React.FC = () => {
   const fetchGridData = useStore(state => state.fetchGridData);
   const isLoading = useStore(state => state.isLoading);
   const error = useStore(state => state.error);
+  const projectId = useStore(state => state.projectId);
+  const selectedIssueId = useStore(state => state.selectedIssueId);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const reorderFeatures = useStore(state => state.reorderFeatures);
   const reorderUserStories = useStore(state => state.reorderUserStories);
   const reorderTasks = useStore(state => state.reorderTasks);
@@ -82,9 +88,13 @@ export const App: React.FC = () => {
     return <div className="error">Error: {error}</div>;
   }
 
-  return (
+  // カンバングリッド部分
+  const kanbanContent = (
     <>
-      <h1>🔬 ネストGrid検証 - 4層Grid構造テスト (正規化API対応)</h1>
+      <div className="kanban-header">
+        <h1>🔬 ネストGrid検証 - 4層Grid構造テスト (正規化API対応)</h1>
+        <DetailPaneToggle />
+      </div>
 
       <div className="test-info">
         <strong>検証目的:</strong> Epic×Version Grid の中に FeatureCardGrid → UserStoryGrid → TaskGrid が4層ネストできるかを検証<br />
@@ -97,5 +107,25 @@ export const App: React.FC = () => {
 
       <Legend />
     </>
+  );
+
+  return (
+    <div className="app-container">
+      {isDetailPaneVisible ? (
+        <SplitLayout
+          leftPane={kanbanContent}
+          rightPane={
+            <IssueDetailPane
+              issueId={selectedIssueId}
+              projectId={projectId}
+            />
+          }
+        />
+      ) : (
+        <div className="kanban-fullscreen">
+          {kanbanContent}
+        </div>
+      )}
+    </div>
   );
 };

@@ -45,6 +45,12 @@ interface StoreState {
   error: string | null;
   projectId: string | null;
 
+  // Issue詳細表示
+  selectedIssueId: string | null;
+  setSelectedIssueId: (issueId: string | null) => void;
+  isDetailPaneVisible: boolean;
+  toggleDetailPane: () => void;
+
   // CRUD操作
   createFeature: (data: CreateFeatureRequest) => Promise<void>;
   createUserStory: (featureId: string, data: CreateUserStoryRequest) => Promise<void>;
@@ -87,6 +93,19 @@ export const useStore = create<StoreState>()(
       isLoading: false,
       error: null,
       projectId: null,
+
+      // Issue詳細表示の初期状態
+      selectedIssueId: null,
+      setSelectedIssueId: (issueId: string | null) => set({ selectedIssueId: issueId }),
+      isDetailPaneVisible: (() => {
+        const saved = localStorage.getItem('kanban_detail_pane_visible');
+        return saved !== null ? saved === 'true' : true; // デフォルトON
+      })(),
+      toggleDetailPane: () => set((state) => {
+        const newValue = !state.isDetailPaneVisible;
+        localStorage.setItem('kanban_detail_pane_visible', String(newValue));
+        return { isDetailPaneVisible: newValue };
+      }),
 
       // グリッドデータ取得
       fetchGridData: async (projectId: string) => {

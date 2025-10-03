@@ -11,6 +11,7 @@ interface FeatureCardProps {
 export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
   // ストアから直接Featureを取得
   const feature = useStore(state => state.entities.features[featureId]);
+  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
 
   if (!feature) return null;
 
@@ -24,9 +25,14 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
     }
   });
 
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIssueId(feature.id);
+  };
+
   return (
     <div ref={ref} className={className} data-feature={feature.id}>
-      <div className="feature-header">
+      <div className="feature-header" onClick={handleHeaderClick}>
         <StatusIndicator status={feature.status} />
         {feature.title}
       </div>

@@ -9,6 +9,7 @@ interface TestItemProps {
 
 export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
   const test = useStore(state => state.entities.tests[testId]);
+  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
 
   if (!test) return null;
 
@@ -22,8 +23,13 @@ export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
     }
   });
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIssueId(test.id);
+  };
+
   return (
-    <div ref={ref} className={className} data-test={test.id}>
+    <div ref={ref} className={className} data-test={test.id} onClick={handleClick}>
       <StatusIndicator status={test.status} />
       {test.title}
     </div>

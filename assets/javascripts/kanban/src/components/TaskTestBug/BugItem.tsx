@@ -9,6 +9,7 @@ interface BugItemProps {
 
 export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   const bug = useStore(state => state.entities.bugs[bugId]);
+  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
 
   if (!bug) return null;
 
@@ -22,8 +23,13 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
     }
   });
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIssueId(bug.id);
+  };
+
   return (
-    <div ref={ref} className={className} data-bug={bug.id}>
+    <div ref={ref} className={className} data-bug={bug.id} onClick={handleClick}>
       <StatusIndicator status={bug.status} />
       {bug.title}
     </div>

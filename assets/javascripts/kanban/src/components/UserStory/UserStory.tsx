@@ -11,6 +11,7 @@ interface UserStoryProps {
 export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
   // ストアから直接UserStoryを取得
   const story = useStore(state => state.entities.user_stories[storyId]);
+  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
 
   if (!story) return null;
 
@@ -24,9 +25,14 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
     }
   });
 
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIssueId(story.id);
+  };
+
   return (
     <div ref={ref} className={className} data-story={story.id}>
-      <div className="user-story-header">
+      <div className="user-story-header" onClick={handleHeaderClick}>
         <StatusIndicator status={story.status} />
         {story.title}
       </div>
