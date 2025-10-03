@@ -15,11 +15,14 @@ import type {
   CreateTestResponse,
   CreateBugRequest,
   CreateBugResponse,
+  CreateVersionRequest,
+  CreateVersionResponse,
   Feature,
   UserStory,
   Task,
   Test,
-  Bug
+  Bug,
+  Version
 } from '../types/normalized-api';
 import { normalizedMockData } from './normalized-mock-data';
 
@@ -643,6 +646,90 @@ export const handlers = [
         updated_entities: {
           user_stories: { [userStoryId as string]: parentStory },
           bugs: { [newBugId]: newBug }
+        }
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response, { status: 201 });
+  }),
+
+  // ========================================
+  // CRUD操作: Version
+  // ========================================
+
+  // POST /api/kanban/projects/:projectId/versions
+  // Version作成
+  http.post('/api/kanban/projects/:projectId/versions', async ({ params, request }) => {
+    await delay(200);
+
+    const body = (await request.json()) as CreateVersionRequest;
+    const { name, description, due_date, status } = body;
+
+    // バリデーション: name必須
+    if (!name || name.trim() === '') {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'validation_error',
+          message: 'Version name is required',
+          details: {
+            field: 'name',
+            validation_errors: [{
+              field: 'name',
+              message: 'Name cannot be blank',
+              code: 'blank'
+            }]
+          }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 400 });
+    }
+
+    // 新規Version作成
+    const newVersionId = `v-new-${Date.now()}`;
+    const newVersion: Version = {
+      id: newVersionId,
+      name: name.trim(),
+      description: description || '',
+      effective_date: due_date,
+      status: status || 'open',
+      issue_count: 0,
+      statistics: {
+        total_issues: 0,
+        completed_issues: 0,
+        completion_rate: 0
+      },
+      created_on: new Date().toISOString(),
+      updated_on: new Date().toISOString()
+    };
+
+    // エンティティ追加
+    currentData.entities.versions[newVersionId] = newVersion;
+
+    // グリッド順序更新 (新しいVersionを最後に追加)
+    if (!currentData.grid.version_order.includes(newVersionId)) {
+      currentData.grid.version_order.push(newVersionId);
+    }
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: CreateVersionResponse = {
+      success: true,
+      data: {
+        created_entity: newVersion,
+        updated_entities: {
+          versions: { [newVersionId]: newVersion }
+        },
+        grid_updates: {
+          version_order: currentData.grid.version_order
         }
       },
       meta: {

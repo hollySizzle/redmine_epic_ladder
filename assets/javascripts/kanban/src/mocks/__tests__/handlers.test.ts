@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { server } from '../server';
 import { http, HttpResponse } from 'msw';
-import type { NormalizedAPIResponse, MoveFeatureRequest, MoveFeatureResponse } from '../../types/normalized-api';
+import type {
+  NormalizedAPIResponse,
+  MoveFeatureRequest,
+  MoveFeatureResponse,
+  CreateVersionRequest,
+  CreateVersionResponse
+} from '../../types/normalized-api';
 
 describe('MSW Handlers', () => {
   const baseUrl = 'http://localhost:3000';
@@ -190,6 +196,154 @@ describe('MSW Handlers', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+    });
+  });
+
+  describe('POST /api/kanban/projects/:projectId/versions', () => {
+    beforeEach(async () => {
+      // モックデータをリセット
+      await fetch(`${baseUrl}/api/kanban/projects/${projectId}/grid/reset`, {
+        method: 'POST'
+      });
+    });
+
+    it('Versionを作成できる', async () => {
+      const createRequest: CreateVersionRequest = {
+        name: 'v2.1.0',
+        description: 'Q2 Release',
+        due_date: '2025-06-30',
+        status: 'open'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateVersionResponse = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(data.success).toBe(true);
+      expect(data.data.created_entity).toBeDefined();
+      expect(data.data.created_entity.name).toBe('v2.1.0');
+      expect(data.data.created_entity.description).toBe('Q2 Release');
+      expect(data.data.created_entity.effective_date).toBe('2025-06-30');
+      expect(data.data.created_entity.status).toBe('open');
+    });
+
+    it('作成後にversion_orderが更新される', async () => {
+      const createRequest: CreateVersionRequest = {
+        name: 'v3.0.0',
+        description: 'Major Release'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateVersionResponse = await response.json();
+
+      expect(data.data.grid_updates.version_order).toBeDefined();
+      expect(data.data.grid_updates.version_order).toContain(data.data.created_entity.id);
+    });
+
+    it('name空文字でバリデーションエラーが返される', async () => {
+      const createRequest = {
+        name: '',
+        description: 'Invalid version'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe('validation_error');
+      expect(data.error.message).toContain('required');
+    });
+
+    it('name空白文字のみでバリデーションエラーが返される', async () => {
+      const createRequest = {
+        name: '   ',
+        description: 'Invalid version'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe('validation_error');
+    });
+
+    it('最小限のパラメータ（nameのみ）でVersion作成できる', async () => {
+      const createRequest: CreateVersionRequest = {
+        name: 'v1.5.0'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateVersionResponse = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(data.success).toBe(true);
+      expect(data.data.created_entity.name).toBe('v1.5.0');
+      expect(data.data.created_entity.status).toBe('open'); // デフォルト値
+    });
+
+    it('作成されたVersionがversionsエンティティに含まれる', async () => {
+      const createRequest: CreateVersionRequest = {
+        name: 'v4.0.0-beta',
+        description: 'Beta Release',
+        status: 'locked'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateVersionResponse = await response.json();
+      const createdId = data.data.created_entity.id;
+
+      expect(data.data.updated_entities.versions).toBeDefined();
+      expect(data.data.updated_entities.versions![createdId]).toBeDefined();
+      expect(data.data.updated_entities.versions![createdId].name).toBe('v4.0.0-beta');
+      expect(data.data.updated_entities.versions![createdId].status).toBe('locked');
     });
   });
 });

@@ -17,6 +17,8 @@ import type {
   CreateTestResponse,
   CreateBugRequest,
   CreateBugResponse,
+  CreateVersionRequest,
+  CreateVersionResponse,
   MoveFeatureRequest,
   MoveFeatureResponse,
   UpdatesResponse,
@@ -178,6 +180,21 @@ export async function createBug(
     }
   );
   return handleResponse<CreateBugResponse>(response);
+}
+
+/**
+ * Version作成
+ */
+export async function createVersion(
+  projectId: number | string,
+  data: CreateVersionRequest
+): Promise<CreateVersionResponse> {
+  const response = await fetch(`/api/kanban/projects/${projectId}/versions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return handleResponse<CreateVersionResponse>(response);
 }
 
 // ========================================

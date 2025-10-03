@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   mode: "development", // or 'production'
-  entry: "./assets/javascripts/kanban/index.jsx",
+  entry: "./assets/javascripts/kanban/src/index.tsx",
   output: {
     filename: "kanban_bundle.js",
     path: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
@@ -12,12 +12,16 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.(jsx?|tsx?)$/,
         exclude: /node_modules/,
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["@babel/preset-env", "@babel/preset-react"],
+            presets: [
+              "@babel/preset-env",
+              "@babel/preset-react",
+              "@babel/preset-typescript"
+            ],
           },
         },
       },
@@ -56,10 +60,29 @@ module.exports = {
   },
   ignoreWarnings: [/Failed to parse source map/],
   resolve: {
-    extensions: [".js", ".jsx"],
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
     alias: {
       'tailwindcss/version.js': false,
     },
+  },
+  devServer: {
+    static: [
+      {
+        directory: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
+        publicPath: "/plugin_assets/redmine_release_kanban"
+      }
+    ],
+    devMiddleware: {
+      writeToDisk: true, // 物理ファイルに書き出し（Redmineから参照するため）
+    },
+    hot: false, // HMRはRedmineプラグインでは不要
+    liveReload: false,
+    port: 8080,
+    compress: true,
+    allowedHosts: 'all',
+    headers: {
+      "Access-Control-Allow-Origin": "*"
+    }
   },
   plugins: [
     // Webpack出力完了後にコピーを実行
@@ -84,7 +107,7 @@ module.exports = {
     // カスタムプラグイン: ビルド完了後にJSファイルをコピー
     {
       apply: (compiler) => {
-        compiler.hooks.afterEmit.tap('CopyJSAfterEmit', (compilation) => {
+        compiler.hooks.afterEmit.tap('CopyJSAfterEmit', () => {
           const fs = require('fs');
           const srcPath = path.resolve(__dirname, "assets/javascripts/kanban/dist/kanban_bundle.js");
           const destPath = "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban_bundle.js";

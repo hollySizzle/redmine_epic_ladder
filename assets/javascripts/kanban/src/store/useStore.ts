@@ -14,7 +14,8 @@ import type {
   CreateUserStoryRequest,
   CreateTaskRequest,
   CreateTestRequest,
-  CreateBugRequest
+  CreateBugRequest,
+  CreateVersionRequest
 } from '../types/normalized-api';
 import * as API from '../api/kanban-api';
 
@@ -49,6 +50,7 @@ interface StoreState {
   createTask: (userStoryId: string, data: CreateTaskRequest) => Promise<void>;
   createTest: (userStoryId: string, data: CreateTestRequest) => Promise<void>;
   createBug: (userStoryId: string, data: CreateBugRequest) => Promise<void>;
+  createVersion: (data: CreateVersionRequest) => Promise<void>;
 
   // Feature移動
   moveFeature: (featureId: string, targetEpicId: string, targetVersionId: string | null) => Promise<void>;
@@ -190,6 +192,28 @@ export const useStore = create<StoreState>()(
           set((state) => {
             Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
             Object.assign(state.entities.bugs, result.data.updated_entities.bugs || {});
+          });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // Version作成
+      createVersion: async (data: CreateVersionRequest) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.createVersion(projectId, data);
+
+          set((state) => {
+            // 正規化データをマージ
+            Object.assign(state.entities.versions, result.data.updated_entities.versions || {});
+            // グリッド順序更新
+            if (result.data.grid_updates.version_order) {
+              state.grid.version_order = result.data.grid_updates.version_order;
+            }
           });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });

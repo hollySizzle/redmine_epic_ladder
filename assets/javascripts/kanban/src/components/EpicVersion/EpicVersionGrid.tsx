@@ -8,12 +8,28 @@ export const EpicVersionGrid: React.FC = () => {
   const grid = useStore(state => state.grid);
   const epics = useStore(state => state.entities.epics);
   const versions = useStore(state => state.entities.versions);
+  const createVersion = useStore(state => state.createVersion);
 
   // versionの数を動的に取得（'none'を除く）
   const versionCount = grid.version_order.filter(vId => vId !== 'none').length;
 
   // grid-template-columnsを動的に生成
   const gridTemplateColumns = `var(--epic-width) repeat(${versionCount}, var(--version-width))`;
+
+  const handleAddVersion = async () => {
+    const name = prompt('Version名を入力してください:');
+    if (!name) return;
+
+    try {
+      await createVersion({
+        name,
+        description: '',
+        status: 'open'
+      });
+    } catch (error) {
+      alert(`Version作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   return (
     <div className="epic-version-wrapper">
@@ -69,6 +85,7 @@ export const EpicVersionGrid: React.FC = () => {
           label="+ New Version"
           dataAddButton="version"
           className="add-version-btn"
+          onClick={handleAddVersion}
         />
       </div>
 

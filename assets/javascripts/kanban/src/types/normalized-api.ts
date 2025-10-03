@@ -528,6 +528,31 @@ export interface CreateBugResponse {
   };
 }
 
+// Version作成
+export interface CreateVersionRequest {
+  name: string;
+  description?: string;
+  due_date?: string;
+  status?: VersionStatus;
+}
+
+export interface CreateVersionResponse {
+  success: true;
+  data: {
+    created_entity: Version;
+    updated_entities: {
+      versions?: Record<string, Version>;
+    };
+    grid_updates: {
+      version_order: string[];
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
 // 更新操作 (共通パターン)
 export interface UpdateEntityRequest {
   id: string;
@@ -653,6 +678,7 @@ export interface ErrorResponse {
  * - CreateTaskRequest / CreateTaskResponse
  * - CreateTestRequest / CreateTestResponse
  * - CreateBugRequest / CreateBugResponse
+ * - CreateVersionRequest / CreateVersionResponse
  * - UpdateEntityRequest / UpdateEntityResponse<T>
  * - DeleteEntityRequest / DeleteEntityResponse
  */
