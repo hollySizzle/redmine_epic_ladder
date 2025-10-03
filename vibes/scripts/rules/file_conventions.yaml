@@ -22,50 +22,81 @@ rules:
       Code as Document原則に従い、作業を続けてください
 
   # ===========================================
-  # バックエンド実装規約
+  # バックエンド実装規約 (Fat Model, Skinny Controller)
   # ===========================================
 
+  # Kanban専用Model規約 (最優先)
+  - name: "KanbanModel実装規約 (Fat Model)"
+    patterns:
+      - "**/app/models/kanban/**/*.rb"
+      - "**/app/models/concerns/kanban/**/*.rb"
+      - "**/app/models/issue.rb"
+      - "**/app/models/project.rb"
+      - "**/app/models/tracker_hierarchy.rb"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 KanbanModel実装前に規約とFat Model原則を確認してください
+      必読: @vibes/rules/backend_standards.md (Fat Model原則)
+      必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
+      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+
+      ✅ Modelに実装すべきもの:
+      - ビジネスロジック (Epic作成、カード移動、統計計算など)
+      - バリデーション・データ整合性保証
+      - トランザクション制御・N+1対策
+
+      ❌ Modelに書いてはいけないもの:
+      - HTTP処理・JSON変換 (Controller責務)
+
   # Kanban専用Controller規約
-  - name: "KanbanController実装規約"
+  - name: "KanbanController実装規約 (Skinny Controller)"
     patterns:
       - "**/app/controllers/kanban/**/*.rb"
       - "**/app/controllers/concerns/kanban_api_concern.rb"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 KanbanController実装前に規約とSSoTを確認してください
-      必読: @vibes/rules/backend_standards.md (Controller原則)
+      📋 KanbanController実装前に規約とSkinny Controller原則を確認してください
+      必読: @vibes/rules/backend_standards.md (Skinny Controller原則)
       必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
       必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
-      必読: @kanban/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
-      Controller層の責務・権限制御・パフォーマンス要件を理解してから作業を続けてください
 
-  # Kanban専用Service規約
-  - name: "KanbanService実装規約"
+      ✅ Controllerに実装すべきもの:
+      - HTTP要求/応答制御・権限検証
+      - **Modelメソッド呼び出し** (Serviceではない)
+      - JSON変換・Strong Parameters
+
+      ❌ Controllerに書いてはいけないもの:
+      - ビジネスロジック (Model責務)
+      - 直接DB操作 (Model責務)
+
+      目標: 10-30行程度に収める
+
+  # Kanban専用Service規約 (原則禁止)
+  - name: "KanbanService実装規約 (外部API連携のみ)"
     patterns:
       - "**/app/services/kanban/**/*.rb"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 KanbanService実装前に規約を確認してください
-      必読: @vibes/rules/backend_standards.md (Service原則)
-      必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
-      単一責任原則・戻り値統一・トランザクション制御・冪等性を理解してから作業を続けてください
+      ⚠️ CRITICAL: Service層は原則として作成禁止です
+      必読: @vibes/rules/backend_standards.md (Service最小限原則)
 
-  # Kanban専用Model規約
-  - name: "KanbanModel実装規約"
-    patterns:
-      - "**/app/models/kanban/**/*.rb"
-      - "**/app/models/concerns/kanban/**/*.rb"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 KanbanModel実装前に規約を確認してください
-      必読: @vibes/rules/technical_architecture_quickstart.md (4層階層定義)
-      必読: @vibes/rules/backend_standards.md (Service原則)
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
-      TrackerHierarchy (Epic→Feature→UserStory→Task/Test) の階層制約を理解してから作業を続けてください
+      ❌ Serviceに書いてはいけないもの:
+      - ビジネスロジック → Modelに書く
+      - データ操作 → Modelに書く
+      - 統計計算 → Modelに書く
+
+      ✅ 例外的に許可される場合 (稀):
+      - 外部API連携のみ (OpenAI、Slack等)
+      - その場合もModelから呼び出す設計にする
+
+      既存Service削除対象:
+      - CardMoveService → Issue#move_to_cell
+      - EpicCreationService → Issue.create_epic
+      - StatisticsCalculator → Project#kanban_statistics
+      - GridDataBuilder → Project#kanban_grid_data
 
   # ===========================================
   # フロントエンド実装規約

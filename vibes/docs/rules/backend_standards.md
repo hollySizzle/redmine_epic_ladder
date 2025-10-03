@@ -1,239 +1,295 @@
-# Backend実装規約 (Controller + Service)
+# Backend実装規約 (Fat Model, Skinny Controller)
 
-## 📋 目次
-- [Backend実装規約 (Controller + Service)](#backend実装規約-controller-service) (L1-47)
-  - [1. Controller層の原則](#1-controller層の原則) (L28-47)
-    - [1.1 責務](#11-責務) (L30-42)
-    - [1.2 必須パターン](#12-必須パターン) (L44-47)
-- [app/controllers/concerns/kanban_api_concern.rb に共通処理を集約](#appcontrollersconcernskanban_api_concernrb-に共通処理を集約) (L48-80)
-    - [1.3 パフォーマンス要件](#13-パフォーマンス要件) (L57-66)
-    - [1.4 セキュリティ必須項目](#14-セキュリティ必須項目) (L68-80)
-- [Strong Parameters必須](#strong-parameters必須) (L81-82)
-- [プロジェクト配下のリソース検証必須](#プロジェクト配下のリソース検証必須) (L84-239)
-    - [1.5 レスポンス形式統一](#15-レスポンス形式統一) (L88-98)
-    - [1.6 参照実装](#16-参照実装) (L100-104)
-  - [2. Service層の原則](#2-service層の原則) (L106-210)
-    - [2.1 責務](#21-責務) (L108-119)
-    - [2.2 単一責任の原則](#22-単一責任の原則) (L121-140)
-    - [2.3 戻り値統一規約](#23-戻り値統一規約) (L142-154)
-    - [2.4 カスタム例外定義](#24-カスタム例外定義) (L156-166)
-    - [2.5 トランザクション制御](#25-トランザクション制御) (L168-181)
-    - [2.6 N+1対策パターン](#26-n1対策パターン) (L183-190)
-    - [2.7 冪等性保証](#27-冪等性保証) (L192-204)
-    - [2.8 参照実装](#28-参照実装) (L206-210)
-  - [3. 実装チェックリスト](#3-実装チェックリスト) (L212-232)
-    - [Controller実装時](#controller実装時) (L214-221)
-    - [Service実装時](#service実装時) (L223-232)
-  - [🔗 関連ドキュメント](#-関連ドキュメント) (L234-239)
-## 1. Controller層の原則
+## 0. 設計思想
+
+**Fat Model, Skinny Controller原則**:
+- ✅ ビジネスロジックはModelに集約
+- ✅ ControllerはHTTP処理のみ
+- ✅ Serviceは外部API依存のみ（最小限）
+
+**レイヤー責任分担**:
+
+| レイヤー | 責務 | 禁止事項 |
+|---------|------|---------|
+| **Model** | ビジネスロジック、バリデーション、データ整合性、統計計算 | HTTP処理、JSON変換 |
+| **Controller** | HTTP要求/応答、権限検証、JSON変換、Model呼び出し | ビジネスロジック、DB直接操作 |
+| **Service** | 外部API連携のみ（存在不要の場合多い） | ビジスロジック |
+
+---
+
+## 1. Model層 (Fat Model)
 
 ### 1.1 責務
 
 **やるべきこと**:
-- HTTP要求受付・レスポンス制御
-- 権限検証 (`before_action :authorize_kanban_access`)
-- パラメータ検証 (Strong Parameters)
-- Service層呼び出し
-- 結果のシリアライゼーション (JSON化)
+- ✅ ビジネスロジック実装
+- ✅ データバリデーション・整合性保証
+- ✅ トランザクション制御
+- ✅ 統計計算・関連データ取得
 
-**やってはいけないこと**:
-- ❌ ビジネスロジック実装
-- ❌ 直接DB操作 (`Issue.find.update!`など)
-- ❌ 複雑なデータ変換
+**禁止事項**:
+- ❌ HTTP要求処理・JSON変換
 
-### 1.2 必須パターン
+### 1.2 実装パターン
 
-**Concern活用**:
+**ドメインロジック**:
 ```ruby
-# app/controllers/concerns/kanban_api_concern.rb に共通処理を集約
-include KanbanApiConcern
-```
+class Issue < ApplicationRecord
+  # Epic作成
+  def self.create_epic(params, project, user)
+    transaction do
+      epic_tracker = project.trackers.find_by(name: TrackerHierarchy.epic_name)
+      raise "Epic tracker not found" unless epic_tracker
+      create!(project: project, tracker: epic_tracker, subject: params[:subject], author: user)
+    end
+  end
 
-**エラーハンドリング階層**:
-1. **専用例外** - `KanbanService::InvalidTransitionError` → 400 Bad Request
-2. **汎用例外** - `ActiveRecord::RecordNotFound` → 404 Not Found
-3. **予期外** - `StandardError` → 500 Internal Server Error
-
-### 1.3 パフォーマンス要件
-
-**N+1対策必須**:
-- `includes(:tracker, :status, :assigned_to, :fixed_version)` で事前読み込み
-- Bulletツールで検出・修正
-
-**API応答時間基準**:
-- 平均: **200ms以内**
-- 95パーセンタイル: **500ms以内**
-- クエリ数: **3クエリ以下**
-
-### 1.4 セキュリティ必須項目
-
-**権限チェック**:
-```ruby
-before_action :authorize_kanban_access
-
-def authorize_kanban_access
-  deny_access unless User.current.allowed_to?(:view_kanban, @project)
+  # カード移動
+  def move_to_cell(epic_id, version_id, user)
+    raise "Permission denied" unless user.allowed_to?(:edit_issues, project)
+    transaction do
+      update!(parent_issue_id: epic_id, fixed_version_id: version_id)
+      propagate_version_to_children(version_id) if tracker.name == 'UserStory'
+    end
+  end
 end
 ```
 
-**パラメータ検証**:
+**統計計算**:
 ```ruby
-# Strong Parameters必須
-params.permit(:version_id, :assignee_id, tracker_ids: [])
+class Project < ApplicationRecord
+  def kanban_grid_data(user, filters = {})
+    {
+      entities: build_normalized_entities(filters),
+      grid: build_grid_index,
+      metadata: build_metadata(user),
+      statistics: kanban_statistics
+    }
+  end
 
-# プロジェクト配下のリソース検証必須
-@project.trackers.pluck(:id).include?(params[:tracker_id])
+  def kanban_statistics
+    {
+      overview: { total_issues: issues.count, completed_issues: issues_closed.count },
+      by_version: calculate_version_statistics,
+      by_status: calculate_status_distribution
+    }
+  end
+end
 ```
 
-### 1.5 レスポンス形式統一
-
-**成功**:
+**N+1対策**:
 ```ruby
-{ success: true, data: result, meta: { total_count: count } }
+def kanban_grid_data(user, filters)
+  epics = issues
+    .includes(:tracker, :status, :fixed_version, :assigned_to, :children)
+    .where(trackers: { name: 'Epic' })
+    .order(:created_on)
+  normalize_entities(epics)
+end
 ```
 
-**エラー**:
+**バリデーション**:
 ```ruby
-{ success: false, error: message, error_code: 'VALIDATION_ERROR' }
+class Issue < ApplicationRecord
+  validates :subject, presence: true
+  validate :validate_tracker_hierarchy, on: :update
+
+  private
+  def validate_tracker_hierarchy
+    return unless parent_issue_id_changed?
+    unless TrackerHierarchy.valid_parent?(tracker, parent.tracker)
+      errors.add(:parent_issue_id, "Invalid parent tracker")
+    end
+  end
+end
 ```
-
-### 1.6 参照実装
-
-**実装済みController**: `app/controllers/kanban/`配下のファイルを参照してください。
 
 ---
 
-## 2. Service層の原則
+## 2. Controller層 (Skinny Controller)
 
 ### 2.1 責務
 
 **やるべきこと**:
-- ビジネスロジック実装
-- データ変換・加工
-- 複雑な計算・判定
-- 非同期Job呼び出し
+- ✅ HTTP要求受付・レスポンス制御
+- ✅ 権限検証 (`before_action :authorize_kanban_access`)
+- ✅ **Modelメソッド呼び出し**（Service呼び出しではない）
+- ✅ JSON変換
 
-**やってはいけないこと**:
-- ❌ HTTP要求処理 (Controller責務)
-- ❌ View描画処理
-- ❌ 直接権限チェック (Controller責務)
+**禁止事項**:
+- ❌ ビジネスロジック実装
+- ❌ 直接DB操作
 
-### 2.2 単一責任の原則
+### 2.2 実装パターン
 
-**Good**: 1つのServiceは1つの責務のみ
-```ruby
-class Kanban::VersionPropagationService
-  # バージョン伝播のみに特化
-end
-
-class Kanban::TestGenerationService
-  # Test自動生成のみに特化
-end
-```
-
-**Bad**: 複数責務混在
-```ruby
-class BadKanbanService
-  def do_everything  # バージョン・状態・検証すべて ❌
-  end
-end
-```
-
-### 2.3 戻り値統一規約
-
-**必須**: 全Serviceは以下の形式で戻り値を統一
-
-**成功時**:
-```ruby
-{ success: true, data: result_data, meta: additional_info }
-```
-
-**失敗時**:
-```ruby
-{ success: false, error: error_message, error_code: 'CODE', details: {...} }
-```
-
-### 2.4 カスタム例外定義
-
-**業務固有エラーは専用例外を定義**:
+**基本構造**:
 ```ruby
 module Kanban
-  class StateTransitionService
-    class InvalidTransitionError < StandardError; end
-    class TransitionBlockedError < StandardError; end
+  class GridController < BaseApiController
+    before_action :find_project
+    before_action :authorize_kanban_access
+
+    def show
+      grid_data = @project.kanban_grid_data(User.current, filter_params)
+      render_success(grid_data)
+    end
+
+    def move_feature
+      feature = Issue.find(params[:feature_id])
+      feature.move_to_cell(params[:target_epic_id], params[:target_version_id], User.current)
+      render_success(feature)
+    rescue ActiveRecord::RecordInvalid => e
+      render_error(e.message, :unprocessable_entity)
+    end
+
+    def create_epic
+      epic = Issue.create_epic(epic_params, @project, User.current)
+      render_success(epic, :created)
+    end
+
+    private
+    def epic_params
+      params.require(:epic).permit(:subject, :description, :assigned_to_id)
+    end
   end
 end
 ```
 
-### 2.5 トランザクション制御
+**ポイント**: Controllerは**10-30行**程度、ビジネスロジックは全てModelに委譲
 
-**複数更新は必ずトランザクション内で実行**:
+**統一レスポンス**:
 ```ruby
-def execute
-  ActiveRecord::Base.transaction do
-    step1_result = execute_step1
-    step2_result = execute_step2(step1_result)
-    { success: true, data: step2_result }
+module Kanban
+  class BaseApiController < ApplicationController
+    def render_success(data, status = :ok)
+      render json: {
+        success: true,
+        data: data,
+        meta: { timestamp: Time.current.iso8601, request_id: request.uuid }
+      }, status: status
+    end
+
+    def render_error(message, status = :bad_request, code: nil)
+      render json: {
+        success: false,
+        error: { message: message, code: code || status.to_s.upcase },
+        meta: { timestamp: Time.current.iso8601, request_id: request.uuid }
+      }, status: status
+    end
   end
-rescue CustomError => e
-  { success: false, error: e.message, error_code: 'CUSTOM_ERROR' }
 end
 ```
 
-### 2.6 N+1対策パターン
-
-**必須**:
-- `includes` - 関連データ事前読み込み
-- `pluck` - 必要カラムのみ取得
-- `find_each(batch_size: 100)` - 大量データ処理
-
-**実装例は実装済みServiceを参照**してください。
-
-### 2.7 冪等性保証
-
-**非同期Job・API呼び出しは冪等性を確保**:
+**エラーハンドリング**:
 ```ruby
-def idempotent_operation(user_story)
-  # 既存レコード確認
-  existing = find_existing_test(user_story)
-  return existing if existing && !options[:force_recreate]
+class BaseApiController < ApplicationController
+  rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
+  rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
 
-  # 作成処理
-  create_new_test(user_story)
+  private
+  def handle_not_found(exception)
+    render_error(exception.message, :not_found, code: 'NOT_FOUND')
+  end
 end
 ```
-
-### 2.8 参照実装
-
-**実装済みService**: `app/services/kanban/`配下のファイルを参照してください。
 
 ---
 
-## 3. 実装チェックリスト
+## 3. Service層 (最小限)
 
-### Controller実装時
+### 3.1 原則
 
-- [ ] `KanbanApiConcern` をincludeしている
+- ✅ ビジネスロジックは**Model**
+- ✅ 外部API連携のみ**Service**
+- ❌ Service層の肥大化を避ける
+
+### 3.2 例外: 外部API連携
+
+**許可されるケース**:
+```ruby
+module Kanban
+  class OpenAIIntegrationService
+    def generate_test_suggestions(user_story)
+      @client.chat(parameters: { model: "gpt-4", messages: [...] })
+    end
+  end
+end
+
+# Modelから呼ぶ
+class Issue < ApplicationRecord
+  def ai_test_suggestions
+    service = Kanban::OpenAIIntegrationService.new(ENV['OPENAI_API_KEY'])
+    service.generate_test_suggestions(self)
+  end
+end
+```
+
+### 3.3 削除対象Service例
+
+**以下は全てアンチパターン（Modelに移行）**:
+- `CardMoveService` → `Issue#move_to_cell`
+- `EpicCreationService` → `Issue.create_epic`
+- `StatisticsCalculator` → `Project#kanban_statistics`
+- `GridDataBuilder` → `Project#kanban_grid_data`
+
+---
+
+## 4. API設計規約
+
+### 4.1 MSW仕様準拠
+
+**全APIはMSW handlers.tsに定義**:
+- フロントエンド: `assets/javascripts/kanban/src/mocks/handlers.ts`
+- バックエンド: 同じエンドポイント・レスポンス形式を実装
+
+### 4.2 Normalized API形式
+
+**レスポンス構造**:
+```typescript
+{
+  success: true,
+  data: {
+    entities: { epics: {}, features: {}, user_stories: {}, tasks: {}, tests: {}, bugs: {}, versions: {} },
+    grid: { index: {}, epic_order: [], version_order: [] },
+    metadata: { project: {}, user_permissions: {}, api_version: "v1" },
+    statistics: { overview: {}, by_version: {}, by_status: {}, by_tracker: {} }
+  }
+}
+```
+
+### 4.3 パフォーマンス要件
+
+- 平均: **200ms以内**
+- 95パーセンタイル: **500ms以内**
+- N+1クエリ: **0件** (Bulletで検証)
+
+---
+
+## 5. 実装チェックリスト
+
+**Model実装時**:
+- [ ] ビジネスロジックをModelに実装
+- [ ] バリデーションをModelに定義
+- [ ] トランザクション制御を実装
+- [ ] N+1対策（includes/pluck）を実施
+
+**Controller実装時**:
+- [ ] Controllerは10-30行程度
 - [ ] `before_action :authorize_kanban_access` を設定
-- [ ] Strong Parametersでパラメータ検証
-- [ ] Service呼び出し結果を統一形式でレスポンス
-- [ ] エラーハンドリング3階層を実装
-- [ ] N+1問題がないことをBulletで確認
+- [ ] Modelメソッド呼び出し（Serviceではない）
+- [ ] `render_success`/`render_error`で統一レスポンス
 
-### Service実装時
-
-- [ ] 単一責任を守っている (1 Service = 1 責務)
-- [ ] 戻り値が統一形式 (`{success: true/false, ...}`)
-- [ ] カスタム例外を定義している
-- [ ] トランザクション内で複数更新を実行
-- [ ] N+1対策 (includes/pluck/find_each) を実施
-- [ ] 冪等性を確保 (非同期Job・API呼び出し)
+**Service実装時（例外的に必要な場合のみ）**:
+- [ ] 外部API連携のみに限定
+- [ ] ビジネスロジックはServiceに書かない
+- [ ] Modelから呼び出される設計
 
 ---
 
-## 🔗 関連ドキュメント
+## 関連ドキュメント
 
 - **技術アーキテクチャ**: @vibes/rules/technical_architecture_quickstart.md
-- **テスト戦略**: @vibes/rules/testing_strategy.md
-- **実装済みController**: `app/controllers/kanban/`
-- **実装済みService**: `app/services/kanban/`
+- **API実装ワークフロー**: @vibes/tasks/api_implementation_workflow.md
+- **テスト戦略**: @vibes/rules/backend_testing.md
+- **MSW API仕様**: assets/javascripts/kanban/src/mocks/handlers.ts
+- **TypeScript型定義**: assets/javascripts/kanban/src/types/normalized-api.ts
