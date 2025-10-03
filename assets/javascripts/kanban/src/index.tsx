@@ -7,11 +7,16 @@ console.log('✅ React application starting...');
 
 // MSWを強制的に有効化（Redmine統合テスト用）
 // TODO: 本番APIが完成したら process.env.NODE_ENV === 'development' に戻す
+
+// MSW Service Worker のURLを取得（Redmineから注入される）
+const serviceWorkerUrl = (window as any).MSW_SERVICE_WORKER_URL || '/mockServiceWorker.js';
+console.log('🔧 MSW Service Worker URL:', serviceWorkerUrl);
+
 worker.start({
   onUnhandledRequest: 'warn',
   quiet: false,
   serviceWorker: {
-    url: '/mockServiceWorker.js'
+    url: serviceWorkerUrl
   }
 }).then(() => {
   console.log('[MSW] Mock Service Worker started');

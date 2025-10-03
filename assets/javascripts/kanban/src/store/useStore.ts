@@ -10,6 +10,7 @@ import type {
   Task,
   Test,
   Bug,
+  CreateEpicRequest,
   CreateFeatureRequest,
   CreateUserStoryRequest,
   CreateTaskRequest,
@@ -50,6 +51,7 @@ interface StoreState {
   createTask: (userStoryId: string, data: CreateTaskRequest) => Promise<void>;
   createTest: (userStoryId: string, data: CreateTestRequest) => Promise<void>;
   createBug: (userStoryId: string, data: CreateBugRequest) => Promise<void>;
+  createEpic: (data: CreateEpicRequest) => Promise<void>;
   createVersion: (data: CreateVersionRequest) => Promise<void>;
 
   // Feature移動
@@ -192,6 +194,28 @@ export const useStore = create<StoreState>()(
           set((state) => {
             Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
             Object.assign(state.entities.bugs, result.data.updated_entities.bugs || {});
+          });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // Epic作成
+      createEpic: async (data: CreateEpicRequest) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.createEpic(projectId, data);
+
+          set((state) => {
+            // 正規化データをマージ
+            Object.assign(state.entities.epics, result.data.updated_entities.epics || {});
+            // グリッド順序更新
+            if (result.data.grid_updates.epic_order) {
+              state.grid.epic_order = result.data.grid_updates.epic_order;
+            }
           });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });

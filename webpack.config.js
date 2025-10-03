@@ -1,44 +1,41 @@
 // plugins/redmine_release_kanban/webpack.config.js
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  mode: "development", // or 'production'
+  mode: "development",
   entry: "./assets/javascripts/kanban/src/index.tsx",
   output: {
     filename: "kanban_bundle.js",
     path: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
+    clean: true,
+  },
+  optimization: {
+    splitChunks: false, // コード分割を無効化（Redmineアセットパイプライン対応）
   },
   module: {
     rules: [
       {
-        test: /\.(jsx?|tsx?)$/,
-        exclude: /node_modules/,
+        test: /\.(ts|tsx)$/,
+        exclude: [
+          /node_modules/,
+          /\.test\.(ts|tsx)$/,
+          /\.spec\.(ts|tsx)$/,
+          /mockData\.ts$/,
+          /setupTests\.ts$/,
+          /mocks\/server\.ts$/,
+        ],
         use: {
-          loader: "babel-loader",
+          loader: "ts-loader",
           options: {
-            presets: [
-              "@babel/preset-env",
-              "@babel/preset-react",
-              "@babel/preset-typescript"
-            ],
+            configFile: path.resolve(__dirname, "assets/javascripts/kanban/tsconfig.json"),
           },
         },
       },
       {
         test: /\.css$/,
-        use: [
-          "style-loader",
-          "css-loader",
-          {
-            loader: "postcss-loader",
-            options: {
-              postcssOptions: {
-                plugins: [require("tailwindcss"), require("autoprefixer")],
-              },
-            },
-          },
-        ],
+        use: ["style-loader", "css-loader"],
       },
       {
         test: /\.scss$/,
@@ -46,14 +43,11 @@ module.exports = {
           "style-loader",
           "css-loader",
           {
-            loader: "postcss-loader",
+            loader: "sass-loader",
             options: {
-              postcssOptions: {
-                plugins: [require("tailwindcss"), require("autoprefixer")],
-              },
+              implementation: require("sass-embedded"),
             },
           },
-          "sass-loader",
         ],
       },
     ],
@@ -69,22 +63,37 @@ module.exports = {
     static: [
       {
         directory: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
-        publicPath: "/plugin_assets/redmine_release_kanban"
+        publicPath: "/",
+      },
+      {
+        directory: path.resolve(__dirname, "assets/javascripts/kanban/public"),
+        publicPath: "/",
       }
     ],
     devMiddleware: {
       writeToDisk: true, // 物理ファイルに書き出し（Redmineから参照するため）
     },
-    hot: false, // HMRはRedmineプラグインでは不要
-    liveReload: false,
+    hot: true,
+    liveReload: true,
     port: 8080,
     compress: true,
     allowedHosts: 'all',
     headers: {
       "Access-Control-Allow-Origin": "*"
-    }
+    },
+    client: {
+      overlay: {
+        warnings: false,
+        errors: true,
+      },
+    },
   },
   plugins: [
+    // 開発用HTMLファイル生成
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, "assets/javascripts/kanban/nested_grid_test_template.html"),
+      filename: "index.html",
+    }),
     // Webpack出力完了後にコピーを実行
     new CopyWebpackPlugin({
       patterns: [
@@ -102,6 +111,12 @@ module.exports = {
           noErrorOnMissing: false,
           force: true
         },
+        // MSW用ファイル
+        {
+          from: path.resolve(__dirname, "assets/javascripts/kanban/public"),
+          to: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
+          noErrorOnMissing: true,
+        }
       ],
     }),
     // カスタムプラグイン: ビルド完了後にJSファイルをコピー

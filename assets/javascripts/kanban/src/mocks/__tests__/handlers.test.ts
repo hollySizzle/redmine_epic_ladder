@@ -5,6 +5,8 @@ import type {
   NormalizedAPIResponse,
   MoveFeatureRequest,
   MoveFeatureResponse,
+  CreateEpicRequest,
+  CreateEpicResponse,
   CreateVersionRequest,
   CreateVersionResponse
 } from '../../types/normalized-api';
@@ -12,6 +14,13 @@ import type {
 describe('MSW Handlers', () => {
   const baseUrl = 'http://localhost:3000';
   const projectId = '1';
+
+  beforeEach(async () => {
+    // 各テストの前にモックデータをリセット
+    await fetch(`${baseUrl}/api/kanban/projects/${projectId}/grid/reset`, {
+      method: 'POST'
+    });
+  });
 
   describe('GET /api/kanban/projects/:projectId/grid', () => {
     it('グリッドデータを取得できる', async () => {
@@ -199,13 +208,145 @@ describe('MSW Handlers', () => {
     });
   });
 
-  describe('POST /api/kanban/projects/:projectId/versions', () => {
-    beforeEach(async () => {
-      // モックデータをリセット
-      await fetch(`${baseUrl}/api/kanban/projects/${projectId}/grid/reset`, {
-        method: 'POST'
-      });
+  describe('POST /api/kanban/projects/:projectId/epics', () => {
+    it('Epicを作成できる', async () => {
+      const createRequest: CreateEpicRequest = {
+        subject: 'ユーザー管理機能',
+        description: 'ユーザー登録・編集・削除機能の実装',
+        status: 'open'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateEpicResponse = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(data.success).toBe(true);
+      expect(data.data.created_entity).toBeDefined();
+      expect(data.data.created_entity.subject).toBe('ユーザー管理機能');
+      expect(data.data.created_entity.description).toBe('ユーザー登録・編集・削除機能の実装');
+      expect(data.data.created_entity.status).toBe('open');
     });
+
+    it('作成後にepic_orderが更新される', async () => {
+      const createRequest: CreateEpicRequest = {
+        subject: '決済機能'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateEpicResponse = await response.json();
+
+      expect(data.data.grid_updates.epic_order).toBeDefined();
+      expect(data.data.grid_updates.epic_order).toContain(data.data.created_entity.id);
+    });
+
+    it('subject空文字でバリデーションエラーが返される', async () => {
+      const createRequest = {
+        subject: '',
+        description: 'Invalid epic'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe('validation_error');
+      expect(data.error.message).toContain('required');
+    });
+
+    it('subject空白文字のみでバリデーションエラーが返される', async () => {
+      const createRequest = {
+        subject: '   ',
+        description: 'Invalid epic'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe('validation_error');
+    });
+
+    it('最小限のパラメータ（subjectのみ）でEpic作成できる', async () => {
+      const createRequest: CreateEpicRequest = {
+        subject: 'シンプルなEpic'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateEpicResponse = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(data.success).toBe(true);
+      expect(data.data.created_entity.subject).toBe('シンプルなEpic');
+      expect(data.data.created_entity.status).toBe('open'); // デフォルト値
+    });
+
+    it('作成されたEpicがepicsエンティティに含まれる', async () => {
+      const createRequest: CreateEpicRequest = {
+        subject: 'インフラ整備',
+        description: 'CI/CD環境構築',
+        status: 'in_progress'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createRequest)
+        }
+      );
+
+      const data: CreateEpicResponse = await response.json();
+      const createdId = data.data.created_entity.id;
+
+      expect(data.data.updated_entities.epics).toBeDefined();
+      expect(data.data.updated_entities.epics![createdId]).toBeDefined();
+      expect(data.data.updated_entities.epics![createdId].subject).toBe('インフラ整備');
+      expect(data.data.updated_entities.epics![createdId].status).toBe('in_progress');
+    });
+  });
+
+  describe('POST /api/kanban/projects/:projectId/versions', () => {
 
     it('Versionを作成できる', async () => {
       const createRequest: CreateVersionRequest = {

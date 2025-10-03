@@ -7,6 +7,8 @@
 
 import type {
   NormalizedAPIResponse,
+  CreateEpicRequest,
+  CreateEpicResponse,
   CreateFeatureRequest,
   CreateFeatureResponse,
   CreateUserStoryRequest,
@@ -90,6 +92,21 @@ export async function fetchUpdates(
 // ========================================
 // CREATE操作
 // ========================================
+
+/**
+ * Epic作成
+ */
+export async function createEpic(
+  projectId: number | string,
+  data: CreateEpicRequest
+): Promise<CreateEpicResponse> {
+  const response = await fetch(`/api/kanban/projects/${projectId}/epics`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return handleResponse<CreateEpicResponse>(response);
+}
 
 /**
  * Feature作成

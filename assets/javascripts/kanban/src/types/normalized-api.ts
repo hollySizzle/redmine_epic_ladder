@@ -528,6 +528,31 @@ export interface CreateBugResponse {
   };
 }
 
+// Epic作成
+export interface CreateEpicRequest {
+  subject: string;
+  description?: string;
+  fixed_version_id?: string | null;
+  status?: IssueStatus;
+}
+
+export interface CreateEpicResponse {
+  success: true;
+  data: {
+    created_entity: Epic;
+    updated_entities: {
+      epics?: Record<string, Epic>;
+    };
+    grid_updates: {
+      epic_order: string[];
+    };
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
 // Version作成
 export interface CreateVersionRequest {
   name: string;
@@ -673,6 +698,7 @@ export interface ErrorResponse {
  * - ErrorResponse
  *
  * CRUD Types:
+ * - CreateEpicRequest / CreateEpicResponse
  * - CreateFeatureRequest / CreateFeatureResponse
  * - CreateUserStoryRequest / CreateUserStoryResponse
  * - CreateTaskRequest / CreateTaskResponse

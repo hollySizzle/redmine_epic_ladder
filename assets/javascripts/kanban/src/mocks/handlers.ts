@@ -5,6 +5,8 @@ import type {
   MoveFeatureResponse,
   UpdatesResponse,
   ErrorResponse,
+  CreateEpicRequest,
+  CreateEpicResponse,
   CreateFeatureRequest,
   CreateFeatureResponse,
   CreateUserStoryRequest,
@@ -17,6 +19,7 @@ import type {
   CreateBugResponse,
   CreateVersionRequest,
   CreateVersionResponse,
+  Epic,
   Feature,
   UserStory,
   Task,
@@ -646,6 +649,93 @@ export const handlers = [
         updated_entities: {
           user_stories: { [userStoryId as string]: parentStory },
           bugs: { [newBugId]: newBug }
+        }
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response, { status: 201 });
+  }),
+
+  // ========================================
+  // CRUD操作: Epic
+  // ========================================
+
+  // POST /api/kanban/projects/:projectId/epics
+  // Epic作成
+  http.post('/api/kanban/projects/:projectId/epics', async ({ params, request }) => {
+    await delay(200);
+
+    const body = (await request.json()) as CreateEpicRequest;
+    const { subject, description, fixed_version_id, status } = body;
+
+    // バリデーション: subject必須
+    if (!subject || subject.trim() === '') {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'validation_error',
+          message: 'Epic subject is required',
+          details: {
+            field: 'subject',
+            validation_errors: [{
+              field: 'subject',
+              message: 'Subject cannot be blank',
+              code: 'blank'
+            }]
+          }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 400 });
+    }
+
+    // 新規Epic作成
+    const newEpicId = `epic-new-${Date.now()}`;
+    const newEpic: Epic = {
+      id: newEpicId,
+      subject: subject.trim(),
+      description: description || '',
+      status: status || 'open',
+      fixed_version_id: fixed_version_id || null,
+      feature_ids: [],
+      statistics: {
+        total_features: 0,
+        completed_features: 0,
+        total_user_stories: 0,
+        total_child_items: 0,
+        completion_percentage: 0
+      },
+      created_on: new Date().toISOString(),
+      updated_on: new Date().toISOString(),
+      tracker_id: 1
+    };
+
+    // エンティティ追加
+    currentData.entities.epics[newEpicId] = newEpic;
+
+    // グリッド順序更新 (新しいEpicを最後に追加)
+    if (!currentData.grid.epic_order.includes(newEpicId)) {
+      currentData.grid.epic_order.push(newEpicId);
+    }
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: CreateEpicResponse = {
+      success: true,
+      data: {
+        created_entity: newEpic,
+        updated_entities: {
+          epics: { [newEpicId]: newEpic }
+        },
+        grid_updates: {
+          epic_order: currentData.grid.epic_order
         }
       },
       meta: {
