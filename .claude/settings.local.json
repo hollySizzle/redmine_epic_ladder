@@ -70,7 +70,8 @@
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/grid_layout_measurement_spec.rb:67 --format documentation)",
       "Bash(RAILS_ENV=test bundle exec rails runner \"puts \"\"Groups: #{Group.count}, Roles: #{Role.count}, Trackers: #{Tracker.count}\"\"\")",
       "Bash(RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data)",
-      "Bash(RAILS_ENV=test bundle exec rails runner \"\nGroupAnonymous.load_instance\nGroupNonMember.load_instance\nputs \"\"✅ Created built-in groups:\"\"\nputs \"\"  - GroupAnonymous: #{GroupAnonymous.first&.lastname}\"\"\nputs \"\"  - GroupNonMember: #{GroupNonMember.first&.lastname}\"\"\nputs \"\"Total Groups: #{Group.count}\"\"\n\")"
+      "Bash(RAILS_ENV=test bundle exec rails runner \"\nGroupAnonymous.load_instance\nGroupNonMember.load_instance\nputs \"\"✅ Created built-in groups:\"\"\nputs \"\"  - GroupAnonymous: #{GroupAnonymous.first&.lastname}\"\"\nputs \"\"  - GroupNonMember: #{GroupNonMember.first&.lastname}\"\"\nputs \"\"Total Groups: #{Group.count}\"\"\n\")",
+      "Bash(timeout 15 npm run dev)"
     ],
     "deny": [],
     "ask": [],
