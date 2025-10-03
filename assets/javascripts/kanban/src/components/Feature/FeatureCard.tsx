@@ -30,7 +30,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
         <StatusIndicator status={feature.status} />
         {feature.title}
       </div>
-      <UserStoryGrid storyIds={feature.user_story_ids} />
+      <UserStoryGrid featureId={feature.id} storyIds={feature.user_story_ids} />
     </div>
   );
 };
