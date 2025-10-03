@@ -31,6 +31,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
         {story.title}
       </div>
       <TaskTestBugGrid
+        userStoryId={story.id}
         taskIds={story.task_ids}
         testIds={story.test_ids}
         bugIds={story.bug_ids}
