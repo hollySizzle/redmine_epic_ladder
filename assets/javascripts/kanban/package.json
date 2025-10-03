@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Nested Grid Test with React and Pragmatic Drag and Drop",
   "scripts": {
-    "dev": "webpack serve --mode development",
+    "dev": "lsof -ti :9000 | xargs -r kill -9 2>/dev/null || true && webpack serve --mode development",
     "build": "webpack --mode production",
     "test": "vitest",
     "test:ui": "vitest --ui",
