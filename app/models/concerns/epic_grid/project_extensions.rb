@@ -20,6 +20,43 @@ module EpicGrid
     end
 
     # ========================================
+    # 統計計算
+    # ========================================
+
+    # プロジェクト全体の統計情報を構築
+    # @return [Hash] 統計情報
+    def epic_grid_build_statistics
+      project_issues = issues.includes(:tracker, :status, :assigned_to)
+
+      {
+        by_tracker: epic_grid_statistics_by_tracker(project_issues),
+        by_status: epic_grid_statistics_by_status(project_issues),
+        by_assignee: epic_grid_statistics_by_assignee(project_issues)
+      }
+    end
+
+    # トラッカー別統計
+    # @param issues [ActiveRecord::Relation] 集計対象のIssue群
+    # @return [Hash] トラッカー別カウント
+    def epic_grid_statistics_by_tracker(project_issues)
+      project_issues.group(:tracker_id).count.transform_keys { |id| Tracker.find(id).name }
+    end
+
+    # ステータス別統計
+    # @param issues [ActiveRecord::Relation] 集計対象のIssue群
+    # @return [Hash] ステータス別カウント
+    def epic_grid_statistics_by_status(project_issues)
+      project_issues.group(:status_id).count.transform_keys { |id| IssueStatus.find(id).name }
+    end
+
+    # 担当者別統計
+    # @param issues [ActiveRecord::Relation] 集計対象のIssue群
+    # @return [Hash] 担当者別カウント
+    def epic_grid_statistics_by_assignee(project_issues)
+      project_issues.group(:assigned_to_id).count.transform_keys { |id| id ? User.find(id).name : '未割当' }
+    end
+
+    # ========================================
     # プライベートメソッド
     # ========================================
 

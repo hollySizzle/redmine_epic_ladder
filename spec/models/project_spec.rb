@@ -218,4 +218,100 @@ RSpec.describe Project, type: :model do
       expect(version_order).to include(v1.id.to_s, v2.id.to_s)
     end
   end
+
+  # ========================================
+  # 追加Fat Modelメソッド: 統計計算
+  # ========================================
+
+  describe '#epic_grid_build_statistics' do
+    it 'builds project-wide statistics' do
+      # プロジェクトにIssueを追加
+      epic = create(:epic, project: project, author: user)
+      feature = create(:feature, project: project, parent: epic, author: user)
+
+      stats = project.epic_grid_build_statistics
+
+      expect(stats).to have_key(:by_tracker)
+      expect(stats).to have_key(:by_status)
+      expect(stats).to have_key(:by_assignee)
+    end
+
+    it 'counts issues by tracker' do
+      epic = create(:epic, project: project, author: user)
+      feature1 = create(:feature, project: project, parent: epic, author: user)
+      feature2 = create(:feature, project: project, parent: epic, author: user)
+
+      stats = project.epic_grid_build_statistics
+
+      expect(stats[:by_tracker][epic_tracker_name]).to eq(1)
+      expect(stats[:by_tracker][feature_tracker_name]).to eq(2)
+    end
+
+    it 'counts issues by status' do
+      epic = create(:epic, project: project, author: user)
+      feature = create(:feature, project: project, parent: epic, author: user)
+
+      stats = project.epic_grid_build_statistics
+
+      # デフォルトステータスでカウント
+      default_status_name = epic.status.name
+      expect(stats[:by_status][default_status_name]).to be >= 1
+    end
+
+    it 'counts issues by assignee' do
+      epic = create(:epic, project: project, author: user, assigned_to: user)
+      feature = create(:feature, project: project, parent: epic, author: user, assigned_to: nil)
+
+      stats = project.epic_grid_build_statistics
+
+      expect(stats[:by_assignee][user.name]).to eq(1)
+      expect(stats[:by_assignee]['未割当']).to eq(1)
+    end
+  end
+
+  describe '#epic_grid_statistics_by_tracker' do
+    it 'returns tracker name as key' do
+      epic = create(:epic, project: project, author: user)
+      issues = project.issues.includes(:tracker, :status, :assigned_to)
+
+      stats = project.epic_grid_statistics_by_tracker(issues)
+
+      expect(stats.keys).to include(epic_tracker_name)
+      expect(stats[epic_tracker_name]).to eq(1)
+    end
+  end
+
+  describe '#epic_grid_statistics_by_status' do
+    it 'returns status name as key' do
+      epic = create(:epic, project: project, author: user)
+      issues = project.issues.includes(:tracker, :status, :assigned_to)
+
+      stats = project.epic_grid_statistics_by_status(issues)
+
+      status_name = epic.status.name
+      expect(stats.keys).to include(status_name)
+      expect(stats[status_name]).to be >= 1
+    end
+  end
+
+  describe '#epic_grid_statistics_by_assignee' do
+    it 'returns assignee name as key' do
+      epic = create(:epic, project: project, author: user, assigned_to: user)
+      issues = project.issues.includes(:tracker, :status, :assigned_to)
+
+      stats = project.epic_grid_statistics_by_assignee(issues)
+
+      expect(stats.keys).to include(user.name)
+      expect(stats[user.name]).to eq(1)
+    end
+
+    it 'returns "未割当" for unassigned issues' do
+      epic = create(:epic, project: project, author: user, assigned_to: nil)
+      issues = project.issues.includes(:tracker, :status, :assigned_to)
+
+      stats = project.epic_grid_statistics_by_assignee(issues)
+
+      expect(stats['未割当']).to eq(1)
+    end
+  end
 end
