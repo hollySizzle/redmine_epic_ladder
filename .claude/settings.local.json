@@ -100,7 +100,8 @@
       "Bash(fi)",
       "Bash(RAILS_ENV=test bundle exec rspec spec/system/epic_grid/simple_e2e_spec.rb --format documentation)",
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/simple_e2e_spec.rb --format documentation)",
-      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/simple_e2e_spec.rb --format documentation)"
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/simple_e2e_spec.rb --format documentation)",
+      "Bash(timeout 30 npm run build:*)"
     ],
     "deny": [],
     "ask": [],

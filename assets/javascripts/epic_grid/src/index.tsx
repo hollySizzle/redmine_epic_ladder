@@ -13,8 +13,6 @@ const serviceWorkerUrl = (window as any).MSW_SERVICE_WORKER_URL || '/mockService
 console.log('🔧 MSW Service Worker URL:', serviceWorkerUrl);
 
 worker.start({
-  onUnhandledRequest: 'warn',
-  quiet: false,
   serviceWorker: {
     url: serviceWorkerUrl
   }

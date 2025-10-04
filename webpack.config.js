@@ -33,6 +33,7 @@ module.exports = {
               __dirname,
               "assets/javascripts/epic_grid/tsconfig.json"
             ),
+            transpileOnly: true,
           },
         },
       },
@@ -108,7 +109,7 @@ module.exports = {
       patterns: [
         // CSSファイルのコピー（ビルド処理と関係ない）
         {
-          from: path.resolve(__dirname, "assets/stylesheets/kanban/kanban.css"),
+          from: path.resolve(__dirname, "assets/stylesheets/epic_grid/kanban.css"),
           to: "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/kanban.css",
           noErrorOnMissing: false,
           force: true,
@@ -117,7 +118,7 @@ module.exports = {
         {
           from: path.resolve(
             __dirname,
-            "assets/stylesheets/kanban/grid_v2.css"
+            "assets/stylesheets/epic_grid/grid_v2.css"
           ),
           to: "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/grid_v2.css",
           noErrorOnMissing: false,

@@ -1,4 +1,4 @@
-import { http, HttpResponse, delay } from 'msw';
+import { http, HttpResponse, delay, PathParams } from 'msw';
 import type {
   NormalizedAPIResponse,
   MoveFeatureRequest,
@@ -42,7 +42,7 @@ let lastUpdateTimestamp = new Date().toISOString();
 export const handlers = [
   // GET /api/epic_grid/projects/:projectId/grid
   // グリッドデータ取得
-  http.get('/api/epic_grid/projects/:projectId/grid', async ({ params, request }) => {
+  http.get('/api/epic_grid/projects/:projectId/grid', async ({ params, request }: { params: PathParams; request: Request }) => {
     const url = new URL(request.url);
     const includeClosed = url.searchParams.get('include_closed') === 'true';
 
@@ -77,7 +77,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/grid/move_feature
   // Feature移動処理
-  http.post('/api/epic_grid/projects/:projectId/grid/move_feature', async ({ request }) => {
+  http.post('/api/epic_grid/projects/:projectId/grid/move_feature', async ({ request }: { request: Request }) => {
     await delay(200);
 
     const body = (await request.json()) as MoveFeatureRequest;
@@ -202,7 +202,7 @@ export const handlers = [
 
   // GET /api/epic_grid/projects/:projectId/grid/updates
   // 差分更新取得 (ポーリング用)
-  http.get('/api/epic_grid/projects/:projectId/grid/updates', async ({ request }) => {
+  http.get('/api/epic_grid/projects/:projectId/grid/updates', async ({ request }: { request: Request }) => {
     const url = new URL(request.url);
     const since = url.searchParams.get('since');
 
@@ -246,7 +246,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/cards
   // Feature作成
-  http.post('/api/epic_grid/projects/:projectId/cards', async ({ request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards', async ({ request }: { request: Request }) => {
     await delay(200);
 
     const body = (await request.json()) as CreateFeatureRequest;
@@ -350,7 +350,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/cards/:featureId/user_stories
   // UserStory作成
-  http.post('/api/epic_grid/projects/:projectId/cards/:featureId/user_stories', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/:featureId/user_stories', async ({ params, request }: { params: PathParams; request: Request }) => {
     await delay(200);
 
     const { featureId } = params;
@@ -439,7 +439,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tasks
   // Task作成
-  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tasks', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tasks', async ({ params, request }: { params: PathParams; request: Request }) => {
     await delay(200);
 
     const { userStoryId } = params;
@@ -516,7 +516,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tests
   // Test作成
-  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tests', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tests', async ({ params, request }: { params: PathParams; request: Request }) => {
     await delay(200);
 
     const { userStoryId } = params;
@@ -591,7 +591,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/bugs
   // Bug作成
-  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/bugs', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/bugs', async ({ params, request }: { params: PathParams; request: Request }) => {
     await delay(200);
 
     const { userStoryId } = params;
@@ -666,7 +666,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/epics
   // Epic作成
-  http.post('/api/epic_grid/projects/:projectId/epics', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/epics', async ({ params, request }: { params: PathParams; request: Request }) => {
     await delay(200);
 
     const body = (await request.json()) as CreateEpicRequest;
@@ -753,7 +753,7 @@ export const handlers = [
 
   // POST /api/epic_grid/projects/:projectId/versions
   // Version作成
-  http.post('/api/epic_grid/projects/:projectId/versions', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/versions', async ({ params, request }: { params: PathParams; request: Request }) => {
     await delay(200);
 
     const body = (await request.json()) as CreateVersionRequest;
