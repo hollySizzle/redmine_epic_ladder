@@ -19,22 +19,14 @@ bash bin/setup_test_env.sh
 5. Redmine default dataロード
 6. RSpec/Playwright環境構築
 
-### DATABASE_URL 環境変数問題
+### DATABASE_URL 環境変数の自動削除
 
-**問題:** `DATABASE_URL`設定時、`database.yml`が無視され、test環境でもdevelopment DBに接続
+`DATABASE_URL`が設定されていると`database.yml`が無視される問題は、`spec/rails_helper.rb`で自動的に解決されます。
 
-**解決:**
-
-```bash
-# テスト実行前（必須）
-unset DATABASE_URL
-
-# テスト実行
-RAILS_ENV=test bundle exec rspec spec/models
-
-# development復帰
-export DATABASE_URL="postgresql://postgres:example@db:5432/redmine_dev"
-```
+**仕組み:**
+- Rails読み込み前に`DATABASE_URL`を自動削除
+- `database.yml`のtest環境設定が優先される
+- 手動で`unset`する必要なし
 
 ### database.yml 構造
 
@@ -182,9 +174,6 @@ end
 ```bash
 cd /usr/src/redmine/plugins/redmine_epic_grid
 
-# DATABASE_URLを削除（重要！）
-unset DATABASE_URL
-
 # Model テスト
 RAILS_ENV=test bundle exec rspec spec/models --format documentation
 
@@ -206,15 +195,16 @@ RAILS_ENV=test bundle exec rspec spec/system --format documentation
 ```bash
 cd /usr/src/redmine
 
-# DATABASE_URLを削除（重要！）
-unset DATABASE_URL
-
 # Model テスト
 RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models --format documentation
 ```
 
 **どちらのディレクトリからでも実行可能:**
 - `spec/rails_helper.rb` が自動的にカレントディレクトリをRedmineルートに変更します
+
+**DATABASE_URL自動削除:**
+- `DATABASE_URL`環境変数が設定されていても、`rails_helper.rb`が自動的に削除します
+- `database.yml`のtest環境設定が優先されます
 
 ## 4. FactoryBot テストデータ
 
@@ -312,10 +302,9 @@ end
 ### 実行前チェック
 
 ```bash
-echo $DATABASE_URL           # 空ならOK
 echo $RAILS_ENV              # "test"ならOK
 RAILS_ENV=test bundle exec rails runner "puts ActiveRecord::Base.connection.current_database"
-# → "redmine_test"ならOK
+# → "redmine_test"ならOK（DATABASE_URLは自動削除される）
 ```
 
 ### development DB破壊時
@@ -331,7 +320,6 @@ bash bin/reset_db
 bash bin/setup_test_env.sh  # 自動
 
 # 手動リセット
-unset DATABASE_URL
 RAILS_ENV=test bundle exec rake db:drop db:create db:migrate
 RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data
 ```

@@ -275,11 +275,12 @@ EOF
 
 log_success "database.yml を再生成しました"
 
-# DATABASE_URL を削除（database.ymlを優先させる）
+# DATABASE_URL に関する情報表示
 if [ -n "$DATABASE_URL" ]; then
-    log_warning "DATABASE_URL を一時的に削除します（database.yml を優先）"
-    unset DATABASE_URL
-    log_info "テスト後に元に戻すには: export DATABASE_URL=\"\$DATABASE_URL_BK\""
+    log_info "DATABASE_URL が設定されています: $DATABASE_URL"
+    log_info "テスト実行時は rails_helper.rb が自動的に削除します"
+else
+    log_success "DATABASE_URL は設定されていません（推奨状態）"
 fi
 
 echo ""
@@ -343,11 +344,7 @@ echo "=========================================="
 echo "📝 次のステップ"
 echo "=========================================="
 echo ""
-echo "⚠️  重要: DATABASE_URL が設定されている場合は削除してください:"
-echo "  unset DATABASE_URL"
-echo "  # または元に戻す: export DATABASE_URL=\"\$DATABASE_URL_BK\""
-echo ""
-echo "✅ database.yml を使用するため、DATABASE_URLは不要です"
+echo "✅ DATABASE_URL は rails_helper.rb で自動削除されます"
 echo ""
 echo "🧪 Model/Controller テスト実行:"
 echo "  cd $REDMINE_ROOT"
@@ -361,10 +358,6 @@ echo ""
 echo "🔍 特定のテスト実行:"
 echo "  cd $REDMINE_ROOT"
 echo "  RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/epic_grid/tracker_hierarchy_spec.rb:7"
-echo ""
-echo "🔄 Development環境に戻る:"
-echo "  export DATABASE_URL=\"\$DATABASE_URL_BK\""
-echo "  # database.yml は development環境用にも更新済みです"
 echo ""
 echo "🧹 ポートクリーンアップ（テスト失敗時）:"
 echo "  lsof -ti:3001 | xargs kill -9"

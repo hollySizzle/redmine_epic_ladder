@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+# ========================================
+# CRITICAL: Rails読み込み前にDATABASE_URL削除
+# ========================================
+# DATABASE_URLが設定されているとdatabase.ymlが無視され、
+# test環境でもdevelopment DBに接続してしまう
+if ENV['DATABASE_URL']
+  puts "\n⚠️  [WARNING] DATABASE_URL detected: #{ENV['DATABASE_URL']}"
+  puts "⚠️  Removing to use database.yml (test environment)...\n"
+  ENV.delete('DATABASE_URL')
+end
+
 # factory_girl を無効化（他プラグインのテストは実行しないため）
 ENV['DISABLE_FACTORY_GIRL'] = '1'
 

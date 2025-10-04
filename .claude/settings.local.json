@@ -118,7 +118,12 @@
       "Bash(env RAILS_ENV=test bundle exec rake db:create db:migrate)",
       "Bash(unset DATABASE_URL)",
       "Bash(env RAILS_ENV=test bundle exec rails runner \"puts ''''Rails.env: '''' + Rails.env; puts ''''Database: '''' + ActiveRecord::Base.connection.current_database\")",
-      "Bash(env RAILS_ENV=test bundle exec rspec spec/models/epic_grid/tracker_hierarchy_spec.rb --format progress)"
+      "Bash(env RAILS_ENV=test bundle exec rspec spec/models/epic_grid/tracker_hierarchy_spec.rb --format progress)",
+      "Bash(RAILS_ENV=test bundle exec rails runner \"puts ''Connected DB: '' + ActiveRecord::Base.connection.current_database\")",
+      "Bash(export DATABASE_URL=\"postgresql://postgres:example@db:5432/redmine_dev\")",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/epic_grid/tracker_hierarchy_spec.rb:7 --format documentation)",
+      "Bash(export RAILS_ENV=test)",
+      "Bash(bundle exec rails runner:*)"
     ],
     "deny": [],
     "ask": [],
