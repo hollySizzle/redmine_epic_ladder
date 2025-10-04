@@ -25,21 +25,34 @@ module EpicGrid
     def create
       feature_params = params.require(:feature).permit(:subject, :description, :assigned_to_id, :fixed_version_id, :parent_id)
 
-      result = EpicGrid::FeatureCreationService.execute(
+      # Featureトラッカー取得
+      feature_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:feature])
+      unless feature_tracker
+        return render_error('Featureトラッカーが設定されていません', :unprocessable_entity)
+      end
+
+      # Feature作成
+      feature = Issue.create!(
         project: @project,
-        feature_params: feature_params,
-        user: User.current
+        tracker: feature_tracker,
+        author: User.current,
+        status: IssueStatus.default,
+        **feature_params
       )
 
-      if result[:success]
-        render_success({
-          feature: serialize_issue_with_children(result[:feature]),
-          parent_epic: result[:parent_epic] ? serialize_issue(result[:parent_epic]) : nil,
-          grid_updates: result[:grid_updates]
-        }, :created)
-      else
-        render_validation_error(result[:errors], result[:details])
-      end
+      # 親Epicを取得
+      parent_epic = feature.parent if feature.parent_id
+
+      render_success({
+        feature: serialize_issue_with_children(feature),
+        parent_epic: parent_epic ? serialize_issue(parent_epic) : nil,
+        grid_updates: {
+          cell_key: "#{feature.parent_id}:#{feature.fixed_version_id || 'none'}",
+          feature_id: feature.id
+        }
+      }, :created)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     end
 
     # Feature Card更新
@@ -86,23 +99,31 @@ module EpicGrid
       feature_id = params[:feature_id]
       user_story_params = params.require(:user_story).permit(:subject, :description, :assigned_to_id)
 
-      result = EpicGrid::UserStoryCreationService.execute(
-        feature_id: feature_id,
-        user_story_params: user_story_params,
-        user: User.current,
-        project: @project
+      feature = Issue.find(feature_id)
+      user_story_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:user_story])
+
+      unless user_story_tracker
+        return render_error('UserStoryトラッカーが設定されていません', :unprocessable_entity)
+      end
+
+      user_story = Issue.create!(
+        project: @project,
+        tracker: user_story_tracker,
+        author: User.current,
+        status: IssueStatus.default,
+        parent_issue_id: feature_id,
+        fixed_version_id: feature.fixed_version_id, # 親のバージョンを継承
+        **user_story_params
       )
 
-      if result[:success]
-        render_success({
-          user_story: serialize_issue_with_children(result[:user_story]),
-          feature: serialize_issue(result[:feature])
-        }, :created)
-      else
-        render_validation_error(result[:errors], result[:details])
-      end
+      render_success({
+        user_story: serialize_issue_with_children(user_story),
+        feature: serialize_issue(feature.reload)
+      }, :created)
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたFeatureが見つかりません', :not_found)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     end
 
     # UserStory更新
@@ -155,23 +176,31 @@ module EpicGrid
       user_story_id = params[:user_story_id]
       task_params = params.require(:task).permit(:subject, :description, :assigned_to_id, :estimated_hours)
 
-      result = EpicGrid::TaskCreationService.execute(
-        user_story_id: user_story_id,
-        task_params: task_params,
-        user: User.current,
-        project: @project
+      user_story = Issue.find(user_story_id)
+      task_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:task])
+
+      unless task_tracker
+        return render_error('Taskトラッカーが設定されていません', :unprocessable_entity)
+      end
+
+      task = Issue.create!(
+        project: @project,
+        tracker: task_tracker,
+        author: User.current,
+        status: IssueStatus.default,
+        parent_issue_id: user_story_id,
+        fixed_version_id: user_story.fixed_version_id,
+        **task_params
       )
 
-      if result[:success]
-        render_success({
-          task: serialize_issue(result[:task]),
-          user_story: serialize_issue_with_children(result[:user_story])
-        }, :created)
-      else
-        render_validation_error(result[:errors], result[:details])
-      end
+      render_success({
+        task: serialize_issue(task),
+        user_story: serialize_issue_with_children(user_story.reload)
+      }, :created)
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたUserStoryが見つかりません', :not_found)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     end
 
     # Test作成
@@ -179,23 +208,31 @@ module EpicGrid
       user_story_id = params[:user_story_id]
       test_params = params.require(:test).permit(:subject, :description, :assigned_to_id)
 
-      result = EpicGrid::TestCreationService.execute(
-        user_story_id: user_story_id,
-        test_params: test_params,
-        user: User.current,
-        project: @project
+      user_story = Issue.find(user_story_id)
+      test_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:test])
+
+      unless test_tracker
+        return render_error('Testトラッカーが設定されていません', :unprocessable_entity)
+      end
+
+      test = Issue.create!(
+        project: @project,
+        tracker: test_tracker,
+        author: User.current,
+        status: IssueStatus.default,
+        parent_issue_id: user_story_id,
+        fixed_version_id: user_story.fixed_version_id,
+        **test_params
       )
 
-      if result[:success]
-        render_success({
-          test: serialize_issue(result[:test]),
-          user_story: serialize_issue_with_children(result[:user_story])
-        }, :created)
-      else
-        render_validation_error(result[:errors], result[:details])
-      end
+      render_success({
+        test: serialize_issue(test),
+        user_story: serialize_issue_with_children(user_story.reload)
+      }, :created)
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたUserStoryが見つかりません', :not_found)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     end
 
     # Bug作成
@@ -203,23 +240,31 @@ module EpicGrid
       user_story_id = params[:user_story_id]
       bug_params = params.require(:bug).permit(:subject, :description, :assigned_to_id, :priority_id)
 
-      result = EpicGrid::BugCreationService.execute(
-        user_story_id: user_story_id,
-        bug_params: bug_params,
-        user: User.current,
-        project: @project
+      user_story = Issue.find(user_story_id)
+      bug_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:bug])
+
+      unless bug_tracker
+        return render_error('Bugトラッカーが設定されていません', :unprocessable_entity)
+      end
+
+      bug = Issue.create!(
+        project: @project,
+        tracker: bug_tracker,
+        author: User.current,
+        status: IssueStatus.default,
+        parent_issue_id: user_story_id,
+        fixed_version_id: user_story.fixed_version_id,
+        **bug_params
       )
 
-      if result[:success]
-        render_success({
-          bug: serialize_issue(result[:bug]),
-          user_story: serialize_issue_with_children(result[:user_story])
-        }, :created)
-      else
-        render_validation_error(result[:errors], result[:details])
-      end
+      render_success({
+        bug: serialize_issue(bug),
+        user_story: serialize_issue_with_children(user_story.reload)
+      }, :created)
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたUserStoryが見つかりません', :not_found)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     end
 
     # Task/Test/Bug更新（共通）

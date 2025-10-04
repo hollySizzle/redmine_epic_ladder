@@ -8,54 +8,27 @@ module EpicGrid
 
     # Grid Data取得 (API001)
     def show
-      # 最小スタブ実装: MSW仕様に準拠した空のレスポンス
+      # Fat Model使用: Project#epic_grid_data
+      include_closed = params[:include_closed] != 'false'
+      grid_data = @project.epic_grid_data(include_closed: include_closed)
+
+      # MSW準拠レスポンス構築
       render_success({
-        entities: {
-          epics: {},
-          versions: {},
-          features: {},
-          user_stories: {},
-          tasks: {},
-          tests: {},
-          bugs: {}
-        },
-        grid: {
-          index: {},
-          epic_order: [],
-          version_order: []
-        },
-        metadata: {
-          project: {
-            id: @project.id,
-            name: @project.name,
-            identifier: @project.identifier,
-            description: @project.description,
-            created_on: @project.created_on.iso8601
-          },
+        entities: grid_data[:entities],
+        grid: grid_data[:grid],
+        metadata: grid_data[:metadata].merge({
           user_permissions: user_permissions,
           grid_configuration: {
             default_expanded: true,
             show_statistics: true,
-            show_closed_issues: false,
+            show_closed_issues: include_closed,
             columns: []
           },
           api_version: 'v1',
           timestamp: Time.current.iso8601,
           request_id: request.uuid
-        },
-        statistics: {
-          overview: {
-            total_issues: 0,
-            completed_issues: 0,
-            completion_rate: 0,
-            total_epics: 0,
-            total_features: 0,
-            total_user_stories: 0
-          },
-          by_version: {},
-          by_status: {},
-          by_tracker: {}
-        }
+        }),
+        statistics: @project.epic_grid_build_statistics
       })
     rescue => e
       Rails.logger.error "Grid data error: #{e.message}"
@@ -72,83 +45,78 @@ module EpicGrid
 
       # 楽観的ロックチェック
       if optimistic_lock_version && feature.lock_version != optimistic_lock_version.to_i
-        raise EpicGrid::ConcurrencyError.new(
-          feature.id,
-          feature.lock_version,
-          optimistic_lock_version
+        return render_error(
+          'リソースが他のユーザーによって更新されています',
+          :conflict,
+          {
+            resource_id: feature.id,
+            current_version: feature.lock_version,
+            attempted_version: optimistic_lock_version
+          }
         )
       end
 
-      result = EpicGrid::FeatureMoveService.execute(
-        feature: feature,
-        target_epic_id: target_epic_id,
-        target_version_id: target_version_id,
-        user: User.current
-      )
+      # Fat Model使用: Issue#epic_grid_move_to_cell
+      feature.epic_grid_move_to_cell(target_epic_id, target_version_id)
 
-      if result[:success]
-        render_success({
-          feature: serialize_issue(result[:feature]),
-          affected_issues: result[:affected_issues].map { |issue| serialize_issue(issue) },
-          propagation_results: result[:propagation_results],
-          grid_updates: result[:grid_updates]
-        })
-      else
-        render_error(result[:error], :unprocessable_entity, result[:details])
-      end
-    rescue EpicGrid::ConcurrencyError => e
-      render_error(
-        'リソースが他のユーザーによって更新されています',
-        :conflict,
-        {
-          resource_id: e.resource_id,
-          current_version: e.current_version,
-          attempted_version: e.attempted_version
+      # 影響を受けた子要素を取得
+      affected_issues = feature.descendants
+
+      render_success({
+        feature: serialize_issue(feature),
+        affected_issues: affected_issues.map { |issue| serialize_issue(issue) },
+        propagation_results: {
+          propagated_count: affected_issues.count,
+          new_version_id: target_version_id
+        },
+        grid_updates: {
+          source_cell: "#{feature.parent_id_was}:#{feature.fixed_version_id_was}",
+          target_cell: "#{target_epic_id}:#{target_version_id}"
         }
-      )
+      })
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたFeatureが見つかりません', :not_found)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     end
 
     # Epic作成 (API003)
     def create_epic
       epic_params = params.require(:epic).permit(:subject, :description, :assigned_to_id, :fixed_version_id)
 
-      result = EpicGrid::EpicCreationService.execute(
-        project: @project,
-        epic_params: epic_params,
-        user: User.current
-      )
-
-      if result[:success]
-        render_success({
-          epic: serialize_issue(result[:epic]),
-          grid_position: result[:grid_position],
-          affected_statistics: result[:statistics_update]
-        }, :created)
-      else
-        # エラーコード別のレスポンス処理
-        case result[:error_code]
-        when 'EPIC_TRACKER_NOT_FOUND'
-          render_error(result[:error], :unprocessable_entity, {
-            error_code: result[:error_code],
+      # Epicトラッカー取得
+      epic_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:epic])
+      unless epic_tracker
+        return render_error(
+          'Epicトラッカーが設定されていません',
+          :unprocessable_entity,
+          {
+            error_code: 'EPIC_TRACKER_NOT_FOUND',
             error_type: 'configuration_error',
             help_url: '/help/kanban_setup'
-          })
-        when 'INVALID_EPIC_DATA'
-          render_error(result[:error], :bad_request, {
-            error_code: result[:error_code],
-            error_type: 'validation_error'
-          })
-        when 'RECORD_INVALID'
-          render_validation_error(result[:details] || {}, result[:error])
-        else
-          render_error(result[:error] || 'Epicの作成に失敗しました', :unprocessable_entity, {
-            error_code: result[:error_code],
-            error_type: 'unknown_error'
-          })
-        end
+          }
+        )
       end
+
+      # Epic作成
+      epic = Issue.create!(
+        project: @project,
+        tracker: epic_tracker,
+        author: User.current,
+        status: IssueStatus.default,
+        **epic_params
+      )
+
+      render_success({
+        epic: serialize_issue(epic),
+        grid_position: {
+          epic_id: epic.id,
+          row_index: @project.issues.where(tracker: epic_tracker).count - 1
+        },
+        affected_statistics: @project.epic_grid_build_statistics
+      }, :created)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     rescue => e
       Rails.logger.error "Epic creation error: #{e.message}"
       render_error('Epicの作成中に予期しないエラーが発生しました', :internal_server_error)
@@ -157,22 +125,27 @@ module EpicGrid
     # Version自動伝播 (API004)
     def propagate_version
       issue = Issue.find(params[:issue_id])
-      version = params[:version_id].present? ? Version.find(params[:version_id]) : nil
+      version_id = params[:version_id].presence
 
-      result = EpicGrid::VersionPropagationService.propagate_to_children(issue, version)
+      # Fat Model使用: Issue#epic_grid_propagate_version_to_children
+      issue.epic_grid_propagate_version_to_children(version_id)
 
-      if result[:error]
-        render_error(result[:error], :unprocessable_entity, result.except(:error))
-      else
-        render_success({
-          root_issue: serialize_issue(issue.reload),
-          affected_issues_count: result[:propagated_count],
-          affected_issue_ids: result[:affected_issues],
-          propagation_summary: result
-        })
-      end
+      # 影響を受けた子要素
+      affected_issues = issue.descendants
+
+      render_success({
+        root_issue: serialize_issue(issue.reload),
+        affected_issues_count: affected_issues.count,
+        affected_issue_ids: affected_issues.pluck(:id),
+        propagation_summary: {
+          propagated_count: affected_issues.count,
+          new_version_id: version_id
+        }
+      })
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたIssueまたはVersionが見つかりません', :not_found)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
     end
 
     # Version作成 (設計書準拠API)

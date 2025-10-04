@@ -164,7 +164,10 @@
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/cards_controller_spec.rb:71 --format documentation)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation --fail-fast)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation)",
-      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format progress)"
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format progress)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers --format documentation)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb --format documentation)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb:18 --format documentation)"
     ],
     "deny": [],
     "ask": [],

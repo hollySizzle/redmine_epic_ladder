@@ -226,8 +226,9 @@ module EpicGrid
     end
 
     def authorize_kanban_access
-      unless User.current.allowed_to?(:view_kanban, @project)
-        raise EpicGrid::PermissionDenied.new('view_kanban', @project)
+      # view_issues 権限で代用（view_kanban が未定義の場合）
+      unless User.current.allowed_to?(:view_issues, @project)
+        raise EpicGrid::PermissionDenied.new('view_issues', @project)
       end
     end
 
