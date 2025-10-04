@@ -1,92 +1,171 @@
-# Backend Testing Guide
+# Backend Testing Standards
 
-Redmine Release Kanban プラグインのバックエンドテスト規約
+バックエンドテスト規約 - RSpec/FactoryBot/Playwright環境構築・実行・デバッグ
 
-## 1. テスト構成
+## テスト環境セットアップ
 
-### テストフレームワーク
+### 初回セットアップ
+
+```bash
+cd /usr/src/redmine/plugins/redmine_epic_grid
+bash bin/setup_test_env.sh
+```
+
+**自動実行内容:**
+1. DATABASE_URLバックアップ
+2. database.yml再生成（test環境追加）
+3. DATABASE_URL削除（database.yml優先）
+4. redmine_test DB作成
+5. Redmine default dataロード
+6. RSpec/Playwright環境構築
+
+### DATABASE_URL 環境変数問題
+
+**問題:** `DATABASE_URL`設定時、`database.yml`が無視され、test環境でもdevelopment DBに接続
+
+**解決:**
+
+```bash
+# テスト実行前（必須）
+unset DATABASE_URL
+
+# テスト実行
+RAILS_ENV=test bundle exec rspec spec/models
+
+# development復帰
+export DATABASE_URL="postgresql://postgres:example@db:5432/redmine_dev"
+```
+
+### database.yml 構造
+
+自動生成: `config/database.yml`
+
+```yaml
+development:
+  database: redmine_dev
+
+test:
+  database: redmine_test  # 別DB
+
+production:
+  database: redmine_dev
+```
+
+## テストフレームワーク
 
 - **RSpec**: テストフレームワーク
-- **FactoryBot**: テストデータ生成
+- **FactoryBot**: テストデータ生成（YAMLフィクスチャ不使用）
 - **DatabaseCleaner**: テストデータクリーンアップ
-- **Playwright**: E2E テスト用ブラウザ自動化
+- **Playwright**: E2E ブラウザ自動化
 
-### ディレクトリ構成
+## ディレクトリ構成
 
 ```
 spec/
-├── models/           # Model テスト
-├── controllers/      # Controller テスト
-├── requests/         # API リクエストテスト
-├── system/           # E2E テスト (Playwright)
-├── factories/        # FactoryBot ファクトリー定義
-├── fixtures/         # テストフィクスチャ
-└── support/          # ヘルパーモジュール
+├── models/epic_grid/        # Model（ビジネスロジック）
+├── controllers/epic_grid/   # Controller（HTTP層のみ）
+├── system/epic_grid/        # E2E (Playwright)
+├── factories/               # FactoryBot定義
+├── support/                 # ヘルパー
+├── rails_helper.rb          # RSpec設定
+└── spec_helper.rb           # 基本設定
 ```
 
-## 2. テスト種別
+**削除:**
+- `spec/fixtures/` - FactoryBotに統一
+- `spec/requests/` - Model + Controller + Systemで充足
+
+## Test Pyramid
+
+```
+        ┌─────────────┐
+        │  E2E Tests  │  ← 少数（遅い、壊れやすい）
+        │   (System)  │
+        ├─────────────┤
+        │ Controller  │  ← 中量（HTTP層のみ）
+        │   Tests     │
+        ├─────────────┤
+        │   Model     │  ← 大量（速い、安定）
+        │   Tests     │  ← ビジネスロジック
+        └─────────────┘
+```
+
+**原則:**
+1. **Model Tests（最優先）**: ビジネスロジックは全てModelに実装し、Modelでテスト
+2. **Controller Tests**: HTTP処理と認可のみテスト（ビジネスロジックはテストしない）
+3. **System Tests**: 重要なユーザーフロー全体のみテスト
 
 ### 2.1 Model テスト
 
-**対象**: `app/models/` 配下のモデルクラス
+**対象**: `app/models/` - ビジネスロジック (Fat Model原則)
 **場所**: `spec/models/`
-**ツール**: RSpec + shoulda-matchers + FactoryBot
 
-**テストパターン**:
+```ruby
+# spec/models/epic_grid/tracker_hierarchy_spec.rb
+require_relative '../../rails_helper'
+
+RSpec.describe EpicGrid::TrackerHierarchy, type: :model do
+  describe '.level' do
+    it { expect(described_class.level('Epic')).to eq(0) }
+    it { expect(described_class.level('Unknown')).to be_nil }
+  end
+
+  describe '.valid_parent?' do
+    it 'allows Feature as child of Epic' do
+      expect(described_class.valid_parent?(feature_tracker, epic_tracker)).to be true
+    end
+  end
+end
+```
+
+**pending で将来実装を文書化:**
+
 ```ruby
 # spec/models/issue_spec.rb
-require 'rails_helper'
-
 RSpec.describe Issue, type: :model do
-  describe 'associations' do
-    it { should belong_to(:project) }
-    it { should have_many(:children).class_name('Issue') }
-  end
-
-  describe 'validations' do
-    it { should validate_presence_of(:subject) }
-  end
-
-  describe 'methods' do
-    it 'returns epic issues' do
-      epic = create(:issue, tracker: Tracker.find_by(name: 'Epic'))
-      expect(Issue.epics).to include(epic)
-    end
+  describe '#move_to_cell (Fat Model - 将来実装)' do
+    pending 'moves feature to target epic and version'
+    pending 'propagates version to child user stories'
   end
 end
 ```
 
 ### 2.2 Controller テスト
 
-**対象**: `app/controllers/` 配下のコントローラー
-**場所**: `spec/controllers/`, `spec/requests/`
-**ツール**: RSpec + FactoryBot
+**対象**: `app/controllers/` - HTTP処理と認可のみ (Skinny Controller原則)
+**場所**: `spec/controllers/`
 
-**テストパターン**:
 ```ruby
-# spec/requests/kanban_api_spec.rb
-require 'rails_helper'
+# spec/controllers/epic_grid/grid_controller_spec.rb
+require_relative '../../rails_helper'
 
-RSpec.describe 'Kanban API', type: :request do
-  let(:project) { create(:project) }
-  let(:user) { create(:user, admin: true) }
+RSpec.describe EpicGrid::GridController, type: :controller do
+  before do
+    allow(User).to receive(:current).and_return(user)
+    @request.session[:user_id] = user.id
+  end
 
-  before { sign_in user }
-
-  describe 'GET /projects/:project_id/kanban/api/data' do
-    it 'returns kanban data as JSON' do
-      get "/projects/#{project.identifier}/kanban/api/data"
+  describe 'GET #show' do
+    it 'returns 200 and JSON response' do
+      get :show, params: { project_id: project.id }
 
       expect(response).to have_http_status(:ok)
-      expect(response.content_type).to eq('application/json')
+      expect(JSON.parse(response.body)).to include('entities', 'grid')
+    end
 
-      json = JSON.parse(response.body)
-      expect(json).to have_key('epics')
-      expect(json).to have_key('versions')
+    context 'without permission' do
+      it 'returns 403' do
+        # unauthorized setup
+        expect(response).to have_http_status(:forbidden)
+      end
     end
   end
 end
 ```
+
+**テスト範囲:**
+- ✅ HTTPステータス、レスポンス形式、認可
+- ❌ ビジネスロジック（→ Modelでテスト）
 
 ### 2.3 E2E テスト (System spec)
 
@@ -94,362 +173,225 @@ end
 **場所**: `spec/system/`
 **ツール**: RSpec + FactoryBot + Playwright
 
-**参照実装**: `spec/system/kanban/simple_e2e_spec.rb`
+**参照実装**: `spec/system/epic_grid/simple_e2e_spec.rb`
 
-## 3. E2E テスト詳細
+## 3. テスト実行方法
 
-### 3.1 新規 E2E テスト作成方法
-
-**ステップ 1: Reference Test をコピー**
+### ✅ 推奨: プラグインディレクトリから実行
 
 ```bash
-cp spec/system/kanban/simple_e2e_spec.rb spec/system/kanban/my_feature_spec.rb
+cd /usr/src/redmine/plugins/redmine_epic_grid
+
+# DATABASE_URLを削除（重要！）
+unset DATABASE_URL
+
+# Model テスト
+RAILS_ENV=test bundle exec rspec spec/models --format documentation
+
+# 特定のファイル
+RAILS_ENV=test bundle exec rspec spec/models/epic_grid/tracker_hierarchy_spec.rb
+
+# 特定の行
+RAILS_ENV=test bundle exec rspec spec/models/epic_grid/tracker_hierarchy_spec.rb:22
+
+# Controller テスト
+RAILS_ENV=test bundle exec rspec spec/controllers --format documentation
+
+# System テスト
+RAILS_ENV=test bundle exec rspec spec/system --format documentation
 ```
 
-**ステップ 2: 基本構造はそのまま使用**
-
-以下の部分は `simple_e2e_spec.rb` のパターンをそのまま使用:
-- プロジェクト作成 (`let(:project)`)
-- ユーザー作成と権限設定 (`let(:user)`, `before(:each)`)
-- ログインフロー
-
-**ステップ 3: テストデータとアサーションを変更**
-
-```ruby
-# テストデータ作成
-before(:each) do
-  @my_data = create(:issue, project: project, ...)
-end
-
-# アサーション
-it 'displays my feature' do
-  # ... ログイン処理 (simple_e2e_spec.rb と同じ) ...
-
-  # ページ遷移
-  @playwright_page.goto("/projects/#{project.identifier}/my_route")
-
-  # 要素確認
-  @playwright_page.wait_for_selector('.my-component')
-  expect(@playwright_page.query_selector("text='#{@my_data.subject}'")).not_to be_nil
-end
-```
-
-### 3.2 テスト失敗時のデバッグ手順
-
-#### Phase 1: 環境 vs コードの切り分け
-
-**まず Reference Test を実行**:
+### Redmineルートから実行（従来通り）
 
 ```bash
 cd /usr/src/redmine
-RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/kanban/simple_e2e_spec.rb
+
+# DATABASE_URLを削除（重要！）
+unset DATABASE_URL
+
+# Model テスト
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models --format documentation
 ```
 
-- ✅ **成功** → あなたのテストコードに問題があります
-  - → Phase 2 へ進む
+**どちらのディレクトリからでも実行可能:**
+- `spec/rails_helper.rb` が自動的にカレントディレクトリをRedmineルートに変更します
 
-- ❌ **失敗** → 環境設定に問題があります
-  - → 以下を確認:
+## 4. FactoryBot テストデータ
 
-```bash
-# 組み込みグループ確認
-RAILS_ENV=test bundle exec rails runner "puts \"Groups: #{Group.count}\""
-
-# 組み込みグループ再作成
-RAILS_ENV=test bundle exec rails runner "
-GroupAnonymous.load_instance
-GroupNonMember.load_instance
-puts '✅ Built-in groups created'
-"
-
-# デフォルトデータロード
-RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data
-```
-
-#### Phase 2: テストコードのデバッグ
-
-**1. スクリーンショット確認**
-
-```bash
-# 最新のスクリーンショットを確認
-ls -lth /usr/src/redmine/tmp/test_artifacts/screenshots/ | head -3
-```
-
-- 何が表示されているか？
-- 期待した要素はあるか？
-- CSS クラス名は正しいか？
-
-**2. Rails サーバーログ確認**
-
-```bash
-# 最新 50 行を確認
-tail -50 /usr/src/redmine/log/test.log
-
-# エラー行のみ
-tail -100 /usr/src/redmine/log/test.log | grep -A 5 ERROR
-```
-
-- 500 エラーが出ていないか？
-- API エンドポイントは正しいか？
-- データベースクエリは成功しているか？
-
-**3. セレクタ確認**
-
-```bash
-# React コンポーネントの className を検索
-cd /workspace/containers/202501_redmine/app/plugins/redmine_epic_grid/
-grep -r "className" assets/javascripts/epic_grid/src/components/ | grep -i "grid\|kanban\|epic"
-```
-
-- テストで使用しているセレクタが実際に存在するか確認
-- スクリーンショットと照らし合わせる
-
-### 3.3 よくあるエラーと対処法
-
-#### エラー 1: "Timeout on /login"
-
-```
-Playwright::TimeoutError:
-  Timeout 30000ms exceeded.
-  - navigating to "http://localhost:3001/login", waiting until "load"
-```
-
-**原因**: Rails サーバーが 500 エラーでクラッシュしている
-
-**対処法**:
-1. Rails ログ確認: `tail -50 log/test.log`
-2. よくある原因:
-   - `GroupAnonymous` / `GroupNonMember` が存在しない
-   - `User.current` が nil
-   - データベース不整合
-
-```bash
-# 組み込みグループ確認と再作成
-RAILS_ENV=test bundle exec rails runner "
-GroupAnonymous.load_instance rescue nil
-GroupNonMember.load_instance rescue nil
-puts \"Groups: #{Group.count}\"
-"
-```
-
-#### エラー 2: "Element not found"
-
-```
-Playwright::TimeoutError:
-  Timeout 15000ms exceeded.
-  - waiting for locator(".some-class") to be visible
-```
-
-**原因**: CSS セレクタが間違っている、または React コンポーネントが読み込まれていない
-
-**対処法**:
-1. スクリーンショット確認: 実際に何が表示されているか
-2. React コンポーネントで実際に使われている className を検索:
-   ```bash
-   grep -r "className" assets/javascripts/epic_grid/src/ | grep "some-class"
-   ```
-3. ブラウザの開発者ツール相当の情報を取得:
-   ```ruby
-   # テストに追加
-   puts @playwright_page.content  # HTML 全体を出力
-   ```
-
-#### エラー 3: "Expected 'Text' but got nil"
+**場所**: `spec/factories/epic_grid_issues.rb`
 
 ```ruby
-expect(@playwright_page.query_selector("text='E2E Test Epic'")).not_to be_nil
-# expected: not nil
-#      got: nil
-```
-
-**原因**: テストデータが表示されていない
-
-**対処法**:
-1. スクリーンショット確認: 何が表示されているか
-2. よくある原因:
-   - **API コントローラーが未実装** (MSW モックデータが表示されている)
-   - テストデータが作成されていない
-   - DatabaseCleaner でデータが削除された
-3. API 実装確認:
-   ```bash
-   # コントローラーが存在するか
-   ls -la app/controllers/ | grep kanban
-
-   # ルーティング確認
-   bundle exec rake routes | grep kanban
-   ```
-
-#### エラー 4: "データが作成されているのに表示されない"
-
-**原因**: API コントローラーが未実装で、フロントエンドが MSW モックデータを表示している
-
-**判別方法**:
-- スクリーンショットに「別のプロジェクトのデータ」が表示されている
-- `assets/javascripts/epic_grid/src/mocks/handlers.ts` のサンプルデータが見える
-
-**対処法**:
-- Redmine プラグインの API コントローラーを実装する
-- `app/controllers/kanban_controller.rb` を作成
-- `config/routes.rb` にルート追加
-
-## 4. テストデータ作成
-
-### 4.1 FactoryBot の使用
-
-Factクトリー定義: `spec/factories/`
-
-```ruby
-# spec/factories/projects.rb
 FactoryBot.define do
-  factory :project do
-    sequence(:identifier) { |n| "project-#{n}" }
-    sequence(:name) { |n| "Project #{n}" }
-    status { Project::STATUS_ACTIVE }
+  factory :epic_tracker, class: 'Tracker' do
+    sequence(:name) { 'Epic' }
+    default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+  end
+
+  factory :epic, class: 'Issue' do
+    association :project
+    association :tracker, factory: :epic_tracker
+    sequence(:subject) { |n| "Epic #{n}" }
+
+    trait :with_features do
+      after(:create) { |epic| create_list(:feature, 3, parent: epic, project: epic.project) }
+    end
   end
 end
 ```
 
-**使用例**:
+**使用例:**
 ```ruby
-# デフォルト値で作成
-project = create(:project)
-
-# 属性を上書き
-project = create(:project, identifier: 'my-project', name: 'My Project')
-
-# 関連を設定
-issue = create(:issue, project: project, author: user)
+epic = create(:epic, subject: 'My Epic')
+epic = create(:epic, :with_features)  # 3つのFeature付き
 ```
 
-### 4.2 組み込みグループ
+**ベストプラクティス:**
+- ✅ `sequence` でユニーク値、`trait` でバリエーション
+- ✅ Redmine default data再利用 (`IssueStatus.first`)
+- ❌ `find_or_create_by!` で固定ID（DB衝突）
+- ❌ YAMLフィクスチャ混在
 
-Redmine の `User.current.roles` メソッドは `GroupAnonymous` と `GroupNonMember` に依存します。
+## 5. rails_helper.rb 重要設定
 
-**自動作成**: `spec/rails_helper.rb` の `before(:suite)` で自動作成されます
+### 5.1 RAILS_ENV強制 (development DB保護)
 
-**手動作成が必要な場合**:
-```bash
-RAILS_ENV=test bundle exec rails runner "
-GroupAnonymous.load_instance
-GroupNonMember.load_instance
-"
+```ruby
+# spec/rails_helper.rb:40-42
+ENV['RAILS_ENV'] = 'test' unless ENV['RAILS_ENV']
 ```
 
-### 4.3 DatabaseCleaner の挙動
+### 5.2 プラグインディレクトリ実行対応
 
-**保護されるテーブル** (truncation で削除されない):
-- `roles`
-- `trackers`
-- `issue_statuses`
-- `enumerations`
-- `workflows`
-- `custom_fields`
-- `settings`
-
-**削除されるテーブル**:
-- `users` (組み込みグループも削除される → 毎回再作成)
-- `projects`
-- `issues`
-- `versions`
-
-## 5. テスト実行
-
-### 全テスト実行
-
-```bash
-cd /usr/src/redmine
-RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/
+```ruby
+# spec/rails_helper.rb:44-48
+REDMINE_ROOT = File.expand_path('../../..', __dir__)
+Dir.chdir(REDMINE_ROOT) unless Dir.pwd == REDMINE_ROOT
 ```
 
-### 特定のテストのみ
+### 5.3 DatabaseCleaner安全装置
 
-```bash
-# ファイル単位
-RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/kanban/simple_e2e_spec.rb
-
-# 行番号指定
-RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/kanban/simple_e2e_spec.rb:58
-
-# パターン指定
-RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/
+```ruby
+# spec/rails_helper.rb:127-131
+config.before(:suite) do
+  raise "Must run in test env!" unless Rails.env.test?
+end
 ```
 
-### カバレッジ測定
+### 5.4 require_relative 必須
 
-```bash
-COVERAGE=1 RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/
+```ruby
+# ✅ GOOD
+require_relative '../../rails_helper'
+
+# ❌ BAD (RSpecはspec/を含まない)
+require 'rails_helper'
 ```
 
-カバレッジレポート: `tmp/test_artifacts/coverage/index.html`
+## 6. DatabaseCleaner
 
-## 6. CI/CD での実行
+**保護テーブル** (truncation除外):
+```ruby
+%w[roles trackers issue_statuses enumerations workflows custom_fields settings groups_users]
+```
 
-### GitHub Actions 設定例
+**削除テーブル**: `users`, `projects`, `issues`, `versions`, `members`
 
-```yaml
-- name: Setup test database
-  run: |
-    cd /usr/src/redmine
-    RAILS_ENV=test bundle exec rake db:schema:load
-    RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data
-
-- name: Run backend tests
-  run: |
-    cd /usr/src/redmine
-    RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/
-
-- name: Upload screenshots on failure
-  if: failure()
-  uses: actions/upload-artifact@v3
-  with:
-    name: test-screenshots
-    path: /usr/src/redmine/tmp/test_artifacts/screenshots/
+**戦略切り替え:**
+```ruby
+config.around(:each) do |example|
+  if example.metadata[:type] == :system
+    DatabaseCleaner.strategy = :truncation, { except: protected_tables }  # 別プロセス対応
+  else
+    DatabaseCleaner.strategy = :transaction  # 高速
+  end
+end
 ```
 
 ## 7. トラブルシューティング
 
-### テスト環境のリセット
+### 実行前チェック
 
 ```bash
-# データベースリセット
-cd /usr/src/redmine
-RAILS_ENV=test bundle exec rake db:drop db:create db:schema:load
-
-# デフォルトデータロード
-RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data
-
-# 組み込みグループ作成
-RAILS_ENV=test bundle exec rails runner "
-GroupAnonymous.load_instance
-GroupNonMember.load_instance
-puts '✅ Test environment reset complete'
-"
+echo $DATABASE_URL           # 空ならOK
+echo $RAILS_ENV              # "test"ならOK
+RAILS_ENV=test bundle exec rails runner "puts ActiveRecord::Base.connection.current_database"
+# → "redmine_test"ならOK
 ```
 
-### Playwright が動かない場合
+### development DB破壊時
 
 ```bash
-# Playwright ブラウザインストール
+export DATABASE_URL="postgresql://postgres:example@db:5432/redmine_dev"
+bash bin/reset_db
+```
+
+### テスト環境リセット
+
+```bash
+bash bin/setup_test_env.sh  # 自動
+
+# 手動リセット
+unset DATABASE_URL
+RAILS_ENV=test bundle exec rake db:drop db:create db:migrate
+RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data
+```
+
+### その他
+
+```bash
+# Playwright
 npx playwright install chromium
 
-# 権限確認
-ls -la node_modules/.bin/playwright
-```
-
-### ポート 3001 が使用中
-
-```bash
-# プロセス確認
-lsof -ti:3001
-
-# 強制終了
+# ポート3001使用中
 lsof -ti:3001 | xargs -r kill -9
 ```
 
-## 8. 参考リンク
+## 8. E2E テスト
 
-- **Reference Test**: `spec/system/kanban/simple_e2e_spec.rb`
-- **RSpec 設定**: `spec/rails_helper.rb`
-- **FactoryBot 定義**: `spec/factories/`
-- **Playwright 公式ドキュメント**: https://playwright.dev/
-- **RSpec 公式ドキュメント**: https://rspec.info/
+### 作成方法
+
+```bash
+cp spec/system/epic_grid/simple_e2e_spec.rb spec/system/epic_grid/my_feature_spec.rb
+```
+
+**基本構造そのまま使用**: プロジェクト/ユーザー作成、ログインフロー
+
+**変更箇所のみ修正**:
+```ruby
+before(:each) { @data = create(:issue, project: project) }
+
+it 'displays feature' do
+  @playwright_page.goto("/projects/#{project.identifier}/my_route")
+  @playwright_page.wait_for_selector('.my-component')
+  expect(@playwright_page.query_selector("text='#{@data.subject}'")).not_to be_nil
+end
+```
+
+### デバッグ手順
+
+**Phase 1: Reference Test実行**
+```bash
+RAILS_ENV=test bundle exec rspec spec/system/epic_grid/simple_e2e_spec.rb
+```
+- ✅ 成功 → コードに問題
+- ❌ 失敗 → 環境に問題（default dataロード、組み込みグループ確認）
+
+**Phase 2: 詳細調査**
+```bash
+# スクリーンショット
+ls -lth tmp/test_artifacts/screenshots/ | head -3
+
+# ログ
+tail -50 log/test.log | grep ERROR
+
+# セレクタ確認
+grep -r "className" assets/javascripts/ | grep -i "grid"
+```
+
+## 10. 参考
+
+- `bin/setup_test_env.sh` - セットアップスクリプト
+- `spec/system/epic_grid/simple_e2e_spec.rb` - E2Eテンプレート
+- `spec/rails_helper.rb` - RSpec設定
+- `spec/factories/` - FactoryBot定義
+- `vibes/docs/rules/backend_standards.md` - Backend規約
