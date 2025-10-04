@@ -162,7 +162,9 @@
       "Bash(RAILS_ENV=test bundle exec rails runner \"\nputs ''=== Test DB Connection ===''\nputs \"\"Current database: #{ActiveRecord::Base.connection.current_database}\"\"\nputs \"\"view_customizes exists: #{ActiveRecord::Base.connection.table_exists?(''view_customizes'')}\"\"\n\")",
       "Bash(RAILS_ENV=test bundle exec rake redmine:plugins:migrate)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/cards_controller_spec.rb:71 --format documentation)",
-      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation --fail-fast)"
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation --fail-fast)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format progress)"
     ],
     "deny": [],
     "ask": [],

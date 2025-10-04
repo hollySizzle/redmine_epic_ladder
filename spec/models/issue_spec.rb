@@ -134,12 +134,9 @@ RSpec.describe Issue, type: :model do
     end
 
     it 'moves feature to target epic and version' do
-      # シンプルに親とバージョンを更新
+      # Fat Modelメソッドを使用
       feature.reload # lock_versionを最新化
-      feature.update!(
-        parent_issue_id: target_epic.id,
-        fixed_version: version_v2
-      )
+      feature.epic_grid_move_to_cell(target_epic.id, version_v2.id)
 
       feature.reload
       expect(feature.parent).to eq(target_epic)
@@ -147,24 +144,9 @@ RSpec.describe Issue, type: :model do
     end
 
     it 'propagates version to child user stories and tasks' do
-      # Feature移動
+      # Fat Modelメソッドを使用（自動的に子要素に伝播）
       feature.reload # lock_versionを最新化
-      feature.update!(
-        parent_issue_id: target_epic.id,
-        fixed_version: version_v2
-      )
-
-      # 子要素も手動で伝播（Fat Modelメソッドで実装される想定）
-      feature.reload
-      feature.children.each do |child|
-        child.reload # lock_versionを最新化
-        child.update!(fixed_version: version_v2)
-        child.reload
-        child.children.each do |grandchild|
-          grandchild.reload # lock_versionを最新化
-          grandchild.update!(fixed_version: version_v2)
-        end
-      end
+      feature.epic_grid_move_to_cell(target_epic.id, version_v2.id)
 
       user_story.reload
       task.reload
@@ -196,12 +178,9 @@ RSpec.describe Issue, type: :model do
     let!(:feature) { create(:feature, :with_user_stories, project: project, fixed_version: version_v1, author: user) }
 
     it 'updates version for all descendants' do
-      # 全子孫にバージョンを伝播
+      # Fat Modelメソッドでバージョンを伝播
       feature.reload # lock_versionを最新化
-      feature.descendants.each do |descendant|
-        descendant.reload # lock_versionを最新化
-        descendant.update!(fixed_version: version_v2)
-      end
+      feature.epic_grid_propagate_version_to_children(version_v2.id)
 
       feature.reload
       feature.children.each do |child|
@@ -214,11 +193,9 @@ RSpec.describe Issue, type: :model do
       story = feature.children.first
       task = create(:task, parent: story, project: project, fixed_version: version_v1, author: user)
 
-      # 全子孫を再帰的に更新
-      [story, task].each do |issue|
-        issue.reload # lock_versionを最新化
-        issue.update!(fixed_version: version_v2)
-      end
+      # Fat Modelメソッドで再帰的に更新
+      feature.reload
+      feature.epic_grid_propagate_version_to_children(version_v2.id)
 
       story.reload
       task.reload

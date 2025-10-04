@@ -150,6 +150,10 @@ RSpec.configure do |config|
     # DATABASE_URL が設定されている環境でも許可
     DatabaseCleaner.allow_remote_database_url = true
 
+    # ConcernをIssueとProjectに追加
+    Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
+    Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
+
     # Redmine default data を保護しながら truncation
     # users, projects, issues などは削除するが、roles, trackers, issue_statuses は保護
     protected_tables = %w[
