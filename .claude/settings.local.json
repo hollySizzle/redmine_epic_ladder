@@ -126,7 +126,9 @@
       "Bash(bundle exec rails runner:*)",
       "Bash(uvx:*)",
       "Bash(sh)",
-      "Bash(source $HOME/.local/bin/env)"
+      "Bash(source $HOME/.local/bin/env)",
+      "Bash(source ~/.bashrc)",
+      "Read(//home/redmine/.local/bin/**)"
     ],
     "deny": [],
     "ask": [],
