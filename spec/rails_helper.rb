@@ -352,13 +352,38 @@ RSpec.configure do |config|
           # テスト実行
           example.run
         ensure
-          # スクリーンショット保存（失敗時）
+          # デバッグ情報保存（失敗時）
           if example.exception
+            timestamp = Time.now.to_i
+            base_filename = "#{example.full_description.parameterize}_#{timestamp}"
+
+            # 1. スクリーンショット保存
             screenshot_dir = Rails.root.join('tmp', 'test_artifacts', 'screenshots')
             FileUtils.mkdir_p(screenshot_dir)
-            screenshot_path = screenshot_dir.join("#{example.full_description.parameterize}_#{Time.now.to_i}.png")
+            screenshot_path = screenshot_dir.join("#{base_filename}.png")
             @playwright_page.screenshot(path: screenshot_path.to_s)
             puts "\n[Screenshot] #{screenshot_path}"
+
+            # 2. HTML保存
+            html_dir = Rails.root.join('tmp', 'test_artifacts', 'html')
+            FileUtils.mkdir_p(html_dir)
+            html_path = html_dir.join("#{base_filename}.html")
+            File.write(html_path, @playwright_page.content)
+            puts "[HTML] #{html_path}"
+
+            # 3. ページ情報保存
+            info_dir = Rails.root.join('tmp', 'test_artifacts', 'info')
+            FileUtils.mkdir_p(info_dir)
+            info_path = info_dir.join("#{base_filename}.txt")
+            page_info = <<~INFO
+              Test: #{example.full_description}
+              URL: #{@playwright_page.url}
+              Title: #{@playwright_page.title}
+              Timestamp: #{Time.now}
+              Error: #{example.exception.class.name}: #{example.exception.message}
+            INFO
+            File.write(info_path, page_info)
+            puts "[Info] #{info_path}"
           end
         end
       end

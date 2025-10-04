@@ -271,39 +271,6 @@ export interface Metadata {
 }
 
 // ========================================
-// 統計情報型定義
-// ========================================
-
-export interface VersionStats {
-  total: number;
-  completed: number;
-  completion_rate: number;
-  by_status: Record<string, number>;
-}
-
-export interface Statistics {
-  overview: {
-    total_issues: number;
-    completed_issues: number;
-    completion_rate: number;
-    total_epics: number;
-    total_features: number;
-    total_user_stories: number;
-  };
-
-  by_version: Record<string, VersionStats>;
-  by_status: Record<string, number>;
-  by_tracker: Record<string, number>;
-
-  trend?: {
-    completion_history: Array<{
-      date: string;
-      completion_rate: number;
-    }>;
-    velocity: number;
-  };
-}
-
 // ========================================
 // API レスポンス型定義
 // ========================================
@@ -321,7 +288,6 @@ export interface NormalizedAPIResponse {
 
   grid: GridIndex;
   metadata: Metadata;
-  statistics: Statistics;
 }
 
 // ========================================
@@ -353,7 +319,6 @@ export interface MoveFeatureResponse {
   };
 
   updated_grid_index: Record<string, string[]>;
-  updated_statistics?: Partial<Statistics>;
 
   propagation_result?: {
     affected_issue_ids: string[];
@@ -395,7 +360,6 @@ export interface UpdatesResponse {
     removed_cells: string[];
   };
 
-  updated_statistics?: Partial<Statistics>;
   current_timestamp: string;
   has_changes: boolean;
 }
@@ -685,8 +649,6 @@ export interface ErrorResponse {
  * Metadata Types:
  * - ColumnConfig
  * - Metadata
- * - VersionStats
- * - Statistics
  *
  * API Types:
  * - NormalizedAPIResponse

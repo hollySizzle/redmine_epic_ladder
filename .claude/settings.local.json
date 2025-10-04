@@ -159,7 +159,10 @@
       "Bash(env RAILS_ENV=test bundle exec rails runner \"\nproject = Project.create!(name: ''Test'', identifier: ''test-#{Time.now.to_i}'')\ntracker = Tracker.first\nparent = Issue.create!(subject: ''Parent'', project: project, tracker: tracker, author: User.first, status: IssueStatus.first)\nchild = Issue.create!(subject: ''Child'', project: project, tracker: tracker, author: User.first, status: IssueStatus.first, parent_issue_id: parent.id)\n\nputs \"\"Parent issue: #{parent.id}\"\"\nputs \"\"Child issue: #{child.id}\"\"\nputs \"\"Child''s parent: #{child.parent&.id}\"\"\nputs \"\"Parent.children method exists: #{parent.respond_to?(:children)}\"\"\n\nif parent.respond_to?(:children)\n  puts \"\"Children: #{parent.children.pluck(:id)}\"\"\nelse\n  puts ''No children method available''\nend\n\")",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models --format progress)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers --format progress)",
-      "Bash(RAILS_ENV=test bundle exec rails runner \"\nputs ''=== Test DB Connection ===''\nputs \"\"Current database: #{ActiveRecord::Base.connection.current_database}\"\"\nputs \"\"view_customizes exists: #{ActiveRecord::Base.connection.table_exists?(''view_customizes'')}\"\"\n\")"
+      "Bash(RAILS_ENV=test bundle exec rails runner \"\nputs ''=== Test DB Connection ===''\nputs \"\"Current database: #{ActiveRecord::Base.connection.current_database}\"\"\nputs \"\"view_customizes exists: #{ActiveRecord::Base.connection.table_exists?(''view_customizes'')}\"\"\n\")",
+      "Bash(RAILS_ENV=test bundle exec rake redmine:plugins:migrate)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/cards_controller_spec.rb:71 --format documentation)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation --fail-fast)"
     ],
     "deny": [],
     "ask": [],

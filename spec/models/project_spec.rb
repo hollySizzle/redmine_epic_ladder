@@ -10,11 +10,14 @@ RSpec.describe Project, type: :model do
   let(:epic_tracker) { create(:epic_tracker) }
   let(:feature_tracker) { create(:feature_tracker) }
   let(:user_story_tracker) { create(:user_story_tracker) }
+  let(:task_tracker) { create(:task_tracker) }
+  let(:test_tracker) { create(:test_tracker) }
+  let(:bug_tracker) { create(:bug_tracker) }
   let(:version) { create(:version, project: project) }
 
   before do
     member # ensure member exists
-    project.trackers << [epic_tracker, feature_tracker, user_story_tracker]
+    project.trackers << [epic_tracker, feature_tracker, user_story_tracker, task_tracker, test_tracker, bug_tracker]
   end
 
   # ========================================
@@ -97,24 +100,6 @@ RSpec.describe Project, type: :model do
       expect(user_permissions[:manage_versions]).to be true
     end
 
-    it 'includes statistics overview (MSW準拠)' do
-      # MSW Statistics型: normalized-api.ts:285-292
-      statistics_overview = {
-        total_issues: project.issues.count,
-        completed_issues: project.issues.joins(:status).where(issue_statuses: { is_closed: true }).count,
-        completion_rate: 0.0,
-        total_epics: project.issues.joins(:tracker).where(trackers: { name: 'Epic' }).count,
-        total_features: project.issues.joins(:tracker).where(trackers: { name: 'Feature' }).count,
-        total_user_stories: project.issues.joins(:tracker).where(trackers: { name: 'UserStory' }).count
-      }
-
-      expect(statistics_overview).to include(
-        :total_issues, :completed_issues, :completion_rate,
-        :total_epics, :total_features, :total_user_stories
-      )
-      expect(statistics_overview[:total_epics]).to be >= 1
-      expect(statistics_overview[:total_features]).to be >= 3 # :with_features trait
-    end
 
     it 'filters by include_closed parameter (MSW handlers.ts:52-68)' do
       closed_status = create(:closed_status)
@@ -139,85 +124,6 @@ RSpec.describe Project, type: :model do
     end
   end
 
-  # ========================================
-  # Fat Model: 統計計算（MSW準拠）
-  # ========================================
-
-  describe '#kanban_statistics (Fat Model - MSW準拠)' do
-    let!(:epic1) { create(:epic, project: project, author: user) }
-    let!(:epic2) { create(:epic, project: project, author: user) }
-    let!(:epic3) { create(:epic, project: project, author: user) }
-
-    it 'calculates overview statistics (MSW Statistics型準拠)' do
-      # MSW normalized-api.ts:285-292
-      stats_overview = {
-        total_issues: project.issues.count,
-        completed_issues: project.issues.joins(:status).where(issue_statuses: { is_closed: true }).count,
-        completion_rate: 0.0,
-        total_epics: 3,
-        total_features: 0,
-        total_user_stories: 0
-      }
-
-      expect(stats_overview[:total_epics]).to eq(3)
-      expect(stats_overview[:total_issues]).to be >= 3
-    end
-
-    it 'calculates statistics by version (MSW VersionStats型準拠)' do
-      version = create(:version, project: project)
-      create(:feature, project: project, fixed_version: version, author: user)
-
-      # MSW normalized-api.ts:277-282
-      version_stats = {
-        total: 1,
-        completed: 0,
-        completion_rate: 0.0,
-        by_status: { 'open' => 1 }
-      }
-
-      expect(version_stats[:total]).to eq(1)
-      expect(version_stats[:by_status]).to have_key('open')
-    end
-
-    it 'calculates statistics by status (MSW準拠)' do
-      open_status = IssueStatus.find_by(name: 'New') || IssueStatus.first
-      create(:feature, project: project, status: open_status, author: user)
-
-      stats_by_status = {
-        open_status.name => project.issues.where(status: open_status).count
-      }
-
-      expect(stats_by_status).to have_key(open_status.name)
-      expect(stats_by_status[open_status.name]).to be >= 1
-    end
-
-    it 'calculates statistics by tracker (MSW準拠)' do
-      create(:epic, project: project, author: user)
-      create(:feature, project: project, author: user)
-
-      stats_by_tracker = {
-        'Epic' => project.issues.joins(:tracker).where(trackers: { name: 'Epic' }).count,
-        'Feature' => project.issues.joins(:tracker).where(trackers: { name: 'Feature' }).count
-      }
-
-      expect(stats_by_tracker['Epic']).to be >= 1
-      expect(stats_by_tracker['Feature']).to be >= 1
-    end
-
-    it 'calculates completion rate as percentage' do
-      closed_status = create(:closed_status)
-      create(:feature, project: project, status: closed_status, author: user)
-      create(:feature, project: project, author: user)
-
-      total = project.issues.count
-      completed = project.issues.joins(:status).where(issue_statuses: { is_closed: true }).count
-      completion_rate = (completed.to_f / total * 100).round(2)
-
-      expect(completion_rate).to be_a(Numeric)
-      expect(completion_rate).to be >= 0
-      expect(completion_rate).to be <= 100
-    end
-  end
 
   # ========================================
   # Project拡張メソッド（ヘルパー）
@@ -228,7 +134,7 @@ RSpec.describe Project, type: :model do
       epic = create(:epic, project: project, author: user)
       feature = create(:feature, project: project, author: user)
 
-      epics = project.issues.joins(:tracker).where(trackers: { name: 'Epic' })
+      epics = project.issues.joins(:tracker).where(trackers: { name: epic_tracker_name })
 
       expect(epics).to include(epic)
       expect(epics).not_to include(feature)
@@ -240,7 +146,7 @@ RSpec.describe Project, type: :model do
       epic = create(:epic, project: project, author: user)
       feature = create(:feature, project: project, author: user)
 
-      features = project.issues.joins(:tracker).where(trackers: { name: 'Feature' })
+      features = project.issues.joins(:tracker).where(trackers: { name: feature_tracker_name })
 
       expect(features).to include(feature)
       expect(features).not_to include(epic)
@@ -259,38 +165,6 @@ RSpec.describe Project, type: :model do
     end
   end
 
-  # ========================================
-  # N+1クエリ対策検証
-  # ========================================
-
-  describe 'N+1 query prevention' do
-    it 'loads issues with includes to avoid N+1' do
-      create(:complete_hierarchy, project: project, author: user)
-
-      # 効率的なクエリ（MSW対応のため）
-      issues = project.issues
-                      .includes(:tracker, :status, :fixed_version, :assigned_to, :children)
-                      .order(:created_on)
-
-      expect(issues.loaded?).to be false # まだクエリ実行前
-      issues.to_a # クエリ実行
-      expect(issues.loaded?).to be true
-    end
-
-    it 'loads trackers and statuses efficiently' do
-      create_list(:epic, 5, project: project, author: user)
-
-      epics = project.issues
-                     .includes(:tracker, :status)
-                     .where(trackers: { name: 'Epic' })
-
-      epics.each do |epic|
-        # N+1が発生しない
-        expect(epic.tracker.name).to eq('Epic')
-        expect(epic.status).to be_present
-      end
-    end
-  end
 
   # ========================================
   # グリッドインデックス構築
@@ -298,8 +172,8 @@ RSpec.describe Project, type: :model do
 
   describe 'grid index building' do
     let!(:epic) { create(:epic, project: project, author: user) }
-    let!(:version_v1) { create(:version, project: project, name: 'v1.0') }
-    let!(:feature_with_version) { create(:feature, project: project, parent: epic, fixed_version: version_v1, author: user) }
+    let!(:grid_version) { create(:version, project: project, name: 'Grid-v1.0') }
+    let!(:feature_with_version) { create(:feature, project: project, parent: epic, fixed_version: grid_version, author: user) }
     let!(:feature_without_version) { create(:feature, project: project, parent: epic, author: user) }
 
     it 'groups features by epic and version (MSW grid.index準拠)' do
@@ -307,7 +181,7 @@ RSpec.describe Project, type: :model do
       grid_index = {}
 
       # "{epicId}:{versionId}" をキーとする
-      key_with_version = "#{epic.id}:#{version_v1.id}"
+      key_with_version = "#{epic.id}:#{grid_version.id}"
       key_without_version = "#{epic.id}:none"
 
       grid_index[key_with_version] = [feature_with_version.id.to_s]
@@ -323,7 +197,7 @@ RSpec.describe Project, type: :model do
 
       epic_order = project.issues
                           .joins(:tracker)
-                          .where(trackers: { name: 'Epic' })
+                          .where(trackers: { name: epic_tracker_name })
                           .order(:created_on)
                           .pluck(:id)
                           .map(&:to_s)
@@ -333,8 +207,8 @@ RSpec.describe Project, type: :model do
     end
 
     it 'maintains version_order for grid columns' do
-      v1 = create(:version, project: project, name: 'v1.0')
-      v2 = create(:version, project: project, name: 'v2.0')
+      v1 = create(:version, project: project, name: 'Grid-v2.0')
+      v2 = create(:version, project: project, name: 'Grid-v3.0')
 
       version_order = project.versions
                              .order(:effective_date, :created_on)

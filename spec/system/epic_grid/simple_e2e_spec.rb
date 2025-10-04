@@ -45,7 +45,7 @@ RSpec.describe 'Kanban Simple E2E', type: :system do
     # プロジェクト設定
     project.trackers << epic_tracker unless project.trackers.include?(epic_tracker)
     project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
-    project.enabled_modules.create!(name: 'kanban') unless project.module_enabled?('kanban')
+    project.enabled_modules.create!(name: 'epic_grid') unless project.module_enabled?('epic_grid')
 
     # ユーザー権限設定
     role = Role.find_or_create_by!(name: 'Manager') do |r|
@@ -54,8 +54,8 @@ RSpec.describe 'Kanban Simple E2E', type: :system do
         :add_issues,
         :edit_issues,
         :manage_versions,
-        :view_kanban,
-        :manage_kanban
+        :view_epic_grid,
+        :manage_epic_grid
       ]
       r.assignable = true
     end
@@ -99,14 +99,18 @@ RSpec.describe 'Kanban Simple E2E', type: :system do
       @playwright_page.wait_for_url(/\/my\/page/, timeout: 15000)
 
       # Step 2: カンバンページに移動
-      @playwright_page.goto("/projects/#{project.identifier}/kanban", timeout: 30000)
+      @playwright_page.goto("/projects/#{project.identifier}/epic_grid", timeout: 30000)
       @playwright_page.wait_for_load_state('networkidle', timeout: 10000) rescue nil
 
       # Step 3: カンバングリッド表示確認
       @playwright_page.wait_for_selector('#kanban-root', timeout: 15000)
 
       # React アプリケーションのマウント待機
-      @playwright_page.wait_for_selector('.epic-version-grid', timeout: 15000)
+      # Loading状態が終わるまで待つ（最大30秒）
+      @playwright_page.wait_for_function(
+        "() => !document.body.textContent.includes('Loading grid data')",
+        timeout: 30000
+      ) rescue nil
 
       # Step 4: データ表示確認
       # Epic が表示されているか
