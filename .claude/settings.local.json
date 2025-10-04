@@ -123,7 +123,10 @@
       "Bash(export DATABASE_URL=\"postgresql://postgres:example@db:5432/redmine_dev\")",
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/epic_grid/tracker_hierarchy_spec.rb:7 --format documentation)",
       "Bash(export RAILS_ENV=test)",
-      "Bash(bundle exec rails runner:*)"
+      "Bash(bundle exec rails runner:*)",
+      "Bash(uvx:*)",
+      "Bash(sh)",
+      "Bash(source $HOME/.local/bin/env)"
     ],
     "deny": [],
     "ask": [],

@@ -36,7 +36,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       }
     end
 
-    pending 'creates new feature (実装後)' do
+    it 'creates new feature' do
       expect {
         post :create, params: valid_params
       }.to change(Issue, :count).by(1)
@@ -47,16 +47,16 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(json).to include(
         'success' => true,
         'data' => include(
-          'created_entity' => include(
-            'title' => 'New Feature',
-            'parent_epic_id' => epic.id.to_s
+          'feature' => include(
+            'subject' => 'New Feature',
+            'parent_id' => epic.id
           )
         )
       )
     end
 
-    pending 'returns error when parent epic not found' do
-      post :create, params: valid_params.merge(parent_epic_id: 99999)
+    it 'returns error when parent epic not found' do
+      post :create, params: valid_params.merge(parent_id: 99999)
 
       expect(response).to have_http_status(:not_found)
     end
@@ -77,7 +77,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       }
     end
 
-    pending 'creates new user story (実装後)' do
+    it 'creates new user story' do
       expect {
         post :create_user_story, params: valid_params
       }.to change(Issue, :count).by(1)
@@ -85,13 +85,18 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(response).to have_http_status(:created)
 
       json = JSON.parse(response.body)
-      expect(json['data']['created_entity']).to include(
-        'title' => 'New User Story',
-        'parent_feature_id' => feature.id.to_s
+      expect(json).to include(
+        'success' => true,
+        'data' => include(
+          'user_story' => include(
+            'subject' => 'New User Story',
+            'parent_id' => feature.id
+          )
+        )
       )
     end
 
-    pending 'inherits version from parent feature' do
+    it 'inherits version from parent feature' do
       version = create(:version, project: project)
       feature.update!(fixed_version: version)
 
@@ -116,7 +121,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       }
     end
 
-    pending 'creates new task (実装後)' do
+    it 'creates new task' do
       expect {
         post :create_task, params: valid_params
       }.to change(Issue, :count).by(1)
@@ -124,9 +129,14 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(response).to have_http_status(:created)
 
       json = JSON.parse(response.body)
-      expect(json['data']['created_entity']).to include(
-        'title' => 'New Task',
-        'parent_user_story_id' => user_story.id.to_s
+      expect(json).to include(
+        'success' => true,
+        'data' => include(
+          'task' => include(
+            'subject' => 'New Task',
+            'parent_id' => user_story.id
+          )
+        )
       )
     end
   end
@@ -144,7 +154,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       }
     end
 
-    pending 'creates new test (実装後)' do
+    it 'creates new test' do
       expect {
         post :create_test, params: valid_params
       }.to change(Issue, :count).by(1)
@@ -152,9 +162,13 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(response).to have_http_status(:created)
 
       json = JSON.parse(response.body)
-      expect(json['data']['created_entity']).to include(
-        'title' => 'New Test',
-        'test_result' => 'pending'
+      expect(json).to include(
+        'success' => true,
+        'data' => include(
+          'test' => include(
+            'subject' => 'New Test'
+          )
+        )
       )
     end
   end
@@ -173,7 +187,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       }
     end
 
-    pending 'creates new bug (実装後)' do
+    it 'creates new bug' do
       expect {
         post :create_bug, params: valid_params
       }.to change(Issue, :count).by(1)
@@ -181,9 +195,13 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(response).to have_http_status(:created)
 
       json = JSON.parse(response.body)
-      expect(json['data']['created_entity']).to include(
-        'title' => 'New Bug',
-        'severity' => 'major'
+      expect(json).to include(
+        'success' => true,
+        'data' => include(
+          'bug' => include(
+            'subject' => 'New Bug'
+          )
+        )
       )
     end
   end

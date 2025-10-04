@@ -101,7 +101,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       project.trackers << [epic_tracker, feature_tracker]
     end
 
-    pending 'moves feature to target epic (実装後)' do
+    it 'moves feature to target epic' do
       post :move_feature, params: {
         project_id: project.id,
         feature_id: feature.id,
@@ -116,7 +116,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       expect(feature.fixed_version).to eq(version_v2)
     end
 
-    pending 'returns error when feature not found' do
+    it 'returns error when feature not found' do
       post :move_feature, params: {
         project_id: project.id,
         feature_id: 99999,
