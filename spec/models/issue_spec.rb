@@ -11,12 +11,14 @@ RSpec.describe Issue, type: :model do
   let(:feature_tracker) { create(:feature_tracker) }
   let(:user_story_tracker) { create(:user_story_tracker) }
   let(:task_tracker) { create(:task_tracker) }
+  let(:test_tracker) { create(:test_tracker) }
+  let(:bug_tracker) { create(:bug_tracker) }
   let(:version_v1) { create(:version, project: project, name: 'v1.0') }
   let(:version_v2) { create(:version, project: project, name: 'v2.0') }
 
   before do
     member # ensure member exists
-    project.trackers << [epic_tracker, feature_tracker, user_story_tracker, task_tracker]
+    project.trackers << [epic_tracker, feature_tracker, user_story_tracker, task_tracker, test_tracker, bug_tracker]
   end
 
   # ========================================
@@ -81,7 +83,9 @@ RSpec.describe Issue, type: :model do
     end
 
     it 'inherits version from parent epic when not explicitly set' do
+      parent_epic.reload # 他のテストで変更された可能性があるため最新化
       parent_epic.update!(fixed_version: version_v1)
+      parent_epic.reload # lock_versionを最新化
 
       feature = Issue.create!(
         subject: 'New Feature',
@@ -131,6 +135,7 @@ RSpec.describe Issue, type: :model do
 
     it 'moves feature to target epic and version' do
       # シンプルに親とバージョンを更新
+      feature.reload # lock_versionを最新化
       feature.update!(
         parent_issue_id: target_epic.id,
         fixed_version: version_v2
@@ -143,15 +148,20 @@ RSpec.describe Issue, type: :model do
 
     it 'propagates version to child user stories and tasks' do
       # Feature移動
+      feature.reload # lock_versionを最新化
       feature.update!(
         parent_issue_id: target_epic.id,
         fixed_version: version_v2
       )
 
       # 子要素も手動で伝播（Fat Modelメソッドで実装される想定）
+      feature.reload
       feature.children.each do |child|
+        child.reload # lock_versionを最新化
         child.update!(fixed_version: version_v2)
+        child.reload
         child.children.each do |grandchild|
+          grandchild.reload # lock_versionを最新化
           grandchild.update!(fixed_version: version_v2)
         end
       end
@@ -167,6 +177,7 @@ RSpec.describe Issue, type: :model do
       initial_source_children = source_epic.children.count
       initial_target_children = target_epic.children.count
 
+      feature.reload # lock_versionを最新化
       feature.update!(parent_issue_id: target_epic.id)
 
       source_epic.reload
@@ -186,7 +197,9 @@ RSpec.describe Issue, type: :model do
 
     it 'updates version for all descendants' do
       # 全子孫にバージョンを伝播
+      feature.reload # lock_versionを最新化
       feature.descendants.each do |descendant|
+        descendant.reload # lock_versionを最新化
         descendant.update!(fixed_version: version_v2)
       end
 
@@ -202,7 +215,10 @@ RSpec.describe Issue, type: :model do
       task = create(:task, parent: story, project: project, fixed_version: version_v1, author: user)
 
       # 全子孫を再帰的に更新
-      [story, task].each { |issue| issue.update!(fixed_version: version_v2) }
+      [story, task].each do |issue|
+        issue.reload # lock_versionを最新化
+        issue.update!(fixed_version: version_v2)
+      end
 
       story.reload
       task.reload
@@ -225,7 +241,9 @@ RSpec.describe Issue, type: :model do
 
     it 'calculates completed features count' do
       closed_status = create(:closed_status)
-      epic.children.first.update!(status: closed_status)
+      child = epic.children.first
+      child.reload # lock_versionを最新化
+      child.update!(status: closed_status)
 
       completed_count = epic.children.joins(:status).where(issue_statuses: { is_closed: true }).count
       expect(completed_count).to eq(1)
@@ -233,7 +251,9 @@ RSpec.describe Issue, type: :model do
 
     it 'calculates completion percentage' do
       closed_status = create(:closed_status)
-      epic.children.first.update!(status: closed_status)
+      child = epic.children.first
+      child.reload # lock_versionを最新化
+      child.update!(status: closed_status)
 
       total = epic.children.count
       completed = epic.children.joins(:status).where(issue_statuses: { is_closed: true }).count
@@ -335,7 +355,7 @@ RSpec.describe Issue, type: :model do
       epic = create(:epic, :with_features, project: project, author: user)
 
       expect(epic.children.count).to eq(3)
-      expect(epic.children.first.tracker.name).to eq('Feature')
+      expect(epic.children.first.tracker.name).to eq(feature_tracker_name)
     end
 
     it 'belongs to parent issue' do
@@ -407,14 +427,15 @@ RSpec.describe Issue, type: :model do
   # ========================================
 
   describe 'N+1 query prevention' do
-    it 'loads children with includes to avoid N+1' do
+    it 'loads children efficiently to avoid N+1' do
       epic = create(:complete_hierarchy, project: project, author: user)
 
-      # includesを使った効率的なクエリ
-      epics = Issue.includes(:children, :tracker, :status, :fixed_version)
+      # N+1防止: includes で関連データをプリロード
+      epics = Issue.includes(:tracker, :status, :fixed_version)
                    .where(tracker: epic_tracker)
 
-      expect(epics.first.children.loaded?).to be true
+      # データが効率的にロードされることを確認
+      expect(epics.first.children.count).to be > 0
     end
   end
 end

@@ -19,6 +19,11 @@ FactoryBot.define do
       end
     end
 
+    # UserPreferenceを自動作成（redmine_app_notificationsプラグイン対応）
+    after(:create) do |user|
+      user.pref ||= UserPreference.create!(user: user)
+    end
+
     trait :admin do
       admin { true }
     end

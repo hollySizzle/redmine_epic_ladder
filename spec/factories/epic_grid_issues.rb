@@ -60,7 +60,7 @@ FactoryBot.define do
   end
 
   factory :closed_status, class: 'IssueStatus' do
-    name { 'Closed' }
+    initialize_with { IssueStatus.find_or_create_by(name: 'Closed') { |s| s.is_closed = true } }
     is_closed { true }
   end
 
@@ -221,15 +221,20 @@ FactoryBot.define do
     after(:create) do |epic|
       # Feature 2個
       2.times do
+        epic.reload # lock_versionを最新化
         feature = create(:feature, parent: epic, project: epic.project)
 
         # 各FeatureにUserStory 2個
         2.times do
+          feature.reload # lock_versionを最新化
           story = create(:user_story, parent: feature, project: epic.project)
 
           # 各UserStoryにTask/Test/Bug各1個
+          story.reload # lock_versionを最新化
           create(:task, parent: story, project: epic.project)
+          story.reload # lock_versionを最新化
           create(:test, parent: story, project: epic.project)
+          story.reload # lock_versionを最新化
           create(:bug, parent: story, project: epic.project)
         end
       end

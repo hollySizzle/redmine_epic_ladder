@@ -296,6 +296,13 @@ else
     log_warning "テストDB作成失敗（既に存在する可能性）"
 fi
 
+log_info "プラグインマイグレーション実行中..."
+if RAILS_ENV=test bundle exec rake redmine:plugins:migrate 2>&1; then
+    log_success "プラグインマイグレーション完了"
+else
+    log_warning "プラグインマイグレーション失敗（既に実行済みの可能性）"
+fi
+
 log_info "Redmine デフォルトデータのロード中..."
 if RAILS_ENV=test REDMINE_LANG=en bundle exec rake redmine:load_default_data --trace 2>&1; then
     log_success "Redmine デフォルトデータロード完了"
@@ -335,6 +342,7 @@ log_success "✅ Node.js/npm: OK"
 log_success "✅ Playwright: インストール済み"
 log_success "✅ Chromium: ダウンロード済み"
 log_success "✅ テストDB: セットアップ済み"
+log_success "✅ プラグインマイグレーション: 実行済み"
 log_success "✅ Redmine デフォルトデータ: ロード済み"
 log_success "✅ ポート ${TEST_PORT}: クリーンアップ済み"
 echo ""

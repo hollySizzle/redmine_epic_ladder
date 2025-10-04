@@ -306,6 +306,7 @@ RSpec.configure do |config|
 
       @shared_server_pid = fork do
         ENV['RAILS_ENV'] = 'test'
+        ENV.delete('DATABASE_URL')  # 確実にdatabase.ymlを使用
         exec("bundle exec rails s -p #{@shared_server_port} -e test > log/test_server.log 2>&1")
       end
 
