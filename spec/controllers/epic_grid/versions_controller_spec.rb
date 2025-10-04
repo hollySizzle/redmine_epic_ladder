@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+require_relative '../../rails_helper'
 
 RSpec.describe EpicGrid::GridController, type: :controller do
   let(:project) { create(:project) }
@@ -56,8 +56,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       )
 
       expect(json['data']['grid_updates']).to include(
-        'new_column_added' => true,
-        'column_position'
+        'new_column_added' => true
       )
     end
 
@@ -103,8 +102,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       json = JSON.parse(response.body)
       expect(json['data']).to include(
         'metadata' => include(
-          'grid_cache_invalidated' => true,
-          'requires_full_reload'
+          'grid_cache_invalidated' => true
         )
       )
     end

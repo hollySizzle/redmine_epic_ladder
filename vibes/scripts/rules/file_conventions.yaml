@@ -25,21 +25,21 @@ rules:
   # バックエンド実装規約 (Fat Model, Skinny Controller)
   # ===========================================
 
-  # Kanban専用Model規約 (最優先)
-  - name: "KanbanModel実装規約 (Fat Model)"
+  # epic_grid専用Model規約 (最優先)
+  - name: "epic_gridModel実装規約 (Fat Model)"
     patterns:
-      - "**/app/models/kanban/**/*.rb"
-      - "**/app/models/concerns/kanban/**/*.rb"
+      - "**/app/models/epic_grid/**/*.rb"
+      - "**/app/models/concerns/epic_grid/**/*.rb"
       - "**/app/models/issue.rb"
       - "**/app/models/project.rb"
       - "**/app/models/tracker_hierarchy.rb"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 KanbanModel実装前に規約とFat Model原則を確認してください
+      📋 epic_gridModel実装前に規約とFat Model原則を確認してください
       必読: @vibes/rules/backend_standards.md (Fat Model原則)
       必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
 
       ✅ Modelに実装すべきもの:
       - ビジネスロジック (Epic作成、カード移動、統計計算など)
@@ -49,18 +49,18 @@ rules:
       ❌ Modelに書いてはいけないもの:
       - HTTP処理・JSON変換 (Controller責務)
 
-  # Kanban専用Controller規約
-  - name: "KanbanController実装規約 (Skinny Controller)"
+  # epic_grid専用Controller規約
+  - name: "epic_gridController実装規約 (Skinny Controller)"
     patterns:
-      - "**/app/controllers/kanban/**/*.rb"
-      - "**/app/controllers/concerns/kanban_api_concern.rb"
+      - "**/app/controllers/epic_grid/**/*.rb"
+      - "**/app/controllers/concerns/epic_grid_api_concern.rb"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 KanbanController実装前に規約とSkinny Controller原則を確認してください
+      📋 epic_gridController実装前に規約とSkinny Controller原則を確認してください
       必読: @vibes/rules/backend_standards.md (Skinny Controller原則)
       必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
 
       ✅ Controllerに実装すべきもの:
       - HTTP要求/応答制御・権限検証
@@ -73,10 +73,10 @@ rules:
 
       目標: 10-30行程度に収める
 
-  # Kanban専用Service規約 (原則禁止)
-  - name: "KanbanService実装規約 (外部API連携のみ)"
+  # epic_grid専用Service規約 (原則禁止)
+  - name: "epic_gridService実装規約 (外部API連携のみ)"
     patterns:
-      - "**/app/services/kanban/**/*.rb"
+      - "**/app/services/epic_grid/**/*.rb"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -95,8 +95,8 @@ rules:
       既存Service削除対象:
       - CardMoveService → Issue#move_to_cell
       - EpicCreationService → Issue.create_epic
-      - StatisticsCalculator → Project#kanban_statistics
-      - GridDataBuilder → Project#kanban_grid_data
+      - StatisticsCalculator → Project#epic_grid_statistics
+      - GridDataBuilder → Project#epic_grid_grid_data
 
   # ===========================================
   # フロントエンド実装規約
@@ -157,9 +157,9 @@ rules:
     token_threshold: 15000
     message: |
       📋 Reactコンポーネント実装前にSSoTを確認してください
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
       必読: @vibes/rules/technical_architecture_quickstart.md (技術スタック)
-      参考: @vibes/specs/ui/kanban_ui_design_spec.md (UI設計)
+      参考: @vibes/specs/ui/epic_grid_ui_design_spec.md (UI設計)
 
       React 18、Zustand、Pragmatic D&Dの使用を推奨します
 
@@ -177,7 +177,7 @@ rules:
     token_threshold: 15000
     message: |
       📋 Zustandストア実装前にSSoTを確認してください
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
       必読: @vibes/rules/technical_architecture_quickstart.md (State管理)
 
       Normalized State構造（entities + grid index）を維持してから作業を続けてください
@@ -196,8 +196,8 @@ rules:
     token_threshold: 15000
     message: |
       📋 MSWモックハンドラ実装前にSSoTを確認してください
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
-      必読: @kanban/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
+      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_grid/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
       必読: @vibes/rules/testing_strategy.md (MSW + Vitest戦略)
 
       モックレスポンスは型定義に完全準拠させてください
@@ -223,7 +223,7 @@ rules:
       📋 フロントエンドテスト実装前に規約を確認してください
       必読: @vibes/rules/testing_strategy.md (Vitest + MSW戦略)
       必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
 
       テストコードが仕様書です。カバレッジ要件（Critical 100%, 全体85%）を維持してください
 
@@ -236,11 +236,11 @@ rules:
   - name: "バックエンドテスト実装規約（RSpec）"
     patterns:
       - "**/spec/**/*_spec.rb"
-      - "**/spec/models/kanban/**/*.rb"
-      - "**/spec/services/kanban/**/*.rb"
-      - "**/spec/requests/kanban/**/*.rb"
-      - "**/spec/integration/kanban/**/*.rb"
-      - "**/spec/system/kanban/**/*.rb"
+      - "**/spec/models/epic_grid/**/*.rb"
+      - "**/spec/services/epic_grid/**/*.rb"
+      - "**/spec/requests/epic_grid/**/*.rb"
+      - "**/spec/integration/epic_grid/**/*.rb"
+      - "**/spec/system/epic_grid/**/*.rb"
       - "**/spec/rails_helper.rb"
       - "**/spec/spec_helper.rb"
     severity: "block"
@@ -249,7 +249,7 @@ rules:
       📋 バックエンドテスト実装前に規約を確認してください
       必読: @vibes/rules/testing_strategy.md (Pure Playwright + RSpec戦略)
       必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
-      必読: @kanban/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
       Pure Playwright方式（Capybara不使用）、FactoryBot、DatabaseCleanerの使用を徹底してください
 
   # E2Eテスト（Playwright）
@@ -265,7 +265,7 @@ rules:
       必読: @vibes/docs/rules/backend_testing.md (E2Eテスト詳細ガイド)
       必読: @vibes/rules/testing_strategy.md (Pure Playwright戦略)
       参考: @vibes/specs/technical/grid_measurement_strategy.md (Grid測定)
-      参考: spec/system/kanban/simple_e2e_spec.rb (Reference Test)
+      参考: spec/system/epic_grid/simple_e2e_spec.rb (Reference Test)
 
       🎯 新規テスト作成: simple_e2e_spec.rb をコピーして編集
       🔍 テスト失敗時: backend_testing.md の「デバッグ手順」参照
@@ -325,7 +325,7 @@ rules:
   # ===========================================
 
   # 以下の規約は Code as Document 移行により廃止されました：
-  # - logics/ 配下のAPI仕様書 → @kanban/src/types/normalized-api.ts (SSoT) に統合
+  # - logics/ 配下のAPI仕様書 → @epic_grid/src/types/normalized-api.ts (SSoT) に統合
   # - logics/ 配下の機能設計書 → テストコード (*.test.tsx, *_spec.rb) に統合
   # - 個別機能のドキュメント規約 → backend_standards.md に統合
 
@@ -353,13 +353,13 @@ meta:
     - データ構造統計システム → backend_standards.md (Service原則) に統合
     - VersionManagement実装規約 → backend_standards.md (Service原則) に統合
     - AutoGeneration実装規約 → backend_standards.md (Service原則) に統合
-    - KanbanUI実装規約 → 削除（実装済みコード参照）
+    - epic_gridUI実装規約 → 削除（実装済みコード参照）
     - StateTransition実装規約 → backend_standards.md (Service原則) に統合
     - ValidationGuard実装規約 → backend_standards.md (Service原則) に統合
     - APIIntegration実装規約 → backend_standards.md (Controller原則) に統合
-    - KanbanHook実装規約 → 削除（実装済みコード参照）
+    - epic_gridHook実装規約 → 削除（実装済みコード参照）
     - Feature Card関連 → 削除（実装済みコード参照）
-    - Kanban Grid関連 → 削除（実装済みコード参照）
+    - epic_grid Grid関連 → 削除（実装済みコード参照）
     - 共通コンポーネント関連 → 削除（実装済みコード参照）
     - ハイブリッド詳細設計書 → 削除（logics/ ディレクトリ廃止）
 

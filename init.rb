@@ -41,5 +41,5 @@ Redmine::Plugin.register :redmine_epic_grid do
     'task_tracker' => 'Task',
     'test_tracker' => 'Test',
     'bug_tracker' => 'Bug'
-  }, partial: 'settings/epic_grid_tracker_settings'
+  }, partial: 'settings/kanban_tracker_settings'
 end

@@ -3,42 +3,42 @@
 FactoryBot.define do
   # Epic Tracker
   factory :epic_tracker, class: 'Tracker' do
-    sequence(:name) { 'Epic' }
+    sequence(:name) { |n| "Epic-#{n}" }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 1 }
   end
 
   # Feature Tracker
   factory :feature_tracker, class: 'Tracker' do
-    sequence(:name) { 'Feature' }
+    sequence(:name) { |n| "Feature-#{n}" }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 2 }
   end
 
   # UserStory Tracker
   factory :user_story_tracker, class: 'Tracker' do
-    sequence(:name) { 'UserStory' }
+    sequence(:name) { |n| "UserStory-#{n}" }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 3 }
   end
 
   # Task Tracker
   factory :task_tracker, class: 'Tracker' do
-    sequence(:name) { 'Task' }
+    sequence(:name) { |n| "Task-#{n}" }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 4 }
   end
 
   # Test Tracker
   factory :test_tracker, class: 'Tracker' do
-    sequence(:name) { 'Test' }
+    sequence(:name) { |n| "Test-#{n}" }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 5 }
   end
 
   # Bug Tracker
   factory :bug_tracker, class: 'Tracker' do
-    sequence(:name) { 'Bug' }
+    sequence(:name) { |n| "Bug-#{n}" }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 6 }
   end

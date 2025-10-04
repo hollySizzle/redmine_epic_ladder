@@ -128,7 +128,13 @@
       "Bash(sh)",
       "Bash(source $HOME/.local/bin/env)",
       "Bash(source ~/.bashrc)",
-      "Read(//home/redmine/.local/bin/**)"
+      "Read(//home/redmine/.local/bin/**)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models --format documentation)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers --format documentation)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers --format progress)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models plugins/redmine_epic_grid/spec/controllers --format progress)",
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models plugins/redmine_epic_grid/spec/controllers --format progress)",
+      "mcp__serena__find_file"
     ],
     "deny": [],
     "ask": [],
