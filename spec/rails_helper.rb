@@ -37,6 +37,10 @@ end
 # DatabaseCleaner 設定（system spec で別プロセスからデータを見えるようにする）
 require 'database_cleaner/active_record'
 
+# CRITICAL: Rails環境を読み込む前に必ずRAILS_ENV=testを設定
+# これがないとdevelopment DBが破壊される
+ENV['RAILS_ENV'] = 'test' unless ENV['RAILS_ENV']
+
 # Redmineのrails_helperまたは標準のrails_helper設定
 begin
   require File.expand_path('../../../spec/rails_helper', __dir__)
@@ -57,10 +61,6 @@ FactoryBot.reload
 RSpec.configure do |config|
   # FactoryBot サポート（明示的にinclude）
   config.include FactoryBot::Syntax::Methods
-
-  # プラグインのフィクスチャパスを追加
-  config.fixture_paths ||= []
-  config.fixture_paths << File.expand_path('fixtures', __dir__)
 
   # メール送信を無効化（テスト高速化・i18nエラー回避）
   config.before(:suite) do
@@ -125,6 +125,11 @@ RSpec.configure do |config|
   config.use_transactional_fixtures = false
 
   config.before(:suite) do
+    # CRITICAL: test環境以外では絶対に実行しない（development DB保護）
+    unless Rails.env.test?
+      raise "DatabaseCleaner must only run in test environment! Current: #{Rails.env}"
+    end
+
     # DATABASE_URL が設定されている環境でも許可
     DatabaseCleaner.allow_remote_database_url = true
 

@@ -52,15 +52,18 @@ module EpicGrid
       rules.dig(tracker_name, :children) || []
     end
 
-    # 階層レベルを取得
+    # 階層レベルを取得 (0-based index)
     def self.level(tracker_name)
       names = tracker_names
       level_map = {
-        names[:epic] => 1,
-        names[:feature] => 2,
-        names[:user_story] => 3
+        names[:epic] => 0,
+        names[:feature] => 1,
+        names[:user_story] => 2,
+        names[:task] => 3,
+        names[:test] => 3,
+        names[:bug] => 3
       }
-      level_map.fetch(tracker_name, 4)
+      level_map[tracker_name]
     end
 
     # 階層構造を検証
