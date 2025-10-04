@@ -18,8 +18,8 @@ AIエージェントとプロジェクトオーナーの効率的な協働体制
 
 | 種別 | パス | 責任者 | AI権限 |
 |------|------|--------|--------|
-| **API型定義** | `assets/javascripts/kanban/src/types/normalized-api.ts` | オーナー | 編集可 (要相談) |
-| **API Endpoints** | `assets/javascripts/kanban/src/types/api-endpoints.ts` | オーナー | 編集可 (要相談) |
+| **API型定義** | `assets/javascripts/epic_grid/src/types/normalized-api.ts` | オーナー | 編集可 (要相談) |
+| **API Endpoints** | `assets/javascripts/epic_grid/src/types/api-endpoints.ts` | オーナー | 編集可 (要相談) |
 | **テストコード** | `**/*.test.tsx`, `spec/**/*_spec.rb` | AI主導 | 自立実行可 |
 | **アーキテクチャ規約** | `vibes/docs/rules/` | オーナー承認 | 提案可 |
 

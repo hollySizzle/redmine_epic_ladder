@@ -1,7 +1,7 @@
 {
   "folders": [
     {
-      "path": "/usr/src/redmine/plugins/redmine_release_kanban/"
+      "path": "/usr/src/redmine/plugins/redmine_epic_grid/"
     },
     {
       "path": "/usr/src/redmine/tmp/test_artifacts/"
@@ -54,6 +54,6 @@
       "**/coverage/lcov-report/**": true,
       "**/vibes/scripts/node_modules/**": true
     },
-    "terminal.integrated.cwd": "/usr/src/redmine/plugins/redmine_release_kanban"
+    "terminal.integrated.cwd": "/usr/src/redmine/plugins/redmine_epic_grid/"
   }
 }

@@ -239,7 +239,7 @@ end
 ### 4.1 MSW仕様準拠
 
 **全APIはMSW handlers.tsに定義**:
-- フロントエンド: `assets/javascripts/kanban/src/mocks/handlers.ts`
+- フロントエンド: `assets/javascripts/epic_grid/src/mocks/handlers.ts`
 - バックエンド: 同じエンドポイント・レスポンス形式を実装
 
 ### 4.2 Normalized API形式
@@ -291,5 +291,5 @@ end
 - **技術アーキテクチャ**: @vibes/rules/technical_architecture_quickstart.md
 - **API実装ワークフロー**: @vibes/tasks/api_implementation_workflow.md
 - **テスト戦略**: @vibes/rules/backend_testing.md
-- **MSW API仕様**: assets/javascripts/kanban/src/mocks/handlers.ts
-- **TypeScript型定義**: assets/javascripts/kanban/src/types/normalized-api.ts
+- **MSW API仕様**: assets/javascripts/epic_grid/src/mocks/handlers.ts
+- **TypeScript型定義**: assets/javascripts/epic_grid/src/types/normalized-api.ts

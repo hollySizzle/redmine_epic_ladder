@@ -20,8 +20,8 @@
 
 1. **必要性確認**: @vibes/INDEX.md で新規ドキュメント必要性を検討
 2. **規約確認**: @vibes/rules/documentation_standards.md 参照
-3. **目次更新**: `python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/main.py --direct doc --action update_all`
-4. **整合性確認**: `python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/main.py --direct doc --action check_all`
+3. **目次更新**: `python3 /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/main.py --direct doc --action update_all`
+4. **整合性確認**: `python3 /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/main.py --direct doc --action check_all`
 
 
 ## 責務分離

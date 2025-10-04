@@ -1,14 +1,14 @@
-// plugins/redmine_release_kanban/webpack.config.js
+// plugins/redmine_epic_grid/webpack.config.js
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   mode: "development",
-  entry: "./assets/javascripts/kanban/src/index.tsx",
+  entry: "./assets/javascripts/epic_grid/src/index.tsx",
   output: {
     filename: "kanban_bundle.js",
-    path: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
+    path: path.resolve(__dirname, "assets/javascripts/epic_grid/dist"),
     clean: true,
   },
   optimization: {
@@ -29,7 +29,10 @@ module.exports = {
         use: {
           loader: "ts-loader",
           options: {
-            configFile: path.resolve(__dirname, "assets/javascripts/kanban/tsconfig.json"),
+            configFile: path.resolve(
+              __dirname,
+              "assets/javascripts/epic_grid/tsconfig.json"
+            ),
           },
         },
       },
@@ -56,19 +59,22 @@ module.exports = {
   resolve: {
     extensions: [".js", ".jsx", ".ts", ".tsx"],
     alias: {
-      'tailwindcss/version.js': false,
+      "tailwindcss/version.js": false,
     },
   },
   devServer: {
     static: [
       {
-        directory: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
+        directory: path.resolve(__dirname, "assets/javascripts/epic_grid/dist"),
         publicPath: "/",
       },
       {
-        directory: path.resolve(__dirname, "assets/javascripts/kanban/public"),
+        directory: path.resolve(
+          __dirname,
+          "assets/javascripts/epic_grid/public"
+        ),
         publicPath: "/",
-      }
+      },
     ],
     devMiddleware: {
       writeToDisk: true, // 物理ファイルに書き出し（Redmineから参照するため）
@@ -77,9 +83,9 @@ module.exports = {
     liveReload: true,
     port: 8080,
     compress: true,
-    allowedHosts: 'all',
+    allowedHosts: "all",
     headers: {
-      "Access-Control-Allow-Origin": "*"
+      "Access-Control-Allow-Origin": "*",
     },
     client: {
       overlay: {
@@ -91,7 +97,10 @@ module.exports = {
   plugins: [
     // 開発用HTMLファイル生成
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, "assets/javascripts/kanban/nested_grid_test_template.html"),
+      template: path.resolve(
+        __dirname,
+        "assets/javascripts/epic_grid/nested_grid_test_template.html"
+      ),
       filename: "index.html",
     }),
     // Webpack出力完了後にコピーを実行
@@ -100,32 +109,39 @@ module.exports = {
         // CSSファイルのコピー（ビルド処理と関係ない）
         {
           from: path.resolve(__dirname, "assets/stylesheets/kanban/kanban.css"),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban.css",
+          to: "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/kanban.css",
           noErrorOnMissing: false,
-          force: true
+          force: true,
         },
         // grid_v2.css のコピー (GridStatistics.css統合済み)
         {
-          from: path.resolve(__dirname, "assets/stylesheets/kanban/grid_v2.css"),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/grid_v2.css",
+          from: path.resolve(
+            __dirname,
+            "assets/stylesheets/kanban/grid_v2.css"
+          ),
+          to: "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/grid_v2.css",
           noErrorOnMissing: false,
-          force: true
+          force: true,
         },
         // MSW用ファイル
         {
-          from: path.resolve(__dirname, "assets/javascripts/kanban/public"),
-          to: path.resolve(__dirname, "assets/javascripts/kanban/dist"),
+          from: path.resolve(__dirname, "assets/javascripts/epic_grid/public"),
+          to: path.resolve(__dirname, "assets/javascripts/epic_grid/dist"),
           noErrorOnMissing: true,
-        }
+        },
       ],
     }),
     // カスタムプラグイン: ビルド完了後にJSファイルをコピー
     {
       apply: (compiler) => {
-        compiler.hooks.afterEmit.tap('CopyJSAfterEmit', () => {
-          const fs = require('fs');
-          const srcPath = path.resolve(__dirname, "assets/javascripts/kanban/dist/kanban_bundle.js");
-          const destPath = "/usr/src/redmine/public/plugin_assets/redmine_release_kanban/kanban_bundle.js";
+        compiler.hooks.afterEmit.tap("CopyJSAfterEmit", () => {
+          const fs = require("fs");
+          const srcPath = path.resolve(
+            __dirname,
+            "assets/javascripts/epic_grid/dist/kanban_bundle.js"
+          );
+          const destPath =
+            "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/kanban_bundle.js";
 
           // ディレクトリが存在しない場合は作成
           const destDir = path.dirname(destPath);
@@ -139,7 +155,7 @@ module.exports = {
             console.log(`✓ Copied ${srcPath} to ${destPath}`);
           }
         });
-      }
-    }
+      },
+    },
   ],
 };

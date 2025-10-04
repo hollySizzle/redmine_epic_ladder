@@ -142,7 +142,7 @@ end
 
 ```bash
 cd /usr/src/redmine
-RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/simple_e2e_spec.rb
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/kanban/simple_e2e_spec.rb
 ```
 
 - ✅ **成功** → あなたのテストコードに問題があります
@@ -197,8 +197,8 @@ tail -100 /usr/src/redmine/log/test.log | grep -A 5 ERROR
 
 ```bash
 # React コンポーネントの className を検索
-cd /workspace/containers/202501_redmine/app/plugins/redmine_release_kanban
-grep -r "className" assets/javascripts/kanban/src/components/ | grep -i "grid\|kanban\|epic"
+cd /workspace/containers/202501_redmine/app/plugins/redmine_epic_grid/
+grep -r "className" assets/javascripts/epic_grid/src/components/ | grep -i "grid\|kanban\|epic"
 ```
 
 - テストで使用しているセレクタが実際に存在するか確認
@@ -246,7 +246,7 @@ Playwright::TimeoutError:
 1. スクリーンショット確認: 実際に何が表示されているか
 2. React コンポーネントで実際に使われている className を検索:
    ```bash
-   grep -r "className" assets/javascripts/kanban/src/ | grep "some-class"
+   grep -r "className" assets/javascripts/epic_grid/src/ | grep "some-class"
    ```
 3. ブラウザの開発者ツール相当の情報を取得:
    ```ruby
@@ -285,7 +285,7 @@ expect(@playwright_page.query_selector("text='E2E Test Epic'")).not_to be_nil
 
 **判別方法**:
 - スクリーンショットに「別のプロジェクトのデータ」が表示されている
-- `assets/javascripts/kanban/src/mocks/handlers.ts` のサンプルデータが見える
+- `assets/javascripts/epic_grid/src/mocks/handlers.ts` のサンプルデータが見える
 
 **対処法**:
 - Redmine プラグインの API コントローラーを実装する
@@ -358,26 +358,26 @@ GroupNonMember.load_instance
 
 ```bash
 cd /usr/src/redmine
-RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/
 ```
 
 ### 特定のテストのみ
 
 ```bash
 # ファイル単位
-RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/simple_e2e_spec.rb
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/kanban/simple_e2e_spec.rb
 
 # 行番号指定
-RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/kanban/simple_e2e_spec.rb:58
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/kanban/simple_e2e_spec.rb:58
 
 # パターン指定
-RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system/
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/
 ```
 
 ### カバレッジ測定
 
 ```bash
-COVERAGE=1 RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/
+COVERAGE=1 RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/
 ```
 
 カバレッジレポート: `tmp/test_artifacts/coverage/index.html`
@@ -396,7 +396,7 @@ COVERAGE=1 RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/
 - name: Run backend tests
   run: |
     cd /usr/src/redmine
-    RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/
+    RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/
 
 - name: Upload screenshots on failure
   if: failure()

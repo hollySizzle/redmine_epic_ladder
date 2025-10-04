@@ -1,4 +1,4 @@
-# plugins/redmine_release_kanban/config/routes.rb
+# plugins/redmine_epic_grid/config/routes.rb
 RedmineApp::Application.routes.draw do
   # 技術仕様書準拠のカンバンAPI設計
   scope 'kanban/projects/:project_id' do

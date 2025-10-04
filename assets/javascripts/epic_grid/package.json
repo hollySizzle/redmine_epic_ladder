@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Nested Grid Test with React and Pragmatic Drag and Drop",
   "scripts": {
-    "dev": "echo '\n❌ ERROR: このディレクトリでは npm run dev を実行しないでください！\n\n正しい実行方法:\n  cd /usr/src/redmine/plugins/redmine_release_kanban\n  npm run dev\n\n親プロジェクトのルートディレクトリで実行してください。\n' && exit 1",
-    "build": "echo '\n❌ ERROR: このディレクトリでは npm run build を実行しないでください！\n\n正しい実行方法:\n  cd /usr/src/redmine/plugins/redmine_release_kanban\n  npm run build\n\n親プロジェクトのルートディレクトリで実行してください。\n' && exit 1",
+    "dev": "echo '\n❌ ERROR: このディレクトリでは npm run dev を実行しないでください！\n\n正しい実行方法:\n  cd /usr/src/redmine/plugins/redmine_epic_grid\n  npm run dev\n\n親プロジェクトのルートディレクトリで実行してください。\n' && exit 1",
+    "build": "echo '\n❌ ERROR: このディレクトリでは npm run build を実行しないでください！\n\n正しい実行方法:\n  cd /usr/src/redmine/plugins/redmine_epic_grid\n  npm run build\n\n親プロジェクトのルートディレクトリで実行してください。\n' && exit 1",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run"

@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module Kanban
+module EpicGrid
   # トラッカー階層制約管理
   # Epic→Feature→UserStory→Task/Test 4段階構造の制約とリレーション自動管理
   class TrackerHierarchy
     # プラグイン設定からトラッカー名を取得
     def self.tracker_names
       @tracker_names ||= begin
-        settings = Setting.plugin_redmine_release_kanban || {}
+        settings = Setting.plugin_redmine_epic_grid || {}
         {
           epic: settings['epic_tracker'] || 'Epic',
           feature: settings['feature_tracker'] || 'Feature',

@@ -1,10 +1,10 @@
 # Dependencies
 node_modules/**
 node_modules
-assets/javascripts/kanban/node_modules/
+assets/javascripts/epic_grid/node_modules/
 
 # Build outputs
-assets/javascripts/kanban/dist/
+assets/javascripts/epic_grid/dist/
 assets/build/
 
 # Test artifacts (all in Redmine's tmp/)

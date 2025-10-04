@@ -17,14 +17,14 @@ describe('MSW Handlers', () => {
 
   beforeEach(async () => {
     // 各テストの前にモックデータをリセット
-    await fetch(`${baseUrl}/api/kanban/projects/${projectId}/grid/reset`, {
+    await fetch(`${baseUrl}/api/epic_grid/projects/${projectId}/grid/reset`, {
       method: 'POST'
     });
   });
 
-  describe('GET /api/kanban/projects/:projectId/grid', () => {
+  describe('GET /api/epic_grid/projects/:projectId/grid', () => {
     it('グリッドデータを取得できる', async () => {
-      const response = await fetch(`${baseUrl}/api/kanban/projects/${projectId}/grid`);
+      const response = await fetch(`${baseUrl}/api/epic_grid/projects/${projectId}/grid`);
       const data: NormalizedAPIResponse = await response.json();
 
       expect(response.status).toBe(200);
@@ -37,7 +37,7 @@ describe('MSW Handlers', () => {
 
     it('include_closed=false でclosedステータスが除外される', async () => {
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid?include_closed=false`
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid?include_closed=false`
       );
       const data: NormalizedAPIResponse = await response.json();
 
@@ -49,7 +49,7 @@ describe('MSW Handlers', () => {
 
     it('include_closed=true でclosedステータスが含まれる', async () => {
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid?include_closed=true`
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid?include_closed=true`
       );
       const data: NormalizedAPIResponse = await response.json();
 
@@ -58,10 +58,10 @@ describe('MSW Handlers', () => {
     });
   });
 
-  describe('POST /api/kanban/projects/:projectId/grid/move_feature', () => {
+  describe('POST /api/epic_grid/projects/:projectId/grid/move_feature', () => {
     beforeEach(async () => {
       // モックデータをリセット
-      await fetch(`${baseUrl}/api/kanban/projects/${projectId}/grid/reset`, {
+      await fetch(`${baseUrl}/api/epic_grid/projects/${projectId}/grid/reset`, {
         method: 'POST'
       });
     });
@@ -74,7 +74,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid/move_feature`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_feature`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -100,7 +100,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid/move_feature`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_feature`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -122,7 +122,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid/move_feature`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_feature`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -144,7 +144,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid/move_feature`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_feature`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -166,7 +166,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid/move_feature`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_feature`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -181,11 +181,11 @@ describe('MSW Handlers', () => {
     });
   });
 
-  describe('GET /api/kanban/projects/:projectId/grid/updates', () => {
+  describe('GET /api/epic_grid/projects/:projectId/grid/updates', () => {
     it('差分更新データを取得できる', async () => {
       const since = new Date(Date.now() - 1000 * 60 * 5).toISOString(); // 5分前
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid/updates?since=${since}`
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/updates?since=${since}`
       );
       const data = await response.json();
 
@@ -195,10 +195,10 @@ describe('MSW Handlers', () => {
     });
   });
 
-  describe('POST /api/kanban/projects/:projectId/grid/reset', () => {
+  describe('POST /api/epic_grid/projects/:projectId/grid/reset', () => {
     it('モックデータをリセットできる', async () => {
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/grid/reset`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/reset`,
         { method: 'POST' }
       );
       const data = await response.json();
@@ -208,7 +208,7 @@ describe('MSW Handlers', () => {
     });
   });
 
-  describe('POST /api/kanban/projects/:projectId/epics', () => {
+  describe('POST /api/epic_grid/projects/:projectId/epics', () => {
     it('Epicを作成できる', async () => {
       const createRequest: CreateEpicRequest = {
         subject: 'ユーザー管理機能',
@@ -217,7 +217,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/epics`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -241,7 +241,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/epics`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -262,7 +262,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/epics`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -284,7 +284,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/epics`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -304,7 +304,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/epics`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -328,7 +328,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/epics`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/epics`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -346,7 +346,7 @@ describe('MSW Handlers', () => {
     });
   });
 
-  describe('POST /api/kanban/projects/:projectId/versions', () => {
+  describe('POST /api/epic_grid/projects/:projectId/versions', () => {
 
     it('Versionを作成できる', async () => {
       const createRequest: CreateVersionRequest = {
@@ -357,7 +357,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -383,7 +383,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -404,7 +404,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -426,7 +426,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -446,7 +446,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -470,7 +470,7 @@ describe('MSW Handlers', () => {
       };
 
       const response = await fetch(
-        `${baseUrl}/api/kanban/projects/${projectId}/versions`,
+        `${baseUrl}/api/epic_grid/projects/${projectId}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

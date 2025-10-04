@@ -1,5 +1,5 @@
 # app/controllers/concerns/kanban_api_concern.rb
-module KanbanApiConcern
+module EpicGridApiConcern
   extend ActiveSupport::Concern
 
   included do

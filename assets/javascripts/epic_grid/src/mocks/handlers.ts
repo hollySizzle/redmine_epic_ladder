@@ -40,9 +40,9 @@ let lastUpdateTimestamp = new Date().toISOString();
 // ========================================
 
 export const handlers = [
-  // GET /api/kanban/projects/:projectId/grid
+  // GET /api/epic_grid/projects/:projectId/grid
   // グリッドデータ取得
-  http.get('/api/kanban/projects/:projectId/grid', async ({ params, request }) => {
+  http.get('/api/epic_grid/projects/:projectId/grid', async ({ params, request }) => {
     const url = new URL(request.url);
     const includeClosed = url.searchParams.get('include_closed') === 'true';
 
@@ -75,9 +75,9 @@ export const handlers = [
     return HttpResponse.json(responseData);
   }),
 
-  // POST /api/kanban/projects/:projectId/grid/move_feature
+  // POST /api/epic_grid/projects/:projectId/grid/move_feature
   // Feature移動処理
-  http.post('/api/kanban/projects/:projectId/grid/move_feature', async ({ request }) => {
+  http.post('/api/epic_grid/projects/:projectId/grid/move_feature', async ({ request }) => {
     await delay(200);
 
     const body = (await request.json()) as MoveFeatureRequest;
@@ -200,9 +200,9 @@ export const handlers = [
     return HttpResponse.json(response);
   }),
 
-  // GET /api/kanban/projects/:projectId/grid/updates
+  // GET /api/epic_grid/projects/:projectId/grid/updates
   // 差分更新取得 (ポーリング用)
-  http.get('/api/kanban/projects/:projectId/grid/updates', async ({ request }) => {
+  http.get('/api/epic_grid/projects/:projectId/grid/updates', async ({ request }) => {
     const url = new URL(request.url);
     const since = url.searchParams.get('since');
 
@@ -228,9 +228,9 @@ export const handlers = [
     return HttpResponse.json(response);
   }),
 
-  // POST /api/kanban/projects/:projectId/grid/reset
+  // POST /api/epic_grid/projects/:projectId/grid/reset
   // モックデータリセット (テスト用)
-  http.post('/api/kanban/projects/:projectId/grid/reset', async () => {
+  http.post('/api/epic_grid/projects/:projectId/grid/reset', async () => {
     currentData = JSON.parse(JSON.stringify(normalizedMockData));
     lastUpdateTimestamp = new Date().toISOString();
 
@@ -244,9 +244,9 @@ export const handlers = [
   // CRUD操作: Feature
   // ========================================
 
-  // POST /api/kanban/projects/:projectId/cards
+  // POST /api/epic_grid/projects/:projectId/cards
   // Feature作成
-  http.post('/api/kanban/projects/:projectId/cards', async ({ request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards', async ({ request }) => {
     await delay(200);
 
     const body = (await request.json()) as CreateFeatureRequest;
@@ -348,9 +348,9 @@ export const handlers = [
   // CRUD操作: UserStory
   // ========================================
 
-  // POST /api/kanban/projects/:projectId/cards/:featureId/user_stories
+  // POST /api/epic_grid/projects/:projectId/cards/:featureId/user_stories
   // UserStory作成
-  http.post('/api/kanban/projects/:projectId/cards/:featureId/user_stories', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/:featureId/user_stories', async ({ params, request }) => {
     await delay(200);
 
     const { featureId } = params;
@@ -437,9 +437,9 @@ export const handlers = [
   // CRUD操作: Task
   // ========================================
 
-  // POST /api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tasks
+  // POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tasks
   // Task作成
-  http.post('/api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tasks', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tasks', async ({ params, request }) => {
     await delay(200);
 
     const { userStoryId } = params;
@@ -514,9 +514,9 @@ export const handlers = [
   // CRUD操作: Test
   // ========================================
 
-  // POST /api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tests
+  // POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tests
   // Test作成
-  http.post('/api/kanban/projects/:projectId/cards/user_stories/:userStoryId/tests', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tests', async ({ params, request }) => {
     await delay(200);
 
     const { userStoryId } = params;
@@ -589,9 +589,9 @@ export const handlers = [
   // CRUD操作: Bug
   // ========================================
 
-  // POST /api/kanban/projects/:projectId/cards/user_stories/:userStoryId/bugs
+  // POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/bugs
   // Bug作成
-  http.post('/api/kanban/projects/:projectId/cards/user_stories/:userStoryId/bugs', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/bugs', async ({ params, request }) => {
     await delay(200);
 
     const { userStoryId } = params;
@@ -664,9 +664,9 @@ export const handlers = [
   // CRUD操作: Epic
   // ========================================
 
-  // POST /api/kanban/projects/:projectId/epics
+  // POST /api/epic_grid/projects/:projectId/epics
   // Epic作成
-  http.post('/api/kanban/projects/:projectId/epics', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/epics', async ({ params, request }) => {
     await delay(200);
 
     const body = (await request.json()) as CreateEpicRequest;
@@ -751,9 +751,9 @@ export const handlers = [
   // CRUD操作: Version
   // ========================================
 
-  // POST /api/kanban/projects/:projectId/versions
+  // POST /api/epic_grid/projects/:projectId/versions
   // Version作成
-  http.post('/api/kanban/projects/:projectId/versions', async ({ params, request }) => {
+  http.post('/api/epic_grid/projects/:projectId/versions', async ({ params, request }) => {
     await delay(200);
 
     const body = (await request.json()) as CreateVersionRequest;

@@ -36,7 +36,7 @@
 ### セットアップ
 
 ```bash
-cd assets/javascripts/kanban
+cd assets/javascripts/epic_grid
 npm install
 npm test              # 38 tests
 npm run dev           # MSW モック起動
@@ -45,7 +45,7 @@ npm run dev           # MSW モック起動
 ### テストファイル構成
 
 ```
-assets/javascripts/kanban/src/
+assets/javascripts/epic_grid/src/
 ├── App.test.tsx                                      # 統合テスト
 ├── store/useStore.test.ts                           # ストアテスト
 ├── components/EpicVersion/EpicVersionGrid.test.tsx  # レイアウトテスト
@@ -76,7 +76,7 @@ it('should have 4 columns for 3 versions', () => {
 ### 環境セットアップ (自動)
 
 ```bash
-cd /usr/src/redmine/plugins/redmine_release_kanban
+cd /usr/src/redmine/plugins/redmine_epic_grid/
 ./bin/setup_test_env.sh
 ```
 
@@ -107,7 +107,7 @@ cd /usr/src/redmine/plugins/redmine_release_kanban
 
 ```bash
 cd /usr/src/redmine
-bundle exec rspec plugins/redmine_release_kanban/spec/models
+bundle exec rspec plugins/redmine_epic_grid/spec/models
 ```
 
 **カバレッジ目標**: 90%以上
@@ -117,7 +117,7 @@ bundle exec rspec plugins/redmine_release_kanban/spec/models
 **対象**: ビジネスロジック
 
 ```bash
-bundle exec rspec plugins/redmine_release_kanban/spec/services
+bundle exec rspec plugins/redmine_epic_grid/spec/services
 ```
 
 **カバレッジ目標**: 100% (Critical機能)
@@ -127,7 +127,7 @@ bundle exec rspec plugins/redmine_release_kanban/spec/services
 **対象**: API・Controller
 
 ```bash
-bundle exec rspec plugins/redmine_release_kanban/spec/requests
+bundle exec rspec plugins/redmine_epic_grid/spec/requests
 ```
 
 **パフォーマンス基準**: API応答 200ms以内、クエリ数 3以下
@@ -137,7 +137,7 @@ bundle exec rspec plugins/redmine_release_kanban/spec/requests
 **対象**: 機能統合・ワークフロー
 
 ```bash
-bundle exec rspec plugins/redmine_release_kanban/spec/integration
+bundle exec rspec plugins/redmine_epic_grid/spec/integration
 ```
 
 ### System テスト (10%)
@@ -145,7 +145,7 @@ bundle exec rspec plugins/redmine_release_kanban/spec/integration
 **対象**: E2E/UI 操作
 
 ```bash
-RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system
 ```
 
 **Playwright 直接実行**: 失敗時スクリーンショット自動保存
@@ -180,20 +180,20 @@ RAILS_ENV=test bundle exec rspec plugins/redmine_release_kanban/spec/system
 
 ```bash
 cd /usr/src/redmine
-bundle exec rspec plugins/redmine_release_kanban/spec/models \
-                  plugins/redmine_release_kanban/spec/services
+bundle exec rspec plugins/redmine_epic_grid/spec/models \
+                  plugins/redmine_epic_grid/spec/services
 ```
 
 ### コミット前チェック (全テスト)
 
 ```bash
-bundle exec rspec plugins/redmine_release_kanban/spec
+bundle exec rspec plugins/redmine_epic_grid/spec
 ```
 
 ### リリース前チェック (カバレッジ)
 
 ```bash
-COVERAGE=true bundle exec rspec plugins/redmine_release_kanban/spec
+COVERAGE=true bundle exec rspec plugins/redmine_epic_grid/spec
 ```
 
 ---
@@ -253,7 +253,7 @@ lsof -ti:3001 | xargs kill -9
 ```bash
 # 必ず Redmine ルートから実行
 cd /usr/src/redmine
-bundle exec rspec plugins/redmine_release_kanban/spec
+bundle exec rspec plugins/redmine_epic_grid/spec
 ```
 
 ---
@@ -264,7 +264,7 @@ bundle exec rspec plugins/redmine_release_kanban/spec
 - **AI協働規約**: @vibes/rules/ai_collaboration_redmine.md
 - **Grid測定戦略**: @vibes/specs/technical/grid_measurement_strategy.md
 - **rails_helper実装**: `spec/rails_helper.rb`
-- **Vitest設定**: `assets/javascripts/kanban/vitest.config.ts`
+- **Vitest設定**: `assets/javascripts/epic_grid/vitest.config.ts`
 
 ---
 

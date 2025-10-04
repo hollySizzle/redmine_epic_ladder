@@ -1,37 +1,37 @@
-# plugins/redmine_release_kanban/init.rb
+# plugins/redmine_epic_grid/init.rb
 
 
-Redmine::Plugin.register :redmine_release_kanban do
-  name 'Redmine Release Kanban Plugin'
+Redmine::Plugin.register :redmine_epic_grid do
+  name 'Redmine Epic Grid Plugin'
   author 'holly'
-  description 'Epic→Feature→UserStory→Task/Test階層制約とバージョン管理を統合したRelease Kanbanシステム'
+  description 'Epic→Feature→UserStory→Task/Test階層制約とVersion管理を統合したEpic Gridシステム'
   version '1.0.0'
-  url 'https://github.com/your-repo/redmine_release_kanban'
+  url 'https://github.com/your-repo/redmine_epic_grid'
   author_url 'https://github.com/your-team'
 
   # プロジェクトモジュール定義
-  project_module :release_kanban do
-    permission :view_kanban, {
-      kanban: [:index],
-      'kanban/cards' => [:index],
-      'kanban/hierarchy' => [:hierarchy_tree],
-      'kanban/validations' => [:release_validation, :bulk_validation]
+  project_module :epic_grid do
+    permission :view_epic_grid, {
+      epic_grid: [:index],
+      'epic_grid/cards' => [:index],
+      'epic_grid/hierarchy' => [:hierarchy_tree],
+      'epic_grid/validations' => [:release_validation, :bulk_validation]
     }, require: :member
 
-    permission :manage_kanban, {
-      'kanban/state_transitions' => [:move_card, :bulk_move_cards],
-      'kanban/versions' => [:assign_version, :bulk_assign_version, :create_version],
-      'kanban/auto_generation' => [:generate_test, :batch_generate_tests]
+    permission :manage_epic_grid, {
+      'epic_grid/state_transitions' => [:move_card, :bulk_move_cards],
+      'epic_grid/versions' => [:assign_version, :bulk_assign_version, :create_version],
+      'epic_grid/auto_generation' => [:generate_test, :batch_generate_tests]
     }, require: :member
   end
 
   # プロジェクトメニューに追加
   menu :project_menu,
-       :release_kanban,
-       { controller: 'kanban', action: 'index' },
-       caption: 'Release Kanban',
+       :epic_grid,
+       { controller: 'epic_grid', action: 'index' },
+       caption: 'Epic Grid',
        param: :project_id,
-       if: Proc.new { |p| User.current.allowed_to?(:view_kanban, p) }
+       if: Proc.new { |p| User.current.allowed_to?(:view_epic_grid, p) }
 
   # プラグイン設定画面
   settings default: {
@@ -41,5 +41,5 @@ Redmine::Plugin.register :redmine_release_kanban do
     'task_tracker' => 'Task',
     'test_tracker' => 'Test',
     'bug_tracker' => 'Bug'
-  }, partial: 'settings/kanban_tracker_settings'
+  }, partial: 'settings/epic_grid_tracker_settings'
 end

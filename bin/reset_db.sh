@@ -40,7 +40,7 @@ print_warning() {
 
 # Redmineのルートディレクトリに移動
 REDMINE_ROOT="/usr/src/redmine"
-KANBAN_PLUGIN_ROOT="/usr/src/redmine/plugins/redmine_release_kanban"
+KANBAN_PLUGIN_ROOT="/usr/src/redmine/plugins/redmine_epic_grid"
 
 if [ ! -d "$REDMINE_ROOT" ]; then
     print_error "Redmineのルートディレクトリが見つかりません: $REDMINE_ROOT"

@@ -105,10 +105,10 @@ rules:
   # フロントエンド全体（包括的テスト要求）
   - name: "フロントエンド実装規約（包括的）"
     patterns:
-      - "**/assets/javascripts/kanban/src/**/*.ts"
-      - "**/assets/javascripts/kanban/src/**/*.tsx"
-      - "**/assets/javascripts/kanban/src/**/*.js"
-      - "**/assets/javascripts/kanban/src/**/*.jsx"
+      - "**/assets/javascripts/epic_grid/src/**/*.ts"
+      - "**/assets/javascripts/epic_grid/src/**/*.tsx"
+      - "**/assets/javascripts/epic_grid/src/**/*.js"
+      - "**/assets/javascripts/epic_grid/src/**/*.jsx"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -118,7 +118,7 @@ rules:
       テストなしでの完了報告は禁止です。
 
       ✅ 必須作業（変更完了後すぐに実行）:
-      1. cd assets/javascripts/kanban
+      1. cd assets/javascripts/epic_grid
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認
       4. 失敗がある場合は修正してから完了報告
@@ -130,9 +130,9 @@ rules:
   # TypeScript型定義（SSoT）
   - name: "TypeScript型定義（SSoT）"
     patterns:
-      - "**/assets/javascripts/kanban/src/types/**/*.ts"
-      - "**/assets/javascripts/kanban/src/types/normalized-api.ts"
-      - "**/assets/javascripts/kanban/src/types/api-endpoints.ts"
+      - "**/assets/javascripts/epic_grid/src/types/**/*.ts"
+      - "**/assets/javascripts/epic_grid/src/types/normalized-api.ts"
+      - "**/assets/javascripts/epic_grid/src/types/api-endpoints.ts"
     severity: "block"
     token_threshold: 12000
     message: |
@@ -144,15 +144,15 @@ rules:
       型定義変更は全システムに影響します。必ずプロジェクトオーナーに確認してから作業を続けてください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/kanban
+      1. cd assets/javascripts/epic_grid
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
   # Reactコンポーネント実装
   - name: "Reactコンポーネント実装規約"
     patterns:
-      - "**/assets/javascripts/kanban/src/components/**/*.tsx"
-      - "**/assets/javascripts/kanban/src/components/**/*.jsx"
+      - "**/assets/javascripts/epic_grid/src/components/**/*.tsx"
+      - "**/assets/javascripts/epic_grid/src/components/**/*.jsx"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -164,15 +164,15 @@ rules:
       React 18、Zustand、Pragmatic D&Dの使用を推奨します
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/kanban
+      1. cd assets/javascripts/epic_grid
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
   # Zustandストア実装
   - name: "Zustandストア実装規約"
     patterns:
-      - "**/assets/javascripts/kanban/src/store/**/*.ts"
-      - "**/assets/javascripts/kanban/src/store/useStore.ts"
+      - "**/assets/javascripts/epic_grid/src/store/**/*.ts"
+      - "**/assets/javascripts/epic_grid/src/store/useStore.ts"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -183,15 +183,15 @@ rules:
       Normalized State構造（entities + grid index）を維持してから作業を続けてください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/kanban
+      1. cd assets/javascripts/epic_grid
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
   # MSWモックハンドラ
   - name: "MSWモックハンドラ実装規約"
     patterns:
-      - "**/assets/javascripts/kanban/src/mocks/**/*.ts"
-      - "**/assets/javascripts/kanban/src/mocks/handlers.ts"
+      - "**/assets/javascripts/epic_grid/src/mocks/**/*.ts"
+      - "**/assets/javascripts/epic_grid/src/mocks/handlers.ts"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -203,7 +203,7 @@ rules:
       モックレスポンスは型定義に完全準拠させてください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/kanban
+      1. cd assets/javascripts/epic_grid
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
@@ -214,9 +214,9 @@ rules:
   # フロントエンドテスト（Vitest）
   - name: "フロントエンドテスト実装規約（Vitest）"
     patterns:
-      - "**/assets/javascripts/kanban/src/**/*.test.tsx"
-      - "**/assets/javascripts/kanban/src/**/*.test.ts"
-      - "**/assets/javascripts/kanban/vitest.config.ts"
+      - "**/assets/javascripts/epic_grid/src/**/*.test.tsx"
+      - "**/assets/javascripts/epic_grid/src/**/*.test.ts"
+      - "**/assets/javascripts/epic_grid/vitest.config.ts"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -228,7 +228,7 @@ rules:
       テストコードが仕様書です。カバレッジ要件（Critical 100%, 全体85%）を維持してください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/kanban
+      1. cd assets/javascripts/epic_grid
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 

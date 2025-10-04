@@ -72,7 +72,7 @@ export async function fetchGridData(
     params.append('include_closed', String(options.include_closed));
   }
 
-  const url = `/api/kanban/projects/${projectId}/grid${params.toString() ? `?${params}` : ''}`;
+  const url = `/api/epic_grid/projects/${projectId}/grid${params.toString() ? `?${params}` : ''}`;
   const response = await fetch(url);
   return handleResponse<NormalizedAPIResponse>(response);
 }
@@ -84,7 +84,7 @@ export async function fetchUpdates(
   projectId: number | string,
   since: string
 ): Promise<UpdatesResponse> {
-  const url = `/api/kanban/projects/${projectId}/grid/updates?since=${encodeURIComponent(since)}`;
+  const url = `/api/epic_grid/projects/${projectId}/grid/updates?since=${encodeURIComponent(since)}`;
   const response = await fetch(url);
   return handleResponse<UpdatesResponse>(response);
 }
@@ -100,7 +100,7 @@ export async function createEpic(
   projectId: number | string,
   data: CreateEpicRequest
 ): Promise<CreateEpicResponse> {
-  const response = await fetch(`/api/kanban/projects/${projectId}/epics`, {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/epics`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -115,7 +115,7 @@ export async function createFeature(
   projectId: number | string,
   data: CreateFeatureRequest
 ): Promise<CreateFeatureResponse> {
-  const response = await fetch(`/api/kanban/projects/${projectId}/cards`, {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/cards`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -132,7 +132,7 @@ export async function createUserStory(
   data: CreateUserStoryRequest
 ): Promise<CreateUserStoryResponse> {
   const response = await fetch(
-    `/api/kanban/projects/${projectId}/cards/${featureId}/user_stories`,
+    `/api/epic_grid/projects/${projectId}/cards/${featureId}/user_stories`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -151,7 +151,7 @@ export async function createTask(
   data: CreateTaskRequest
 ): Promise<CreateTaskResponse> {
   const response = await fetch(
-    `/api/kanban/projects/${projectId}/cards/user_stories/${userStoryId}/tasks`,
+    `/api/epic_grid/projects/${projectId}/cards/user_stories/${userStoryId}/tasks`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -170,7 +170,7 @@ export async function createTest(
   data: CreateTestRequest
 ): Promise<CreateTestResponse> {
   const response = await fetch(
-    `/api/kanban/projects/${projectId}/cards/user_stories/${userStoryId}/tests`,
+    `/api/epic_grid/projects/${projectId}/cards/user_stories/${userStoryId}/tests`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -189,7 +189,7 @@ export async function createBug(
   data: CreateBugRequest
 ): Promise<CreateBugResponse> {
   const response = await fetch(
-    `/api/kanban/projects/${projectId}/cards/user_stories/${userStoryId}/bugs`,
+    `/api/epic_grid/projects/${projectId}/cards/user_stories/${userStoryId}/bugs`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -206,7 +206,7 @@ export async function createVersion(
   projectId: number | string,
   data: CreateVersionRequest
 ): Promise<CreateVersionResponse> {
-  const response = await fetch(`/api/kanban/projects/${projectId}/versions`, {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/versions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -225,7 +225,7 @@ export async function moveFeature(
   projectId: number | string,
   data: MoveFeatureRequest
 ): Promise<MoveFeatureResponse> {
-  const response = await fetch(`/api/kanban/projects/${projectId}/grid/move_feature`, {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/move_feature`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -247,7 +247,7 @@ export async function moveFeature(
  * モックデータリセット（開発/テスト用）
  */
 export async function resetMockData(projectId: number | string): Promise<void> {
-  const response = await fetch(`/api/kanban/projects/${projectId}/grid/reset`, {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/reset`, {
     method: 'POST'
   });
   await handleResponse(response);
