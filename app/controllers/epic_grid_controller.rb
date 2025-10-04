@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# リリースカンバンメインコントローラー
+# Epic Grid メインコントローラー
 # ReactアプリとRedmine統合のエントリーポイント
-class KanbanController < ApplicationController
+class EpicGridController < ApplicationController
   before_action :require_login
   before_action :find_project
   before_action :authorize_kanban

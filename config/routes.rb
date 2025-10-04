@@ -82,7 +82,7 @@ RedmineApp::Application.routes.draw do
 
   # メインカンバン画面（従来のRedmineプロジェクト構造を維持）
   resources :projects do
-    get 'kanban', to: 'kanban#index'
+    get 'epic_grid', to: 'epic_grid#index'
   end
 
   # グローバルテスト用ルート

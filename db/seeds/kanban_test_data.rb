@@ -247,14 +247,14 @@ if created_projects['sakura-ec']
     'boards',
     'calendar',
     'gantt',
-    'release_kanban'  # カンバンモジュール追加
+    'epic_grid'  # Epic Grid モジュール追加
   ]
 
   sakura_ec.enabled_module_names = enabled_modules
 
   if sakura_ec.save
     puts "  ✅ 桜商店ECサイト: #{enabled_modules.size}個のモジュールを有効化"
-    puts "    - release_kanban モジュールを含む"
+    puts "    - epic_grid モジュールを含む"
   else
     puts "  ❌ 桜商店ECサイトのモジュール有効化に失敗: #{sakura_ec.errors.full_messages.join(', ')}"
   end
