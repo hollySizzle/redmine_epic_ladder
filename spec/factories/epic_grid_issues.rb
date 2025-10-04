@@ -1,44 +1,54 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  # Epic Tracker
+  # Generic Issue (base factory)
+  factory :issue, class: 'Issue' do
+    sequence(:subject) { |n| "Issue #{n}" }
+    association :project
+    association :tracker
+    association :author, factory: :user
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
+  end
+
+  # Epic Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :epic_tracker, class: 'Tracker' do
-    sequence(:name) { |n| "Epic-#{n}" }
+    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:epic]) }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 1 }
   end
 
-  # Feature Tracker
+  # Feature Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :feature_tracker, class: 'Tracker' do
-    sequence(:name) { |n| "Feature-#{n}" }
+    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:feature]) }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 2 }
   end
 
-  # UserStory Tracker
+  # UserStory Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :user_story_tracker, class: 'Tracker' do
-    sequence(:name) { |n| "UserStory-#{n}" }
+    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:user_story]) }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 3 }
   end
 
-  # Task Tracker
+  # Task Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :task_tracker, class: 'Tracker' do
-    sequence(:name) { |n| "Task-#{n}" }
+    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:task]) }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 4 }
   end
 
-  # Test Tracker
+  # Test Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :test_tracker, class: 'Tracker' do
-    sequence(:name) { |n| "Test-#{n}" }
+    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:test]) }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 5 }
   end
 
-  # Bug Tracker
+  # Bug Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :bug_tracker, class: 'Tracker' do
-    sequence(:name) { |n| "Bug-#{n}" }
+    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:bug]) }
     default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
     position { 6 }
   end

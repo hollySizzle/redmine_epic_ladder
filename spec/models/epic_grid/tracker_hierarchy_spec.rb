@@ -8,33 +8,33 @@ RSpec.describe EpicGrid::TrackerHierarchy, type: :model do
       names = described_class.tracker_names
 
       expect(names).to include(
-        epic: 'Epic',
-        feature: 'Feature',
-        user_story: 'UserStory',
-        task: 'Task',
-        test: 'Test',
-        bug: 'Bug'
+        epic: epic_tracker_name,
+        feature: feature_tracker_name,
+        user_story: user_story_tracker_name,
+        task: task_tracker_name,
+        test: test_tracker_name,
+        bug: bug_tracker_name
       )
     end
   end
 
   describe '.level' do
     it 'returns correct hierarchy level for Epic' do
-      expect(described_class.level('Epic')).to eq(0)
+      expect(described_class.level(epic_tracker_name)).to eq(0)
     end
 
     it 'returns correct hierarchy level for Feature' do
-      expect(described_class.level('Feature')).to eq(1)
+      expect(described_class.level(feature_tracker_name)).to eq(1)
     end
 
     it 'returns correct hierarchy level for UserStory' do
-      expect(described_class.level('UserStory')).to eq(2)
+      expect(described_class.level(user_story_tracker_name)).to eq(2)
     end
 
     it 'returns correct hierarchy level for Task/Test/Bug' do
-      expect(described_class.level('Task')).to eq(3)
-      expect(described_class.level('Test')).to eq(3)
-      expect(described_class.level('Bug')).to eq(3)
+      expect(described_class.level(task_tracker_name)).to eq(3)
+      expect(described_class.level(test_tracker_name)).to eq(3)
+      expect(described_class.level(bug_tracker_name)).to eq(3)
     end
 
     it 'returns nil for unknown tracker' do
@@ -71,28 +71,28 @@ RSpec.describe EpicGrid::TrackerHierarchy, type: :model do
 
   describe '.root_tracker' do
     it 'returns Epic tracker name' do
-      expect(described_class.root_tracker).to eq('Epic')
+      expect(described_class.root_tracker).to eq(epic_tracker_name)
     end
   end
 
   describe '.children_trackers' do
     it 'returns valid child trackers for Epic' do
-      children = described_class.children_trackers('Epic')
-      expect(children).to eq(['Feature'])
+      children = described_class.children_trackers(epic_tracker_name)
+      expect(children).to eq([feature_tracker_name])
     end
 
     it 'returns valid child trackers for Feature' do
-      children = described_class.children_trackers('Feature')
-      expect(children).to eq(['UserStory'])
+      children = described_class.children_trackers(feature_tracker_name)
+      expect(children).to eq([user_story_tracker_name])
     end
 
     it 'returns valid child trackers for UserStory' do
-      children = described_class.children_trackers('UserStory')
-      expect(children).to contain_exactly('Task', 'Test', 'Bug')
+      children = described_class.children_trackers(user_story_tracker_name)
+      expect(children).to contain_exactly(task_tracker_name, test_tracker_name, bug_tracker_name)
     end
 
     it 'returns empty array for leaf trackers' do
-      expect(described_class.children_trackers('Task')).to eq([])
+      expect(described_class.children_trackers(task_tracker_name)).to eq([])
     end
   end
 end

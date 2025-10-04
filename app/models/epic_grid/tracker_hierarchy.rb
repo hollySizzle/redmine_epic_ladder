@@ -52,6 +52,16 @@ module EpicGrid
       rules.dig(tracker_name, :children) || []
     end
 
+    # ルートトラッカー名を返す
+    def self.root_tracker
+      tracker_names[:epic]
+    end
+
+    # 指定トラッカーの子トラッカー一覧を返す
+    def self.children_trackers(tracker_name)
+      allowed_children(tracker_name)
+    end
+
     # 階層レベルを取得 (0-based index)
     def self.level(tracker_name)
       names = tracker_names
