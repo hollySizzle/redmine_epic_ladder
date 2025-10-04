@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import './SplitLayout.scss';
 
 interface SplitLayoutProps {
   leftPane: React.ReactNode;

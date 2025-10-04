@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import './IssueDetailPane.scss';
 
 interface IssueDetailPaneProps {
   issueId: string | null;

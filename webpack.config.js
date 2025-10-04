@@ -107,23 +107,6 @@ module.exports = {
     // Webpack出力完了後にコピーを実行
     new CopyWebpackPlugin({
       patterns: [
-        // CSSファイルのコピー（ビルド処理と関係ない）
-        {
-          from: path.resolve(__dirname, "assets/stylesheets/epic_grid/kanban.css"),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/kanban.css",
-          noErrorOnMissing: false,
-          force: true,
-        },
-        // grid_v2.css のコピー (GridStatistics.css統合済み)
-        {
-          from: path.resolve(
-            __dirname,
-            "assets/stylesheets/epic_grid/grid_v2.css"
-          ),
-          to: "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/grid_v2.css",
-          noErrorOnMissing: false,
-          force: true,
-        },
         // MSW用ファイル
         {
           from: path.resolve(__dirname, "assets/javascripts/epic_grid/public"),

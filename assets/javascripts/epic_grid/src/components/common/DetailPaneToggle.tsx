@@ -1,6 +1,5 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
-import './DetailPaneToggle.scss';
 
 /**
  * Issue詳細ペインの表示/非表示を切り替えるトグルボタン
