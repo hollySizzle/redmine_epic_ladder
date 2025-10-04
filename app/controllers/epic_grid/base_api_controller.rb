@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module Kanban
+module EpicGrid
   # カスタム例外クラス群
-  class KanbanError < StandardError
+  class EpicGridError < StandardError
     attr_reader :details
 
     def initialize(message = nil, details = {})
@@ -11,7 +11,7 @@ module Kanban
     end
   end
 
-  class PermissionDenied < KanbanError
+  class PermissionDenied < EpicGridError
     attr_reader :permission, :resource
 
     def initialize(permission = nil, resource = nil, message = nil)
@@ -21,7 +21,7 @@ module Kanban
     end
   end
 
-  class WorkflowViolation < KanbanError
+  class WorkflowViolation < EpicGridError
     attr_reader :current_status, :attempted_action, :suggested_actions
 
     def initialize(current_status = nil, attempted_action = nil, suggested_actions = [], message = nil)
@@ -41,8 +41,8 @@ module Kanban
     rescue_from StandardError, with: :handle_internal_error
     rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
     rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
-    rescue_from Kanban::PermissionDenied, with: :handle_permission_denied
-    rescue_from Kanban::WorkflowViolation, with: :handle_workflow_error
+    rescue_from EpicGrid::PermissionDenied, with: :handle_permission_denied
+    rescue_from EpicGrid::WorkflowViolation, with: :handle_workflow_error
 
     # パフォーマンス監視
     after_action :log_performance_metrics
@@ -227,7 +227,7 @@ module Kanban
 
     def authorize_kanban_access
       unless User.current.allowed_to?(:view_kanban, @project)
-        raise Kanban::PermissionDenied.new('view_kanban', @project)
+        raise EpicGrid::PermissionDenied.new('view_kanban', @project)
       end
     end
 
@@ -256,7 +256,7 @@ module Kanban
 
       # 認証失敗
       Rails.logger.info "API Authentication failed: session=#{session[:user_id]}, token=#{api_token_from_request}"
-      raise Kanban::PermissionDenied.new('login', nil, '認証が必要です')
+      raise EpicGrid::PermissionDenied.new('login', nil, '認証が必要です')
     end
 
     # セッション認証確認

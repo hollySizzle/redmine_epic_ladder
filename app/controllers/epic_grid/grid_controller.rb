@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Kanban
+module EpicGrid
   # グリッドデータ管理コントローラー
   # Epic×Version マトリクスデータ取得・操作API提供
   class GridController < BaseApiController
@@ -72,14 +72,14 @@ module Kanban
 
       # 楽観的ロックチェック
       if optimistic_lock_version && feature.lock_version != optimistic_lock_version.to_i
-        raise Kanban::ConcurrencyError.new(
+        raise EpicGrid::ConcurrencyError.new(
           feature.id,
           feature.lock_version,
           optimistic_lock_version
         )
       end
 
-      result = Kanban::FeatureMoveService.execute(
+      result = EpicGrid::FeatureMoveService.execute(
         feature: feature,
         target_epic_id: target_epic_id,
         target_version_id: target_version_id,
@@ -96,7 +96,7 @@ module Kanban
       else
         render_error(result[:error], :unprocessable_entity, result[:details])
       end
-    rescue Kanban::ConcurrencyError => e
+    rescue EpicGrid::ConcurrencyError => e
       render_error(
         'リソースが他のユーザーによって更新されています',
         :conflict,
@@ -114,7 +114,7 @@ module Kanban
     def create_epic
       epic_params = params.require(:epic).permit(:subject, :description, :assigned_to_id, :fixed_version_id)
 
-      result = Kanban::EpicCreationService.execute(
+      result = EpicGrid::EpicCreationService.execute(
         project: @project,
         epic_params: epic_params,
         user: User.current
@@ -159,7 +159,7 @@ module Kanban
       issue = Issue.find(params[:issue_id])
       version = params[:version_id].present? ? Version.find(params[:version_id]) : nil
 
-      result = Kanban::VersionPropagationService.propagate_to_children(issue, version)
+      result = EpicGrid::VersionPropagationService.propagate_to_children(issue, version)
 
       if result[:error]
         render_error(result[:error], :unprocessable_entity, result.except(:error))
@@ -183,7 +183,7 @@ module Kanban
 
       # 権限チェック
       unless User.current.allowed_to?(:manage_versions, @project)
-        raise Kanban::PermissionDenied.new('manage_versions', @project)
+        raise EpicGrid::PermissionDenied.new('manage_versions', @project)
       end
 
       # バージョンインスタンス作成
@@ -241,7 +241,7 @@ module Kanban
       card = Issue.find(card_id)
 
       # 移動サービス実行
-      result = Kanban::CardMoveService.execute(
+      result = EpicGrid::CardMoveService.execute(
         card: card,
         source_cell: source_cell.to_h.symbolize_keys,
         target_cell: target_cell.to_h.symbolize_keys,
@@ -340,7 +340,7 @@ module Kanban
         assigned_to: issue.assigned_to&.name,
         fixed_version: issue.fixed_version&.name,
         parent_id: issue.parent_id,
-        hierarchy_level: Kanban::TrackerHierarchy.level(issue.tracker.name),
+        hierarchy_level: EpicGrid::TrackerHierarchy.level(issue.tracker.name),
         lock_version: issue.lock_version,
         created_on: issue.created_on.iso8601,
         updated_on: issue.updated_on.iso8601,
@@ -436,7 +436,7 @@ module Kanban
       # 削除されたVersionの検出は難しいため、キャッシュベースで検出予定
 
       # 新しいEpicの検出
-      epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+      epic_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       new_epics = @project.issues.joins(:tracker)
                           .where(trackers: { name: epic_tracker_name })
                           .where('issues.created_on > ?', since_time)

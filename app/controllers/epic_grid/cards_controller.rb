@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Kanban
+module EpicGrid
   # Feature Cards管理コントローラー
   # Feature一覧・詳細・CRUD操作API提供
   class CardsController < BaseApiController
@@ -10,7 +10,7 @@ module Kanban
       filter_params = params.permit(:version_id, :assignee_id, :status_id, :tracker_name)
 
       # 設計書準拠: KanbanDataBuilderを使用
-      kanban_data = Kanban::KanbanDataBuilder.new(@project, User.current, filter_params).build
+      kanban_data = EpicGrid::KanbanDataBuilder.new(@project, User.current, filter_params).build
 
       render_success({
         epics: kanban_data[:epics],
@@ -25,7 +25,7 @@ module Kanban
     def create
       feature_params = params.require(:feature).permit(:subject, :description, :assigned_to_id, :fixed_version_id, :parent_id)
 
-      result = Kanban::FeatureCreationService.execute(
+      result = EpicGrid::FeatureCreationService.execute(
         project: @project,
         feature_params: feature_params,
         user: User.current
@@ -47,7 +47,7 @@ module Kanban
       feature = Issue.find(params[:id])
       feature_params = params.require(:feature).permit(:subject, :description, :assigned_to_id, :fixed_version_id, :status_id)
 
-      result = Kanban::FeatureUpdateService.execute(
+      result = EpicGrid::FeatureUpdateService.execute(
         feature: feature,
         feature_params: feature_params,
         user: User.current
@@ -72,10 +72,10 @@ module Kanban
 
       render_success({
         feature: serialize_issue_with_children(feature),
-        user_stories: serialize_user_stories_with_children(feature.children.joins(:tracker).where(trackers: { name: Kanban::TrackerHierarchy.tracker_names[:user_story] })),
+        user_stories: serialize_user_stories_with_children(feature.children.joins(:tracker).where(trackers: { name: EpicGrid::TrackerHierarchy.tracker_names[:user_story] })),
         relationships: serialize_relationships(feature),
         activity_timeline: build_activity_timeline(feature),
-        validation_status: Kanban::ValidationGuardService.validate_feature_readiness(feature)
+        validation_status: EpicGrid::ValidationGuardService.validate_feature_readiness(feature)
       })
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたFeatureが見つかりません', :not_found)
@@ -86,7 +86,7 @@ module Kanban
       feature_id = params[:feature_id]
       user_story_params = params.require(:user_story).permit(:subject, :description, :assigned_to_id)
 
-      result = Kanban::UserStoryCreationService.execute(
+      result = EpicGrid::UserStoryCreationService.execute(
         feature_id: feature_id,
         user_story_params: user_story_params,
         user: User.current,
@@ -110,7 +110,7 @@ module Kanban
       user_story = Issue.find(params[:id])
       user_story_params = params.require(:user_story).permit(:subject, :description, :assigned_to_id, :status_id)
 
-      result = Kanban::UserStoryUpdateService.execute(
+      result = EpicGrid::UserStoryUpdateService.execute(
         user_story: user_story,
         user_story_params: user_story_params,
         user: User.current
@@ -132,7 +132,7 @@ module Kanban
     def destroy_user_story
       user_story = Issue.find(params[:id])
 
-      result = Kanban::UserStoryDeletionService.execute(
+      result = EpicGrid::UserStoryDeletionService.execute(
         user_story: user_story,
         user: User.current
       )
@@ -155,7 +155,7 @@ module Kanban
       user_story_id = params[:user_story_id]
       task_params = params.require(:task).permit(:subject, :description, :assigned_to_id, :estimated_hours)
 
-      result = Kanban::TaskCreationService.execute(
+      result = EpicGrid::TaskCreationService.execute(
         user_story_id: user_story_id,
         task_params: task_params,
         user: User.current,
@@ -179,7 +179,7 @@ module Kanban
       user_story_id = params[:user_story_id]
       test_params = params.require(:test).permit(:subject, :description, :assigned_to_id)
 
-      result = Kanban::TestCreationService.execute(
+      result = EpicGrid::TestCreationService.execute(
         user_story_id: user_story_id,
         test_params: test_params,
         user: User.current,
@@ -203,7 +203,7 @@ module Kanban
       user_story_id = params[:user_story_id]
       bug_params = params.require(:bug).permit(:subject, :description, :assigned_to_id, :priority_id)
 
-      result = Kanban::BugCreationService.execute(
+      result = EpicGrid::BugCreationService.execute(
         user_story_id: user_story_id,
         bug_params: bug_params,
         user: User.current,
@@ -227,7 +227,7 @@ module Kanban
       item = Issue.find(params[:id])
       item_params = params.require(:item).permit(:subject, :description, :assigned_to_id, :status_id, :done_ratio, :estimated_hours)
 
-      result = Kanban::ItemUpdateService.execute(
+      result = EpicGrid::ItemUpdateService.execute(
         item: item,
         item_params: item_params,
         user: User.current
@@ -249,7 +249,7 @@ module Kanban
     def destroy_item
       item = Issue.find(params[:id])
 
-      result = Kanban::ItemDeletionService.execute(
+      result = EpicGrid::ItemDeletionService.execute(
         item: item,
         user: User.current
       )
@@ -272,7 +272,7 @@ module Kanban
       user_story_ids = params.require(:user_story_ids)
       bulk_params = params.require(:bulk_update).permit(:status_id, :assigned_to_id, :fixed_version_id)
 
-      result = Kanban::BulkUpdateService.execute(
+      result = EpicGrid::BulkUpdateService.execute(
         user_story_ids: user_story_ids,
         bulk_params: bulk_params,
         user: User.current
@@ -397,17 +397,17 @@ module Kanban
     def serialize_issue_with_children(issue)
       base_data = serialize_issue(issue)
 
-      feature_tracker_name = Kanban::TrackerHierarchy.tracker_names[:feature]
+      feature_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       if issue.tracker.name == feature_tracker_name
-        user_story_tracker_name = Kanban::TrackerHierarchy.tracker_names[:user_story]
+        user_story_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
         user_stories = issue.children.joins(:tracker).where(trackers: { name: user_story_tracker_name })
         base_data.merge({
           user_stories: user_stories.map do |us|
             {
               issue: serialize_issue(us),
-              tasks: serialize_children_by_tracker(us, Kanban::TrackerHierarchy.tracker_names[:task]),
-              tests: serialize_children_by_tracker(us, Kanban::TrackerHierarchy.tracker_names[:test]),
-              bugs: serialize_children_by_tracker(us, Kanban::TrackerHierarchy.tracker_names[:bug])
+              tasks: serialize_children_by_tracker(us, EpicGrid::TrackerHierarchy.tracker_names[:task]),
+              tests: serialize_children_by_tracker(us, EpicGrid::TrackerHierarchy.tracker_names[:test]),
+              bugs: serialize_children_by_tracker(us, EpicGrid::TrackerHierarchy.tracker_names[:bug])
             }
           end
         })
@@ -440,7 +440,7 @@ module Kanban
           fixed_version: issue.fixed_version&.name,
           fixed_version_id: issue.fixed_version_id,
           parent_id: issue.parent_id,
-          hierarchy_level: Kanban::TrackerHierarchy.level(issue.tracker.name),
+          hierarchy_level: EpicGrid::TrackerHierarchy.level(issue.tracker.name),
           created_on: issue.created_on.iso8601,
           updated_on: issue.updated_on.iso8601,
           estimated_hours: issue.estimated_hours,
