@@ -41,13 +41,19 @@ require 'database_cleaner/active_record'
 # これがないとdevelopment DBが破壊される
 ENV['RAILS_ENV'] = 'test' unless ENV['RAILS_ENV']
 
+# Redmineルートディレクトリを特定（プラグインディレクトリから2階層上）
+REDMINE_ROOT = File.expand_path('../../..', __dir__)
+
+# カレントディレクトリをRedmineルートに変更（相対パス解決のため）
+Dir.chdir(REDMINE_ROOT) unless Dir.pwd == REDMINE_ROOT
+
 # Redmineのrails_helperまたは標準のrails_helper設定
 begin
-  require File.expand_path('../../../spec/rails_helper', __dir__)
+  require File.join(REDMINE_ROOT, 'spec/rails_helper')
 rescue LoadError
   # Redmineのrails_helperがない場合の基本設定
   # Railsアプリケーションが確実にロードされるようにする
-  require File.expand_path('../../../config/environment', __dir__)
+  require File.join(REDMINE_ROOT, 'config/environment')
   require 'rspec/rails'
 end
 

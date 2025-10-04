@@ -117,7 +117,8 @@
       "Bash(RAILS_ENV=test bundle exec rake db:create db:migrate)",
       "Bash(env RAILS_ENV=test bundle exec rake db:create db:migrate)",
       "Bash(unset DATABASE_URL)",
-      "Bash(env RAILS_ENV=test bundle exec rails runner \"puts ''''Rails.env: '''' + Rails.env; puts ''''Database: '''' + ActiveRecord::Base.connection.current_database\")"
+      "Bash(env RAILS_ENV=test bundle exec rails runner \"puts ''''Rails.env: '''' + Rails.env; puts ''''Database: '''' + ActiveRecord::Base.connection.current_database\")",
+      "Bash(env RAILS_ENV=test bundle exec rspec spec/models/epic_grid/tracker_hierarchy_spec.rb --format progress)"
     ],
     "deny": [],
     "ask": [],
