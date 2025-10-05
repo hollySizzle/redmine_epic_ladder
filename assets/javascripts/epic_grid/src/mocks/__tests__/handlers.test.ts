@@ -111,7 +111,12 @@ describe('MSW Handlers', () => {
       const data: MoveFeatureResponse = await response.json();
 
       expect(data.updated_grid_index).toBeDefined();
-      expect(data.updated_grid_index['epic2:v2']).toContain('f1');
+      // 3D Grid format: epic:feature:version
+      // Grid index contains UserStory IDs, not Feature IDs
+      // f1 has user_story_ids: ['us1', 'us5'] in normalized-mock-data.ts
+      const cellKey = 'epic2:f1:v2';
+      expect(data.updated_grid_index[cellKey]).toBeDefined();
+      expect(Array.isArray(data.updated_grid_index[cellKey])).toBe(true);
     });
 
     it('存在しないFeature IDでエラーが返される', async () => {

@@ -205,7 +205,8 @@
       "Bash(npm test:*)",
       "Read(//workspace/**)",
       "Bash(pgrep:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebFetch(domain:css-tricks.com)"
     ],
     "deny": [],
     "ask": [],
