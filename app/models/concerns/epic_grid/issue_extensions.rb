@@ -38,20 +38,96 @@ module EpicGrid
     # MSW準拠のJSON出力
     # ========================================
 
-    # 正規化されたJSON形式で出力
+    # 正規化されたJSON形式で出力（Epic用）
     # @return [Hash] MSW NormalizedAPIResponse準拠のHash
     def epic_grid_as_normalized_json
-      {
+      base = {
         id: id.to_s,
         subject: subject,
-        description: description,
+        description: description || '',
         status: status.is_closed? ? 'closed' : 'open',
         fixed_version_id: fixed_version_id&.to_s,
         tracker_id: tracker_id,
-        feature_ids: children.pluck(:id).map(&:to_s),
         created_on: created_on.iso8601,
         updated_on: updated_on.iso8601
       }
+
+      # トラッカー別に異なるフィールドを追加
+      case tracker.name
+      when EpicGrid::TrackerHierarchy.tracker_names[:epic]
+        base.merge(
+          feature_ids: children.pluck(:id).map(&:to_s),
+          statistics: {
+            total_features: children.count,
+            completed_features: 0,
+            total_user_stories: 0,
+            total_child_items: 0,
+            completion_percentage: 0
+          }
+        )
+      when EpicGrid::TrackerHierarchy.tracker_names[:feature]
+        base.merge(
+          title: subject,
+          parent_epic_id: parent_id&.to_s,
+          user_story_ids: children.pluck(:id).map(&:to_s),
+          version_source: fixed_version_id ? 'direct' : 'none',
+          statistics: {
+            total_user_stories: children.count,
+            completed_user_stories: 0,
+            total_child_items: 0,
+            child_items_by_type: { tasks: 0, tests: 0, bugs: 0 },
+            completion_percentage: 0
+          },
+          assigned_to_id: assigned_to_id,
+          priority_id: priority_id
+        )
+      when EpicGrid::TrackerHierarchy.tracker_names[:user_story]
+        base.merge(
+          title: subject,
+          parent_feature_id: parent_id&.to_s,
+          task_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:task])).pluck(:id).map(&:to_s),
+          test_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:test])).pluck(:id).map(&:to_s),
+          bug_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:bug])).pluck(:id).map(&:to_s),
+          version_source: 'inherited',
+          expansion_state: true,
+          statistics: {
+            total_tasks: 0,
+            completed_tasks: 0,
+            total_tests: 0,
+            passed_tests: 0,
+            total_bugs: 0,
+            resolved_bugs: 0,
+            completion_percentage: 0
+          },
+          assigned_to_id: assigned_to_id,
+          estimated_hours: estimated_hours
+        )
+      when EpicGrid::TrackerHierarchy.tracker_names[:task]
+        base.merge(
+          title: subject,
+          parent_user_story_id: parent_id&.to_s,
+          assigned_to_id: assigned_to_id,
+          estimated_hours: estimated_hours,
+          spent_hours: 0.0,
+          done_ratio: done_ratio || 0
+        )
+      when EpicGrid::TrackerHierarchy.tracker_names[:test]
+        base.merge(
+          title: subject,
+          parent_user_story_id: parent_id&.to_s,
+          test_result: 'pending',
+          assigned_to_id: assigned_to_id
+        )
+      when EpicGrid::TrackerHierarchy.tracker_names[:bug]
+        base.merge(
+          title: subject,
+          parent_user_story_id: parent_id&.to_s,
+          severity: 'minor',
+          assigned_to_id: assigned_to_id
+        )
+      else
+        base
+      end
     end
 
     # ========================================

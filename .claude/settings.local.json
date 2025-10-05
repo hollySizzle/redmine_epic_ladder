@@ -184,7 +184,9 @@
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb:231 --format progress)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb:231 plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb:323 --format progress)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb:243)",
-      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb:243 --format progress)"
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb:243 --format progress)",
+      "mcp__serena__find_symbol",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:30 --format documentation)"
     ],
     "deny": [],
     "ask": [],

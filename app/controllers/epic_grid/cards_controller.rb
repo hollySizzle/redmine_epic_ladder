@@ -40,17 +40,40 @@ module EpicGrid
         **feature_params
       )
 
-      # 親Epicを取得
-      parent_epic = feature.parent if feature.parent_id
+      # 親Epicを取得してリロード
+      parent_epic = feature.parent.reload if feature.parent_id
+      version = feature.fixed_version
 
-      render_success({
-        feature: serialize_issue_with_children(feature),
-        parent_epic: parent_epic ? serialize_issue(parent_epic) : nil,
+      # MSW準拠のレスポンス構築
+      updated_entities = {
+        features: { feature.id.to_s => feature.epic_grid_as_normalized_json }
+      }
+      updated_entities[:epics] = { parent_epic.id.to_s => parent_epic.epic_grid_as_normalized_json } if parent_epic
+      updated_entities[:versions] = { version.id.to_s => {
+        id: version.id.to_s,
+        name: version.name,
+        description: version.description || '',
+        status: version.status,
+        issue_count: version.fixed_issues.count,
+        statistics: {
+          total_issues: version.fixed_issues.count,
+          completed_issues: 0,
+          completion_rate: 0
+        },
+        created_on: version.created_on.iso8601,
+        updated_on: version.updated_on.iso8601
+      }} if version
+
+      cell_key = "#{feature.parent_id}:#{feature.fixed_version_id || 'none'}"
+
+      render_normalized_success(
+        created_entity: feature.epic_grid_as_normalized_json,
+        updated_entities: updated_entities,
         grid_updates: {
-          cell_key: "#{feature.parent_id}:#{feature.fixed_version_id || 'none'}",
-          feature_id: feature.id
-        }
-      }, :created)
+          index: { cell_key => @project.epic_grid_index[:index][cell_key] || [feature.id.to_s] }
+        },
+        status: :created
+      )
     rescue ActiveRecord::RecordInvalid => e
       render_validation_error(e.record.errors)
     end

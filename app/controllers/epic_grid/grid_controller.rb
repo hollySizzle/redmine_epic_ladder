@@ -116,14 +116,17 @@ module EpicGrid
         **epic_params
       )
 
-      render_success({
-        epic: serialize_issue(epic),
-        grid_position: {
-          epic_id: epic.id,
-          row_index: @project.issues.where(tracker: epic_tracker).count - 1
+      # MSW準拠のレスポンス構築
+      render_normalized_success(
+        created_entity: epic.epic_grid_as_normalized_json,
+        updated_entities: {
+          epics: { epic.id.to_s => epic.epic_grid_as_normalized_json }
         },
-        affected_statistics: @project.epic_grid_build_statistics
-      }, :created)
+        grid_updates: {
+          epic_order: @project.epic_grid_index[:epic_order]
+        },
+        status: :created
+      )
     rescue ActiveRecord::RecordInvalid => e
       render_validation_error(e.record.errors)
     end
@@ -185,21 +188,28 @@ module EpicGrid
       if version.save
         Rails.logger.info "Version created successfully: #{version.name} (id: #{version.id})"
 
-        # グリッドへの影響を計算
-        grid_impact = calculate_grid_impact_for_new_version(version)
+        # MSW準拠のレスポンス構築
+        version_json = {
+          id: version.id.to_s,
+          name: version.name,
+          description: version.description || '',
+          effective_date: version.effective_date&.iso8601,
+          due_date: version.effective_date&.iso8601,
+          status: version.status,
+          created_on: version.created_on.iso8601,
+          updated_on: version.updated_on.iso8601
+        }
 
-        render_success({
-          created_version: serialize_version(version),
-          grid_updates: {
-            new_column_added: true,
-            column_position: version.id,
-            affected_statistics: grid_impact[:statistics]
+        render_normalized_success(
+          created_entity: version_json,
+          updated_entities: {
+            versions: { version.id.to_s => version_json }
           },
-          metadata: {
-            grid_cache_invalidated: true,
-            requires_full_reload: grid_impact[:requires_reload]
-          }
-        }, :created)
+          grid_updates: {
+            version_order: @project.epic_grid_index[:version_order]
+          },
+          status: :created
+        )
       else
         Rails.logger.error "Version save failed: #{version.errors.full_messages}"
         render_validation_error(version.errors)

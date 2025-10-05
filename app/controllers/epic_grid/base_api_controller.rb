@@ -55,6 +55,20 @@ module EpicGrid
       render json: response_data, status: status
     end
 
+    # MSW準拠の正規化レスポンス（Contract Testing用）
+    def render_normalized_success(created_entity: nil, updated_entities: {}, grid_updates: {}, status: :ok)
+      response_data = {
+        success: true,
+        data: {
+          created_entity: created_entity,
+          updated_entities: updated_entities,
+          grid_updates: grid_updates
+        }.compact, # nilを除外
+        meta: response_metadata
+      }
+      render json: response_data, status: status
+    end
+
     # エラー応答の統一形式
     def render_error(message, status, details = {})
       response_data = build_error_response(message, status, details)
