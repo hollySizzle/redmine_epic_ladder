@@ -125,7 +125,7 @@ module EpicGrid
     def response_metadata
       {
         timestamp: Time.current.iso8601,
-        request_id: request.uuid,
+        request_id: request.uuid || SecureRandom.uuid,
         api_version: 'v1',
         execution_time: execution_time
       }
