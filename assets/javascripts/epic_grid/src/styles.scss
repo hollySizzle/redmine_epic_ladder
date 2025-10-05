@@ -123,9 +123,9 @@
     }
   }
 
-// ========================================
-// Level 1: Epic × Version Grid
-// ========================================
+  // ========================================
+  // Level 1: Epic × Version Grid
+  // ========================================
   .epic-version-wrapper {
     display: grid;
     grid-template-rows: auto auto;
@@ -133,23 +133,32 @@
     gap: 0px;
     overflow-x: auto;
     max-width: 100vw;
-  
+    height: 100vh;
+
     .epic-version-grid {
       grid-row: 1;
       grid-column: 1;
     }
-  
+
     .new-version-wrapper {
       grid-row: 1;
       grid-column: 2;
+      position: sticky;
+      right: 0;
+      z-index: 100;
     }
-  
+
     .new-epic-wrapper {
       grid-row: 2;
       grid-column: 1 / -1;
+      grid-row: 1;
+      grid-column: 2;
+      position: sticky;
+      bottom: 0;
+      z-index: 100;
     }
   }
-  
+
   .epic-version-grid {
     display: grid;
     grid-template-columns: var(--epic-width) repeat(4, var(--version-width));
@@ -158,7 +167,7 @@
     background: #e0e0e0;
     padding: var(--space-md);
   }
-  
+
   // Epic & Version Headers
   .epic-version-label {
     background: #fff3e0;
@@ -171,7 +180,7 @@
     align-items: center;
     color: #e65100;
   }
-  
+
   .epic-header {
     background: #dae8fc;
     border: 2px solid #6c8ebf;
@@ -183,8 +192,11 @@
     justify-content: center;
     min-height: 3.75rem;
     text-align: center;
+    position: sticky;
+    left: 0;
+    z-index: 100;
   }
-  
+
   .version-header {
     background: #e1d5e7;
     border: 2px solid #9673a6;
@@ -192,15 +204,18 @@
     font-weight: bold;
     font-size: 0.8125rem;
     text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
-  
+
   .epic-version-cell {
     background: #fafafa;
     border: 2px solid #bdbdbd;
     padding: var(--space-md);
     min-height: 12.5rem;
   }
-  
+
   // ========================================
   // Level 2: Feature Card Grid
   // ========================================
@@ -210,7 +225,7 @@
     gap: var(--feature-gap);
     height: 100%;
   }
-  
+
   .feature-card {
     background: #ffffff;
     border: 2px solid #dee2e6;
@@ -220,32 +235,32 @@
     cursor: move;
     transition: all 150ms ease-in-out;
     user-select: none; // テキスト選択を無効化してドラッグを容易に
-  
+
     &:hover {
       box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
     }
-  
+
     &.dragging {
       opacity: 0.5;
       filter: grayscale(0.8);
     }
-  
+
     &.over {
       transform: scale(1.05);
       box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
     }
-  
+
     &.closed {
       opacity: 0.6;
       filter: grayscale(0.5);
-  
+
       .feature-header {
         background: #e0e0e0;
         border-color: #9e9e9e;
         color: #757575;
       }
     }
-  
+
     .feature-header {
       background: #fff9c4;
       border: 1px solid #f57f17;
@@ -260,7 +275,7 @@
       }
     }
   }
-  
+
   // ========================================
   // Level 3: User Story Grid
   // ========================================
@@ -269,7 +284,7 @@
     grid-template-columns: 1fr;
     gap: var(--user-story-gap);
   }
-  
+
   .user-story {
     background: #f9f9f9;
     border: 1px solid #e0e0e0;
@@ -278,29 +293,29 @@
     cursor: move;
     transition: all 150ms ease-in-out;
     user-select: none; // テキスト選択を無効化してドラッグを容易に
-  
+
     &:hover {
       background: #f0f0f0;
     }
-  
+
     &.dragging {
       opacity: 0.5;
     }
-  
+
     &.over {
       transform: scale(1.03);
       border-color: #2196f3;
     }
-  
+
     &.closed {
       opacity: 0.6;
       filter: grayscale(0.5);
-  
+
       .user-story-header {
         color: #9e9e9e;
       }
     }
-  
+
     .user-story-header {
       font-size: var(--font-user-story-header);
       font-weight: bold;
@@ -312,7 +327,7 @@
       }
     }
   }
-  
+
   // ========================================
   // Level 4: Task/Test/Bug Grid
   // ========================================
@@ -321,7 +336,7 @@
     grid-template-columns: 1fr;
     gap: var(--task-container-gap);
   }
-  
+
   // Container styles (Task, Test, Bug)
   .task-container,
   .test-container,
@@ -329,37 +344,37 @@
     border-radius: var(--border-radius-md);
     padding: var(--task-container-padding);
   }
-  
+
   .task-container {
     background: #e3f2fd;
     border: 1px solid #1976d2;
-  
+
     .task-container-header {
       background: #bbdefb;
       color: #0d47a1;
     }
   }
-  
+
   .test-container {
     background: #e8f5e9;
     border: 1px solid #388e3c;
-  
+
     .test-container-header {
       background: #c8e6c9;
       color: #1b5e20;
     }
   }
-  
+
   .bug-container {
     background: #ffebee;
     border: 1px solid #c62828;
-  
+
     .bug-container-header {
       background: #ffcdd2;
       color: #b71c1c;
     }
   }
-  
+
   // Container headers
   .task-container-header,
   .test-container-header,
@@ -370,7 +385,7 @@
     padding: var(--task-item-gap) var(--task-container-padding);
     border-radius: var(--border-radius-sm);
   }
-  
+
   // Item grids
   .task-item-grid,
   .test-item-grid,
@@ -379,7 +394,7 @@
     grid-template-columns: 1fr;
     gap: var(--task-item-gap);
   }
-  
+
   // Item styles
   .task-item,
   .test-item,
@@ -391,57 +406,57 @@
     transition: all 150ms ease-in-out;
     border-radius: var(--border-radius-sm);
     user-select: none; // テキスト選択を無効化してドラッグを容易に
-  
+
     &.dragging {
       opacity: 0.5;
     }
-  
+
     &.closed {
       opacity: 0.6;
       filter: grayscale(0.7);
       text-decoration: line-through;
     }
   }
-  
+
   .task-item {
     border: 1px solid #90caf9;
-  
+
     &:hover {
       background: #bbdefb;
     }
-  
+
     &.over {
       border-color: #1565c0;
       background: #90caf9;
     }
   }
-  
+
   .test-item {
     border: 1px solid #81c784;
-  
+
     &:hover {
       background: #c8e6c9;
     }
-  
+
     &.over {
       border-color: #2e7d32;
       background: #a5d6a7;
     }
   }
-  
+
   .bug-item {
     border: 1px solid #ef5350;
-  
+
     &:hover {
       background: #ffcdd2;
     }
-  
+
     &.over {
       border-color: #c62828;
       background: #ef9a9a;
     }
   }
-  
+
   // ========================================
   // Add Buttons (All Levels)
   // ========================================
@@ -456,12 +471,12 @@
     font-weight: bold;
     transition: all 150ms ease-in-out;
     order: 9999;
-  
+
     &:active {
       transform: scale(0.98);
     }
   }
-  
+
   // Add Epic/Version buttons
   .add-epic-btn,
   .add-version-btn {
@@ -475,44 +490,44 @@
     width: 100%;
     height: 100%;
   }
-  
+
   .add-epic-btn {
     background: #e3f2fd;
     border: 2px dashed #1976d2;
     color: #1565c0;
-  
+
     &:hover {
       background: #bbdefb;
       border-color: #1565c0;
     }
   }
-  
+
   .add-version-btn {
     background: #f3e5f5;
     border: 2px dashed #7b1fa2;
     color: #6a1b9a;
   }
-  
+
   // Add Feature button
   .add-feature-btn {
     border: 2px dashed #f57f17;
     color: #f57f17;
     min-height: 3.75rem;
     font-size: 0.75rem;
-  
+
     &:hover {
       background: #fff9c4;
       border-color: #f57f17;
     }
   }
-  
+
   // Add User Story button
   .add-user-story-btn {
     min-height: 2.5rem;
     font-size: 0.625rem;
     padding-top: var(--task-container-padding);
   }
-  
+
   // Add Task/Test/Bug buttons
   .add-task-btn,
   .add-test-btn,
@@ -521,37 +536,37 @@
     font-size: 0.5rem;
     padding-top: 0.125rem;
   }
-  
+
   .add-task-btn {
     border: 2px dashed #1976d2;
     color: #1976d2;
-  
+
     &:hover {
       background: #e3f2fd;
       border-color: #1976d2;
     }
   }
-  
+
   .add-test-btn {
     border: 2px dashed #388e3c;
     color: #388e3c;
-  
+
     &:hover {
       background: #e8f5e9;
       border-color: #388e3c;
     }
   }
-  
+
   .add-bug-btn {
     border: 2px dashed #c62828;
     color: #c62828;
-  
+
     &:hover {
       background: #ffebee;
       border-color: #c62828;
     }
   }
-  
+
   // ========================================
   // Legend
   // ========================================
@@ -563,11 +578,11 @@
     background: white;
     border-radius: var(--border-radius-lg);
     border: 1px solid #ddd;
-  
+
     h3 {
       padding-bottom: var(--space-md);
     }
-  
+
     &-item {
       padding-top: var(--space-xs);
       padding-bottom: var(--space-xs);
@@ -834,6 +849,10 @@
 // Keyframe Animations
 // ========================================
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

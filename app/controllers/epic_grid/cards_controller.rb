@@ -36,7 +36,7 @@ module EpicGrid
         project: @project,
         tracker: feature_tracker,
         author: User.current,
-        status: IssueStatus.default,
+        status: IssueStatus.first,
         **feature_params
       )
 
@@ -110,7 +110,7 @@ module EpicGrid
         project: @project,
         tracker: user_story_tracker,
         author: User.current,
-        status: IssueStatus.default,
+        status: IssueStatus.first,
         parent_issue_id: feature_id,
         fixed_version_id: feature.fixed_version_id, # 親のバージョンを継承
         **user_story_params
@@ -187,7 +187,7 @@ module EpicGrid
         project: @project,
         tracker: task_tracker,
         author: User.current,
-        status: IssueStatus.default,
+        status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
         **task_params
@@ -219,7 +219,7 @@ module EpicGrid
         project: @project,
         tracker: test_tracker,
         author: User.current,
-        status: IssueStatus.default,
+        status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
         **test_params
@@ -251,7 +251,7 @@ module EpicGrid
         project: @project,
         tracker: bug_tracker,
         author: User.current,
-        status: IssueStatus.default,
+        status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
         **bug_params

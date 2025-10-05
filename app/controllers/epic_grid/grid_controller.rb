@@ -103,7 +103,7 @@ module EpicGrid
         project: @project,
         tracker: epic_tracker,
         author: User.current,
-        status: IssueStatus.default,
+        status: IssueStatus.first,
         **epic_params
       )
 
@@ -423,6 +423,32 @@ module EpicGrid
       end
 
       changes
+    end
+
+    public
+
+    # テストデータリセット (テスト環境専用)
+    def reset
+      # 本番環境では実行不可
+      unless Rails.env.test? || Rails.env.development?
+        return render_error('この操作は本番環境では実行できません', :forbidden)
+      end
+
+      # プロジェクトの全Issueを削除
+      deleted_count = @project.issues.delete_all
+
+      # キャッシュクリア
+      Rails.cache.clear
+
+      render_success({
+        message: 'グリッドデータをリセットしました',
+        deleted_issues_count: deleted_count,
+        project_id: @project.id,
+        timestamp: Time.current.iso8601
+      })
+    rescue => e
+      Rails.logger.error "Reset error: #{e.message}"
+      render_error('リセット処理に失敗しました', :internal_server_error)
     end
   end
 end

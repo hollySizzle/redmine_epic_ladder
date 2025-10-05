@@ -12,9 +12,11 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
   let(:feature_tracker) { create(:feature_tracker) }
   let(:user_story_tracker) { create(:user_story_tracker) }
   let(:task_tracker) { create(:task_tracker) }
+  let(:test_tracker) { create(:test_tracker) }
+  let(:bug_tracker) { create(:bug_tracker) }
 
   before do
-    project.trackers << [epic_tracker, feature_tracker, user_story_tracker, task_tracker]
+    project.trackers << [epic_tracker, feature_tracker, user_story_tracker, task_tracker, test_tracker, bug_tracker]
     member # ensure member exists
     allow(User).to receive(:current).and_return(user)
     @request.session[:user_id] = user.id
@@ -27,12 +29,13 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
     let(:valid_params) do
       {
         project_id: project.id,
-        subject: 'New Feature',
-        description: 'Feature description',
-        parent_epic_id: epic.id,
-        fixed_version_id: version.id,
-        assigned_to_id: user.id,
-        priority_id: 4
+        feature: {
+          subject: 'New Feature',
+          description: 'Feature description',
+          parent_id: epic.id,
+          fixed_version_id: version.id,
+          assigned_to_id: user.id
+        }
       }
     end
 
@@ -55,10 +58,15 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       )
     end
 
-    it 'returns error when parent epic not found' do
-      post :create, params: valid_params.merge(parent_id: 99999)
+    it 'creates feature even with invalid parent_id (Redmine behavior)' do
+      invalid_params = valid_params.deep_dup
+      invalid_params[:feature][:parent_id] = 99999
 
-      expect(response).to have_http_status(:not_found)
+      expect {
+        post :create, params: invalid_params
+      }.to change(Issue, :count).by(1)
+
+      expect(response).to have_http_status(:created)
     end
   end
 
@@ -70,10 +78,11 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       {
         project_id: project.id,
         feature_id: feature.id,
-        subject: 'New User Story',
-        description: 'User story description',
-        assigned_to_id: user.id,
-        estimated_hours: 8
+        user_story: {
+          subject: 'New User Story',
+          description: 'User story description',
+          assigned_to_id: user.id
+        }
       }
     end
 
@@ -114,10 +123,12 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       {
         project_id: project.id,
         user_story_id: user_story.id,
-        subject: 'New Task',
-        description: 'Task description',
-        assigned_to_id: user.id,
-        estimated_hours: 4
+        task: {
+          subject: 'New Task',
+          description: 'Task description',
+          assigned_to_id: user.id,
+          estimated_hours: 4
+        }
       }
     end
 
@@ -148,9 +159,11 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       {
         project_id: project.id,
         user_story_id: user_story.id,
-        subject: 'New Test',
-        description: 'Test description',
-        assigned_to_id: user.id
+        test: {
+          subject: 'New Test',
+          description: 'Test description',
+          assigned_to_id: user.id
+        }
       }
     end
 
@@ -180,10 +193,12 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       {
         project_id: project.id,
         user_story_id: user_story.id,
-        subject: 'New Bug',
-        description: 'Bug description',
-        assigned_to_id: user.id,
-        severity: 'major'
+        bug: {
+          subject: 'New Bug',
+          description: 'Bug description',
+          assigned_to_id: user.id,
+          priority_id: IssuePriority.default.id
+        }
       }
     end
 

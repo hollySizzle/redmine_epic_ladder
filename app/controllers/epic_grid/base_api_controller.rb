@@ -300,5 +300,58 @@ module EpicGrid
       # パラメータからトークン取得
       params[:key]
     end
+
+    # Issue シリアライザー（基本情報のみ）
+    def serialize_issue(issue)
+      {
+        id: issue.id,
+        subject: issue.subject,
+        description: issue.description,
+        tracker_id: issue.tracker_id,
+        tracker_name: issue.tracker&.name,
+        status_id: issue.status_id,
+        status_name: issue.status&.name,
+        priority_id: issue.priority_id,
+        assigned_to_id: issue.assigned_to_id,
+        assigned_to_name: issue.assigned_to&.name,
+        fixed_version_id: issue.fixed_version_id,
+        fixed_version_name: issue.fixed_version&.name,
+        parent_id: issue.parent_id,
+        start_date: issue.start_date,
+        due_date: issue.due_date,
+        estimated_hours: issue.estimated_hours,
+        done_ratio: issue.done_ratio,
+        created_on: issue.created_on,
+        updated_on: issue.updated_on
+      }
+    end
+
+    # Issue シリアライザー（子要素付き）
+    def serialize_issue_with_children(issue)
+      base = serialize_issue(issue)
+      base[:children] = issue.children.map { |child| serialize_issue(child) }
+      base
+    end
+
+    # UserStory シリアライザー（Task/Test/Bug付き）
+    def serialize_user_stories_with_children(user_stories)
+      user_stories.map do |us|
+        serialize_issue_with_children(us)
+      end
+    end
+
+    # Issue関係性シリアライザー
+    def serialize_relationships(issue)
+      {
+        parent: issue.parent ? serialize_issue(issue.parent) : nil,
+        children: issue.children.map { |child| serialize_issue(child) },
+        relations: []
+      }
+    end
+
+    # アクティビティタイムライン構築
+    def build_activity_timeline(issue)
+      []
+    end
   end
 end

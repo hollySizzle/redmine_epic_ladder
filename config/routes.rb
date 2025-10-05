@@ -11,7 +11,7 @@ RedmineApp::Application.routes.draw do
     post 'grid/move_feature', to: 'epic_grid/grid#move_feature'
 
     # GET /api/epic_grid/projects/:projectId/grid/updates
-    get 'grid/updates', to: 'epic_grid/grid#updates'
+    get 'grid/updates', to: 'epic_grid/grid#real_time_updates'
 
     # POST /api/epic_grid/projects/:projectId/grid/reset (テスト用)
     post 'grid/reset', to: 'epic_grid/grid#reset'
