@@ -18,11 +18,11 @@ RedmineApp::Application.routes.draw do
 
     # ===== Epic CRUD API =====
     # POST /api/epic_grid/projects/:projectId/epics
-    post 'epics', to: 'epic_grid/epics#create'
+    post 'epics', to: 'epic_grid/grid#create_epic'
 
     # ===== Version CRUD API =====
     # POST /api/epic_grid/projects/:projectId/versions
-    post 'versions', to: 'epic_grid/versions#create'
+    post 'versions', to: 'epic_grid/grid#create_version'
 
     # ===== Feature Cards API =====
     # POST /api/epic_grid/projects/:projectId/cards

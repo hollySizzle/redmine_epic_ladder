@@ -27,7 +27,10 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
 
-      expect(json).to include(
+      expect(json['success']).to be true
+      expect(json).to have_key('data')
+      expect(json).to have_key('meta')
+      expect(json['data']).to include(
         'entities',
         'grid',
         'metadata',
@@ -40,7 +43,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
 
-      expect(json['entities']).to include(
+      expect(json['data']['entities']).to include(
         'epics',
         'versions',
         'features',
@@ -56,15 +59,15 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
 
-      expect(json['metadata']['project']).to include(
+      expect(json['data']['metadata']['project']).to include(
         'id' => project.id,
         'name' => project.name,
         'identifier' => project.identifier
       )
     end
 
-    context 'when user lacks view_kanban permission' do
-      let(:unauthorized_role) { create(:role, permissions: [:view_issues]) }
+    context 'when user lacks view_issues permission' do
+      let(:unauthorized_role) { create(:role, permissions: []) }
       let(:unauthorized_member) { create(:member, project: project, user: user, roles: [unauthorized_role]) }
 
       before do
@@ -81,10 +84,14 @@ RSpec.describe EpicGrid::GridController, type: :controller do
   end
 
   describe 'POST #move_feature' do
-    let(:epic_tracker) { create(:epic_tracker) }
-    let(:feature_tracker) { create(:feature_tracker) }
-    let(:version_v1) { create(:version, project: project) }
-    let(:version_v2) { create(:version, project: project) }
+    let!(:epic_tracker) { create(:epic_tracker) }
+    let!(:feature_tracker) { create(:feature_tracker) }
+    let!(:version_v1) { create(:version, project: project) }
+    let!(:version_v2) { create(:version, project: project) }
+
+    before do
+      project.trackers << [epic_tracker, feature_tracker]
+    end
 
     let!(:source_epic) { create(:epic, project: project, author: user) }
     let!(:target_epic) { create(:epic, project: project, author: user) }
@@ -95,10 +102,6 @@ RSpec.describe EpicGrid::GridController, type: :controller do
         fixed_version: version_v1,
         author: user
       )
-    end
-
-    before do
-      project.trackers << [epic_tracker, feature_tracker]
     end
 
     it 'moves feature to target epic' do
@@ -128,9 +131,9 @@ RSpec.describe EpicGrid::GridController, type: :controller do
     end
   end
 
-  describe 'GET #updates' do
+  describe 'GET #real_time_updates' do
     it 'returns updates response' do
-      get :updates, params: {
+      get :real_time_updates, params: {
         project_id: project.id,
         since: 1.hour.ago.iso8601
       }
@@ -138,11 +141,14 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       expect(response).to have_http_status(:ok)
 
       json = JSON.parse(response.body)
-      expect(json).to include(
-        'updated_entities',
-        'deleted_entities',
-        'current_timestamp',
-        'has_changes'
+      expect(json['success']).to be true
+      expect(json).to have_key('data')
+      expect(json).to have_key('meta')
+      expect(json['data']).to include(
+        'updates',
+        'deleted_issues',
+        'grid_structure_changes',
+        'metadata'
       )
     end
   end
@@ -154,9 +160,180 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       expect(response).to have_http_status(:ok)
 
       json = JSON.parse(response.body)
-      expect(json).to include(
-        'success' => true,
-        'message' => be_a(String)
+      expect(json['success']).to be true
+      expect(json).to have_key('data')
+      expect(json).to have_key('meta')
+      expect(json['data']['message']).to be_a(String)
+      expect(json['data']).to have_key('deleted_issues_count')
+      expect(json['data']['project_id']).to eq(project.id)
+    end
+  end
+
+  describe 'POST #create_epic' do
+    let!(:epic_tracker) { create(:epic_tracker) }
+
+    before do
+      project.trackers << epic_tracker
+    end
+
+    let(:valid_params) do
+      {
+        project_id: project.id,
+        epic: {
+          subject: 'New Epic',
+          description: 'Epic description',
+          fixed_version_id: nil
+        }
+      }
+    end
+
+    it 'creates new epic' do
+      expect {
+        post :create_epic, params: valid_params
+      }.to change(Issue, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+
+      json = JSON.parse(response.body)
+      expect(json['success']).to be true
+      expect(json['data']['epic']).to include(
+        'subject' => 'New Epic'
+      )
+    end
+
+    it 'returns MSW-compliant response structure' do
+      post :create_epic, params: valid_params
+
+      json = JSON.parse(response.body)
+      expect(json['data']).to have_key('epic')
+      expect(json['data']).to have_key('grid_position')
+      expect(json['data']).to have_key('affected_statistics')
+    end
+
+    it 'validates required subject field' do
+      invalid_params = valid_params.deep_dup
+      invalid_params[:epic][:subject] = ''
+
+      post :create_epic, params: invalid_params
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    context 'when user lacks add_issues permission' do
+      let(:unauthorized_role) { create(:role, permissions: [:view_issues]) }
+      let(:unauthorized_member) { create(:member, project: project, user: user, roles: [unauthorized_role]) }
+
+      before do
+        member.destroy
+        unauthorized_member
+      end
+
+      it 'returns 403 forbidden' do
+        post :create_epic, params: valid_params
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when epic tracker is not configured' do
+      before do
+        project.trackers.clear
+      end
+
+      it 'returns configuration error' do
+        post :create_epic, params: valid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+
+        json = JSON.parse(response.body)
+        expect(json['error']['details']['error_code']).to eq('EPIC_TRACKER_NOT_FOUND')
+      end
+    end
+  end
+
+  describe 'POST #create_version' do
+    let(:valid_params) do
+      {
+        project_id: project.id,
+        version: {
+          name: 'v1.0.0',
+          description: 'Version 1.0.0 release',
+          effective_date: '2025-12-31',
+          status: 'open'
+        }
+      }
+    end
+
+    it 'creates new version' do
+      expect {
+        post :create_version, params: valid_params
+      }.to change(Version, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+
+      json = JSON.parse(response.body)
+      expect(json['success']).to be true
+      expect(json['data']['created_version']).to include(
+        'name' => 'v1.0.0',
+        'description' => 'Version 1.0.0 release'
+      )
+    end
+
+    it 'returns MSW-compliant response structure' do
+      post :create_version, params: valid_params
+
+      json = JSON.parse(response.body)
+      expect(json['data']).to have_key('created_version')
+      expect(json['data']).to have_key('grid_updates')
+
+      expect(json['data']['grid_updates']).to include(
+        'new_column_added' => true
+      )
+    end
+
+    it 'validates required name field' do
+      invalid_params = valid_params.deep_dup
+      invalid_params[:version][:name] = ''
+
+      post :create_version, params: invalid_params
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'returns error when version name already exists' do
+      create(:version, project: project, name: 'v1.0.0')
+
+      post :create_version, params: valid_params
+
+      expect(response).to have_http_status(:unprocessable_entity)
+
+      json = JSON.parse(response.body)
+      expect(json['error']['message']).to include('バージョン名が既に存在します')
+    end
+
+    context 'when user lacks manage_versions permission' do
+      let(:unauthorized_role) { create(:role, permissions: [:view_issues]) }
+      let(:unauthorized_member) { create(:member, project: project, user: user, roles: [unauthorized_role]) }
+
+      before do
+        member.destroy
+        unauthorized_member
+      end
+
+      it 'returns 403 forbidden' do
+        post :create_version, params: valid_params
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    it 'includes grid impact metadata' do
+      post :create_version, params: valid_params
+
+      json = JSON.parse(response.body)
+      expect(json['data']).to have_key('metadata')
+      expect(json['data']['metadata']).to include(
+        'grid_cache_invalidated' => true
       )
     end
   end

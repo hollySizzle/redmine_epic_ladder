@@ -8,7 +8,7 @@ FactoryBot.define do
     permissions { [:view_issues, :add_issues, :edit_issues] }
 
     trait :with_kanban_permissions do
-      permissions { [:view_issues, :add_issues, :edit_issues, :view_kanban, :manage_kanban] }
+      permissions { [:view_issues, :add_issues, :edit_issues, :view_kanban, :manage_kanban, :manage_versions] }
     end
 
     trait :with_version_permissions do

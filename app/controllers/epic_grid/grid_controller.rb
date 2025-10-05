@@ -82,10 +82,19 @@ module EpicGrid
 
     # Epic作成 (API003)
     def create_epic
+      # 権限チェック
+      unless User.current.allowed_to?(:add_issues, @project)
+        return render_error('権限が不足しています', :forbidden, {
+          required_permission: 'add_issues',
+          resource_type: 'Project',
+          resource_id: @project.id
+        })
+      end
+
       epic_params = params.require(:epic).permit(:subject, :description, :assigned_to_id, :fixed_version_id)
 
       # Epicトラッカー取得
-      epic_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:epic])
+      epic_tracker = @project.trackers.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:epic])
       unless epic_tracker
         return render_error(
           'Epicトラッカーが設定されていません',
@@ -117,9 +126,6 @@ module EpicGrid
       }, :created)
     rescue ActiveRecord::RecordInvalid => e
       render_validation_error(e.record.errors)
-    rescue => e
-      Rails.logger.error "Epic creation error: #{e.message}"
-      render_error('Epicの作成中に予期しないエラーが発生しました', :internal_server_error)
     end
 
     # Version自動伝播 (API004)
@@ -156,7 +162,11 @@ module EpicGrid
 
       # 権限チェック
       unless User.current.allowed_to?(:manage_versions, @project)
-        raise EpicGrid::PermissionDenied.new('manage_versions', @project)
+        return render_error('権限が不足しています', :forbidden, {
+          required_permission: 'manage_versions',
+          resource_type: 'Project',
+          resource_id: @project.id
+        })
       end
 
       # バージョンインスタンス作成
@@ -194,13 +204,6 @@ module EpicGrid
         Rails.logger.error "Version save failed: #{version.errors.full_messages}"
         render_validation_error(version.errors)
       end
-
-    rescue => e
-      Rails.logger.error "Version creation error: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      render_error('バージョン作成に失敗しました', :internal_server_error, {
-        error_id: request.uuid
-      })
     end
 
     # カード移動 (設計書準拠move_card API)

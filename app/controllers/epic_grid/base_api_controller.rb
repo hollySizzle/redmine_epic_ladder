@@ -37,12 +37,12 @@ module EpicGrid
     before_action :api_require_login, :find_project, :authorize_kanban_access
     before_action :set_start_time
 
-    # 統一例外ハンドリング
-    rescue_from StandardError, with: :handle_internal_error
-    rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
-    rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
+    # 統一例外ハンドリング (具体的な例外を先に定義)
     rescue_from EpicGrid::PermissionDenied, with: :handle_permission_denied
     rescue_from EpicGrid::WorkflowViolation, with: :handle_workflow_error
+    rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
+    rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
+    rescue_from StandardError, with: :handle_internal_error
 
     # パフォーマンス監視
     after_action :log_performance_metrics
@@ -171,9 +171,11 @@ module EpicGrid
 
     def handle_permission_denied(exception)
       Rails.logger.warn "Permission Denied: #{exception.message}"
+      resource = exception.try(:resource)
       render_error('権限が不足しています', :forbidden, {
         required_permission: exception.try(:permission),
-        resource: exception.try(:resource)
+        resource_type: resource.class.name,
+        resource_id: resource.try(:id)
       })
     end
 
@@ -228,7 +230,12 @@ module EpicGrid
     def authorize_kanban_access
       # view_issues 権限で代用（view_kanban が未定義の場合）
       unless User.current.allowed_to?(:view_issues, @project)
-        raise EpicGrid::PermissionDenied.new('view_issues', @project)
+        render_error('権限が不足しています', :forbidden, {
+          required_permission: 'view_issues',
+          resource_type: 'Project',
+          resource_id: @project&.id
+        })
+        return false
       end
     end
 
