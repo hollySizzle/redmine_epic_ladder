@@ -20,6 +20,18 @@ import type {
 } from '../types/normalized-api';
 import * as API from '../api/kanban-api';
 
+/**
+ * ドロップターゲットデータ型
+ * ドラッグ&ドロップ操作で使用される追加のコンテキスト情報
+ */
+export interface DropTargetData {
+  epicId?: string;
+  featureId?: string;
+  versionId?: string;
+  userStoryId?: string;
+  [key: string]: unknown;
+}
+
 interface StoreState {
   // 正規化されたエンティティ
   entities: {
@@ -65,14 +77,14 @@ interface StoreState {
   moveFeature: (featureId: string, targetEpicId: string, targetVersionId: string | null) => Promise<void>;
 
   // ドラッグ&ドロップ操作
-  reorderFeatures: (sourceId: string, targetId: string, targetData?: any) => void;
-  reorderUserStories: (sourceId: string, targetId: string, targetData?: any) => void;
+  reorderFeatures: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
+  reorderUserStories: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
   moveUserStoryToCell: (storyId: string, epicId: string, featureId: string, versionId: string) => void;
-  reorderTasks: (sourceId: string, targetId: string, targetData?: any) => void;
-  reorderTests: (sourceId: string, targetId: string, targetData?: any) => void;
-  reorderBugs: (sourceId: string, targetId: string, targetData?: any) => void;
-  reorderEpics: (sourceId: string, targetId: string, targetData?: any) => void;
-  reorderVersions: (sourceId: string, targetId: string, targetData?: any) => void;
+  reorderTasks: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
+  reorderTests: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
+  reorderBugs: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
+  reorderEpics: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
+  reorderVersions: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -318,7 +330,7 @@ export const useStore = create<StoreState>()(
       },
 
       // Feature カードの並び替え (ローカル操作)
-      reorderFeatures: (sourceId: string, targetId: string, targetData?: any) =>
+      reorderFeatures: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           // Addボタンへのドロップの場合
           if (targetData?.isAddButton) {
@@ -395,7 +407,7 @@ export const useStore = create<StoreState>()(
         }, false, 'reorderFeatures'),
 
       // UserStory の並び替え
-      reorderUserStories: (sourceId: string, targetId: string, targetData?: any) =>
+      reorderUserStories: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const sourceStory = state.entities.user_stories[sourceId];
           const targetStory = state.entities.user_stories[targetId];
@@ -482,7 +494,7 @@ export const useStore = create<StoreState>()(
         }, false, 'moveUserStoryToCell'),
 
       // Task の並び替え
-      reorderTasks: (sourceId: string, targetId: string, targetData?: any) =>
+      reorderTasks: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const sourceTask = state.entities.tasks[sourceId];
           const targetTask = state.entities.tasks[targetId];
@@ -522,7 +534,7 @@ export const useStore = create<StoreState>()(
         }, false, 'reorderTasks'),
 
       // Test の並び替え
-      reorderTests: (sourceId: string, targetId: string, targetData?: any) =>
+      reorderTests: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const sourceTest = state.entities.tests[sourceId];
           const targetTest = state.entities.tests[targetId];
@@ -562,7 +574,7 @@ export const useStore = create<StoreState>()(
         }, false, 'reorderTests'),
 
       // Bug の並び替え
-      reorderBugs: (sourceId: string, targetId: string, targetData?: any) =>
+      reorderBugs: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const sourceBug = state.entities.bugs[sourceId];
           const targetBug = state.entities.bugs[targetId];
@@ -602,7 +614,7 @@ export const useStore = create<StoreState>()(
         }, false, 'reorderBugs'),
 
       // Epic の並び替え
-      reorderEpics: (sourceId: string, targetId: string, targetData?: any) =>
+      reorderEpics: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const epicOrder = state.grid.epic_order;
           const sourceIndex = epicOrder.indexOf(sourceId);
@@ -619,7 +631,7 @@ export const useStore = create<StoreState>()(
         }, false, 'reorderEpics'),
 
       // Version の並び替え
-      reorderVersions: (sourceId: string, targetId: string, targetData?: any) =>
+      reorderVersions: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const versionOrder = state.grid.version_order;
           const sourceIndex = versionOrder.indexOf(sourceId);

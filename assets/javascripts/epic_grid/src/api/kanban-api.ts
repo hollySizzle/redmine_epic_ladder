@@ -40,7 +40,7 @@ class KanbanAPIError extends Error {
     message: string,
     public code: string,
     public status: number,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'KanbanAPIError';
@@ -271,7 +271,24 @@ export async function reorderVersions(
 // DELETE操作
 // ========================================
 
-// TODO: 削除APIは後で実装
+/**
+ * TODO: 削除API実装予定
+ *
+ * 実装予定のエンドポイント:
+ * - DELETE /api/epic_grid/projects/:project_id/epics/:id
+ * - DELETE /api/epic_grid/projects/:project_id/versions/:id
+ * - DELETE /api/epic_grid/projects/:project_id/features/:id
+ * - DELETE /api/epic_grid/projects/:project_id/user_stories/:id
+ * - DELETE /api/epic_grid/projects/:project_id/tasks/:id
+ * - DELETE /api/epic_grid/projects/:project_id/tests/:id
+ * - DELETE /api/epic_grid/projects/:project_id/bugs/:id
+ *
+ * 削除時の考慮事項:
+ * - 子要素の連鎖削除またはorphan処理
+ * - grid.indexからの削除
+ * - feature_order_by_epicの更新
+ * - ソフトデリート vs ハードデリート
+ */
 
 // ========================================
 // デバッグ/テスト用

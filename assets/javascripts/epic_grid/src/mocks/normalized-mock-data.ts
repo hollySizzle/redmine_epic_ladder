@@ -12,13 +12,13 @@ export const normalizedMockData: NormalizedAPIResponse = {
         description: '施設情報とユーザーアカウントの管理機能',
         status: 'open',
         fixed_version_id: null,
-        feature_ids: ['f1', 'f2'],
+        feature_ids: ['f1', 'f2', 'f5'],
         statistics: {
-          total_features: 2,
-          completed_features: 0,
-          total_user_stories: 2,
-          total_child_items: 5,
-          completion_percentage: 20.0
+          total_features: 3,
+          completed_features: 1,
+          total_user_stories: 3,
+          total_child_items: 6,
+          completion_percentage: 33.3
         },
         created_on: '2025-01-15T09:00:00Z',
         updated_on: '2025-10-01T14:30:00Z',
@@ -145,8 +145,8 @@ export const normalizedMockData: NormalizedAPIResponse = {
         updated_on: '2025-09-20T10:15:00Z',
         tracker_id: 2
       },
-      f3: {
-        id: 'f3',
+      f5: {
+        id: 'f5',
         title: '編集画面',
         description: 'ユーザー情報編集機能',
         status: 'closed',
@@ -287,7 +287,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         title: 'US#103 ユーザー編集機能',
         description: 'ユーザー情報の更新機能',
         status: 'closed',
-        parent_feature_id: 'f3',
+        parent_feature_id: 'f5',
         task_ids: ['t4'],
         test_ids: [],
         bug_ids: [],
@@ -826,8 +826,11 @@ export const normalizedMockData: NormalizedAPIResponse = {
       'epic1:f2:v1': ['us2'],
       'epic1:f2:v2': ['us6'],
       'epic1:f2:v3': [],
+      'epic1:f5:v1': [],
+      'epic1:f5:v2': ['us3'],
+      'epic1:f5:v3': [],
       'epic2:f3:v1': [],
-      'epic2:f3:v2': ['us3'],
+      'epic2:f3:v2': [],
       'epic2:f3:v3': ['us7'],
       'epic2:f4:v1': [],
       'epic2:f4:v2': ['us4'],
@@ -835,7 +838,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
     },
     epic_order: ['epic1', 'epic2'],
     feature_order_by_epic: {
-      epic1: ['f1', 'f2'],
+      epic1: ['f1', 'f2', 'f5'],
       epic2: ['f3', 'f4']
     },
     version_order: ['v1', 'v2', 'v3']
