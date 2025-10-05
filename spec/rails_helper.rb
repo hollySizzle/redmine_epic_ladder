@@ -188,12 +188,12 @@ RSpec.configure do |config|
       # ただしcleaningブロックは使わない（トランザクション分離の問題を回避）
       DatabaseCleaner.strategy = :truncation, { except: protected_tables }
 
-      # 組み込みグループを再作成
-      GroupAnonymous.load_instance rescue nil
-      GroupNonMember.load_instance rescue nil
-
       # テスト前にクリーンアップ（seed dataは保護）
       DatabaseCleaner.clean
+
+      # 組み込みグループを再作成（クリーンアップ後に実行）
+      GroupAnonymous.load_instance rescue nil
+      GroupNonMember.load_instance rescue nil
 
       # テスト実行（cleaningブロックなし - サーバーから見えるように）
       example.run
