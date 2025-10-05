@@ -24,7 +24,11 @@ export const App: React.FC = () => {
 
   // 初期データ取得
   useEffect(() => {
-    fetchGridData('1'); // projectId = 1
+    // data-project-id属性からプロジェクトIDを取得
+    const rootElement = document.getElementById('kanban-root');
+    const dataProjectId = rootElement?.getAttribute('data-project-id') || '1';
+    console.log('📊 Loading grid for project ID:', dataProjectId);
+    fetchGridData(dataProjectId);
   }, [fetchGridData]);
 
   // グローバルなドロップイベント監視

@@ -336,26 +336,73 @@ lsof -ti:3001 | xargs -r kill -9
 
 ## 8. E2E テスト
 
-### 作成方法
+### 8.1 重要な制約事項
 
+**System specとデータ可視性:**
+- テストプロセスとRailsサーバーは**別プロセス**で動作
+- `DatabaseCleaner.cleaning`ブロック内のデータは別プロセスから見えない
+- rails_helper.rbでsystem spec専用の設定を実装済み
+
+```ruby
+# rails_helper.rb (自動適用済み)
+if example.metadata[:type] == :system
+  DatabaseCleaner.clean      # 前クリーンアップ
+  example.run                # cleaningブロックなし
+  DatabaseCleaner.clean      # 後クリーンアップ
+end
+```
+
+### 8.2 作成方法
+
+**テンプレートをコピー:**
 ```bash
 cp spec/system/epic_grid/simple_e2e_spec.rb spec/system/epic_grid/my_feature_spec.rb
 ```
 
-**基本構造そのまま使用**: プロジェクト/ユーザー作成、ログインフロー
-
-**変更箇所のみ修正**:
+**ヘルパーメソッド使用（推奨）:**
 ```ruby
-before(:each) { @data = create(:issue, project: project) }
+let!(:project) { setup_epic_grid_project(identifier: 'test-project') }
+let!(:user) { setup_admin_user(login: 'test_user') }
 
-it 'displays feature' do
-  @playwright_page.goto("/projects/#{project.identifier}/my_route")
-  @playwright_page.wait_for_selector('.my-component')
-  expect(@playwright_page.query_selector("text='#{@data.subject}'")).not_to be_nil
+before(:each) do
+  # プロジェクトに紐づくトラッカーを取得（重複作成回避）
+  epic_tracker = project.trackers.find { |t| t.name == EpicGridTestConfig::TRACKER_NAMES[:epic] }
+
+  # テストデータ作成（トラッカーを明示的に渡す）
+  @epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Test Epic')
+end
+
+it 'displays data' do
+  login_as(user)
+  goto_kanban(project)
+  expect_text_visible('Test Epic')
 end
 ```
 
-### デバッグ手順
+**利用可能なヘルパー** (`spec/support/epic_grid_e2e_helpers.rb`):
+- `setup_epic_grid_project(identifier:, name:)` - プロジェクト+トラッカー+モジュール作成
+- `setup_admin_user(login:)` - 管理者ユーザー作成
+- `login_as(user)` - Playwrightでログイン
+- `goto_kanban(project)` - カンバンページ遷移+読み込み待機
+- `expect_text_visible(text)` - テキスト表示確認
+- `verify_kanban_structure` - グリッド構造検証
+
+### 8.3 注意事項
+
+**❌ 避けるべきパターン:**
+```ruby
+# FactoryBotのassociationが重複してトラッカー作成を試みる
+@epic = create(:epic, project: project)  # NG: trackerを内部で作成
+```
+
+**✅ 推奨パターン:**
+```ruby
+# プロジェクトに既存のトラッカーを明示的に指定
+tracker = project.trackers.find { |t| t.name == EpicGridTestConfig::TRACKER_NAMES[:epic] }
+@epic = create(:issue, project: project, tracker: tracker, subject: 'Test Epic')
+```
+
+### 8.4 デバッグ手順
 
 **Phase 1: Reference Test実行**
 ```bash
@@ -369,11 +416,20 @@ RAILS_ENV=test bundle exec rspec spec/system/epic_grid/simple_e2e_spec.rb
 # スクリーンショット
 ls -lth tmp/test_artifacts/screenshots/ | head -3
 
-# ログ
-tail -50 log/test.log | grep ERROR
+# HTML保存
+cat tmp/test_artifacts/html/[最新ファイル].html | grep -E "(Error|data-)"
 
-# セレクタ確認
-grep -r "className" assets/javascripts/ | grep -i "grid"
+# サーバーログ
+tail -50 log/test.log | grep -E "(ERROR|Started GET)"
+```
+
+**Phase 3: データ可視性確認**
+```bash
+# テスト中にサーバーからデータが見えるか確認
+RAILS_ENV=test bundle exec rails runner "
+  puts 'Projects: ' + Project.count.to_s
+  puts 'Issues: ' + Issue.count.to_s
+"
 ```
 
 ## 10. 参考

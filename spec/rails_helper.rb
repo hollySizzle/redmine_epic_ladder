@@ -185,21 +185,28 @@ RSpec.configure do |config|
 
     if example.metadata[:type] == :system
       # System spec: 別プロセス（Railsサーバー）から見えるように truncation 使用
-      # default data テーブルは保護
+      # ただしcleaningブロックは使わない（トランザクション分離の問題を回避）
       DatabaseCleaner.strategy = :truncation, { except: protected_tables }
+
+      # 組み込みグループを再作成
+      GroupAnonymous.load_instance rescue nil
+      GroupNonMember.load_instance rescue nil
+
+      # テスト前にクリーンアップ（seed dataは保護）
+      DatabaseCleaner.clean
+
+      # テスト実行（cleaningブロックなし - サーバーから見えるように）
+      example.run
+
+      # テスト後にクリーンアップ
+      DatabaseCleaner.clean
     else
       # 通常の spec: 高速な transaction 使用
       DatabaseCleaner.strategy = :transaction
-    end
 
-    # 組み込みグループを再作成（truncation 前に必須 - サーバーが参照する）
-    if example.metadata[:type] == :system
-      GroupAnonymous.load_instance rescue nil
-      GroupNonMember.load_instance rescue nil
-    end
-
-    DatabaseCleaner.cleaning do
-      example.run
+      DatabaseCleaner.cleaning do
+        example.run
+      end
     end
   end
   

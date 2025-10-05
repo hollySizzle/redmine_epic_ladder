@@ -16,24 +16,24 @@ FactoryBot.define do
     initialize_with do
       name = EpicGridTestConfig::TRACKER_NAMES[:epic]
 
-      # 既存レコードを検索
-      Tracker.find_by(name: name) || begin
-        # 新規作成
+      # 既存レコードを検索（常に最新の状態を取得）
+      existing = Tracker.find_by(name: name)
+      if existing
+        existing
+      else
+        # 新規作成を試みる
         status = IssueStatus.find_by(name: 'New') || IssueStatus.first
-        tracker = Tracker.new(name: name, default_status: status, position: 1)
 
+        # find_or_create_by!を使って、レースコンディションに対応
         begin
-          tracker.save!
-          tracker
-        rescue ActiveRecord::RecordInvalid => e
-          # 並行実行で別スレッドが先に作成した場合、再検索
-          # エラーがnameフィールドの重複に関するものか確認
-          if e.record.errors[:name].any? || e.message =~ /name/i
-            found = Tracker.find_by(name: name)
-            found || raise # 見つからなければ元のエラーをraise
-          else
-            raise
+          Tracker.find_or_create_by!(name: name) do |tracker|
+            tracker.default_status = status
+            tracker.position = 1
           end
+        rescue ActiveRecord::RecordInvalid => e
+          # ブロック内でのvalidation errorの場合、既存レコードを返す
+          puts "[DEBUG] Tracker creation error: #{e.message}"
+          Tracker.find_by!(name: name)
         end
       end
     end
@@ -50,7 +50,13 @@ FactoryBot.define do
           tracker.save!
           tracker
         rescue ActiveRecord::RecordInvalid => e
-          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+          # 並行実行で別スレッドが先に作成した場合、再検索
+          # Name uniqueness エラーなら既存レコードを返す
+          if e.message.include?('Name') || e.message.include?('taken') || e.message.include?('already')
+            Tracker.find_by!(name: name)
+          else
+            raise
+          end
         end
       end
     end
@@ -67,7 +73,13 @@ FactoryBot.define do
           tracker.save!
           tracker
         rescue ActiveRecord::RecordInvalid => e
-          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+          # 並行実行で別スレッドが先に作成した場合、再検索
+          # Name uniqueness エラーなら既存レコードを返す
+          if e.message.include?('Name') || e.message.include?('taken') || e.message.include?('already')
+            Tracker.find_by!(name: name)
+          else
+            raise
+          end
         end
       end
     end
@@ -84,7 +96,13 @@ FactoryBot.define do
           tracker.save!
           tracker
         rescue ActiveRecord::RecordInvalid => e
-          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+          # 並行実行で別スレッドが先に作成した場合、再検索
+          # Name uniqueness エラーなら既存レコードを返す
+          if e.message.include?('Name') || e.message.include?('taken') || e.message.include?('already')
+            Tracker.find_by!(name: name)
+          else
+            raise
+          end
         end
       end
     end
@@ -101,7 +119,13 @@ FactoryBot.define do
           tracker.save!
           tracker
         rescue ActiveRecord::RecordInvalid => e
-          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+          # 並行実行で別スレッドが先に作成した場合、再検索
+          # Name uniqueness エラーなら既存レコードを返す
+          if e.message.include?('Name') || e.message.include?('taken') || e.message.include?('already')
+            Tracker.find_by!(name: name)
+          else
+            raise
+          end
         end
       end
     end
@@ -118,7 +142,13 @@ FactoryBot.define do
           tracker.save!
           tracker
         rescue ActiveRecord::RecordInvalid => e
-          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+          # 並行実行で別スレッドが先に作成した場合、再検索
+          # Name uniqueness エラーなら既存レコードを返す
+          if e.message.include?('Name') || e.message.include?('taken') || e.message.include?('already')
+            Tracker.find_by!(name: name)
+          else
+            raise
+          end
         end
       end
     end
