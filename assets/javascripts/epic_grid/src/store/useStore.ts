@@ -69,6 +69,8 @@ interface StoreState {
   reorderTasks: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderTests: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderBugs: (sourceId: string, targetId: string, targetData?: any) => void;
+  reorderEpics: (sourceId: string, targetId: string, targetData?: any) => void;
+  reorderVersions: (sourceId: string, targetId: string, targetData?: any) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -528,6 +530,40 @@ export const useStore = create<StoreState>()(
             sourceBug.parent_user_story_id = targetBug.parent_user_story_id;
           }
         }, false, 'reorderBugs'),
+
+      // Epic の並び替え
+      reorderEpics: (sourceId: string, targetId: string, targetData?: any) =>
+        set((state) => {
+          const epicOrder = state.grid.epic_order;
+          const sourceIndex = epicOrder.indexOf(sourceId);
+          const targetIndex = epicOrder.indexOf(targetId);
+
+          if (sourceIndex === -1 || targetIndex === -1) return;
+
+          // 配列から削除
+          epicOrder.splice(sourceIndex, 1);
+
+          // 新しい位置を計算（削除後のインデックスを考慮）
+          const newTargetIndex = epicOrder.indexOf(targetId);
+          epicOrder.splice(newTargetIndex + 1, 0, sourceId);
+        }, false, 'reorderEpics'),
+
+      // Version の並び替え
+      reorderVersions: (sourceId: string, targetId: string, targetData?: any) =>
+        set((state) => {
+          const versionOrder = state.grid.version_order;
+          const sourceIndex = versionOrder.indexOf(sourceId);
+          const targetIndex = versionOrder.indexOf(targetId);
+
+          if (sourceIndex === -1 || targetIndex === -1) return;
+
+          // 配列から削除
+          versionOrder.splice(sourceIndex, 1);
+
+          // 新しい位置を計算（削除後のインデックスを考慮）
+          const newTargetIndex = versionOrder.indexOf(targetId);
+          versionOrder.splice(newTargetIndex + 1, 0, sourceId);
+        }, false, 'reorderVersions'),
     }))
   )
 );

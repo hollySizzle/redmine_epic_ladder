@@ -200,7 +200,9 @@
       "Bash(xargs cat:*)",
       "Bash(RAILS_ENV=test bundle exec rails runner \"puts ''=== Test DB Users ===''; User.all.each { |u| puts \"\"ID: #{u.id}, Login: #{u.login}, Type: #{u.type}\"\" }; puts \"\"Total: #{User.count}\"\"\")",
       "Bash(RAILS_ENV=test bundle exec rails runner \"\nputs ''=== Anonymous/NonMember Groups ===''\nputs \"\"GroupAnonymous: #{GroupAnonymous.first&.id rescue ''ERROR''}\"\"\nputs \"\"GroupNonMember: #{GroupNonMember.first&.id rescue ''ERROR''}\"\"\nputs \"\"Total Groups: #{Group.count}\"\"\n\")",
-      "mcp__serena__list_dir"
+      "mcp__serena__list_dir",
+      "Bash(npm uninstall:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": [],

@@ -21,6 +21,8 @@ export const App: React.FC = () => {
   const reorderTasks = useStore(state => state.reorderTasks);
   const reorderTests = useStore(state => state.reorderTests);
   const reorderBugs = useStore(state => state.reorderBugs);
+  const reorderEpics = useStore(state => state.reorderEpics);
+  const reorderVersions = useStore(state => state.reorderVersions);
 
   // 初期データ取得
   useEffect(() => {
@@ -79,10 +81,18 @@ export const App: React.FC = () => {
           console.log('🔍 Calling reorderBugs...');
           reorderBugs(sourceId, targetId, targetData);
           console.log('🔍 reorderBugs called');
+        } else if (sourceType === 'epic') {
+          console.log('🔍 Calling reorderEpics...');
+          reorderEpics(sourceId, targetId, targetData);
+          console.log('🔍 reorderEpics called');
+        } else if (sourceType === 'version') {
+          console.log('🔍 Calling reorderVersions...');
+          reorderVersions(sourceId, targetId, targetData);
+          console.log('🔍 reorderVersions called');
         }
       }
     });
-  }, [reorderFeatures, reorderUserStories, reorderTasks, reorderTests, reorderBugs]);
+  }, [reorderFeatures, reorderUserStories, reorderTasks, reorderTests, reorderBugs, reorderEpics, reorderVersions]);
 
   if (isLoading) {
     return <div className="loading">Loading grid data...</div>;

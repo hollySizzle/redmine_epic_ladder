@@ -3,6 +3,10 @@ import type {
   NormalizedAPIResponse,
   MoveFeatureRequest,
   MoveFeatureResponse,
+  ReorderEpicsRequest,
+  ReorderEpicsResponse,
+  ReorderVersionsRequest,
+  ReorderVersionsResponse,
   UpdatesResponse,
   ErrorResponse,
   CreateEpicRequest,
@@ -829,6 +833,146 @@ export const handlers = [
     };
 
     return HttpResponse.json(response, { status: 201 });
+  }),
+
+  // POST /api/epic_grid/projects/:projectId/grid/reorder_epics
+  // Epic並び替え処理
+  http.post('/api/epic_grid/projects/:projectId/grid/reorder_epics', async ({ request }: { request: Request }) => {
+    await delay(100);
+
+    const body = (await request.json()) as ReorderEpicsRequest;
+    const { source_epic_id, target_epic_id, position } = body;
+
+    // Epic存在確認
+    if (!currentData.entities.epics[source_epic_id]) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `Epic ${source_epic_id} not found`,
+          details: { field: 'source_epic_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    if (!currentData.entities.epics[target_epic_id]) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `Epic ${target_epic_id} not found`,
+          details: { field: 'target_epic_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // 並び替え実行
+    const epicOrder = currentData.grid.epic_order;
+    const sourceIndex = epicOrder.indexOf(source_epic_id);
+    const targetIndex = epicOrder.indexOf(target_epic_id);
+
+    if (sourceIndex !== -1) {
+      epicOrder.splice(sourceIndex, 1);
+    }
+
+    const newTargetIndex = epicOrder.indexOf(target_epic_id);
+    const insertPosition = position === 'before' ? newTargetIndex : newTargetIndex + 1;
+    epicOrder.splice(insertPosition, 0, source_epic_id);
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: ReorderEpicsResponse = {
+      success: true,
+      data: {
+        epic_order: currentData.grid.epic_order
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response);
+  }),
+
+  // POST /api/epic_grid/projects/:projectId/grid/reorder_versions
+  // Version並び替え処理
+  http.post('/api/epic_grid/projects/:projectId/grid/reorder_versions', async ({ request }: { request: Request }) => {
+    await delay(100);
+
+    const body = (await request.json()) as ReorderVersionsRequest;
+    const { source_version_id, target_version_id, position } = body;
+
+    // Version存在確認
+    if (!currentData.entities.versions[source_version_id]) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `Version ${source_version_id} not found`,
+          details: { field: 'source_version_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    if (!currentData.entities.versions[target_version_id]) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `Version ${target_version_id} not found`,
+          details: { field: 'target_version_id' }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // 並び替え実行
+    const versionOrder = currentData.grid.version_order;
+    const sourceIndex = versionOrder.indexOf(source_version_id);
+    const targetIndex = versionOrder.indexOf(target_version_id);
+
+    if (sourceIndex !== -1) {
+      versionOrder.splice(sourceIndex, 1);
+    }
+
+    const newTargetIndex = versionOrder.indexOf(target_version_id);
+    const insertPosition = position === 'before' ? newTargetIndex : newTargetIndex + 1;
+    versionOrder.splice(insertPosition, 0, source_version_id);
+
+    lastUpdateTimestamp = new Date().toISOString();
+
+    const response: ReorderVersionsResponse = {
+      success: true,
+      data: {
+        version_order: currentData.grid.version_order
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response);
   })
 ];
 

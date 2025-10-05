@@ -216,6 +216,112 @@ describe('useStore - Normalized API', () => {
     });
   });
 
+  describe('reorderEpics', () => {
+    it('should reorder epics in epic_order array', () => {
+      const { reorderEpics } = useStore.getState();
+      const initialState = useStore.getState();
+      const initialOrder = [...initialState.grid.epic_order];
+
+      if (initialOrder.length < 2) {
+        expect(true).toBe(true);
+        return;
+      }
+
+      const [epic1, epic2] = initialOrder;
+      reorderEpics(epic1, epic2);
+
+      const state = useStore.getState();
+      const epicOrder = state.grid.epic_order;
+
+      // epic1 が epic2 の後ろに移動していることを確認
+      const epic1Index = epicOrder.indexOf(epic1);
+      const epic2Index = epicOrder.indexOf(epic2);
+      expect(epic1Index).toBeGreaterThan(epic2Index);
+    });
+
+    it('should handle invalid epic ID gracefully', () => {
+      const { reorderEpics } = useStore.getState();
+
+      expect(() => {
+        reorderEpics('invalid-epic-id', 'epic1');
+      }).not.toThrow();
+    });
+
+    it('should maintain epic_order array integrity', () => {
+      const { reorderEpics } = useStore.getState();
+      const initialState = useStore.getState();
+      const initialLength = initialState.grid.epic_order.length;
+
+      if (initialLength < 2) {
+        expect(true).toBe(true);
+        return;
+      }
+
+      const [epic1, epic2] = initialState.grid.epic_order;
+      reorderEpics(epic1, epic2);
+
+      const state = useStore.getState();
+      // 配列の長さは変わらないことを確認
+      expect(state.grid.epic_order.length).toBe(initialLength);
+      // 重複がないことを確認
+      const uniqueEpics = new Set(state.grid.epic_order);
+      expect(uniqueEpics.size).toBe(initialLength);
+    });
+  });
+
+  describe('reorderVersions', () => {
+    it('should reorder versions in version_order array', () => {
+      const { reorderVersions } = useStore.getState();
+      const initialState = useStore.getState();
+      const initialOrder = [...initialState.grid.version_order];
+
+      if (initialOrder.length < 2) {
+        expect(true).toBe(true);
+        return;
+      }
+
+      const [version1, version2] = initialOrder;
+      reorderVersions(version1, version2);
+
+      const state = useStore.getState();
+      const versionOrder = state.grid.version_order;
+
+      // version1 が version2 の後ろに移動していることを確認
+      const version1Index = versionOrder.indexOf(version1);
+      const version2Index = versionOrder.indexOf(version2);
+      expect(version1Index).toBeGreaterThan(version2Index);
+    });
+
+    it('should handle invalid version ID gracefully', () => {
+      const { reorderVersions } = useStore.getState();
+
+      expect(() => {
+        reorderVersions('invalid-version-id', 'v1');
+      }).not.toThrow();
+    });
+
+    it('should maintain version_order array integrity', () => {
+      const { reorderVersions } = useStore.getState();
+      const initialState = useStore.getState();
+      const initialLength = initialState.grid.version_order.length;
+
+      if (initialLength < 2) {
+        expect(true).toBe(true);
+        return;
+      }
+
+      const [version1, version2] = initialState.grid.version_order;
+      reorderVersions(version1, version2);
+
+      const state = useStore.getState();
+      // 配列の長さは変わらないことを確認
+      expect(state.grid.version_order.length).toBe(initialLength);
+      // 重複がないことを確認
+      const uniqueVersions = new Set(state.grid.version_order);
+      expect(uniqueVersions.size).toBe(initialLength);
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle invalid feature ID gracefully', () => {
       const { reorderFeatures } = useStore.getState();

@@ -329,6 +329,40 @@ export interface MoveFeatureResponse {
   };
 }
 
+export interface ReorderEpicsRequest {
+  source_epic_id: string;
+  target_epic_id: string;
+  position: 'before' | 'after';
+}
+
+export interface ReorderEpicsResponse {
+  success: true;
+  data: {
+    epic_order: string[];
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
+export interface ReorderVersionsRequest {
+  source_version_id: string;
+  target_version_id: string;
+  position: 'before' | 'after';
+}
+
+export interface ReorderVersionsResponse {
+  success: true;
+  data: {
+    version_order: string[];
+  };
+  meta: {
+    timestamp: string;
+    request_id: string;
+  };
+}
+
 export interface UpdatesRequest {
   since: string;
   entity_types?: string[];

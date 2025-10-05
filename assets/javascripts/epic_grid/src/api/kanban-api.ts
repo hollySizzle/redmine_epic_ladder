@@ -23,6 +23,10 @@ import type {
   CreateVersionResponse,
   MoveFeatureRequest,
   MoveFeatureResponse,
+  ReorderEpicsRequest,
+  ReorderEpicsResponse,
+  ReorderVersionsRequest,
+  ReorderVersionsResponse,
   UpdatesResponse,
   ErrorResponse
 } from '../types/normalized-api';
@@ -231,6 +235,36 @@ export async function moveFeature(
     body: JSON.stringify(data)
   });
   return handleResponse<MoveFeatureResponse>(response);
+}
+
+/**
+ * Epic並び替え
+ */
+export async function reorderEpics(
+  projectId: number | string,
+  data: ReorderEpicsRequest
+): Promise<ReorderEpicsResponse> {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/reorder_epics`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return handleResponse<ReorderEpicsResponse>(response);
+}
+
+/**
+ * Version並び替え
+ */
+export async function reorderVersions(
+  projectId: number | string,
+  data: ReorderVersionsRequest
+): Promise<ReorderVersionsResponse> {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/reorder_versions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return handleResponse<ReorderVersionsResponse>(response);
 }
 
 // ========================================
