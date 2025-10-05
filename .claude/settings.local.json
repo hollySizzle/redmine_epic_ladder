@@ -191,7 +191,8 @@
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb --format documentation)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:44 --format documentation)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:80 --format documentation)",
-      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:105 --format documentation)"
+      "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:105 --format documentation)",
+      "mcp__serena__get_symbols_overview"
     ],
     "deny": [],
     "ask": [],
