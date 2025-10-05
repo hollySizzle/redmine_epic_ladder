@@ -475,6 +475,9 @@ export const useStore = create<StoreState>()(
           // UserStoryの親Feature更新
           story.parent_feature_id = featureId;
 
+          // UserStoryのVersion更新 (versionId が 'none' の場合は null に設定)
+          story.fixed_version_id = versionId === 'none' ? null : versionId;
+
           console.log(`✅ Moved UserStory ${storyId} from ${oldCellKey} to ${newCellKey}`);
         }, false, 'moveUserStoryToCell'),
 
