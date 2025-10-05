@@ -57,6 +57,49 @@ module EpicGrid
     end
 
     # ========================================
+    # グリッドインデックス構築（public - Controller から呼び出される）
+    # ========================================
+
+    # グリッドインデックスを構築
+    def epic_grid_index
+      epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
+      feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
+
+      epics = issues.joins(:tracker).where(trackers: { name: epic_tracker })
+      features = issues.joins(:tracker).where(trackers: { name: feature_tracker })
+
+      grid_index = {}
+      epic_ids = []
+      version_ids = versions.pluck(:id).map(&:to_s)
+
+      epics.order(:created_on).each do |epic|
+        epic_ids << epic.id.to_s
+
+        # Epic配下のFeatureをバージョン別に分類
+        epic_features = features.where(parent_id: epic.id)
+
+        # バージョンありのFeature
+        epic_features.where.not(fixed_version_id: nil).group_by(&:fixed_version_id).each do |version_id, version_features|
+          key = "#{epic.id}:#{version_id}"
+          grid_index[key] = version_features.map { |f| f.id.to_s }
+        end
+
+        # バージョンなしのFeature
+        no_version_features = epic_features.where(fixed_version_id: nil)
+        if no_version_features.any?
+          key = "#{epic.id}:none"
+          grid_index[key] = no_version_features.map { |f| f.id.to_s }
+        end
+      end
+
+      {
+        index: grid_index,
+        epic_order: epic_ids,
+        version_order: version_ids + ['none']
+      }
+    end
+
+    # ========================================
     # プライベートメソッド
     # ========================================
 
@@ -106,45 +149,6 @@ module EpicGrid
           updated_on: version.updated_on.iso8601
         }
       end
-    end
-
-    # グリッドインデックスを構築
-    def epic_grid_index
-      epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
-      feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
-
-      epics = issues.joins(:tracker).where(trackers: { name: epic_tracker })
-      features = issues.joins(:tracker).where(trackers: { name: feature_tracker })
-
-      grid_index = {}
-      epic_ids = []
-      version_ids = versions.pluck(:id).map(&:to_s)
-
-      epics.order(:created_on).each do |epic|
-        epic_ids << epic.id.to_s
-
-        # Epic配下のFeatureをバージョン別に分類
-        epic_features = features.where(parent_id: epic.id)
-
-        # バージョンありのFeature
-        epic_features.where.not(fixed_version_id: nil).group_by(&:fixed_version_id).each do |version_id, version_features|
-          key = "#{epic.id}:#{version_id}"
-          grid_index[key] = version_features.map { |f| f.id.to_s }
-        end
-
-        # バージョンなしのFeature
-        no_version_features = epic_features.where(fixed_version_id: nil)
-        if no_version_features.any?
-          key = "#{epic.id}:none"
-          grid_index[key] = no_version_features.map { |f| f.id.to_s }
-        end
-      end
-
-      {
-        index: grid_index,
-        epic_order: epic_ids,
-        version_order: version_ids + ['none']
-      }
     end
 
     # メタデータを構築

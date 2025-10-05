@@ -139,10 +139,18 @@ module EpicGrid
         **user_story_params
       )
 
-      render_success({
-        user_story: serialize_issue_with_children(user_story),
-        feature: serialize_issue(feature.reload)
-      }, :created)
+      # 親Featureをリロード
+      feature.reload
+
+      # MSW準拠のレスポンス構築
+      render_normalized_success(
+        created_entity: user_story.epic_grid_as_normalized_json,
+        updated_entities: {
+          features: { feature.id.to_s => feature.epic_grid_as_normalized_json },
+          user_stories: { user_story.id.to_s => user_story.epic_grid_as_normalized_json }
+        },
+        status: :created
+      )
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたFeatureが見つかりません', :not_found)
     rescue ActiveRecord::RecordInvalid => e
@@ -216,10 +224,18 @@ module EpicGrid
         **task_params
       )
 
-      render_success({
-        task: serialize_issue(task),
-        user_story: serialize_issue_with_children(user_story.reload)
-      }, :created)
+      # 親UserStoryをリロード
+      user_story.reload
+
+      # MSW準拠のレスポンス構築
+      render_normalized_success(
+        created_entity: task.epic_grid_as_normalized_json,
+        updated_entities: {
+          user_stories: { user_story.id.to_s => user_story.epic_grid_as_normalized_json },
+          tasks: { task.id.to_s => task.epic_grid_as_normalized_json }
+        },
+        status: :created
+      )
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたUserStoryが見つかりません', :not_found)
     rescue ActiveRecord::RecordInvalid => e

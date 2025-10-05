@@ -12,7 +12,7 @@ module MswContracts
         subject: String,
         description: String,
         status: String, # 'open' | 'closed'
-        fixed_version_id: [String, NilClass],
+        fixed_version_id: [String, NilClass], # nilも許容
         feature_ids: Array,
         statistics: Hash,
         created_on: String, # ISO8601
@@ -28,7 +28,9 @@ module MswContracts
     },
     meta: {
       timestamp: String,
-      request_id: String
+      request_id: [String, NilClass], # nilも許容（テスト環境）
+      api_version: String,
+      execution_time: [Float, NilClass]
     }
   }.freeze
 
@@ -55,7 +57,9 @@ module MswContracts
     },
     meta: {
       timestamp: String,
-      request_id: String
+      request_id: [String, NilClass],
+      api_version: String,
+      execution_time: [Float, NilClass]
     }
   }.freeze
 
@@ -81,8 +85,8 @@ module MswContracts
       },
       updated_entities: {
         epics: Hash,
-        features: Hash,
-        versions: Hash # optional
+        features: Hash
+        # versions: Hash # optional - nilの場合は存在しない
       },
       grid_updates: {
         index: Hash # { [cellKey]: [featureIds] }
@@ -90,7 +94,9 @@ module MswContracts
     },
     meta: {
       timestamp: String,
-      request_id: String
+      request_id: [String, NilClass],
+      api_version: String,
+      execution_time: [Float, NilClass]
     }
   }.freeze
 
@@ -124,7 +130,9 @@ module MswContracts
     },
     meta: {
       timestamp: String,
-      request_id: String
+      request_id: [String, NilClass],
+      api_version: String,
+      execution_time: [Float, NilClass]
     }
   }.freeze
 
@@ -154,7 +162,9 @@ module MswContracts
     },
     meta: {
       timestamp: String,
-      request_id: String
+      request_id: [String, NilClass],
+      api_version: String,
+      execution_time: [Float, NilClass]
     }
   }.freeze
 

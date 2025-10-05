@@ -48,12 +48,6 @@ RSpec::Matchers.define :conform_to_msw_contract do |contract_name|
         check_structure(value, actual[key], current_path)
       end
 
-    when Array
-      # 配列の場合、要素の型チェックは行わない（空配列も許容）
-      unless actual.is_a?(Array)
-        @errors << [path, Array, actual]
-      end
-
     when Class
       # 型チェック（NilClassは特別扱い）
       unless actual.is_a?(expected)
@@ -61,9 +55,17 @@ RSpec::Matchers.define :conform_to_msw_contract do |contract_name|
       end
 
     when Array
-      # 複数の型を許容（例: [String, NilClass]）
-      unless expected.any? { |klass| actual.is_a?(klass) }
-        @errors << [path, "one of #{expected.inspect}", actual]
+      # 配列の場合
+      if expected.all? { |e| e.is_a?(Class) }
+        # 複数の型を許容（例: [String, NilClass]）
+        unless expected.any? { |klass| actual.is_a?(klass) }
+          @errors << [path, "one of #{expected.inspect}", actual]
+        end
+      else
+        # 配列要素の型チェックは行わない（空配列も許容）
+        unless actual.is_a?(Array)
+          @errors << [path, Array, actual]
+        end
       end
 
     else
