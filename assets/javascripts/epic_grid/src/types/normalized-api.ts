@@ -424,6 +424,7 @@ export interface CreateFeatureResponse {
     };
     grid_updates: {
       index: Record<string, string[]>;
+      feature_order_by_epic: Record<string, string[]>;
     };
   };
   meta: {

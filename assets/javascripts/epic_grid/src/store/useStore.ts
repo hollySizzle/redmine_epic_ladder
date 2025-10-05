@@ -34,8 +34,9 @@ interface StoreState {
 
   // グリッドインデックス
   grid: {
-    index: Record<string, string[]>; // "epicId:versionId" => feature IDs
+    index: Record<string, string[]>; // "epicId:featureId:versionId" => userStory IDs (3D Grid)
     epic_order: string[];
+    feature_order_by_epic: Record<string, string[]>; // epicId => feature IDs
     version_order: string[];
   };
 
@@ -89,6 +90,7 @@ export const useStore = create<StoreState>()(
       grid: {
         index: {},
         epic_order: [],
+        feature_order_by_epic: {},
         version_order: []
       },
 
@@ -142,7 +144,10 @@ export const useStore = create<StoreState>()(
             Object.assign(state.entities.epics, result.data.updated_entities.epics || {});
             Object.assign(state.entities.features, result.data.updated_entities.features || {});
             Object.assign(state.entities.versions, result.data.updated_entities.versions || {});
+
+            // 3D Grid対応: grid.indexとfeature_order_by_epicを更新
             Object.assign(state.grid.index, result.data.grid_updates.index);
+            Object.assign(state.grid.feature_order_by_epic, result.data.grid_updates.feature_order_by_epic);
           });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
@@ -161,6 +166,23 @@ export const useStore = create<StoreState>()(
           set((state) => {
             Object.assign(state.entities.features, result.data.updated_entities.features || {});
             Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
+
+            // 3D Grid対応: 新UserStoryをgrid.indexに追加
+            // MSWハンドラーがgrid.indexを更新しているので、それを反映
+            const newStory = result.data.created_entity;
+            const feature = state.entities.features[featureId];
+            if (feature && newStory) {
+              const epicId = feature.parent_epic_id;
+              const versionId = newStory.fixed_version_id || 'none';
+              const cellKey = `${epicId}:${featureId}:${versionId}`;
+
+              if (!state.grid.index[cellKey]) {
+                state.grid.index[cellKey] = [];
+              }
+              if (!state.grid.index[cellKey].includes(newStory.id)) {
+                state.grid.index[cellKey].push(newStory.id);
+              }
+            }
           });
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });

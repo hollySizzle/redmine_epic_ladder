@@ -203,7 +203,8 @@
       "mcp__serena__list_dir",
       "Bash(npm uninstall:*)",
       "Bash(npm test:*)",
-      "Read(//workspace/**)"
+      "Read(//workspace/**)",
+      "Bash(pgrep:*)"
     ],
     "deny": [],
     "ask": [],

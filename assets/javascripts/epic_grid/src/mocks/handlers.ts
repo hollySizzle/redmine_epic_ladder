@@ -64,9 +64,23 @@ export const handlers = [
         }
       });
 
-      // グリッドインデックスも更新
+      // UserStoryからclosedを除外
+      Object.keys(responseData.entities.user_stories).forEach(id => {
+        if (responseData.entities.user_stories[id].status === 'closed') {
+          delete responseData.entities.user_stories[id];
+        }
+      });
+
+      // grid.indexも更新 (closedのUserStoryを削除)
       Object.keys(responseData.grid.index).forEach(key => {
         responseData.grid.index[key] = responseData.grid.index[key].filter(
+          (userStoryId: string) => responseData.entities.user_stories[userStoryId]
+        );
+      });
+
+      // feature_order_by_epicからclosedのFeatureを削除
+      Object.keys(responseData.grid.feature_order_by_epic).forEach(epicId => {
+        responseData.grid.feature_order_by_epic[epicId] = responseData.grid.feature_order_by_epic[epicId].filter(
           (featureId: string) => responseData.entities.features[featureId]
         );
       });
@@ -127,29 +141,50 @@ export const handlers = [
       return HttpResponse.json(errorResponse, { status: 404 });
     }
 
-    // 古いセルから削除
-    const oldCellKey = `${feature.parent_epic_id}:${feature.fixed_version_id || 'none'}`;
-    currentData.grid.index[oldCellKey] = currentData.grid.index[oldCellKey].filter(
-      id => id !== feature_id
-    );
+    const oldEpicId = feature.parent_epic_id;
+    const oldVersionId = feature.fixed_version_id;
 
-    // 新しいセルに追加
-    const newCellKey = `${target_epic_id}:${target_version_id || 'none'}`;
-    if (!currentData.grid.index[newCellKey]) {
-      currentData.grid.index[newCellKey] = [];
+    // feature_order_by_epicを更新 (3D Grid対応)
+    // 古いEpicから削除
+    if (currentData.grid.feature_order_by_epic[oldEpicId]) {
+      currentData.grid.feature_order_by_epic[oldEpicId] =
+        currentData.grid.feature_order_by_epic[oldEpicId].filter(id => id !== feature_id);
     }
-    currentData.grid.index[newCellKey].push(feature_id);
+
+    // 新しいEpicに追加
+    if (!currentData.grid.feature_order_by_epic[target_epic_id]) {
+      currentData.grid.feature_order_by_epic[target_epic_id] = [];
+    }
+    currentData.grid.feature_order_by_epic[target_epic_id].push(feature_id);
 
     // Featureエンティティ更新
     feature.parent_epic_id = target_epic_id;
     feature.fixed_version_id = target_version_id;
     feature.updated_on = new Date().toISOString();
 
-    // Version伝播 (UserStory以下も更新)
+    // grid.indexの全UserStoryセルを更新 (3D Grid対応)
     const affectedIssueIds: string[] = [];
+
     feature.user_story_ids.forEach(storyId => {
       const story = currentData.entities.user_stories[storyId];
       if (story) {
+        // 古いセルから削除
+        currentData.grid.version_order.forEach(vId => {
+          const oldCellKey = `${oldEpicId}:${feature_id}:${vId}`;
+          if (currentData.grid.index[oldCellKey]) {
+            currentData.grid.index[oldCellKey] =
+              currentData.grid.index[oldCellKey].filter(id => id !== storyId);
+          }
+        });
+
+        // 新しいセルに追加
+        const newCellKey = `${target_epic_id}:${feature_id}:${target_version_id || 'none'}`;
+        if (!currentData.grid.index[newCellKey]) {
+          currentData.grid.index[newCellKey] = [];
+        }
+        currentData.grid.index[newCellKey].push(storyId);
+
+        // UserStoryエンティティ更新
         story.fixed_version_id = target_version_id;
         story.version_source = 'inherited';
         story.updated_on = new Date().toISOString();
@@ -191,10 +226,7 @@ export const handlers = [
           [feature_id]: feature
         }
       },
-      updated_grid_index: {
-        [oldCellKey]: currentData.grid.index[oldCellKey],
-        [newCellKey]: currentData.grid.index[newCellKey]
-      },
+      updated_grid_index: currentData.grid.index,
       propagation_result: {
         affected_issue_ids: affectedIssueIds,
         conflicts: []
@@ -302,12 +334,11 @@ export const handlers = [
     // エンティティ追加
     currentData.entities.features[newFeatureId] = newFeature;
 
-    // グリッドインデックス更新
-    const cellKey = `${parent_epic_id}:${fixed_version_id || 'none'}`;
-    if (!currentData.grid.index[cellKey]) {
-      currentData.grid.index[cellKey] = [];
+    // feature_order_by_epic更新 (3D Grid対応)
+    if (!currentData.grid.feature_order_by_epic[parent_epic_id]) {
+      currentData.grid.feature_order_by_epic[parent_epic_id] = [];
     }
-    currentData.grid.index[cellKey].push(newFeatureId);
+    currentData.grid.feature_order_by_epic[parent_epic_id].push(newFeatureId);
 
     // 親Epic更新
     parentEpic.feature_ids.push(newFeatureId);
@@ -336,7 +367,8 @@ export const handlers = [
           } : {})
         },
         grid_updates: {
-          index: { [cellKey]: currentData.grid.index[cellKey] }
+          index: currentData.grid.index,
+          feature_order_by_epic: currentData.grid.feature_order_by_epic
         }
       },
       meta: {
@@ -416,6 +448,17 @@ export const handlers = [
     parentFeature.user_story_ids.push(newStoryId);
     parentFeature.statistics.total_user_stories += 1;
     parentFeature.updated_on = new Date().toISOString();
+
+    // grid.index更新 (3D Grid対応)
+    // Epic × Feature × Version の3次元セルにUserStoryを追加
+    const epicId = parentFeature.parent_epic_id;
+    const versionId = parentFeature.fixed_version_id || 'none';
+    const cellKey = `${epicId}:${featureId}:${versionId}`;
+
+    if (!currentData.grid.index[cellKey]) {
+      currentData.grid.index[cellKey] = [];
+    }
+    currentData.grid.index[cellKey].push(newStoryId);
 
     lastUpdateTimestamp = new Date().toISOString();
 
