@@ -13,44 +13,115 @@ FactoryBot.define do
 
   # Epic Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :epic_tracker, class: 'Tracker' do
-    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:epic]) }
-    default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
-    position { 1 }
+    initialize_with do
+      name = EpicGridTestConfig::TRACKER_NAMES[:epic]
+
+      # 既存レコードを検索
+      Tracker.find_by(name: name) || begin
+        # 新規作成
+        status = IssueStatus.find_by(name: 'New') || IssueStatus.first
+        tracker = Tracker.new(name: name, default_status: status, position: 1)
+
+        begin
+          tracker.save!
+          tracker
+        rescue ActiveRecord::RecordInvalid => e
+          # 並行実行で別スレッドが先に作成した場合、再検索
+          # エラーがnameフィールドの重複に関するものか確認
+          if e.record.errors[:name].any? || e.message =~ /name/i
+            found = Tracker.find_by(name: name)
+            found || raise # 見つからなければ元のエラーをraise
+          else
+            raise
+          end
+        end
+      end
+    end
   end
 
   # Feature Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :feature_tracker, class: 'Tracker' do
-    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:feature]) }
-    default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
-    position { 2 }
+    initialize_with do
+      name = EpicGridTestConfig::TRACKER_NAMES[:feature]
+      Tracker.find_by(name: name) || begin
+        status = IssueStatus.find_by(name: 'New') || IssueStatus.first
+        tracker = Tracker.new(name: name, default_status: status, position: 2)
+        begin
+          tracker.save!
+          tracker
+        rescue ActiveRecord::RecordInvalid => e
+          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+        end
+      end
+    end
   end
 
   # UserStory Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :user_story_tracker, class: 'Tracker' do
-    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:user_story]) }
-    default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
-    position { 3 }
+    initialize_with do
+      name = EpicGridTestConfig::TRACKER_NAMES[:user_story]
+      Tracker.find_by(name: name) || begin
+        status = IssueStatus.find_by(name: 'New') || IssueStatus.first
+        tracker = Tracker.new(name: name, default_status: status, position: 3)
+        begin
+          tracker.save!
+          tracker
+        rescue ActiveRecord::RecordInvalid => e
+          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+        end
+      end
+    end
   end
 
   # Task Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :task_tracker, class: 'Tracker' do
-    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:task]) }
-    default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
-    position { 4 }
+    initialize_with do
+      name = EpicGridTestConfig::TRACKER_NAMES[:task]
+      Tracker.find_by(name: name) || begin
+        status = IssueStatus.find_by(name: 'New') || IssueStatus.first
+        tracker = Tracker.new(name: name, default_status: status, position: 4)
+        begin
+          tracker.save!
+          tracker
+        rescue ActiveRecord::RecordInvalid => e
+          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+        end
+      end
+    end
   end
 
   # Test Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :test_tracker, class: 'Tracker' do
-    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:test]) }
-    default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
-    position { 5 }
+    initialize_with do
+      name = EpicGridTestConfig::TRACKER_NAMES[:test]
+      Tracker.find_by(name: name) || begin
+        status = IssueStatus.find_by(name: 'New') || IssueStatus.first
+        tracker = Tracker.new(name: name, default_status: status, position: 5)
+        begin
+          tracker.save!
+          tracker
+        rescue ActiveRecord::RecordInvalid => e
+          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+        end
+      end
+    end
   end
 
   # Bug Tracker (テスト専用名で作成、find_or_create_byで再利用)
   factory :bug_tracker, class: 'Tracker' do
-    initialize_with { Tracker.find_or_create_by(name: EpicGridTestConfig::TRACKER_NAMES[:bug]) }
-    default_status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
-    position { 6 }
+    initialize_with do
+      name = EpicGridTestConfig::TRACKER_NAMES[:bug]
+      Tracker.find_by(name: name) || begin
+        status = IssueStatus.find_by(name: 'New') || IssueStatus.first
+        tracker = Tracker.new(name: name, default_status: status, position: 6)
+        begin
+          tracker.save!
+          tracker
+        rescue ActiveRecord::RecordInvalid => e
+          (e.record.errors[:name].any? || e.message =~ /name/i) ? (Tracker.find_by(name: name) || raise) : raise
+        end
+      end
+    end
   end
 
   # Issue Status
@@ -75,10 +146,10 @@ FactoryBot.define do
   factory :epic, class: 'Issue' do
     sequence(:subject) { |n| "Epic #{n}" }
     association :project
-    association :tracker, factory: :epic_tracker
     association :author, factory: :user
     association :status, factory: :issue_status
     association :priority, factory: :issue_priority
+    association :tracker, factory: :epic_tracker
 
     trait :with_features do
       after(:create) do |epic|
@@ -95,10 +166,10 @@ FactoryBot.define do
   factory :feature, class: 'Issue' do
     sequence(:subject) { |n| "Feature #{n}" }
     association :project
-    association :tracker, factory: :feature_tracker
     association :author, factory: :user
     association :status, factory: :issue_status
     association :priority, factory: :issue_priority
+    association :tracker, factory: :feature_tracker
 
     trait :with_parent_epic do
       association :parent, factory: :epic
@@ -119,10 +190,10 @@ FactoryBot.define do
   factory :user_story, class: 'Issue' do
     sequence(:subject) { |n| "User Story #{n}" }
     association :project
-    association :tracker, factory: :user_story_tracker
     association :author, factory: :user
     association :status, factory: :issue_status
     association :priority, factory: :issue_priority
+    association :tracker, factory: :user_story_tracker
 
     trait :with_parent_feature do
       association :parent, factory: :feature
@@ -157,10 +228,10 @@ FactoryBot.define do
   factory :task, class: 'Issue' do
     sequence(:subject) { |n| "Task #{n}" }
     association :project
-    association :tracker, factory: :task_tracker
     association :author, factory: :user
     association :status, factory: :issue_status
     association :priority, factory: :issue_priority
+    association :tracker, factory: :task_tracker
     estimated_hours { 8 }
     done_ratio { 0 }
 
@@ -173,10 +244,10 @@ FactoryBot.define do
   factory :test, class: 'Issue' do
     sequence(:subject) { |n| "Test #{n}" }
     association :project
-    association :tracker, factory: :test_tracker
     association :author, factory: :user
     association :status, factory: :issue_status
     association :priority, factory: :issue_priority
+    association :tracker, factory: :test_tracker
 
     trait :with_parent_story do
       association :parent, factory: :user_story
@@ -191,10 +262,10 @@ FactoryBot.define do
   factory :bug, class: 'Issue' do
     sequence(:subject) { |n| "Bug #{n}" }
     association :project
-    association :tracker, factory: :bug_tracker
     association :author, factory: :user
     association :status, factory: :issue_status
     association :priority, factory: :issue_priority
+    association :tracker, factory: :bug_tracker
 
     trait :with_parent_story do
       association :parent, factory: :user_story
@@ -213,10 +284,10 @@ FactoryBot.define do
   factory :complete_hierarchy, class: 'Issue' do
     sequence(:subject) { |n| "Complete Epic #{n}" }
     association :project
-    association :tracker, factory: :epic_tracker
     association :author, factory: :user
     association :status, factory: :issue_status
     association :priority, factory: :issue_priority
+    association :tracker, factory: :epic_tracker
 
     after(:create) do |epic|
       # Feature 2個

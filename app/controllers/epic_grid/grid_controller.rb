@@ -7,13 +7,14 @@ module EpicGrid
     before_action :find_issue, only: [:move_feature, :create_epic]
 
     # Grid Data取得 (API001)
+    # MSW NormalizedAPIResponse形式を直接返す
     def show
       # Fat Model使用: Project#epic_grid_data
       include_closed = params[:include_closed] != 'false'
       grid_data = @project.epic_grid_data(include_closed: include_closed)
 
-      # MSW準拠レスポンス構築
-      render_success({
+      # MSW準拠レスポンス: NormalizedAPIResponse形式（success/dataラッパーなし）
+      response_data = {
         entities: grid_data[:entities],
         grid: grid_data[:grid],
         metadata: grid_data[:metadata].merge({
@@ -29,7 +30,9 @@ module EpicGrid
           request_id: request.uuid
         }),
         statistics: @project.epic_grid_build_statistics
-      })
+      }
+
+      render json: response_data, status: :ok
     rescue => e
       Rails.logger.error "Grid data error: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")

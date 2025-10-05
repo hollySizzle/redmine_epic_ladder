@@ -192,7 +192,11 @@
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:44 --format documentation)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:80 --format documentation)",
       "Bash(env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/msw_contract_spec.rb:105 --format documentation)",
-      "mcp__serena__get_symbols_overview"
+      "mcp__serena__get_symbols_overview",
+      "Bash(env RAILS_ENV=test bundle exec rails runner \"\n# Extensionsを手動でinclude\nrequire_relative ''plugins/redmine_epic_grid/app/models/concerns/epic_grid/project_extensions''\nrequire_relative ''plugins/redmine_epic_grid/app/models/concerns/epic_grid/issue_extensions''\n\nIssue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)\nProject.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)\n\nproject = Project.first\nputs \"\"Project methods: #{project.methods.grep(/epic_grid/).inspect}\"\"\nputs \"\"Has epic_grid_data? #{project.respond_to?(:epic_grid_data)}\"\"\n\")",
+      "Bash(env RAILS_ENV=test bundle exec rails runner \"\nproject = Project.first\nputs \"\"Project included modules: #{Project.included_modules.grep(/EpicGrid/).inspect}\"\"\nputs \"\"Has epic_grid_data? #{project.respond_to?(:epic_grid_data)}\"\"\nputs \"\"Project methods with epic: #{project.methods.grep(/epic/).inspect}\"\"\n\")",
+      "Bash(env:*)",
+      "Bash(do echo \"===== Run $i =====\")"
     ],
     "deny": [],
     "ask": [],

@@ -41,12 +41,32 @@ require File.expand_path('../../rails_helper', __dir__)
 # ============================================================
 
 RSpec.describe 'Kanban Simple E2E', type: :system do
-  let(:project) { create(:project, identifier: 'simple-e2e-test', name: 'Simple E2E Test Project') }
-  let(:user) { create(:user, login: 'e2e_user', admin: true) }
+  let!(:project) { create(:project, identifier: 'simple-e2e-test', name: 'Simple E2E Test Project') }
+  let!(:user) { create(:user, login: 'e2e_user', admin: true) }
 
   before(:each) do
-    # プロジェクト設定（モジュール有効化のみ）
-    # 注: データはMSWモックから取得するため、Issue作成は不要
+    # FactoryBotでトラッカー作成（default_status自動設定）
+    epic_tracker = create(:epic_tracker)
+    feature_tracker = create(:feature_tracker)
+    user_story_tracker = create(:user_story_tracker)
+
+    # トラッカーをプロジェクトに追加（Issue作成前に必須）
+    project.trackers << [epic_tracker, feature_tracker, user_story_tracker]
+
+    # バージョン作成
+    @version1 = create(:version, project: project, name: 'v1.0.0')
+
+    # Epicデータ作成（FactoryBotで簡潔に）
+    @epic1 = create(:epic, project: project, subject: 'Test Epic 1')
+    @epic2 = create(:epic, project: project, subject: 'Test Epic 2')
+
+    # Featureデータ作成
+    @feature1 = create(:feature, project: project, parent: @epic1, fixed_version: @version1, subject: 'Test Feature 1')
+
+    # UserStoryデータ作成
+    @user_story1 = create(:user_story, project: project, parent: @feature1, subject: 'Test User Story 1')
+
+    # プロジェクト設定（モジュール有効化）
     project.enabled_modules.create!(name: 'epic_grid') unless project.module_enabled?('epic_grid')
 
     # ユーザー権限設定
@@ -91,20 +111,24 @@ RSpec.describe 'Kanban Simple E2E', type: :system do
         timeout: 30000
       ) rescue nil
 
-      # Step 4: MSWモックデータ表示確認
-      # Epic が表示されているか（MSWモックデータ）
-      epic1_element = @playwright_page.query_selector("text='施設・ユーザー管理'")
+      # Step 4: 実バックエンドデータ表示確認
+      # Epic が表示されているか
+      epic1_element = @playwright_page.query_selector("text='Test Epic 1'")
       expect(epic1_element).not_to be_nil
 
-      epic2_element = @playwright_page.query_selector("text='開診スケジュール'")
+      epic2_element = @playwright_page.query_selector("text='Test Epic 2'")
       expect(epic2_element).not_to be_nil
 
-      # Feature が表示されているか（MSWモックデータ）
-      feature_element = @playwright_page.query_selector("text='登録画面'")
+      # Version が表示されているか
+      version_element = @playwright_page.query_selector("text='v1.0.0'")
+      expect(version_element).not_to be_nil
+
+      # Feature が表示されているか
+      feature_element = @playwright_page.query_selector("text='Test Feature 1'")
       expect(feature_element).not_to be_nil
 
-      # User Story が表示されているか（MSWモックデータ）
-      user_story_element = @playwright_page.query_selector("text='US#101 ユーザー登録フォーム'")
+      # User Story が表示されているか
+      user_story_element = @playwright_page.query_selector("text='Test User Story 1'")
       expect(user_story_element).not_to be_nil
 
       # Step 5: グリッド構造確認
