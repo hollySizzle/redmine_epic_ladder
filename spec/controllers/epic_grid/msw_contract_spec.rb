@@ -211,5 +211,89 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         expect(response_body).to conform_to_msw_contract(:CREATE_TASK_RESPONSE)
       end
     end
+
+    describe 'POST #create_test' do
+      let(:test_feature) { create(:issue, project: project, tracker: feature_tracker, parent: epic, subject: 'Test Feature') }
+      let(:test_user_story_tracker) { create(:user_story_tracker) }
+      let(:test_tracker) { create(:test_tracker) }
+      let(:test_user_story) { create(:issue, project: project, tracker: test_user_story_tracker, parent: test_feature, subject: 'Test User Story') }
+
+      before do
+        project.trackers << [test_user_story_tracker, test_tracker]
+        test_user_story
+      end
+
+      it 'conforms to MSW CREATE_TEST_RESPONSE contract (nested format)' do
+        post :create_test, params: {
+          project_id: project.id,
+          user_story_id: test_user_story.id,
+          test: {
+            subject: 'New Test',
+            description: 'Test description'
+          }
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_TEST_RESPONSE)
+      end
+
+      it 'conforms to MSW CREATE_TEST_RESPONSE contract (flat format - actual frontend)' do
+        post :create_test, params: {
+          project_id: project.id,
+          user_story_id: test_user_story.id,
+          subject: 'New Test',
+          description: 'Test description'
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_TEST_RESPONSE)
+      end
+    end
+
+    describe 'POST #create_bug' do
+      let(:bug_feature) { create(:issue, project: project, tracker: feature_tracker, parent: epic, subject: 'Bug Feature') }
+      let(:bug_user_story_tracker) { create(:user_story_tracker) }
+      let(:bug_tracker) { create(:bug_tracker) }
+      let(:bug_user_story) { create(:issue, project: project, tracker: bug_user_story_tracker, parent: bug_feature, subject: 'Bug User Story') }
+
+      before do
+        project.trackers << [bug_user_story_tracker, bug_tracker]
+        bug_user_story
+      end
+
+      it 'conforms to MSW CREATE_BUG_RESPONSE contract (nested format)' do
+        post :create_bug, params: {
+          project_id: project.id,
+          user_story_id: bug_user_story.id,
+          bug: {
+            subject: 'New Bug',
+            description: 'Bug description'
+          }
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_BUG_RESPONSE)
+      end
+
+      it 'conforms to MSW CREATE_BUG_RESPONSE contract (flat format - actual frontend)' do
+        post :create_bug, params: {
+          project_id: project.id,
+          user_story_id: bug_user_story.id,
+          subject: 'New Bug',
+          description: 'Bug description'
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_BUG_RESPONSE)
+      end
+    end
   end
 end

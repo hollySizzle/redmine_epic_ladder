@@ -265,7 +265,13 @@ module EpicGrid
     # Test作成
     def create_test
       user_story_id = params[:user_story_id]
-      test_params = params.require(:test).permit(:subject, :description, :assigned_to_id)
+
+      # 両方の形式をサポート: ネスト形式 {test: {...}} と平坦形式 {...}
+      test_params = if params[:test].present?
+        params.require(:test).permit(:subject, :description, :assigned_to_id)
+      else
+        params.permit(:subject, :description, :assigned_to_id)
+      end
 
       user_story = Issue.find(user_story_id)
       test_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:test])
@@ -284,10 +290,15 @@ module EpicGrid
         **test_params
       )
 
-      render_success({
-        test: serialize_issue(test),
-        user_story: serialize_issue_with_children(user_story.reload)
-      }, :created)
+      # 正規化APIレスポンス形式
+      render_normalized_success(
+        created_entity: test.epic_grid_as_normalized_json,
+        updated_entities: {
+          tests: { test.id.to_s => test.epic_grid_as_normalized_json },
+          user_stories: { user_story.id.to_s => user_story.reload.epic_grid_as_normalized_json }
+        },
+        status: :created
+      )
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたUserStoryが見つかりません', :not_found)
     rescue ActiveRecord::RecordInvalid => e
@@ -297,7 +308,13 @@ module EpicGrid
     # Bug作成
     def create_bug
       user_story_id = params[:user_story_id]
-      bug_params = params.require(:bug).permit(:subject, :description, :assigned_to_id, :priority_id)
+
+      # 両方の形式をサポート: ネスト形式 {bug: {...}} と平坦形式 {...}
+      bug_params = if params[:bug].present?
+        params.require(:bug).permit(:subject, :description, :assigned_to_id, :priority_id)
+      else
+        params.permit(:subject, :description, :assigned_to_id, :priority_id)
+      end
 
       user_story = Issue.find(user_story_id)
       bug_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:bug])
@@ -316,10 +333,15 @@ module EpicGrid
         **bug_params
       )
 
-      render_success({
-        bug: serialize_issue(bug),
-        user_story: serialize_issue_with_children(user_story.reload)
-      }, :created)
+      # 正規化APIレスポンス形式
+      render_normalized_success(
+        created_entity: bug.epic_grid_as_normalized_json,
+        updated_entities: {
+          bugs: { bug.id.to_s => bug.epic_grid_as_normalized_json },
+          user_stories: { user_story.id.to_s => user_story.reload.epic_grid_as_normalized_json }
+        },
+        status: :created
+      )
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたUserStoryが見つかりません', :not_found)
     rescue ActiveRecord::RecordInvalid => e
