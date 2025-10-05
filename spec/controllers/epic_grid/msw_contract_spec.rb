@@ -59,11 +59,12 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
     let(:member) { create(:member, project: project, user: user, roles: [role]) }
     let(:epic_tracker) { create(:epic_tracker) }
     let(:feature_tracker) { create(:feature_tracker) }
-    let(:epic) { create(:epic, project: project, tracker: epic_tracker) }
+    let(:epic) { create(:issue, project: project, tracker: epic_tracker, subject: 'Test Epic') }
 
     before do
       member
       project.trackers << [epic_tracker, feature_tracker]
+      epic  # トラッカー追加後にepic作成
       allow(User).to receive(:current).and_return(user)
       @request.session[:user_id] = user.id
     end
@@ -87,11 +88,12 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
     end
 
     describe 'POST #create_user_story' do
-      let(:feature) { create(:feature, project: project, tracker: feature_tracker, parent: epic) }
+      let(:feature) { create(:issue, project: project, tracker: feature_tracker, parent: epic, subject: 'Test Feature') }
       let(:user_story_tracker) { create(:user_story_tracker) }
 
       before do
         project.trackers << user_story_tracker
+        feature  # トラッカー追加後にfeature作成
       end
 
       it 'conforms to MSW CREATE_USER_STORY_RESPONSE contract' do
@@ -112,13 +114,14 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
     end
 
     describe 'POST #create_task' do
-      let(:feature) { create(:feature, project: project, tracker: feature_tracker, parent: epic) }
-      let(:user_story_tracker) { create(:user_story_tracker) }
+      let(:task_feature) { create(:issue, project: project, tracker: feature_tracker, parent: epic, subject: 'Task Feature') }
+      let(:task_user_story_tracker) { create(:user_story_tracker) }
       let(:task_tracker) { create(:task_tracker) }
-      let(:user_story) { create(:user_story, project: project, tracker: user_story_tracker, parent: feature) }
+      let(:user_story) { create(:issue, project: project, tracker: task_user_story_tracker, parent: task_feature, subject: 'Test User Story') }
 
       before do
-        project.trackers << [user_story_tracker, task_tracker]
+        project.trackers << [task_user_story_tracker, task_tracker]
+        user_story  # トラッカー追加後にuser_story作成
       end
 
       it 'conforms to MSW CREATE_TASK_RESPONSE contract' do
