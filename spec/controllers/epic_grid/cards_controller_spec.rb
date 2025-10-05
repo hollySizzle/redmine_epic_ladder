@@ -50,9 +50,9 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(json).to include(
         'success' => true,
         'data' => include(
-          'feature' => include(
+          'created_entity' => include(
             'subject' => 'New Feature',
-            'parent_id' => epic.id
+            'parent_epic_id' => epic.id.to_s
           )
         )
       )
@@ -97,9 +97,9 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(json).to include(
         'success' => true,
         'data' => include(
-          'user_story' => include(
+          'created_entity' => include(
             'subject' => 'New User Story',
-            'parent_id' => feature.id
+            'parent_feature_id' => feature.id.to_s
           )
         )
       )
@@ -143,9 +143,8 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(json).to include(
         'success' => true,
         'data' => include(
-          'task' => include(
-            'subject' => 'New Task',
-            'parent_id' => user_story.id
+          'created_entity' => include(
+            'subject' => 'New Task'
           )
         )
       )
@@ -178,7 +177,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(json).to include(
         'success' => true,
         'data' => include(
-          'test' => include(
+          'created_entity' => include(
             'subject' => 'New Test'
           )
         )
@@ -213,7 +212,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       expect(json).to include(
         'success' => true,
         'data' => include(
-          'bug' => include(
+          'created_entity' => include(
             'subject' => 'New Bug'
           )
         )

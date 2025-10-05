@@ -177,8 +177,8 @@ FactoryBot.define do
     sequence(:subject) { |n| "Epic #{n}" }
     association :project
     association :author, factory: :user
-    association :status, factory: :issue_status
-    association :priority, factory: :issue_priority
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
     association :tracker, factory: :epic_tracker
 
     trait :with_features do
@@ -197,8 +197,8 @@ FactoryBot.define do
     sequence(:subject) { |n| "Feature #{n}" }
     association :project
     association :author, factory: :user
-    association :status, factory: :issue_status
-    association :priority, factory: :issue_priority
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
     association :tracker, factory: :feature_tracker
 
     trait :with_parent_epic do
@@ -221,8 +221,8 @@ FactoryBot.define do
     sequence(:subject) { |n| "User Story #{n}" }
     association :project
     association :author, factory: :user
-    association :status, factory: :issue_status
-    association :priority, factory: :issue_priority
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
     association :tracker, factory: :user_story_tracker
 
     trait :with_parent_feature do
@@ -259,8 +259,8 @@ FactoryBot.define do
     sequence(:subject) { |n| "Task #{n}" }
     association :project
     association :author, factory: :user
-    association :status, factory: :issue_status
-    association :priority, factory: :issue_priority
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
     association :tracker, factory: :task_tracker
     estimated_hours { 8 }
     done_ratio { 0 }
@@ -275,8 +275,8 @@ FactoryBot.define do
     sequence(:subject) { |n| "Test #{n}" }
     association :project
     association :author, factory: :user
-    association :status, factory: :issue_status
-    association :priority, factory: :issue_priority
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
     association :tracker, factory: :test_tracker
 
     trait :with_parent_story do
@@ -284,7 +284,7 @@ FactoryBot.define do
     end
 
     trait :passed do
-      association :status, factory: :closed_status
+      status { IssueStatus.find_by(is_closed: true) || IssueStatus.find_or_create_by!(name: 'Closed', is_closed: true) }
     end
   end
 
@@ -293,8 +293,8 @@ FactoryBot.define do
     sequence(:subject) { |n| "Bug #{n}" }
     association :project
     association :author, factory: :user
-    association :status, factory: :issue_status
-    association :priority, factory: :issue_priority
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
     association :tracker, factory: :bug_tracker
 
     trait :with_parent_story do
@@ -302,11 +302,11 @@ FactoryBot.define do
     end
 
     trait :critical do
-      association :priority, factory: :issue_priority, name: 'Critical', position: 1
+      priority { IssuePriority.find_or_create_by!(name: 'Critical') { |p| p.position = 1; p.is_default = false } }
     end
 
     trait :resolved do
-      association :status, factory: :closed_status
+      status { IssueStatus.find_by(is_closed: true) || IssueStatus.find_or_create_by!(name: 'Closed', is_closed: true) }
     end
   end
 
@@ -315,8 +315,8 @@ FactoryBot.define do
     sequence(:subject) { |n| "Complete Epic #{n}" }
     association :project
     association :author, factory: :user
-    association :status, factory: :issue_status
-    association :priority, factory: :issue_priority
+    status { IssueStatus.find_by(name: 'New') || IssueStatus.first }
+    priority { IssuePriority.default || IssuePriority.first }
     association :tracker, factory: :epic_tracker
 
     after(:create) do |epic|

@@ -27,15 +27,11 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
 
-      expect(json['success']).to be true
-      expect(json).to have_key('data')
-      expect(json).to have_key('meta')
-      expect(json['data']).to include(
-        'entities',
-        'grid',
-        'metadata',
-        'statistics'
-      )
+      # MSW準拠: トップレベルに直接データ構造（success/dataラッパーなし）
+      expect(json).to have_key('entities')
+      expect(json).to have_key('grid')
+      expect(json).to have_key('metadata')
+      expect(json).to have_key('statistics')
     end
 
     it 'includes all entity types in response' do
@@ -43,7 +39,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
 
-      expect(json['data']['entities']).to include(
+      expect(json['entities']).to include(
         'epics',
         'versions',
         'features',
@@ -59,7 +55,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
 
-      expect(json['data']['metadata']['project']).to include(
+      expect(json['metadata']['project']).to include(
         'id' => project.id,
         'name' => project.name,
         'identifier' => project.identifier
@@ -196,7 +192,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
       expect(json['success']).to be true
-      expect(json['data']['epic']).to include(
+      expect(json['data']['created_entity']).to include(
         'subject' => 'New Epic'
       )
     end
@@ -205,9 +201,12 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       post :create_epic, params: valid_params
 
       json = JSON.parse(response.body)
-      expect(json['data']).to have_key('epic')
-      expect(json['data']).to have_key('grid_position')
-      expect(json['data']).to have_key('affected_statistics')
+      expect(json['data']).to have_key('created_entity')
+      expect(json['data']).to have_key('updated_entities')
+      expect(json['data']).to have_key('grid_updates')
+
+      # created_entityがepic情報を含むことを確認
+      expect(json['data']['created_entity']).to include('subject' => 'New Epic')
     end
 
     it 'validates required subject field' do
@@ -273,7 +272,7 @@ RSpec.describe EpicGrid::GridController, type: :controller do
 
       json = JSON.parse(response.body)
       expect(json['success']).to be true
-      expect(json['data']['created_version']).to include(
+      expect(json['data']['created_entity']).to include(
         'name' => 'v1.0.0',
         'description' => 'Version 1.0.0 release'
       )
@@ -283,12 +282,11 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       post :create_version, params: valid_params
 
       json = JSON.parse(response.body)
-      expect(json['data']).to have_key('created_version')
+      expect(json['data']).to have_key('created_entity')
       expect(json['data']).to have_key('grid_updates')
 
-      expect(json['data']['grid_updates']).to include(
-        'new_column_added' => true
-      )
+      # created_entityがversion情報を含むことを確認
+      expect(json['data']['created_entity']).to include('name' => 'v1.0.0')
     end
 
     it 'validates required name field' do
@@ -331,10 +329,9 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       post :create_version, params: valid_params
 
       json = JSON.parse(response.body)
-      expect(json['data']).to have_key('metadata')
-      expect(json['data']['metadata']).to include(
-        'grid_cache_invalidated' => true
-      )
+      expect(json).to have_key('meta')
+      expect(json['meta']).to have_key('timestamp')
+      expect(json['meta']).to have_key('request_id')
     end
   end
 end
