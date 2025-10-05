@@ -221,11 +221,12 @@ export interface Bug {
 // ========================================
 
 export interface GridIndex {
-  // Epic × Version マッピング
-  index: Record<string, string[]>;  // "{epicId}:{versionId}" => feature IDs
+  // Epic × Feature × Version マッピング (3次元グリッド)
+  index: Record<string, string[]>;  // "{epicId}:{featureId}:{versionId}" => userStory IDs
 
   // 表示順序
   epic_order: string[];
+  feature_order_by_epic: Record<string, string[]>;  // epicId => feature IDs
   version_order: string[];
 }
 

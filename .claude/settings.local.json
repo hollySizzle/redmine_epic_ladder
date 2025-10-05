@@ -202,7 +202,8 @@
       "Bash(RAILS_ENV=test bundle exec rails runner \"\nputs ''=== Anonymous/NonMember Groups ===''\nputs \"\"GroupAnonymous: #{GroupAnonymous.first&.id rescue ''ERROR''}\"\"\nputs \"\"GroupNonMember: #{GroupNonMember.first&.id rescue ''ERROR''}\"\"\nputs \"\"Total Groups: #{Group.count}\"\"\n\")",
       "mcp__serena__list_dir",
       "Bash(npm uninstall:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Read(//workspace/**)"
     ],
     "deny": [],
     "ask": [],

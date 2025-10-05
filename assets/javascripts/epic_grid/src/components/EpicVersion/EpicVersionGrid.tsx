@@ -1,21 +1,42 @@
 import React from 'react';
-import { FeatureCardGrid } from '../Feature/FeatureCardGrid';
+import { UserStoryGrid } from '../UserStory/UserStoryGrid';
 import { AddButton } from '../common/AddButton';
 import { useStore } from '../../store/useStore';
+import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
+import type { Feature } from '../../types/normalized-api';
+
+// Feature列のD&D対応コンポーネント
+const DraggableFeatureCell: React.FC<{ feature: Feature }> = ({ feature }) => {
+  const ref = useDraggableAndDropTarget({
+    type: 'feature-card',
+    id: feature.id,
+    onDrop: (sourceData) => {
+      console.log('Feature dropped:', sourceData.id, '→', feature.id);
+    }
+  });
+
+  return (
+    <div ref={ref} className="feature-cell draggable" data-feature={feature.id}>
+      {feature.title}
+    </div>
+  );
+};
 
 export const EpicVersionGrid: React.FC = () => {
   // ストアから直接データを取得
   const grid = useStore(state => state.grid);
   const epics = useStore(state => state.entities.epics);
+  const features = useStore(state => state.entities.features);
   const versions = useStore(state => state.entities.versions);
   const createEpic = useStore(state => state.createEpic);
   const createVersion = useStore(state => state.createVersion);
+  const createFeature = useStore(state => state.createFeature);
 
-  // versionの数を動的に取得（'none'を除く）
-  const versionCount = grid.version_order.filter(vId => vId !== 'none').length;
+  // versionの数を動的に取得
+  const versionCount = grid.version_order.length;
 
-  // grid-template-columnsを動的に生成
-  const gridTemplateColumns = `var(--epic-width) repeat(${versionCount}, var(--version-width))`;
+  // grid-template-columnsを動的に生成 (Epic列 + Feature列 + Version列×N)
+  const gridTemplateColumns = `var(--epic-width) var(--feature-width) repeat(${versionCount}, var(--version-width))`;
 
   const handleAddEpic = async () => {
     const subject = prompt('Epic名を入力してください:');
@@ -47,51 +68,114 @@ export const EpicVersionGrid: React.FC = () => {
     }
   };
 
+  const handleAddFeature = async (epicId: string) => {
+    const subject = prompt('Feature名を入力してください:');
+    if (!subject) return;
+
+    try {
+      await createFeature({
+        subject,
+        description: '',
+        parent_epic_id: epicId,
+        fixed_version_id: null,
+      });
+    } catch (error) {
+      alert(`Feature作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   return (
     <div className="epic-version-wrapper">
-      <div className="epic-version-grid" style={{ gridTemplateColumns }}>
+      <div className="epic-feature-version-grid" style={{ gridTemplateColumns }}>
         {/* ヘッダー行 */}
-        <div className="epic-version-label">Epic \ Version</div>
-        {grid.version_order
-          .filter(vId => vId !== 'none')
-          .map(versionId => {
-            const version = versions[versionId];
-            return (
-              <div key={versionId} className="version-header">
-                {version.name}
-              </div>
-            );
-          })}
+        <div className="header-label">Epic</div>
+        <div className="header-label">Feature</div>
+        {grid.version_order.map(versionId => {
+          const version = versions[versionId];
+          return (
+            <div key={versionId} className="version-header">
+              {version.name}
+            </div>
+          );
+        })}
 
-        {/* Epic行 */}
+        {/* Epic × Feature × Version の3次元グリッド */}
         {grid.epic_order.map(epicId => {
           const epic = epics[epicId];
-          return (
-            <React.Fragment key={epicId}>
-              <div className="epic-header">{epic.subject}</div>
-              {grid.version_order
-                .filter(vId => vId !== 'none')
-                .map(versionId => {
-                  const cellKey = `${epicId}:${versionId}`;
-                  const featureIds = grid.index[cellKey] || [];
+          const epicFeatures = grid.feature_order_by_epic[epicId] || [];
+
+          // 実際に存在するFeatureだけをフィルタ
+          const validFeatures = epicFeatures.filter(fId => features[fId]);
+
+          // Featureが0個の場合でもEpic列を表示
+          if (validFeatures.length === 0) {
+            return (
+              <React.Fragment key={epicId}>
+                <div className="epic-cell">
+                  <div className="epic-name">{epic.subject}</div>
+                  <AddButton
+                    type="feature"
+                    label="+ Add Feature"
+                    dataAddButton="feature"
+                    className="add-feature-btn"
+                    onClick={() => handleAddFeature(epicId)}
+                    epicId={epicId}
+                  />
+                </div>
+                <div className="feature-cell empty-cell"></div>
+                {grid.version_order.map(versionId => (
+                  <div key={`${epicId}-empty-${versionId}`} className="us-cell empty-cell"></div>
+                ))}
+              </React.Fragment>
+            );
+          }
+
+          return validFeatures.map((featureId, featureIndex) => {
+            const feature = features[featureId];
+
+            return (
+              <React.Fragment key={`${epicId}-${featureId}`}>
+                {/* Epic列 (1Epic分を縦に結合したイメージ) */}
+                {featureIndex === 0 ? (
+                  <div className="epic-cell" style={{ gridRow: `span ${validFeatures.length}` }}>
+                    <div className="epic-name">{epic.subject}</div>
+                    <AddButton
+                      type="feature"
+                      label="+ Add Feature"
+                      dataAddButton="feature"
+                      className="add-feature-btn"
+                      onClick={() => handleAddFeature(epicId)}
+                      epicId={epicId}
+                    />
+                  </div>
+                ) : null}
+
+                {/* Feature列 (D&D対応) */}
+                <DraggableFeatureCell feature={feature} />
+
+                {/* Version列 (UserStory一覧) */}
+                {grid.version_order.map(versionId => {
+                  const cellKey = `${epicId}:${featureId}:${versionId}`;
+                  const userStoryIds = grid.index[cellKey] || [];
 
                   return (
                     <div
                       key={cellKey}
-                      className="epic-version-cell"
+                      className="us-cell"
                       data-epic={epicId}
+                      data-feature={featureId}
                       data-version={versionId}
                     >
-                      <FeatureCardGrid
-                        featureIds={featureIds}
-                        epicId={epicId}
-                        versionId={versionId}
+                      <UserStoryGrid
+                        featureId={featureId}
+                        storyIds={userStoryIds}
                       />
                     </div>
                   );
                 })}
-            </React.Fragment>
-          );
+              </React.Fragment>
+            );
+          });
         })}
       </div>
 

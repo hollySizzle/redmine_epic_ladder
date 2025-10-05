@@ -171,6 +171,32 @@ export const normalizedMockData: NormalizedAPIResponse = {
         updated_on: '2025-08-15T16:00:00Z',
         tracker_id: 2
       },
+      f3: {
+        id: 'f3',
+        title: '診察室管理',
+        description: '診察室の登録・編集機能',
+        status: 'open',
+        parent_epic_id: 'epic2',
+        user_story_ids: ['us3'],
+        fixed_version_id: 'v2',
+        version_source: 'direct',
+        statistics: {
+          total_user_stories: 1,
+          completed_user_stories: 0,
+          total_child_items: 1,
+          child_items_by_type: {
+            tasks: 1,
+            tests: 0,
+            bugs: 0
+          },
+          completion_percentage: 0.0
+        },
+        assigned_to_id: 102,
+        priority_id: 2,
+        created_on: '2025-03-08T10:00:00Z',
+        updated_on: '2025-09-16T14:00:00Z',
+        tracker_id: 2
+      },
       f4: {
         id: 'f4',
         title: 'スケジュール登録',
@@ -441,18 +467,27 @@ export const normalizedMockData: NormalizedAPIResponse = {
   },
 
   grid: {
+    // Epic × Feature × Version の3次元インデックス
     index: {
-      'epic1:v1': ['f1', 'f2'],
-      'epic1:v2': ['f3'],
-      'epic1:v3': [],
-      'epic1:none': [],
-      'epic2:v1': [],
-      'epic2:v2': ['f4'],
-      'epic2:v3': [],
-      'epic2:none': []
+      'epic1:f1:v1': ['us1'],
+      'epic1:f1:v2': [],
+      'epic1:f1:v3': [],
+      'epic1:f2:v1': ['us2'],
+      'epic1:f2:v2': [],
+      'epic1:f2:v3': [],
+      'epic2:f3:v1': [],
+      'epic2:f3:v2': ['us3'],
+      'epic2:f3:v3': [],
+      'epic2:f4:v1': [],
+      'epic2:f4:v2': ['us4'],
+      'epic2:f4:v3': []
     },
     epic_order: ['epic1', 'epic2'],
-    version_order: ['v1', 'v2', 'v3', 'none']
+    feature_order_by_epic: {
+      epic1: ['f1', 'f2'],
+      epic2: ['f3', 'f4']
+    },
+    version_order: ['v1', 'v2', 'v3']
   },
 
   metadata: {
