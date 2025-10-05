@@ -4,11 +4,13 @@ import { AddButton } from '../common/AddButton';
 import { useStore } from '../../store/useStore';
 
 interface UserStoryGridProps {
+  epicId: string;
   featureId: string;
+  versionId: string;
   storyIds: string[];
 }
 
-export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ featureId, storyIds }) => {
+export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ epicId, featureId, versionId, storyIds }) => {
   const createUserStory = useStore((state) => state.createUserStory);
 
   const handleAddUserStory = async () => {
@@ -35,6 +37,9 @@ export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ featureId, storyId
         type="user-story"
         label="+ Add User Story"
         dataAddButton="user-story"
+        epicId={epicId}
+        featureId={featureId}
+        versionId={versionId}
         onClick={handleAddUserStory}
       />
     </div>

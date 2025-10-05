@@ -67,6 +67,7 @@ interface StoreState {
   // ドラッグ&ドロップ操作
   reorderFeatures: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderUserStories: (sourceId: string, targetId: string, targetData?: any) => void;
+  moveUserStoryToCell: (storyId: string, epicId: string, featureId: string, versionId: string) => void;
   reorderTasks: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderTests: (sourceId: string, targetId: string, targetData?: any) => void;
   reorderBugs: (sourceId: string, targetId: string, targetData?: any) => void;
@@ -432,6 +433,50 @@ export const useStore = create<StoreState>()(
             sourceStory.parent_feature_id = targetStory.parent_feature_id;
           }
         }, false, 'reorderUserStories'),
+
+      // UserStory をセルに移動
+      moveUserStoryToCell: (storyId: string, epicId: string, featureId: string, versionId: string) =>
+        set((state) => {
+          const story = state.entities.user_stories[storyId];
+          if (!story) return;
+
+          const oldFeature = state.entities.features[story.parent_feature_id];
+          const newFeature = state.entities.features[featureId];
+          if (!oldFeature || !newFeature) return;
+
+          // 古いセルから削除
+          const oldEpicId = oldFeature.parent_epic_id;
+          const oldVersionId = story.fixed_version_id || 'none';
+          const oldCellKey = `${oldEpicId}:${story.parent_feature_id}:${oldVersionId}`;
+
+          if (state.grid.index[oldCellKey]) {
+            const oldCellIndex = state.grid.index[oldCellKey].indexOf(storyId);
+            if (oldCellIndex !== -1) {
+              state.grid.index[oldCellKey].splice(oldCellIndex, 1);
+            }
+          }
+
+          // 新しいセルに追加
+          const newCellKey = `${epicId}:${featureId}:${versionId}`;
+          if (!state.grid.index[newCellKey]) {
+            state.grid.index[newCellKey] = [];
+          }
+          state.grid.index[newCellKey].push(storyId);
+
+          // 古いFeatureから削除
+          const oldIndex = oldFeature.user_story_ids.indexOf(storyId);
+          if (oldIndex !== -1) {
+            oldFeature.user_story_ids.splice(oldIndex, 1);
+          }
+
+          // 新しいFeatureに追加
+          newFeature.user_story_ids.push(storyId);
+
+          // UserStoryの親Feature更新
+          story.parent_feature_id = featureId;
+
+          console.log(`✅ Moved UserStory ${storyId} from ${oldCellKey} to ${newCellKey}`);
+        }, false, 'moveUserStoryToCell'),
 
       // Task の並び替え
       reorderTasks: (sourceId: string, targetId: string, targetData?: any) =>

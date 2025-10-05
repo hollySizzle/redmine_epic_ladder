@@ -18,6 +18,7 @@ export const App: React.FC = () => {
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const reorderFeatures = useStore(state => state.reorderFeatures);
   const reorderUserStories = useStore(state => state.reorderUserStories);
+  const moveUserStoryToCell = useStore(state => state.moveUserStoryToCell);
   const reorderTasks = useStore(state => state.reorderTasks);
   const reorderTests = useStore(state => state.reorderTests);
   const reorderBugs = useStore(state => state.reorderBugs);
@@ -56,6 +57,39 @@ export const App: React.FC = () => {
         // 同じタイプ同士のみ並び替え可能
         if (sourceType !== targetType) {
           console.warn('⚠️ Cannot reorder different types');
+          return;
+        }
+
+        // AddButtonへのドロップ処理（真下に配置）
+        if (targetData.isAddButton) {
+          console.log('📦 Drop on AddButton:', targetData);
+
+          if (sourceType === 'user-story' && targetType === 'user-story') {
+            // UserStory → AddButton: そのセルの最後に移動
+            moveUserStoryToCell(
+              sourceId,
+              targetData.epicId,
+              targetData.featureId,
+              targetData.versionId
+            );
+            console.log('✅ UserStory moved to AddButton position (end of list)');
+          }
+          return;
+        }
+
+        // セルへのドロップ処理（移動）
+        if (targetId.startsWith('cell-')) {
+          console.log('📦 Drop on cell:', targetData);
+
+          if (sourceType === 'user-story' && targetData.cellType === 'us-cell') {
+            moveUserStoryToCell(
+              sourceId,
+              targetData.epicId,
+              targetData.featureId,
+              targetData.versionId
+            );
+            console.log('✅ UserStory moved to cell');
+          }
           return;
         }
 

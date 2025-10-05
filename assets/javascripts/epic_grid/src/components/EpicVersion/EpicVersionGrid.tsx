@@ -3,6 +3,7 @@ import { UserStoryGrid } from '../UserStory/UserStoryGrid';
 import { AddButton } from '../common/AddButton';
 import { useStore } from '../../store/useStore';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
+import { useDropTarget } from '../../hooks/useDropTarget';
 import type { Feature } from '../../types/normalized-api';
 
 // Feature列のD&D対応コンポーネント
@@ -18,6 +19,38 @@ const DraggableFeatureCell: React.FC<{ feature: Feature }> = ({ feature }) => {
   return (
     <div ref={ref} className="feature-cell draggable" data-feature={feature.id}>
       {feature.title}
+    </div>
+  );
+};
+
+// UserStoryセル: drop targetとして機能
+const UserStoryCell: React.FC<{
+  epicId: string;
+  featureId: string;
+  versionId: string;
+  storyIds: string[];
+}> = ({ epicId, featureId, versionId, storyIds }) => {
+  const ref = useDropTarget({
+    type: 'user-story',
+    id: `cell-${epicId}-${featureId}-${versionId}`,
+    data: { epicId, featureId, versionId, cellType: 'us-cell' },
+    canDrop: (sourceData) => sourceData.type === 'user-story',
+  });
+
+  return (
+    <div
+      ref={ref}
+      className="us-cell"
+      data-epic={epicId}
+      data-feature={featureId}
+      data-version={versionId}
+    >
+      <UserStoryGrid
+        epicId={epicId}
+        featureId={featureId}
+        versionId={versionId}
+        storyIds={storyIds}
+      />
     </div>
   );
 };
@@ -159,18 +192,13 @@ export const EpicVersionGrid: React.FC = () => {
                   const userStoryIds = grid.index[cellKey] || [];
 
                   return (
-                    <div
+                    <UserStoryCell
                       key={cellKey}
-                      className="us-cell"
-                      data-epic={epicId}
-                      data-feature={featureId}
-                      data-version={versionId}
-                    >
-                      <UserStoryGrid
-                        featureId={featureId}
-                        storyIds={userStoryIds}
-                      />
-                    </div>
+                      epicId={epicId}
+                      featureId={featureId}
+                      versionId={versionId}
+                      storyIds={userStoryIds}
+                    />
                   );
                 })}
               </React.Fragment>

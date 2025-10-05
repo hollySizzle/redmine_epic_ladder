@@ -1,5 +1,5 @@
-import React from 'react';
-import { useDropTarget } from '../../hooks/useDropTarget';
+import React, { useRef, useEffect } from 'react';
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 
 interface AddButtonProps {
   type: 'epic' | 'version' | 'feature' | 'user-story' | 'task' | 'test' | 'bug';
@@ -9,6 +9,8 @@ interface AddButtonProps {
   className?: string;
   epicId?: string;
   versionId?: string;
+  featureId?: string;
+  onDrop?: (sourceData: Record<string, any>) => void;
 }
 
 export const AddButton: React.FC<AddButtonProps> = ({
@@ -18,19 +20,13 @@ export const AddButton: React.FC<AddButtonProps> = ({
   dataAddButton,
   className = '',
   epicId,
-  versionId
+  versionId,
+  featureId,
+  onDrop
 }) => {
+  const ref = useRef<HTMLButtonElement>(null);
   const baseClass = `add-button add-${type}-btn`;
   const fullClass = className ? `${baseClass} ${className}` : baseClass;
-
-  // Addボタンをドロップターゲットとして登録
-  const dropTargetType = type === 'feature' ? 'feature-card' : type;
-  const ref = useDropTarget({
-    type: dropTargetType,
-    id: `add-button-${type}-${epicId || 'none'}-${versionId || 'none'}`,
-    data: { isAddButton: true, epicId, versionId },
-    canDrop: (sourceData) => sourceData.type === dropTargetType,
-  }) as unknown as React.RefObject<HTMLButtonElement>;
 
   const handleClick = () => {
     if (onClick) {
@@ -39,6 +35,33 @@ export const AddButton: React.FC<AddButtonProps> = ({
       alert(`${label} clicked!`);
     }
   };
+
+  // AddButtonをdrop targetとして設定
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    return dropTargetForElements({
+      element,
+      getData: () => ({
+        type,
+        id: `add-button-${type}-${epicId || 'none'}-${versionId || 'none'}-${featureId || 'none'}`,
+        epicId,
+        versionId,
+        featureId,
+        isAddButton: true
+      }),
+      canDrop: ({ source }) => {
+        // 同じtypeのアイテムのみドロップ可能
+        return source.data.type === type;
+      },
+      onDrop: ({ source }) => {
+        if (onDrop) {
+          onDrop(source.data);
+        }
+      }
+    });
+  }, [type, epicId, versionId, featureId, onDrop]);
 
   return (
     <button
@@ -51,3 +74,4 @@ export const AddButton: React.FC<AddButtonProps> = ({
     </button>
   );
 };
+

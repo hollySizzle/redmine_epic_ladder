@@ -204,7 +204,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npm test:*)",
       "Read(//workspace/**)",
-      "Bash(pgrep:*)"
+      "Bash(pgrep:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": [],
