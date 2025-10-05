@@ -94,7 +94,12 @@ module EpicGrid
         })
       end
 
-      epic_params = params.require(:epic).permit(:subject, :description, :assigned_to_id, :fixed_version_id)
+      # 両方の形式をサポート: ネスト形式 {epic: {...}} と平坦形式 {...}
+      epic_params = if params[:epic].present?
+        params.require(:epic).permit(:subject, :description, :assigned_to_id, :fixed_version_id)
+      else
+        params.permit(:subject, :description, :assigned_to_id, :fixed_version_id)
+      end
 
       # Epicトラッカー取得
       epic_tracker = @project.trackers.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:epic])
@@ -162,7 +167,12 @@ module EpicGrid
 
     # Version作成 (設計書準拠API)
     def create_version
-      version_params = params.require(:version).permit(:name, :description, :effective_date, :status)
+      # 両方の形式をサポート: ネスト形式 {version: {...}} と平坦形式 {...}
+      version_params = if params[:version].present?
+        params.require(:version).permit(:name, :description, :effective_date, :status)
+      else
+        params.permit(:name, :description, :effective_date, :status)
+      end
 
       Rails.logger.info "Creating version for project #{@project.id}: #{version_params.inspect}"
 

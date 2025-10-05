@@ -23,7 +23,7 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         project.trackers << epic_tracker
       end
 
-      it 'conforms to MSW CREATE_EPIC_RESPONSE contract' do
+      it 'conforms to MSW CREATE_EPIC_RESPONSE contract (nested format)' do
         post :create_epic, params: {
           project_id: project.id,
           epic: { subject: 'New Epic', description: 'Epic description' }
@@ -34,13 +34,40 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         response_body = JSON.parse(response.body, symbolize_names: true)
         expect(response_body).to conform_to_msw_contract(:CREATE_EPIC_RESPONSE)
       end
+
+      it 'conforms to MSW CREATE_EPIC_RESPONSE contract (flat format - actual frontend)' do
+        post :create_epic, params: {
+          project_id: project.id,
+          subject: 'New Epic',
+          description: 'Epic description'
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_EPIC_RESPONSE)
+      end
     end
 
     describe 'POST #create_version' do
-      it 'conforms to MSW CREATE_VERSION_RESPONSE contract' do
+      it 'conforms to MSW CREATE_VERSION_RESPONSE contract (nested format)' do
         post :create_version, params: {
           project_id: project.id,
           version: { name: 'v1.0.0', description: 'First version', status: 'open' }
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_VERSION_RESPONSE)
+      end
+
+      it 'conforms to MSW CREATE_VERSION_RESPONSE contract (flat format - actual frontend)' do
+        post :create_version, params: {
+          project_id: project.id,
+          name: 'v1.0.0',
+          description: 'First version',
+          status: 'open'
         }
 
         expect(response).to have_http_status(:created)
@@ -70,7 +97,7 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
     end
 
     describe 'POST #create (Feature)' do
-      it 'conforms to MSW CREATE_FEATURE_RESPONSE contract' do
+      it 'conforms to MSW CREATE_FEATURE_RESPONSE contract (nested format)' do
         post :create, params: {
           project_id: project.id,
           feature: {
@@ -78,6 +105,20 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
             description: 'Feature description',
             parent_id: epic.id
           }
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_FEATURE_RESPONSE)
+      end
+
+      it 'conforms to MSW CREATE_FEATURE_RESPONSE contract (flat format - actual frontend)' do
+        post :create, params: {
+          project_id: project.id,
+          subject: 'New Feature',
+          description: 'Feature description',
+          parent_epic_id: epic.id
         }
 
         expect(response).to have_http_status(:created)
@@ -96,7 +137,7 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         feature  # トラッカー追加後にfeature作成
       end
 
-      it 'conforms to MSW CREATE_USER_STORY_RESPONSE contract' do
+      it 'conforms to MSW CREATE_USER_STORY_RESPONSE contract (nested format)' do
         post :create_user_story, params: {
           project_id: project.id,
           feature_id: feature.id,
@@ -104,6 +145,20 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
             subject: 'New User Story',
             description: 'User story description'
           }
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_USER_STORY_RESPONSE)
+      end
+
+      it 'conforms to MSW CREATE_USER_STORY_RESPONSE contract (flat format - actual frontend)' do
+        post :create_user_story, params: {
+          project_id: project.id,
+          feature_id: feature.id,
+          subject: 'New User Story',
+          description: 'User story description'
         }
 
         expect(response).to have_http_status(:created)
@@ -124,7 +179,7 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         user_story  # トラッカー追加後にuser_story作成
       end
 
-      it 'conforms to MSW CREATE_TASK_RESPONSE contract' do
+      it 'conforms to MSW CREATE_TASK_RESPONSE contract (nested format)' do
         post :create_task, params: {
           project_id: project.id,
           user_story_id: user_story.id,
@@ -133,6 +188,21 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
             description: 'Task description',
             estimated_hours: 5.0
           }
+        }
+
+        expect(response).to have_http_status(:created)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:CREATE_TASK_RESPONSE)
+      end
+
+      it 'conforms to MSW CREATE_TASK_RESPONSE contract (flat format - actual frontend)' do
+        post :create_task, params: {
+          project_id: project.id,
+          user_story_id: user_story.id,
+          subject: 'New Task',
+          description: 'Task description',
+          estimated_hours: 5.0
         }
 
         expect(response).to have_http_status(:created)

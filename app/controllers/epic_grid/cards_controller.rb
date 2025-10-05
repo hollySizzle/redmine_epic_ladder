@@ -23,7 +23,15 @@ module EpicGrid
 
     # Feature Card作成
     def create
-      feature_params = params.require(:feature).permit(:subject, :description, :assigned_to_id, :fixed_version_id, :parent_id)
+      # 両方の形式をサポート: ネスト形式 {feature: {...}} と平坦形式 {...}
+      feature_params = if params[:feature].present?
+        params.require(:feature).permit(:subject, :description, :assigned_to_id, :fixed_version_id, :parent_id, :parent_epic_id)
+      else
+        params.permit(:subject, :description, :assigned_to_id, :fixed_version_id, :parent_id, :parent_epic_id)
+      end
+
+      # parent_epic_id を parent_id に変換（フロントエンド互換性）
+      feature_params[:parent_id] ||= feature_params.delete(:parent_epic_id) if feature_params[:parent_epic_id]
 
       # Featureトラッカー取得
       feature_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:feature])
@@ -120,7 +128,13 @@ module EpicGrid
     # UserStory作成
     def create_user_story
       feature_id = params[:feature_id]
-      user_story_params = params.require(:user_story).permit(:subject, :description, :assigned_to_id)
+
+      # 両方の形式をサポート: ネスト形式 {user_story: {...}} と平坦形式 {...}
+      user_story_params = if params[:user_story].present?
+        params.require(:user_story).permit(:subject, :description, :assigned_to_id)
+      else
+        params.permit(:subject, :description, :assigned_to_id)
+      end
 
       feature = Issue.find(feature_id)
       user_story_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:user_story])
@@ -205,7 +219,13 @@ module EpicGrid
     # Task作成
     def create_task
       user_story_id = params[:user_story_id]
-      task_params = params.require(:task).permit(:subject, :description, :assigned_to_id, :estimated_hours)
+
+      # 両方の形式をサポート: ネスト形式 {task: {...}} と平坦形式 {...}
+      task_params = if params[:task].present?
+        params.require(:task).permit(:subject, :description, :assigned_to_id, :estimated_hours)
+      else
+        params.permit(:subject, :description, :assigned_to_id, :estimated_hours)
+      end
 
       user_story = Issue.find(user_story_id)
       task_tracker = Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:task])
