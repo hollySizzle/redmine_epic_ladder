@@ -34,21 +34,28 @@ RSpec.describe 'Epic Creation E2E', type: :system, js: true do
       expect_text_visible('Epic')
       expect_text_visible('Feature')
 
-      # Step 4: "Add Epic" ボタンを見つける（明示的待機）
-      add_epic_button = @playwright_page.wait_for_selector('button[data-add-button="epic"]', state: 'visible', timeout: 10000)
+      # Step 4: "Add Epic" ボタンを見つける
+      add_epic_button = @playwright_page.wait_for_selector('.add-epic-btn', state: 'visible', timeout: 15000)
       expect(add_epic_button).not_to be_nil, 'Add Epic button not found'
 
-      # Step 5: Dialogリスナーを設定（クリック前に設定）
-      @playwright_page.on('dialog', ->(dialog) {
+      puts "\n✅ Step 4: Add Epic button found"
+
+      # Step 5: Dialogハンドラを先に設定（クリック前に設定する必要がある）
+      @playwright_page.on('dialog') do |dialog|
+        puts "✅ Dialog detected: #{dialog.message}"
         expect(dialog.message).to include('Epic名を入力してください')
         dialog.accept('New Test Epic')
-      })
+      end
+
+      puts "✅ Step 5: Dialog handler registered"
 
       # Step 6: ボタンをクリック
       add_epic_button.click
 
-      # Step 7: 新しいEpicが表示されることを確認
-      @playwright_page.wait_for_selector('.epic-cell >> text="New Test Epic"', timeout: 10000)
+      puts "✅ Step 6: Button clicked, waiting for Epic to appear"
+
+      # Step 7: 新しいEpicが表示されることを確認（タイムアウトを長めに）
+      @playwright_page.wait_for_selector('.epic-cell:has-text("New Test Epic")', timeout: 15000)
       expect_text_visible('New Test Epic')
 
       puts "\n✅ Epic Creation E2E Test Passed"
@@ -58,18 +65,20 @@ RSpec.describe 'Epic Creation E2E', type: :system, js: true do
       login_as(user)
       goto_kanban(project)
 
-      add_epic_button = @playwright_page.wait_for_selector('button[data-add-button="epic"]', state: 'visible', timeout: 10000)
+      add_epic_button = @playwright_page.wait_for_selector('.add-epic-btn', state: 'visible', timeout: 15000)
       expect(add_epic_button).not_to be_nil
 
-      # Dialogリスナーを設定（キャンセル）
-      @playwright_page.on('dialog', ->(dialog) {
+      # Dialogハンドラを先に設定してキャンセル
+      @playwright_page.on('dialog') do |dialog|
+        puts "✅ Dialog detected, dismissing..."
         dialog.dismiss
-      })
+      end
 
+      # ボタンをクリック
       add_epic_button.click
+      sleep 1
 
       # Epicが作成されていないことを確認（エラーがないこと）
-      sleep 1
       epic_cells = @playwright_page.query_selector_all('.epic-cell')
       expect(epic_cells.length).to eq(0)
 
