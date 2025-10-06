@@ -235,7 +235,17 @@
       "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:18 --format documentation)",
       "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:35 --format documentation)",
       "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/ --format documentation)",
-      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/feature_creation_spec.rb --format documentation)"
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/feature_creation_spec.rb --format documentation)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/feature_creation_spec.rb --format progress)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/simple_e2e_spec.rb --format documentation)",
+      "Bash(timeout 600 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/ --format progress)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/version_creation_spec.rb --format progress)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/feature_creation_spec.rb:28 --format documentation)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/debug_feature_creation_spec.rb --format documentation)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/user_story_creation_spec.rb --format progress)",
+      "Bash(timeout 120 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/task_creation_spec.rb --format progress)",
+      "Bash(timeout:*)",
+      "Bash(perl:*)"
     ],
     "deny": [],
     "ask": [],

@@ -263,7 +263,7 @@ module EpicGridE2EHelpers
 
   # UserStoryカードを展開
   def expand_user_story(user_story_subject)
-    user_story_card = @playwright_page.query_selector(".user-story-card >> text=\"#{user_story_subject}\"")
+    user_story_card = @playwright_page.query_selector(".user-story >> text=\"#{user_story_subject}\"")
     raise "UserStory '#{user_story_subject}' not found" unless user_story_card
 
     # 展開ボタンをクリック（存在すれば）
@@ -276,11 +276,17 @@ module EpicGridE2EHelpers
   # キャンセル操作（汎用）
   def cancel_item_creation_via_ui(item_type, parent_info: {})
     button_selector = if parent_info[:epic_id]
-      ".epic-cell[data-epic='#{parent_info[:epic_id]}'] .add-feature-btn"
+      # Feature作成キャンセル: Epic内のボタン
+      ".epic-cell[data-epic='#{parent_info[:epic_id]}'] button[data-add-button='feature']"
     elsif parent_info[:feature_id]
-      ".feature-card[data-feature='#{parent_info[:feature_id]}'] .add-#{item_type}-btn"
+      # UserStory作成キャンセル: Feature×Versionセル内のボタン
+      ".us-cell button[data-add-button='user-story']"
+    elsif parent_info[:user_story_subject]
+      # Task/Test/Bug作成キャンセル: UserStory内のボタン
+      ".#{item_type}-container button[data-add-button='#{item_type}']"
     else
-      ".add-#{item_type}-btn"
+      # Epic/Version作成キャンセル: グローバルボタン
+      "button[data-add-button='#{item_type}']"
     end
 
     button = @playwright_page.wait_for_selector(button_selector, state: 'visible', timeout: 15000)
@@ -357,9 +363,12 @@ module EpicGridE2EHelpers
 
   # アイテム作成完了待機
   def wait_for_item_created(item_type, item_name)
+    # モーダルが閉じてから少し待機（アニメーション完了待ち）
+    sleep 0.5
+
     case item_type
     when 'epic'
-      @playwright_page.wait_for_selector(".epic-cell:has-text('#{item_name}')", timeout: 15000)
+      @playwright_page.wait_for_selector(".epic-name:has-text('#{item_name}')", timeout: 15000)
     when 'version'
       @playwright_page.wait_for_selector(".version-header:has-text('#{item_name}')", timeout: 15000)
     when 'feature'
@@ -367,7 +376,7 @@ module EpicGridE2EHelpers
     when 'user-story'
       @playwright_page.wait_for_selector(".user-story:has-text('#{item_name}')", timeout: 15000)
     when 'task', 'test', 'bug'
-      @playwright_page.wait_for_selector(".#{item_type}:has-text('#{item_name}')", timeout: 15000)
+      @playwright_page.wait_for_selector(".#{item_type}-item:has-text('#{item_name}')", timeout: 15000)
     end
   end
 end

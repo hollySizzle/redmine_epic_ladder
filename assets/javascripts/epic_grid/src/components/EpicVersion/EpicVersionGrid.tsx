@@ -20,7 +20,7 @@ const DraggableFeatureCell: React.FC<{ feature: Feature }> = ({ feature }) => {
 
   return (
     <div ref={ref} className="feature-cell draggable" data-feature={feature.id}>
-      {feature.title}
+      {feature.subject}
     </div>
   );
 };
@@ -133,7 +133,13 @@ export const EpicVersionGrid: React.FC = () => {
   };
 
   const handleFeatureSubmit = async (data: IssueFormData) => {
-    if (!selectedEpicId) return;
+    if (!selectedEpicId) {
+      console.error('[DEBUG] selectedEpicId is null!');
+      alert('エラー: Epic IDが設定されていません');
+      return;
+    }
+
+    console.log('[DEBUG] Creating Feature with epicId:', selectedEpicId);
 
     try {
       await createFeature({
@@ -142,7 +148,9 @@ export const EpicVersionGrid: React.FC = () => {
         parent_epic_id: selectedEpicId,
         fixed_version_id: null,
       });
+      console.log('[DEBUG] Feature created successfully');
     } catch (error) {
+      console.error('[DEBUG] Feature creation error:', error);
       alert(`Feature作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error; // モーダルでエラー処理するため再スロー
     }
@@ -177,7 +185,7 @@ export const EpicVersionGrid: React.FC = () => {
           if (validFeatures.length === 0) {
             return (
               <React.Fragment key={epicId}>
-                <div className="epic-cell">
+                <div className="epic-cell" data-epic={epicId}>
                   <div className="epic-name">{epic.subject}</div>
                   <AddButton
                     type="feature"
@@ -203,7 +211,7 @@ export const EpicVersionGrid: React.FC = () => {
               <React.Fragment key={`${epicId}-${featureId}`}>
                 {/* Epic列 (1Epic分を縦に結合したイメージ) */}
                 {featureIndex === 0 ? (
-                  <div className="epic-cell" style={{ gridRow: `span ${validFeatures.length}` }}>
+                  <div className="epic-cell" data-epic={epicId} style={{ gridRow: `span ${validFeatures.length}` }}>
                     <div className="epic-name">{epic.subject}</div>
                     <AddButton
                       type="feature"

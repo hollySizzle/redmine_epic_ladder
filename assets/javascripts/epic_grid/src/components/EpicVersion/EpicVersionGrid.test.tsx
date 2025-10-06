@@ -135,6 +135,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f1': {
               id: 'f1',
               title: 'Feature 1',
+              subject: 'Feature 1',
               parent_epic_id: 'e1',
               fixed_version_id: null,
               user_story_ids: [],
@@ -143,6 +144,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f2': {
               id: 'f2',
               title: 'Feature 2',
+              subject: 'Feature 2',
               parent_epic_id: 'e1',
               fixed_version_id: null,
               user_story_ids: [],
@@ -207,6 +209,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f1': {
               id: 'f1',
               title: 'Feature 1',
+              subject: 'Feature 1',
               parent_epic_id: 'e1',
               fixed_version_id: null,
               user_story_ids: [],
@@ -215,6 +218,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f2': {
               id: 'f2',
               title: 'Feature 2',
+              subject: 'Feature 2',
               parent_epic_id: 'e2',
               fixed_version_id: null,
               user_story_ids: [],
@@ -270,6 +274,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f1': {
               id: 'f1',
               title: 'Feature 1',
+              subject: 'Feature 1',
               parent_epic_id: 'e1',
               fixed_version_id: null,
               user_story_ids: ['us1', 'us2'],
@@ -498,6 +503,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f1': {
               id: 'f1',
               title: 'Feature 1',
+              subject: 'Feature 1',
               parent_epic_id: 'e1',
               fixed_version_id: null,
               user_story_ids: ['us1'],
@@ -567,6 +573,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f1': {
               id: 'f1',
               title: 'Feature 1',
+              subject: 'Feature 1',
               parent_epic_id: 'e1',
               fixed_version_id: null,
               user_story_ids: ['us1'],
@@ -637,6 +644,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             'f1': {
               id: 'f1',
               title: 'Feature 1',
+              subject: 'Feature 1',
               parent_epic_id: 'e1',
               fixed_version_id: null,
               user_story_ids: ['us1', 'us2'],

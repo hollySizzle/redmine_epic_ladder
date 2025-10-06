@@ -2,8 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { startMocking } from './mocks/browser';
+import { useStore } from './store/useStore';
 
 console.log('✅ React application starting...');
+
+// Expose store globally for debugging/E2E tests
+(window as any).useStore = useStore;
 
 // MSWを初期化してからReactアプリをマウント
 startMocking().then(() => {

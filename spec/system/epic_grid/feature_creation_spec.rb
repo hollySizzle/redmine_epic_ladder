@@ -35,11 +35,14 @@ RSpec.describe 'Feature Creation E2E', type: :system, js: true do
       # Step 3: Epicが表示されることを確認
       expect_text_visible('Test Epic for Feature')
 
-      # Step 4: create_feature_via_uiヘルパーを使用
+      # Step 4: Featureを作成
       create_feature_via_ui(@epic1.id, 'New Test Feature')
 
       # Step 5: 新しいFeatureが表示されることを確認
+      # wait_for_item_createdで既にウェイトしているので、ここでは単純にチェック
       expect_text_visible('New Test Feature')
+
+      puts "\n✅ Feature作成後のグリッド表示を確認"
 
       puts "\n✅ Feature Creation E2E Test Passed"
     end

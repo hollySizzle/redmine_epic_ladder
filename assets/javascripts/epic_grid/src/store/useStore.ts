@@ -201,8 +201,11 @@ export const useStore = create<StoreState>()(
         const projectId = get().projectId;
         if (!projectId) throw new Error('Project ID not set');
 
+        console.log('[DEBUG] createFeature called with:', { projectId, data });
+
         try {
           const result = await API.createFeature(projectId, data);
+          console.log('[DEBUG] API.createFeature returned:', JSON.stringify(result, null, 2));
 
           set((state) => {
             // 正規化データをマージ
@@ -210,11 +213,17 @@ export const useStore = create<StoreState>()(
             Object.assign(state.entities.features, result.data.updated_entities.features || {});
             Object.assign(state.entities.versions, result.data.updated_entities.versions || {});
 
+            console.log('[DEBUG] After merge - state.entities.features:', Object.keys(state.entities.features));
+            console.log('[DEBUG] After merge - state.grid.feature_order_by_epic:', state.grid.feature_order_by_epic);
+
             // 3D Grid対応: grid.indexとfeature_order_by_epicを更新
             Object.assign(state.grid.index, result.data.grid_updates.index);
             Object.assign(state.grid.feature_order_by_epic, result.data.grid_updates.feature_order_by_epic);
+
+            console.log('[DEBUG] After grid updates - feature_order_by_epic:', state.grid.feature_order_by_epic);
           });
         } catch (error) {
+          console.error('[DEBUG] createFeature error:', error);
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
         }

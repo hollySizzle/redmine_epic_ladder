@@ -96,6 +96,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       f1: {
         id: 'f1',
         title: '登録画面',
+        subject: '登録画面',
         description: '新規ユーザー登録機能',
         status: 'open',
         parent_epic_id: 'epic1',
@@ -122,6 +123,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       f2: {
         id: 'f2',
         title: '一覧画面',
+        subject: '一覧画面',
         description: 'ユーザー一覧表示機能',
         status: 'open',
         parent_epic_id: 'epic1',
@@ -148,6 +150,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       f5: {
         id: 'f5',
         title: '編集画面',
+        subject: '編集画面',
         description: 'ユーザー情報編集機能',
         status: 'closed',
         parent_epic_id: 'epic1',
@@ -174,6 +177,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       f3: {
         id: 'f3',
         title: '診察室管理',
+        subject: '診察室管理',
         description: '診察室の登録・編集機能',
         status: 'open',
         parent_epic_id: 'epic2',
@@ -200,6 +204,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       f4: {
         id: 'f4',
         title: 'スケジュール登録',
+        subject: 'スケジュール登録',
         description: '診療スケジュール登録機能',
         status: 'open',
         parent_epic_id: 'epic2',
@@ -229,6 +234,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us1: {
         id: 'us1',
         title: 'US#101 ユーザー登録フォーム',
+        subject: 'US#101 ユーザー登録フォーム',
         description: 'ユーザー情報入力フォームの実装',
         status: 'open',
         parent_feature_id: 'f1',
@@ -257,6 +263,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us2: {
         id: 'us2',
         title: 'US#102 ユーザー一覧表示',
+        subject: 'US#102 ユーザー一覧表示',
         description: 'ユーザー情報の一覧表示機能',
         status: 'open',
         parent_feature_id: 'f2',
@@ -285,6 +292,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us3: {
         id: 'us3',
         title: 'US#103 ユーザー編集機能',
+        subject: 'US#103 ユーザー編集機能',
         description: 'ユーザー情報の更新機能',
         status: 'closed',
         parent_feature_id: 'f5',
@@ -313,6 +321,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us4: {
         id: 'us4',
         title: 'US#201 スケジュール登録画面',
+        subject: 'US#201 スケジュール登録画面',
         description: '診療スケジュール入力フォーム',
         status: 'open',
         parent_feature_id: 'f4',
@@ -341,6 +350,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us5: {
         id: 'us5',
         title: 'US#104 ユーザー認証強化',
+        subject: 'US#104 ユーザー認証強化',
         description: '2要素認証の実装',
         status: 'in_progress',
         parent_feature_id: 'f1',
@@ -369,6 +379,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us6: {
         id: 'us6',
         title: 'US#105 パスワードリセット機能',
+        subject: 'US#105 パスワードリセット機能',
         description: 'メール経由のパスワードリセット',
         status: 'open',
         parent_feature_id: 'f2',
@@ -397,6 +408,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us7: {
         id: 'us7',
         title: 'US#202 診察室ステータス表示',
+        subject: 'US#202 診察室ステータス表示',
         description: '診察室の空き状況リアルタイム表示',
         status: 'in_progress',
         parent_feature_id: 'f3',
@@ -425,6 +437,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       us8: {
         id: 'us8',
         title: 'US#203 スケジュール一覧表示',
+        subject: 'US#203 スケジュール一覧表示',
         description: '週間スケジュールカレンダー表示',
         status: 'open',
         parent_feature_id: 'f4',
@@ -456,6 +469,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t1: {
         id: 't1',
         title: 'バリデーション実装',
+        subject: 'バリデーション実装',
         description: '入力値のバリデーション処理実装',
         status: 'open',
         parent_user_story_id: 'us1',
@@ -471,6 +485,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t2: {
         id: 't2',
         title: 'UI設計完了',
+        subject: 'UI設計完了',
         description: '登録フォームのUI設計',
         status: 'closed',
         parent_user_story_id: 'us1',
@@ -486,6 +501,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t3: {
         id: 't3',
         title: '一覧API実装',
+        subject: '一覧API実装',
         description: 'ユーザー一覧取得API実装',
         status: 'open',
         parent_user_story_id: 'us2',
@@ -501,6 +517,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t4: {
         id: 't4',
         title: '編集フォーム作成',
+        subject: '編集フォーム作成',
         description: 'ユーザー編集フォームの実装',
         status: 'closed',
         parent_user_story_id: 'us3',
@@ -516,6 +533,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t5: {
         id: 't5',
         title: 'カレンダーUI実装',
+        subject: 'カレンダーUI実装',
         description: 'スケジュール選択カレンダーUI',
         status: 'open',
         parent_user_story_id: 'us4',
@@ -531,6 +549,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t6: {
         id: 't6',
         title: '繰り返し設定機能',
+        subject: '繰り返し設定機能',
         description: '定期スケジュール設定機能',
         status: 'open',
         parent_user_story_id: 'us4',
@@ -546,6 +565,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t7: {
         id: 't7',
         title: 'TOTPライブラリ導入',
+        subject: 'TOTPライブラリ導入',
         description: 'Time-based OTP生成ライブラリ選定と導入',
         status: 'closed',
         parent_user_story_id: 'us5',
@@ -561,6 +581,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t8: {
         id: 't8',
         title: 'QRコード生成機能',
+        subject: 'QRコード生成機能',
         description: '認証用QRコード生成UI実装',
         status: 'in_progress',
         parent_user_story_id: 'us5',
@@ -576,6 +597,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t9: {
         id: 't9',
         title: 'トークン生成処理',
+        subject: 'トークン生成処理',
         description: 'パスワードリセット用ワンタイムトークン生成',
         status: 'open',
         parent_user_story_id: 'us6',
@@ -591,6 +613,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t10: {
         id: 't10',
         title: 'メール送信機能',
+        subject: 'メール送信機能',
         description: 'リセットメール送信処理実装',
         status: 'open',
         parent_user_story_id: 'us6',
@@ -606,6 +629,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t11: {
         id: 't11',
         title: 'リセットフォーム作成',
+        subject: 'リセットフォーム作成',
         description: '新パスワード入力フォーム実装',
         status: 'open',
         parent_user_story_id: 'us6',
@@ -621,6 +645,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t12: {
         id: 't12',
         title: 'WebSocket接続実装',
+        subject: 'WebSocket接続実装',
         description: 'リアルタイム更新用WebSocket接続',
         status: 'closed',
         parent_user_story_id: 'us7',
@@ -636,6 +661,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t13: {
         id: 't13',
         title: 'ステータス表示UI',
+        subject: 'ステータス表示UI',
         description: '診察室ステータス表示コンポーネント',
         status: 'in_progress',
         parent_user_story_id: 'us7',
@@ -651,6 +677,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t14: {
         id: 't14',
         title: 'カレンダーライブラリ選定',
+        subject: 'カレンダーライブラリ選定',
         description: 'React用カレンダーライブラリ調査・選定',
         status: 'open',
         parent_user_story_id: 'us8',
@@ -666,6 +693,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       t15: {
         id: 't15',
         title: 'スケジュールデータ取得API',
+        subject: 'スケジュールデータ取得API',
         description: '週間スケジュール取得API実装',
         status: 'open',
         parent_user_story_id: 'us8',
@@ -684,6 +712,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       test1: {
         id: 'test1',
         title: '単体テスト作成',
+        subject: '単体テスト作成',
         description: 'バリデーション機能の単体テスト',
         status: 'open',
         parent_user_story_id: 'us1',
@@ -697,6 +726,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       test2: {
         id: 'test2',
         title: 'TOTP認証テスト',
+        subject: 'TOTP認証テスト',
         description: 'OTPコード検証ロジックのテスト',
         status: 'closed',
         parent_user_story_id: 'us5',
@@ -710,6 +740,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       test3: {
         id: 'test3',
         title: 'QRコード表示テスト',
+        subject: 'QRコード表示テスト',
         description: 'QRコード生成・表示の結合テスト',
         status: 'in_progress',
         parent_user_story_id: 'us5',
@@ -723,6 +754,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       test4: {
         id: 'test4',
         title: 'パスワードリセット E2E',
+        subject: 'パスワードリセット E2E',
         description: 'メール送信からリセット完了までのE2Eテスト',
         status: 'open',
         parent_user_story_id: 'us6',
@@ -736,6 +768,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       test5: {
         id: 'test5',
         title: 'WebSocket接続テスト',
+        subject: 'WebSocket接続テスト',
         description: 'リアルタイム更新の接続・切断テスト',
         status: 'in_progress',
         parent_user_story_id: 'us7',
@@ -749,6 +782,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       test6: {
         id: 'test6',
         title: 'カレンダー表示テスト',
+        subject: 'カレンダー表示テスト',
         description: '週間カレンダーレンダリングテスト',
         status: 'open',
         parent_user_story_id: 'us8',
@@ -762,6 +796,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       test7: {
         id: 'test7',
         title: 'スケジュールAPI統合テスト',
+        subject: 'スケジュールAPI統合テスト',
         description: 'APIからデータ取得してカレンダー表示まで',
         status: 'open',
         parent_user_story_id: 'us8',
@@ -778,6 +813,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       b1: {
         id: 'b1',
         title: 'バリデーションエラー修正',
+        subject: 'バリデーションエラー修正',
         description: 'メールアドレス形式チェックの不具合',
         status: 'open',
         parent_user_story_id: 'us1',
@@ -791,6 +827,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       b2: {
         id: 'b2',
         title: 'メールテンプレート文字化け',
+        subject: 'メールテンプレート文字化け',
         description: 'リセットメールの日本語が文字化けする',
         status: 'open',
         parent_user_story_id: 'us6',
@@ -804,6 +841,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
       b3: {
         id: 'b3',
         title: 'WebSocket切断時再接続失敗',
+        subject: 'WebSocket切断時再接続失敗',
         description: 'ネットワーク切断後の自動再接続が動作しない',
         status: 'closed',
         parent_user_story_id: 'us7',

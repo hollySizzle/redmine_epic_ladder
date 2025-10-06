@@ -82,6 +82,12 @@ module EpicGrid
         cell_key = "#{feature.parent_id}:#{feature.fixed_version_id || 'none'}"
         grid_index = @project.epic_grid_index
         grid_updates[:index] = { cell_key => grid_index[:index][cell_key] || [feature.id.to_s] }
+
+        # feature_order_by_epicも更新 (フロントエンドがこれを使ってレンダリング)
+        epic_id = feature.parent_id.to_s
+        grid_updates[:feature_order_by_epic] = {
+          epic_id => parent_epic.children.where(tracker: feature_tracker).order(:id).pluck(:id).map(&:to_s)
+        }
       end
 
       render_normalized_success(
@@ -161,6 +167,18 @@ module EpicGrid
 
       # 親Featureをリロード
       feature.reload
+      parent_epic = feature.parent
+
+      # grid_updatesの構築 (3D Grid対応)
+      epic_id = parent_epic&.id.to_s
+      feature_id = feature.id.to_s
+      version_id = (user_story.fixed_version_id || 'none').to_s
+      cell_key = "#{epic_id}:#{feature_id}:#{version_id}"
+
+      grid_index = @project.epic_grid_index
+      grid_updates = {
+        index: { cell_key => grid_index[:index][cell_key] || [user_story.id.to_s] }
+      }
 
       # MSW準拠のレスポンス構築
       render_normalized_success(
@@ -169,6 +187,7 @@ module EpicGrid
           features: { feature.id.to_s => feature.epic_grid_as_normalized_json },
           user_stories: { user_story.id.to_s => user_story.epic_grid_as_normalized_json }
         },
+        grid_updates: grid_updates,
         status: :created
       )
     rescue ActiveRecord::RecordNotFound
