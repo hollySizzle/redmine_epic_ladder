@@ -599,5 +599,162 @@ module EpicGrid
       Rails.logger.error "Reset error: #{e.message}"
       render_error('リセット処理に失敗しました', :internal_server_error)
     end
+
+    # POST /api/epic_grid/projects/:projectId/grid/batch_update
+    # D&D操作の一括保存
+    def batch_update
+      # 権限チェック
+      unless User.current.allowed_to?(:edit_issues, @project)
+        return render_error('権限が不足しています', :forbidden, {
+          required_permission: 'edit_issues',
+          resource_type: 'Project',
+          resource_id: @project.id
+        })
+      end
+
+      updated_entities = {}
+      updated_grid_index = {}
+      updated_epic_order = nil
+      updated_version_order = nil
+
+      # ========================================
+      # UserStory移動の一括処理
+      # ========================================
+      moved_user_stories = params[:moved_user_stories] || []
+      if moved_user_stories.any?
+        user_stories_data = {}
+        features_data = {}
+        affected_feature_ids = Set.new
+
+        moved_user_stories.each do |move|
+          user_story_id = move[:id]
+          target_feature_id = move[:target_feature_id]
+          target_version_id = move[:target_version_id].presence
+
+          # UserStory存在確認
+          user_story = Issue.find_by(id: user_story_id)
+          next unless user_story
+
+          # Feature存在確認
+          target_feature = Issue.find_by(id: target_feature_id)
+          next unless target_feature
+
+          # 移動前の状態を保存
+          old_feature = user_story.parent
+          old_version_id = user_story.fixed_version_id
+
+          # UserStory移動実行
+          user_story.parent_issue_id = target_feature_id
+          user_story.fixed_version_id = target_version_id
+          user_story.save!
+
+          # 子要素（Task/Test/Bug）のVersion伝播
+          user_story.children.each do |child|
+            child.update!(fixed_version_id: target_version_id)
+          end
+
+          # 影響を受けたFeatureを記録
+          affected_feature_ids << old_feature.id if old_feature
+          affected_feature_ids << target_feature_id
+
+          # Grid index更新
+          update_grid_index_for_user_story_move(
+            user_story, old_feature, target_feature, old_version_id, target_version_id, updated_grid_index
+          )
+
+          # UserStoryデータを追加（reload後）
+          user_stories_data[user_story.id.to_s] = user_story.reload.epic_grid_as_normalized_json
+        end
+
+        # 影響を受けたFeatureのデータを取得
+        affected_feature_ids.each do |feature_id|
+          feature = Issue.find_by(id: feature_id)
+          features_data[feature_id.to_s] = feature.reload.epic_grid_as_normalized_json if feature
+        end
+
+        updated_entities[:user_stories] = user_stories_data
+        updated_entities[:features] = features_data
+      end
+
+      # ========================================
+      # Epic並び替え
+      # ========================================
+      if params[:reordered_epics].present?
+        updated_epic_order = params[:reordered_epics].map(&:to_s)
+        # Note: Epic順序はフロントエンドで管理、DBには保存しない
+      end
+
+      # ========================================
+      # Version並び替え
+      # ========================================
+      if params[:reordered_versions].present?
+        updated_version_order = params[:reordered_versions].map(&:to_s)
+        # Note: Version順序はフロントエンドで管理、DBには保存しない
+      end
+
+      # レスポンス構築
+      response_data = {
+        success: true,
+        updated_entities: updated_entities,
+        updated_grid_index: updated_grid_index
+      }
+
+      response_data[:updated_epic_order] = updated_epic_order if updated_epic_order
+      response_data[:updated_version_order] = updated_version_order if updated_version_order
+
+      render json: response_data, status: :ok
+    rescue => e
+      Rails.logger.error "Batch update error: #{e.message}\n#{e.backtrace.join("\n")}"
+      render_error('バッチ更新に失敗しました', :internal_server_error, {
+        error_class: e.class.name,
+        error_message: e.message
+      })
+    end
+
+    private
+
+    # UserStory移動時のGrid Index更新（部分更新）
+    def update_grid_index_for_user_story_move(user_story, old_feature, target_feature, old_version_id, target_version_id, grid_index)
+      user_story_tracker = @project.trackers.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:user_story])
+
+      # 古いセルの更新（移動したUserStoryを除く）
+      if old_feature
+        old_epic_id = old_feature.parent_id
+        @project.versions.each do |version|
+          old_cell_key = "#{old_epic_id}:#{old_feature.id}:#{version.id}"
+          old_cell_user_stories = old_feature.children
+            .where(tracker: user_story_tracker)
+            .where(fixed_version_id: version.id)
+            .where.not(id: user_story.id)
+            .pluck(:id)
+            .map(&:to_s)
+
+          grid_index[old_cell_key] = old_cell_user_stories
+        end
+
+        # version_id = null のセルも更新
+        old_cell_key_none = "#{old_epic_id}:#{old_feature.id}:none"
+        old_cell_user_stories_none = old_feature.children
+          .where(tracker: user_story_tracker)
+          .where(fixed_version_id: nil)
+          .where.not(id: user_story.id)
+          .pluck(:id)
+          .map(&:to_s)
+        grid_index[old_cell_key_none] = old_cell_user_stories_none
+      end
+
+      # 新しいセルの更新（移動したUserStoryを含む）
+      new_epic_id = target_feature.parent_id
+      new_version_key = target_version_id || 'none'
+      new_cell_key = "#{new_epic_id}:#{target_feature.id}:#{new_version_key}"
+
+      new_cell_user_stories = target_feature.children
+        .where(tracker: user_story_tracker)
+        .where(fixed_version_id: target_version_id)
+        .pluck(:id)
+        .map(&:to_s)
+
+      grid_index[new_cell_key] = new_cell_user_stories
+    end
   end
 end

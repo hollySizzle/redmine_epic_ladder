@@ -389,5 +389,150 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         expect(response_body[:error][:code]).to eq('not_found')
       end
     end
+
+    describe 'POST #batch_update' do
+      let(:epic_tracker) { create(:epic_tracker) }
+      let(:feature_tracker) { create(:feature_tracker) }
+      let(:user_story_tracker) { create(:user_story_tracker) }
+      let(:version1) { create(:version, project: project, name: 'v1.0') }
+      let(:version2) { create(:version, project: project, name: 'v2.0') }
+
+      let(:epic1) { create(:issue, project: project, tracker: epic_tracker, subject: 'Epic 1') }
+      let(:epic2) { create(:issue, project: project, tracker: epic_tracker, subject: 'Epic 2') }
+
+      let(:feature1) { create(:issue, project: project, tracker: feature_tracker, subject: 'Feature 1', parent: epic1) }
+      let(:feature2) { create(:issue, project: project, tracker: feature_tracker, subject: 'Feature 2', parent: epic1) }
+
+      let(:user_story1) do
+        create(:issue, project: project, tracker: user_story_tracker, subject: 'Story 1',
+               parent: feature1, fixed_version: version1)
+      end
+      let(:user_story2) do
+        create(:issue, project: project, tracker: user_story_tracker, subject: 'Story 2',
+               parent: feature1, fixed_version: version1)
+      end
+
+      before do
+        [epic_tracker, feature_tracker, user_story_tracker].each do |tracker|
+          project.trackers << tracker unless project.trackers.include?(tracker)
+        end
+        epic1
+        epic2
+        feature1
+        feature2
+        user_story1
+        user_story2
+        version1
+        version2
+      end
+
+      it 'conforms to MSW BATCH_UPDATE_RESPONSE contract (UserStory moves only)' do
+        post :batch_update, params: {
+          project_id: project.id,
+          moved_user_stories: [
+            {
+              id: user_story1.id.to_s,
+              target_feature_id: feature2.id.to_s,
+              target_version_id: version2.id.to_s
+            },
+            {
+              id: user_story2.id.to_s,
+              target_feature_id: feature2.id.to_s,
+              target_version_id: nil
+            }
+          ]
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+
+        # MSW契約確認
+        expect(response_body).to include(:success, :updated_entities, :updated_grid_index)
+        expect(response_body[:success]).to eq(true)
+
+        # updated_entities構造確認
+        expect(response_body[:updated_entities]).to include(:user_stories, :features)
+        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story1.id.to_s)
+        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story2.id.to_s)
+        expect(response_body[:updated_entities][:features]).to have_key(feature1.id.to_s)
+        expect(response_body[:updated_entities][:features]).to have_key(feature2.id.to_s)
+
+        # updated_grid_indexの部分更新確認（全セルではなく変更されたセルのみ）
+        expect(response_body[:updated_grid_index]).to be_a(Hash)
+        expect(response_body[:updated_grid_index].keys.length).to be > 0
+
+        # UserStoryの移動確認
+        user_story1.reload
+        user_story2.reload
+        expect(user_story1.parent_id).to eq(feature2.id)
+        expect(user_story1.fixed_version_id).to eq(version2.id)
+        expect(user_story2.parent_id).to eq(feature2.id)
+        expect(user_story2.fixed_version_id).to be_nil
+      end
+
+      it 'conforms to MSW BATCH_UPDATE_RESPONSE contract (Epic/Version reorder)' do
+        post :batch_update, params: {
+          project_id: project.id,
+          reordered_epics: [epic2.id.to_s, epic1.id.to_s],
+          reordered_versions: [version2.id.to_s, version1.id.to_s]
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+
+        # MSW契約確認
+        expect(response_body).to include(:success, :updated_epic_order, :updated_version_order)
+        expect(response_body[:success]).to eq(true)
+        expect(response_body[:updated_epic_order]).to eq([epic2.id.to_s, epic1.id.to_s])
+        expect(response_body[:updated_version_order]).to eq([version2.id.to_s, version1.id.to_s])
+      end
+
+      it 'conforms to MSW BATCH_UPDATE_RESPONSE contract (mixed operations)' do
+        post :batch_update, params: {
+          project_id: project.id,
+          moved_user_stories: [
+            {
+              id: user_story1.id.to_s,
+              target_feature_id: feature2.id.to_s,
+              target_version_id: version2.id.to_s
+            }
+          ],
+          reordered_epics: [epic2.id.to_s, epic1.id.to_s],
+          reordered_versions: [version2.id.to_s, version1.id.to_s]
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+
+        # MSW契約確認
+        expect(response_body).to include(
+          :success,
+          :updated_entities,
+          :updated_grid_index,
+          :updated_epic_order,
+          :updated_version_order
+        )
+        expect(response_body[:success]).to eq(true)
+
+        # 各種更新の確認
+        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story1.id.to_s)
+        expect(response_body[:updated_epic_order]).to eq([epic2.id.to_s, epic1.id.to_s])
+        expect(response_body[:updated_version_order]).to eq([version2.id.to_s, version1.id.to_s])
+      end
+
+      it 'returns success even with empty request' do
+        post :batch_update, params: { project_id: project.id }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body[:success]).to eq(true)
+        expect(response_body[:updated_entities]).to eq({})
+        expect(response_body[:updated_grid_index]).to eq({})
+      end
+    end
   end
 end

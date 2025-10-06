@@ -13,6 +13,9 @@ RedmineApp::Application.routes.draw do
     # POST /api/epic_grid/projects/:projectId/grid/move_user_story
     post 'grid/move_user_story', to: 'epic_grid/grid#move_user_story'
 
+    # POST /api/epic_grid/projects/:projectId/grid/batch_update
+    post 'grid/batch_update', to: 'epic_grid/grid#batch_update'
+
     # GET /api/epic_grid/projects/:projectId/grid/updates
     get 'grid/updates', to: 'epic_grid/grid#real_time_updates'
 
