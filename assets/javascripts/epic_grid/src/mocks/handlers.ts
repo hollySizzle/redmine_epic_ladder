@@ -33,6 +33,7 @@ import type {
   Bug,
   Version
 } from '../types/normalized-api';
+import type { BatchUpdateRequest, BatchUpdateResponse } from '../api/kanban-api';
 import { normalizedMockData } from './normalized-mock-data';
 
 // モックデータのディープコピー (状態を保持するため)
@@ -1177,6 +1178,133 @@ export const handlers = [
         conflicts: []
       }
     };
+
+    return HttpResponse.json(response);
+  }),
+
+  // POST /api/epic_grid/projects/:projectId/grid/batch_update
+  // バッチ更新処理（D&D操作の一括保存）
+  http.post('/api/epic_grid/projects/:projectId/grid/batch_update', async ({ request }: { request: Request }) => {
+    await delay(300); // API遅延シミュレート
+
+    const body = await request.json() as BatchUpdateRequest;
+    console.log('📦 MSW: batch_update called:', body);
+
+    const updatedEntities: BatchUpdateResponse['updated_entities'] = {};
+    const updatedGridIndex: Record<string, string[]> = {};
+
+    // ========================================
+    // UserStory移動の一括処理
+    // ========================================
+    if (body.moved_user_stories && body.moved_user_stories.length > 0) {
+      const userStories: Record<string, UserStory> = {};
+      const features: Record<string, Feature> = {};
+
+      body.moved_user_stories.forEach(move => {
+        const { id: userStoryId, target_feature_id, target_version_id } = move;
+
+        const userStory = currentData.entities.user_stories[userStoryId];
+        if (!userStory) {
+          console.error(`❌ UserStory not found: ${userStoryId}`);
+          return;
+        }
+
+        const oldFeatureId = userStory.parent_feature_id;
+        const oldFeature = currentData.entities.features[oldFeatureId];
+        const targetFeature = currentData.entities.features[target_feature_id];
+
+        if (!targetFeature) {
+          console.error(`❌ Target feature not found: ${target_feature_id}`);
+          return;
+        }
+
+        // UserStoryの移動処理（move_user_storyのロジックを再利用）
+        const oldVersionId = userStory.fixed_version_id;
+
+        // 古いFeatureから削除
+        if (oldFeature) {
+          oldFeature.user_story_ids = oldFeature.user_story_ids.filter(id => id !== userStoryId);
+          features[oldFeatureId] = oldFeature;
+        }
+
+        // 新しいFeatureに追加
+        if (!targetFeature.user_story_ids.includes(userStoryId)) {
+          targetFeature.user_story_ids.push(userStoryId);
+        }
+        features[target_feature_id] = targetFeature;
+
+        // UserStory更新
+        userStory.parent_feature_id = target_feature_id;
+        userStory.fixed_version_id = target_version_id;
+        userStories[userStoryId] = userStory;
+
+        // Grid index更新（全versionに対して処理）
+        const oldEpicId = oldFeature?.parent_epic_id;
+        const newEpicId = targetFeature.parent_epic_id;
+
+        currentData.grid.version_order.forEach(vId => {
+          // 古いセルの更新
+          if (oldEpicId && oldFeature) {
+            const oldCellKey = `${oldEpicId}:${oldFeatureId}:${vId}`;
+            if (currentData.grid.index[oldCellKey]) {
+              currentData.grid.index[oldCellKey] = currentData.grid.index[oldCellKey].filter(
+                id => id !== userStoryId
+              );
+              updatedGridIndex[oldCellKey] = currentData.grid.index[oldCellKey];
+            }
+          }
+
+          // 新しいセルの更新
+          const newCellKey = `${newEpicId}:${target_feature_id}:${vId}`;
+          if (vId === (target_version_id || 'none')) {
+            if (!currentData.grid.index[newCellKey]) {
+              currentData.grid.index[newCellKey] = [];
+            }
+            if (!currentData.grid.index[newCellKey].includes(userStoryId)) {
+              currentData.grid.index[newCellKey].push(userStoryId);
+            }
+            updatedGridIndex[newCellKey] = currentData.grid.index[newCellKey];
+          }
+        });
+
+        console.log(`✅ Moved UserStory ${userStoryId} → Feature ${target_feature_id}, Version ${target_version_id}`);
+      });
+
+      updatedEntities.user_stories = userStories;
+      updatedEntities.features = features;
+    }
+
+    // ========================================
+    // Epic並び替え
+    // ========================================
+    let updatedEpicOrder: string[] | undefined;
+    if (body.reordered_epics) {
+      currentData.grid.epic_order = [...body.reordered_epics];
+      updatedEpicOrder = [...body.reordered_epics];
+      console.log('✅ Reordered Epics:', updatedEpicOrder);
+    }
+
+    // ========================================
+    // Version並び替え
+    // ========================================
+    let updatedVersionOrder: string[] | undefined;
+    if (body.reordered_versions) {
+      currentData.grid.version_order = [...body.reordered_versions];
+      updatedVersionOrder = [...body.reordered_versions];
+      console.log('✅ Reordered Versions:', updatedVersionOrder);
+    }
+
+    // レスポンス構築
+    const response: BatchUpdateResponse = {
+      success: true,
+      updated_entities: updatedEntities,
+      updated_grid_index: updatedGridIndex,
+      updated_epic_order: updatedEpicOrder,
+      updated_version_order: updatedVersionOrder
+    };
+
+    lastUpdateTimestamp = new Date().toISOString();
+    console.log('📦 MSW: batch_update response:', response);
 
     return HttpResponse.json(response);
   })

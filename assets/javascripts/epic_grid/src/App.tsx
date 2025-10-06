@@ -27,6 +27,48 @@ export const App: React.FC = () => {
   const reorderEpics = useStore(state => state.reorderEpics);
   const reorderVersions = useStore(state => state.reorderVersions);
 
+  // Dirty state管理
+  const isDirty = useStore(state => state.isDirty);
+  const pendingChanges = useStore(state => state.pendingChanges);
+  const savePendingChanges = useStore(state => state.savePendingChanges);
+  const discardPendingChanges = useStore(state => state.discardPendingChanges);
+
+  // 保存中状態の管理
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // 保存ボタンのハンドラー
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await savePendingChanges();
+      alert('✅ 変更を保存しました');
+    } catch (error) {
+      alert(`❌ 保存に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 破棄ボタンのハンドラー
+  const handleDiscard = () => {
+    if (confirm('未保存の変更を破棄してもよろしいですか？')) {
+      discardPendingChanges();
+    }
+  };
+
+  // ページ離脱時の警告
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '未保存の変更があります。ページを離れますか？';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
   // 初期データ取得
   useEffect(() => {
     // data-project-id属性からプロジェクトIDを取得
@@ -141,12 +183,56 @@ export const App: React.FC = () => {
     return <div className="error">Error: {error}</div>;
   }
 
+  // 変更件数のカウント
+  const changesCount =
+    pendingChanges.movedUserStories.length +
+    (pendingChanges.reorderedEpics ? 1 : 0) +
+    (pendingChanges.reorderedVersions ? 1 : 0);
+
   // カンバングリッド部分
   const kanbanContent = (
     <>
       <div className="kanban-header">
         <h1>🔬 ネストGrid検証 - 4層Grid構造テスト (正規化API対応)</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {isDirty && (
+            <>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="save-btn"
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isSaving ? 'wait' : 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                {isSaving ? '保存中...' : `💾 保存 (${changesCount}件)`}
+              </button>
+              <button
+                onClick={handleDiscard}
+                disabled={isSaving}
+                className="discard-btn"
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isSaving ? 'not-allowed' : 'pointer'
+                }}
+              >
+                ✖ 破棄
+              </button>
+              <span style={{ color: '#ff9800', fontWeight: 'bold' }}>
+                ⚠️ 未保存の変更があります
+              </span>
+            </>
+          )}
           <VerticalModeToggle />
           <DetailPaneToggle />
         </div>

@@ -23,32 +23,30 @@ const DraggableFeatureCell: React.FC<{ feature: Feature }> = ({ feature }) => {
   );
 };
 
-// UserStoryセル: drop targetとして機能
+// UserStoryセル: drop targetとして機能（ローカル操作に変更）
 const UserStoryCell: React.FC<{
   epicId: string;
   featureId: string;
   versionId: string;
   storyIds: string[];
 }> = ({ epicId, featureId, versionId, storyIds }) => {
-  const moveUserStory = useStore(state => state.moveUserStory);
+  const moveUserStoryToCell = useStore(state => state.moveUserStoryToCell);
 
   const ref = useDropTarget({
     type: 'user-story',
     id: `cell-${epicId}-${featureId}-${versionId}`,
     data: { epicId, featureId, versionId, cellType: 'us-cell' },
     canDrop: (sourceData) => sourceData.type === 'user-story',
-    onDrop: async (sourceData) => {
+    onDrop: (sourceData) => {
       console.log('UserStory dropped on cell:', sourceData.id, '→', { epicId, featureId, versionId });
 
-      try {
-        await moveUserStory(
-          sourceData.id,
-          featureId,
-          versionId === 'none' ? null : versionId
-        );
-      } catch (error) {
-        console.error('Failed to move UserStory:', error);
-      }
+      // ローカル操作に変更（API呼び出しは保存ボタン押下時）
+      moveUserStoryToCell(
+        sourceData.id,
+        epicId,
+        featureId,
+        versionId
+      );
     }
   });
 

@@ -34,6 +34,43 @@ import type {
 } from '../types/normalized-api';
 
 // ========================================
+// Batch Update Request/Response Types
+// ========================================
+
+/**
+ * バッチ更新リクエスト
+ * D&D操作をまとめて保存
+ */
+export interface BatchUpdateRequest {
+  moved_user_stories?: Array<{
+    id: string;
+    target_feature_id: string;
+    target_version_id: string | null;
+  }>;
+  reordered_epics?: string[];
+  reordered_versions?: string[];
+}
+
+/**
+ * バッチ更新レスポンス
+ */
+export interface BatchUpdateResponse {
+  success: boolean;
+  updated_entities?: {
+    epics?: Record<string, any>;
+    versions?: Record<string, any>;
+    features?: Record<string, any>;
+    user_stories?: Record<string, any>;
+    tasks?: Record<string, any>;
+    tests?: Record<string, any>;
+    bugs?: Record<string, any>;
+  };
+  updated_grid_index?: Record<string, string[]>;
+  updated_epic_order?: string[];
+  updated_version_order?: string[];
+}
+
+// ========================================
 // エラーハンドリング
 // ========================================
 
@@ -282,6 +319,21 @@ export async function reorderVersions(
     body: JSON.stringify(data)
   });
   return handleResponse<ReorderVersionsResponse>(response);
+}
+
+/**
+ * バッチ更新（D&D操作の一括保存）
+ */
+export async function batchUpdate(
+  projectId: number | string,
+  data: BatchUpdateRequest
+): Promise<BatchUpdateResponse> {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/batch_update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return handleResponse<BatchUpdateResponse>(response);
 }
 
 // ========================================

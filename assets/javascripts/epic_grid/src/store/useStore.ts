@@ -32,6 +32,26 @@ export interface DropTargetData {
   [key: string]: unknown;
 }
 
+/**
+ * UserStory移動の変更履歴
+ */
+interface UserStoryMoveChange {
+  id: string;
+  oldFeatureId: string;
+  newFeatureId: string;
+  oldVersionId: string | null;
+  newVersionId: string | null;
+}
+
+/**
+ * 未保存の変更を追跡する状態
+ */
+interface PendingChanges {
+  movedUserStories: UserStoryMoveChange[];
+  reorderedEpics: string[] | null;
+  reorderedVersions: string[] | null;
+}
+
 interface StoreState {
   // 正規化されたエンティティ
   entities: {
@@ -67,6 +87,12 @@ interface StoreState {
   // 縦書きモード
   isVerticalMode: boolean;
   toggleVerticalMode: () => void;
+
+  // Dirty state管理（未保存変更の追跡）
+  isDirty: boolean;
+  pendingChanges: PendingChanges;
+  savePendingChanges: () => Promise<void>;
+  discardPendingChanges: () => void;
 
   // CRUD操作
   createFeature: (data: CreateFeatureRequest) => Promise<void>;
@@ -117,6 +143,14 @@ export const useStore = create<StoreState>()(
       isLoading: false,
       error: null,
       projectId: null,
+
+      // Dirty state管理の初期状態
+      isDirty: false,
+      pendingChanges: {
+        movedUserStories: [],
+        reorderedEpics: null,
+        reorderedVersions: null
+      },
 
       // Issue詳細表示の初期状態
       selectedIssueId: null,
@@ -504,7 +538,7 @@ export const useStore = create<StoreState>()(
           }
         }, false, 'reorderUserStories'),
 
-      // UserStory をセルに移動
+      // UserStory をセルに移動（ローカル操作 + dirty state追跡）
       moveUserStoryToCell: (storyId: string, epicId: string, featureId: string, versionId: string) =>
         set((state) => {
           const story = state.entities.user_stories[storyId];
@@ -514,10 +548,20 @@ export const useStore = create<StoreState>()(
           const newFeature = state.entities.features[featureId];
           if (!oldFeature || !newFeature) return;
 
+          // 移動前の状態を記録
+          const oldFeatureId = story.parent_feature_id;
+          const oldVersionId = story.fixed_version_id;
+          const newVersionId = versionId === 'none' ? null : versionId;
+
+          // 同じセルへの移動は無視
+          if (oldFeatureId === featureId && oldVersionId === newVersionId) {
+            console.log(`ℹ️ UserStory ${storyId} is already in the target cell`);
+            return;
+          }
+
           // 古いセルから削除
           const oldEpicId = oldFeature.parent_epic_id;
-          const oldVersionId = story.fixed_version_id || 'none';
-          const oldCellKey = `${oldEpicId}:${story.parent_feature_id}:${oldVersionId}`;
+          const oldCellKey = `${oldEpicId}:${oldFeatureId}:${oldVersionId || 'none'}`;
 
           if (state.grid.index[oldCellKey]) {
             const oldCellIndex = state.grid.index[oldCellKey].indexOf(storyId);
@@ -545,10 +589,33 @@ export const useStore = create<StoreState>()(
           // UserStoryの親Feature更新
           story.parent_feature_id = featureId;
 
-          // UserStoryのVersion更新 (versionId が 'none' の場合は null に設定)
-          story.fixed_version_id = versionId === 'none' ? null : versionId;
+          // UserStoryのVersion更新
+          story.fixed_version_id = newVersionId;
 
-          console.log(`✅ Moved UserStory ${storyId} from ${oldCellKey} to ${newCellKey}`);
+          // Dirty state更新: pendingChangesに追加
+          const existingChangeIndex = state.pendingChanges.movedUserStories.findIndex(
+            change => change.id === storyId
+          );
+
+          if (existingChangeIndex !== -1) {
+            // 既存の変更を更新（最終的な移動先を記録）
+            state.pendingChanges.movedUserStories[existingChangeIndex].newFeatureId = featureId;
+            state.pendingChanges.movedUserStories[existingChangeIndex].newVersionId = newVersionId;
+          } else {
+            // 新しい変更を追加
+            state.pendingChanges.movedUserStories.push({
+              id: storyId,
+              oldFeatureId,
+              newFeatureId: featureId,
+              oldVersionId,
+              newVersionId
+            });
+          }
+
+          // isDirtyフラグを立てる
+          state.isDirty = true;
+
+          console.log(`✅ [Local] Moved UserStory ${storyId} from ${oldCellKey} to ${newCellKey}`);
         }, false, 'moveUserStoryToCell'),
 
       // Task の並び替え
@@ -671,7 +738,7 @@ export const useStore = create<StoreState>()(
           }
         }, false, 'reorderBugs'),
 
-      // Epic の並び替え
+      // Epic の並び替え（ローカル操作 + dirty state追跡）
       reorderEpics: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const epicOrder = state.grid.epic_order;
@@ -686,9 +753,15 @@ export const useStore = create<StoreState>()(
           // 新しい位置を計算（削除後のインデックスを考慮）
           const newTargetIndex = epicOrder.indexOf(targetId);
           epicOrder.splice(newTargetIndex + 1, 0, sourceId);
+
+          // Dirty state更新: epic順序を保存
+          state.pendingChanges.reorderedEpics = [...epicOrder];
+          state.isDirty = true;
+
+          console.log('✅ [Local] Reordered Epics:', epicOrder);
         }, false, 'reorderEpics'),
 
-      // Version の並び替え
+      // Version の並び替え（ローカル操作 + dirty state追跡）
       reorderVersions: (sourceId: string, targetId: string, targetData?: DropTargetData) =>
         set((state) => {
           const versionOrder = state.grid.version_order;
@@ -703,7 +776,106 @@ export const useStore = create<StoreState>()(
           // 新しい位置を計算（削除後のインデックスを考慮）
           const newTargetIndex = versionOrder.indexOf(targetId);
           versionOrder.splice(newTargetIndex + 1, 0, sourceId);
+
+          // Dirty state更新: version順序を保存
+          state.pendingChanges.reorderedVersions = [...versionOrder];
+          state.isDirty = true;
+
+          console.log('✅ [Local] Reordered Versions:', versionOrder);
         }, false, 'reorderVersions'),
+
+      // 未保存の変更を一括保存
+      savePendingChanges: async () => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        const { pendingChanges } = get();
+
+        // 保存する変更が無い場合は何もしない
+        if (
+          pendingChanges.movedUserStories.length === 0 &&
+          !pendingChanges.reorderedEpics &&
+          !pendingChanges.reorderedVersions
+        ) {
+          console.log('ℹ️ No pending changes to save');
+          return;
+        }
+
+        try {
+          console.log('💾 Saving pending changes:', pendingChanges);
+
+          // Batch Update API呼び出し（後で実装）
+          const result = await API.batchUpdate(projectId, {
+            moved_user_stories: pendingChanges.movedUserStories.map(change => ({
+              id: change.id,
+              target_feature_id: change.newFeatureId,
+              target_version_id: change.newVersionId
+            })),
+            reordered_epics: pendingChanges.reorderedEpics || undefined,
+            reordered_versions: pendingChanges.reorderedVersions || undefined
+          });
+
+          // サーバーからの応答でstateを更新
+          set((state) => {
+            if (result.updated_entities) {
+              Object.assign(state.entities.epics, result.updated_entities.epics || {});
+              Object.assign(state.entities.versions, result.updated_entities.versions || {});
+              Object.assign(state.entities.features, result.updated_entities.features || {});
+              Object.assign(state.entities.user_stories, result.updated_entities.user_stories || {});
+              Object.assign(state.entities.tasks, result.updated_entities.tasks || {});
+              Object.assign(state.entities.tests, result.updated_entities.tests || {});
+              Object.assign(state.entities.bugs, result.updated_entities.bugs || {});
+            }
+
+            if (result.updated_grid_index) {
+              Object.assign(state.grid.index, result.updated_grid_index);
+            }
+
+            // Epic/Version順序更新
+            if (result.updated_epic_order) {
+              state.grid.epic_order = result.updated_epic_order;
+            }
+            if (result.updated_version_order) {
+              state.grid.version_order = result.updated_version_order;
+            }
+
+            // Dirty stateをクリア
+            state.isDirty = false;
+            state.pendingChanges = {
+              movedUserStories: [],
+              reorderedEpics: null,
+              reorderedVersions: null
+            };
+          });
+
+          console.log('✅ Successfully saved all pending changes');
+        } catch (error) {
+          console.error('❌ Failed to save pending changes:', error);
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // 未保存の変更を破棄してリロード
+      discardPendingChanges: () => {
+        const projectId = get().projectId;
+        if (!projectId) return;
+
+        console.log('🔄 Discarding pending changes and reloading...');
+
+        // 変更を破棄してグリッドデータを再取得
+        set((state) => {
+          state.isDirty = false;
+          state.pendingChanges = {
+            movedUserStories: [],
+            reorderedEpics: null,
+            reorderedVersions: null
+          };
+        });
+
+        // データを再取得
+        get().fetchGridData(projectId);
+      },
     }))
   )
 );
