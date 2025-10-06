@@ -236,7 +236,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: ['test1'],
         bug_ids: ['b1'],
         fixed_version_id: 'v1',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: true,
         statistics: {
           total_tasks: 2,
@@ -264,7 +264,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: [],
         bug_ids: [],
         fixed_version_id: 'v1',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: false,
         statistics: {
           total_tasks: 1,
@@ -292,7 +292,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: [],
         bug_ids: [],
         fixed_version_id: 'v2',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: false,
         statistics: {
           total_tasks: 1,
@@ -320,7 +320,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: [],
         bug_ids: [],
         fixed_version_id: 'v2',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: true,
         statistics: {
           total_tasks: 2,
@@ -348,7 +348,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: ['test2', 'test3'],
         bug_ids: [],
         fixed_version_id: 'v2',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: true,
         statistics: {
           total_tasks: 2,
@@ -376,7 +376,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: ['test4'],
         bug_ids: ['b2'],
         fixed_version_id: 'v2',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: true,
         statistics: {
           total_tasks: 3,
@@ -404,7 +404,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: ['test5'],
         bug_ids: ['b3'],
         fixed_version_id: 'v3',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: true,
         statistics: {
           total_tasks: 2,
@@ -432,7 +432,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         test_ids: ['test6', 'test7'],
         bug_ids: [],
         fixed_version_id: 'v3',
-        version_source: 'inherited',
+        version_source: 'direct',
         expansion_state: true,
         statistics: {
           total_tasks: 2,

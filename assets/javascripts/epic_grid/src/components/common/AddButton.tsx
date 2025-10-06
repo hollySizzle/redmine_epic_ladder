@@ -29,9 +29,13 @@ export const AddButton: React.FC<AddButtonProps> = ({
   const fullClass = className ? `${baseClass} ${className}` : baseClass;
 
   const handleClick = () => {
+    console.log(`[DEBUG] AddButton clicked: type=${type}, label=${label}`);
     if (onClick) {
+      console.log('[DEBUG] Calling onClick handler...');
       onClick();
+      console.log('[DEBUG] onClick handler returned');
     } else {
+      console.log('[DEBUG] No onClick handler provided, showing alert');
       alert(`${label} clicked!`);
     }
   };

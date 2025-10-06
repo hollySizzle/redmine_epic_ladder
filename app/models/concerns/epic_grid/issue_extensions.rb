@@ -88,7 +88,7 @@ module EpicGrid
           task_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:task])).pluck(:id).map(&:to_s),
           test_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:test])).pluck(:id).map(&:to_s),
           bug_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:bug])).pluck(:id).map(&:to_s),
-          version_source: 'inherited',
+          version_source: fixed_version_id ? 'direct' : 'none',
           expansion_state: true,
           statistics: {
             total_tasks: 0,

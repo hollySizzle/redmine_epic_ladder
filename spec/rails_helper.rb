@@ -359,6 +359,11 @@ RSpec.configure do |config|
         @playwright_page = browser.new_page(baseURL: "http://localhost:#{server_port}")
         @playwright_page.context.set_default_timeout(10000)
 
+        # ブラウザコンソールログをキャプチャ（全テストで自動実行）
+        @playwright_page.on('console', lambda { |msg|
+          puts "[🌐 BROWSER] #{msg.type.upcase}: #{msg.text}"
+        })
+
         begin
           # テスト実行
           example.run

@@ -219,7 +219,14 @@
       "Bash(ruby -e \"require ''playwright''; puts Playwright::VERSION\")",
       "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:26 --format documentation)",
       "Read(///**)",
-      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid --format progress)"
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid --format progress)",
+      "Bash(cp:*)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb --format documentation)",
+      "Bash(timeout 40 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb --format documentation)",
+      "Bash(tee:*)",
+      "Bash(wget:*)",
+      "Bash(RAILS_ENV=development bundle exec rails runner:*)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation)"
     ],
     "deny": [],
     "ask": [],

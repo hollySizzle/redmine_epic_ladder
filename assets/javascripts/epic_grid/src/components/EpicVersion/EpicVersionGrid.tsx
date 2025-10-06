@@ -86,16 +86,25 @@ export const EpicVersionGrid: React.FC = () => {
   const gridTemplateColumns = `var(--epic-width) var(--feature-width) repeat(${versionCount}, var(--version-width))`;
 
   const handleAddEpic = async () => {
+    console.log('[DEBUG] handleAddEpic called');
+    console.log('[DEBUG] About to call prompt()...');
     const subject = prompt('Epic名を入力してください:');
-    if (!subject) return;
+    console.log('[DEBUG] prompt() returned:', subject);
+    if (!subject) {
+      console.log('[DEBUG] prompt() cancelled or empty, returning');
+      return;
+    }
 
     try {
+      console.log('[DEBUG] Creating epic with subject:', subject);
       await createEpic({
         subject,
         description: '',
         status: 'open'
       });
+      console.log('[DEBUG] Epic created successfully');
     } catch (error) {
+      console.error('[DEBUG] Epic creation failed:', error);
       alert(`Epic作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

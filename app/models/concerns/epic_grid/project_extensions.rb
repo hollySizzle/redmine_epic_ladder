@@ -84,16 +84,16 @@ module EpicGrid
         # Epic配下の全Feature IDsを記録
         feature_order_by_epic[epic.id.to_s] = epic_features.pluck(:id).map(&:to_s)
 
-        # 各Featureについて、バージョン別にUserStoryをグループ化
+        # 各Featureについて、UserStory個別のVersionでグループ化
         epic_features.each do |feature|
           feature_user_stories = user_stories.where(parent_id: feature.id)
 
-          # Featureのバージョンを取得（UserStoryはFeatureのバージョンを継承）
-          feature_version_id = feature.fixed_version_id&.to_s || 'none'
-
-          # 3次元キー: {epicId}:{featureId}:{versionId}
-          cell_key = "#{epic.id}:#{feature.id}:#{feature_version_id}"
-          grid_index[cell_key] = feature_user_stories.order(:created_on).pluck(:id).map(&:to_s)
+          # UserStory個別のVersionでグループ化（Featureのバージョンは無視）
+          feature_user_stories.group_by { |us| us.fixed_version_id&.to_s || 'none' }.each do |version_id, stories|
+            # 3次元キー: {epicId}:{featureId}:{versionId}
+            cell_key = "#{epic.id}:#{feature.id}:#{version_id}"
+            grid_index[cell_key] = stories.sort_by(&:created_on).map { |us| us.id.to_s }
+          end
         end
       end
 

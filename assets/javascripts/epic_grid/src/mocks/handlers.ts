@@ -189,7 +189,7 @@ export const handlers = [
 
         // UserStoryエンティティ更新
         story.fixed_version_id = target_version_id;
-        story.version_source = 'inherited';
+        story.version_source = target_version_id ? 'direct' : 'none';
         story.updated_on = new Date().toISOString();
         affectedIssueIds.push(storyId);
 
@@ -425,8 +425,8 @@ export const handlers = [
       task_ids: [],
       test_ids: [],
       bug_ids: [],
-      fixed_version_id: parentFeature.fixed_version_id,
-      version_source: 'inherited',
+      fixed_version_id: null, // FeatureのVersionを継承しない
+      version_source: 'none',
       expansion_state: true,
       statistics: {
         total_tasks: 0,
@@ -454,8 +454,9 @@ export const handlers = [
 
     // grid.index更新 (3D Grid対応)
     // Epic × Feature × Version の3次元セルにUserStoryを追加
+    // UserStory個別のVersionを使用（Featureは無関係）
     const epicId = parentFeature.parent_epic_id;
-    const versionId = parentFeature.fixed_version_id || 'none';
+    const versionId = newUserStory.fixed_version_id || 'none';
     const cellKey = `${epicId}:${featureId}:${versionId}`;
 
     if (!currentData.grid.index[cellKey]) {

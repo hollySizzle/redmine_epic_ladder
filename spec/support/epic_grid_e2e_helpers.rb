@@ -185,6 +185,131 @@ module EpicGridE2EHelpers
     expect(save_button).not_to be_nil
     expect(save_button.text_content).to include(count.to_s)
   end
+
+  # ========================================
+  # 作成ダイアログの抽象化レイヤー
+  # ========================================
+  #
+  # 将来カスタムダイアログに変更する際は、このメソッド群だけを
+  # 書き換えればE2Eテスト全体が対応できる設計
+  #
+
+  # アイテム作成（汎用）
+  # @param item_type [String] アイテムタイプ ('epic', 'version', 'feature', 'user-story', 'task', 'test', 'bug')
+  # @param item_name [String] 作成するアイテムの名前
+  # @param parent_info [Hash] 親要素情報（featureの場合はepic_id, user-storyの場合はfeature_idなど）
+  def create_item_via_ui(item_type, item_name, parent_info: {})
+    # Step 1: ボタンを見つけてクリック
+    button_selector = if parent_info[:epic_id]
+      # Feature作成: Epic内のボタン
+      ".epic-cell[data-epic='#{parent_info[:epic_id]}'] .add-feature-btn"
+    elsif parent_info[:feature_id]
+      # UserStory/Task/Test/Bug作成: Feature内のボタン
+      ".feature-card[data-feature='#{parent_info[:feature_id]}'] .add-#{item_type}-btn"
+    else
+      # Epic/Version作成: グローバルボタン
+      ".add-#{item_type}-btn"
+    end
+
+    button = @playwright_page.wait_for_selector(button_selector, state: 'visible', timeout: 15000)
+
+    # Step 2: ダイアログ処理（抽象化ポイント）
+    handle_creation_dialog(item_type, item_name, button)
+
+    # Step 3: 作成完了待機
+    wait_for_item_created(item_type, item_name)
+  end
+
+  # Epic作成（簡易版）
+  def create_epic_via_ui(epic_name)
+    create_item_via_ui('epic', epic_name)
+  end
+
+  # Version作成（簡易版）
+  def create_version_via_ui(version_name)
+    create_item_via_ui('version', version_name)
+  end
+
+  # Feature作成（簡易版）
+  def create_feature_via_ui(epic_id, feature_name)
+    create_item_via_ui('feature', feature_name, parent_info: { epic_id: epic_id })
+  end
+
+  # UserStory作成（簡易版）
+  def create_user_story_via_ui(feature_id, story_name)
+    create_item_via_ui('user-story', story_name, parent_info: { feature_id: feature_id })
+  end
+
+  # キャンセル操作（汎用）
+  def cancel_item_creation_via_ui(item_type, parent_info: {})
+    button_selector = if parent_info[:epic_id]
+      ".epic-cell[data-epic='#{parent_info[:epic_id]}'] .add-feature-btn"
+    elsif parent_info[:feature_id]
+      ".feature-card[data-feature='#{parent_info[:feature_id]}'] .add-#{item_type}-btn"
+    else
+      ".add-#{item_type}-btn"
+    end
+
+    button = @playwright_page.wait_for_selector(button_selector, state: 'visible', timeout: 15000)
+
+    handle_creation_dialog_cancel(item_type, button)
+  end
+
+  private
+
+  # ========================================
+  # 実装詳細レイヤー（将来の変更ポイント）
+  # ========================================
+
+  # ダイアログ処理（現在: prompt() / 将来: カスタムダイアログ）
+  def handle_creation_dialog(item_type, item_name, button)
+    # 現在の実装: ブラウザネイティブのprompt()を使用
+    @playwright_page.on('dialog', lambda { |dialog|
+      puts "[E2E] Dialog detected for #{item_type}: #{dialog.message}"
+      dialog.accept(item_name)
+    })
+
+    button.click
+
+    # 将来の実装例（カスタムダイアログに変更する場合）:
+    # button.click
+    # @playwright_page.wait_for_selector(".custom-dialog[data-type='#{item_type}']")
+    # @playwright_page.fill('.custom-dialog input[name="subject"]', item_name)
+    # @playwright_page.click('.custom-dialog button[type="submit"]')
+  end
+
+  # キャンセル処理（現在: prompt() dismiss / 将来: カスタムダイアログ）
+  def handle_creation_dialog_cancel(item_type, button)
+    # 現在の実装: ブラウザネイティブのprompt()をdismiss
+    @playwright_page.on('dialog', lambda { |dialog|
+      puts "[E2E] Dialog detected for #{item_type}, dismissing..."
+      dialog.dismiss
+    })
+
+    button.click
+    sleep 0.5 # キャンセル処理の完了待ち
+
+    # 将来の実装例（カスタムダイアログに変更する場合）:
+    # button.click
+    # @playwright_page.wait_for_selector(".custom-dialog[data-type='#{item_type}']")
+    # @playwright_page.click('.custom-dialog button[data-action="cancel"]')
+  end
+
+  # アイテム作成完了待機
+  def wait_for_item_created(item_type, item_name)
+    case item_type
+    when 'epic'
+      @playwright_page.wait_for_selector(".epic-cell:has-text('#{item_name}')", timeout: 15000)
+    when 'version'
+      @playwright_page.wait_for_selector(".version-header:has-text('#{item_name}')", timeout: 15000)
+    when 'feature'
+      @playwright_page.wait_for_selector(".feature-cell:has-text('#{item_name}')", timeout: 15000)
+    when 'user-story'
+      @playwright_page.wait_for_selector(".user-story:has-text('#{item_name}')", timeout: 15000)
+    when 'task', 'test', 'bug'
+      @playwright_page.wait_for_selector(".#{item_type}:has-text('#{item_name}')", timeout: 15000)
+    end
+  end
 end
 
 RSpec.configure do |config|
