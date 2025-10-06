@@ -143,9 +143,9 @@ module EpicGrid
 
       # 両方の形式をサポート: ネスト形式 {user_story: {...}} と平坦形式 {...}
       user_story_params = if params[:user_story].present?
-        params.require(:user_story).permit(:subject, :description, :assigned_to_id)
+        params.require(:user_story).permit(:subject, :description, :assigned_to_id, :fixed_version_id)
       else
-        params.permit(:subject, :description, :assigned_to_id)
+        params.permit(:subject, :description, :assigned_to_id, :fixed_version_id)
       end
 
       feature = Issue.find(feature_id)
@@ -161,8 +161,8 @@ module EpicGrid
         author: User.current,
         status: IssueStatus.first,
         parent_issue_id: feature_id,
-        fixed_version_id: feature.fixed_version_id, # 親のバージョンを継承
-        **user_story_params
+        fixed_version_id: user_story_params[:fixed_version_id] || feature.fixed_version_id, # クライアント指定を優先
+        **user_story_params.except(:fixed_version_id)
       )
 
       # 親Featureをリロード

@@ -114,6 +114,21 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       new_story = Issue.last
       expect(new_story.fixed_version).to eq(version)
     end
+
+    it 'uses client-specified version when provided' do
+      version1 = create(:version, project: project, name: 'v1.0')
+      version2 = create(:version, project: project, name: 'v2.0')
+      feature.update!(fixed_version: version1)
+
+      params_with_version = valid_params.deep_merge({
+        user_story: { fixed_version_id: version2.id }
+      })
+
+      post :create_user_story, params: params_with_version
+
+      new_story = Issue.last
+      expect(new_story.fixed_version).to eq(version2) # version1ではなくversion2
+    end
   end
 
   describe 'POST #create_task' do
