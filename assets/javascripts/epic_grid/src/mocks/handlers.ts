@@ -394,7 +394,7 @@ export const handlers = [
 
     const { featureId } = params;
     const body = (await request.json()) as CreateUserStoryRequest;
-    const { subject, description, assigned_to_id, estimated_hours } = body;
+    const { subject, description, assigned_to_id, estimated_hours, fixed_version_id } = body;
 
     // Feature存在確認
     const parentFeature = currentData.entities.features[featureId as string];
@@ -425,8 +425,8 @@ export const handlers = [
       task_ids: [],
       test_ids: [],
       bug_ids: [],
-      fixed_version_id: null, // FeatureのVersionを継承しない
-      version_source: 'none',
+      fixed_version_id: fixed_version_id || null, // クライアント指定を優先（未指定時はnull）
+      version_source: fixed_version_id ? 'direct' : 'none',
       expansion_state: true,
       statistics: {
         total_tasks: 0,

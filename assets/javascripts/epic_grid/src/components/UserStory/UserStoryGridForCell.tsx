@@ -37,7 +37,8 @@ export const UserStoryGridForCell: React.FC<UserStoryGridForCellProps> = ({
       await createUserStory(featureId, {
         subject: data.subject,
         description: data.description,
-        parent_feature_id: featureId
+        parent_feature_id: featureId,
+        fixed_version_id: versionId !== 'none' ? versionId : undefined // セル指定バージョンを送信
       });
     } catch (error) {
       alert(`User Story作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);

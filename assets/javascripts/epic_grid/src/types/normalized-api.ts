@@ -470,6 +470,7 @@ export interface CreateUserStoryRequest {
   parent_feature_id: string;
   assigned_to_id?: number;
   estimated_hours?: number;
+  fixed_version_id?: string; // バージョン指定（セル指定時に使用）
 }
 
 export interface CreateUserStoryResponse {

@@ -121,7 +121,8 @@ describe('UserStoryGridForCell', () => {
       expect(createUserStoryMock).toHaveBeenCalledWith('f1', {
         subject: 'New User Story',
         description: '',
-        parent_feature_id: 'f1'
+        parent_feature_id: 'f1',
+        fixed_version_id: 'v1' // バージョン指定を期待
       });
     });
 
