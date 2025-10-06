@@ -6,9 +6,10 @@ import { useStore } from '../../store/useStore';
 
 interface UserStoryProps {
   storyId: string;
+  isLocalCollapsed?: boolean;
 }
 
-export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
+export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed = false }) => {
   // ストアから直接UserStoryを取得
   const story = useStore(state => state.entities.user_stories[storyId]);
   const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
@@ -41,6 +42,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
         taskIds={story.task_ids}
         testIds={story.test_ids}
         bugIds={story.bug_ids}
+        isLocalCollapsed={isLocalCollapsed}
       />
     </div>
   );

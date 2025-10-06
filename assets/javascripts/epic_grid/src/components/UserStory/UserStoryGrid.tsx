@@ -9,9 +9,10 @@ interface UserStoryGridProps {
   featureId: string;
   versionId: string;
   storyIds: string[];
+  isLocalCollapsed?: boolean;
 }
 
-export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ epicId, featureId, versionId, storyIds }) => {
+export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ epicId, featureId, versionId, storyIds, isLocalCollapsed = false }) => {
   const createUserStory = useStore((state) => state.createUserStory);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -36,7 +37,7 @@ export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ epicId, featureId,
     <>
       <div className="user-story-grid">
         {storyIds.map(storyId => (
-          <UserStory key={storyId} storyId={storyId} />
+          <UserStory key={storyId} storyId={storyId} isLocalCollapsed={isLocalCollapsed} />
         ))}
         <AddButton
           type="user-story"

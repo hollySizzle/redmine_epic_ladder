@@ -6,6 +6,7 @@ import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { Legend } from './components/Legend';
 import { DetailPaneToggle } from './components/common/DetailPaneToggle';
 import { VerticalModeToggle } from './components/common/VerticalModeToggle';
+import { UserStoryChildrenToggle } from './components/common/UserStoryChildrenToggle';
 import { useStore } from './store/useStore';
 import './styles.scss';
 
@@ -230,6 +231,7 @@ export const App: React.FC = () => {
               </button>
             </>
           )}
+          <UserStoryChildrenToggle />
           <VerticalModeToggle />
           <DetailPaneToggle />
         </div>

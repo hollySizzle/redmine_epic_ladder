@@ -88,6 +88,10 @@ interface StoreState {
   isVerticalMode: boolean;
   toggleVerticalMode: () => void;
 
+  // UserStory配下の折り畳み（Task/Test/Bug）
+  isUserStoryChildrenCollapsed: boolean;
+  toggleUserStoryChildrenCollapsed: () => void;
+
   // Dirty state管理（未保存変更の追跡）
   isDirty: boolean;
   pendingChanges: PendingChanges;
@@ -174,6 +178,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isVerticalMode;
         localStorage.setItem('kanban_vertical_mode', String(newValue));
         return { isVerticalMode: newValue };
+      }),
+
+      // UserStory配下の折り畳み（Task/Test/Bug）の初期状態
+      isUserStoryChildrenCollapsed: (() => {
+        const saved = localStorage.getItem('kanban_userstory_children_collapsed');
+        return saved !== null ? saved === 'true' : false; // デフォルトOFF（展開）
+      })(),
+      toggleUserStoryChildrenCollapsed: () => set((state) => {
+        const newValue = !state.isUserStoryChildrenCollapsed;
+        localStorage.setItem('kanban_userstory_children_collapsed', String(newValue));
+        return { isUserStoryChildrenCollapsed: newValue };
       }),
 
       // グリッドデータ取得
