@@ -2,13 +2,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { UserStoryGrid } from './UserStoryGrid';
+import { UserStoryGridForCell } from './UserStoryGridForCell';
 import { useStore } from '../../store/useStore';
 
 // モックアラート
 global.alert = vi.fn();
 
-describe('UserStoryGrid', () => {
+describe('UserStoryGridForCell', () => {
   describe('Rendering', () => {
     it('should render + Add User Story button', () => {
       useStore.setState({
@@ -21,13 +21,13 @@ describe('UserStoryGrid', () => {
           tests: {},
           bugs: {}
         },
-        grid: { index: {}, epic_order: [], version_order: [] },
+        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
         error: null,
         projectId: 'project1'
       });
 
-      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       expect(addButton).toBeTruthy();
@@ -47,13 +47,13 @@ describe('UserStoryGrid', () => {
           tests: {},
           bugs: {}
         },
-        grid: { index: {}, epic_order: [], version_order: [] },
+        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
         error: null,
         projectId: 'project1'
       });
 
-      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={['us1', 'us2']} />);
+      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={['us1', 'us2']} />);
 
       expect(screen.getByText('User Story 1')).toBeTruthy();
       expect(screen.getByText('User Story 2')).toBeTruthy();
@@ -74,13 +74,13 @@ describe('UserStoryGrid', () => {
           tests: {},
           bugs: {}
         },
-        grid: { index: {}, epic_order: [], version_order: [] },
+        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
         error: null,
         projectId: 'project1'
       });
 
-      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       await user.click(addButton);
@@ -103,14 +103,14 @@ describe('UserStoryGrid', () => {
           tests: {},
           bugs: {}
         },
-        grid: { index: {}, epic_order: [], version_order: [] },
+        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
         error: null,
         projectId: 'project1',
         createUserStory: createUserStoryMock
       });
 
-      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       await user.click(addButton);
@@ -139,14 +139,14 @@ describe('UserStoryGrid', () => {
           tests: {},
           bugs: {}
         },
-        grid: { index: {}, epic_order: [], version_order: [] },
+        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
         error: null,
         projectId: 'project1',
         createUserStory: createUserStoryMock
       });
 
-      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       await user.click(addButton);
@@ -170,14 +170,14 @@ describe('UserStoryGrid', () => {
           tests: {},
           bugs: {}
         },
-        grid: { index: {}, epic_order: [], version_order: [] },
+        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
         error: null,
         projectId: 'project1',
         createUserStory: createUserStoryMock
       });
 
-      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       await user.click(addButton);

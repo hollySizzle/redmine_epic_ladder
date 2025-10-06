@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserStoryGrid } from '../UserStory/UserStoryGrid';
+import { UserStoryGridForCell } from '../UserStory/UserStoryGridForCell';
 import { AddButton } from '../common/AddButton';
 import { VersionFormModal, VersionFormData } from '../common/VersionFormModal';
 import { IssueFormModal, IssueFormData } from '../common/IssueFormModal';
@@ -60,7 +60,7 @@ const UserStoryCell: React.FC<{
       data-feature={featureId}
       data-version={versionId}
     >
-      <UserStoryGrid
+      <UserStoryGridForCell
         epicId={epicId}
         featureId={featureId}
         versionId={versionId}

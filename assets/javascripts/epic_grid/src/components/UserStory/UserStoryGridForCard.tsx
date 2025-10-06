@@ -4,15 +4,24 @@ import { AddButton } from '../common/AddButton';
 import { IssueFormModal, IssueFormData } from '../common/IssueFormModal';
 import { useStore } from '../../store/useStore';
 
-interface UserStoryGridProps {
-  epicId: string;
+/**
+ * UserStoryGridForCard
+ *
+ * FeatureCard内で使用されるUserStoryグリッド。
+ * FeatureCardは単独のFeatureコンポーネントであり、
+ * Epic/Versionのコンテキストを持たないため、featureIdのみで動作する。
+ */
+interface UserStoryGridForCardProps {
   featureId: string;
-  versionId: string;
   storyIds: string[];
   isLocalCollapsed?: boolean;
 }
 
-export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ epicId, featureId, versionId, storyIds, isLocalCollapsed = false }) => {
+export const UserStoryGridForCard: React.FC<UserStoryGridForCardProps> = ({
+  featureId,
+  storyIds,
+  isLocalCollapsed = false
+}) => {
   const createUserStory = useStore((state) => state.createUserStory);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -43,9 +52,7 @@ export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ epicId, featureId,
           type="user-story"
           label="+ Add User Story"
           dataAddButton="user-story"
-          epicId={epicId}
           featureId={featureId}
-          versionId={versionId}
           onClick={handleAddUserStory}
         />
       </div>

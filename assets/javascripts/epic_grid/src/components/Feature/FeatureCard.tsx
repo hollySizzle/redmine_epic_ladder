@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
-import { UserStoryGrid } from '../UserStory/UserStoryGrid';
+import { UserStoryGridForCard } from '../UserStory/UserStoryGridForCard';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
 
@@ -51,7 +51,7 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
         <StatusIndicator status={feature.status} />
         {feature.title}
       </div>
-      <UserStoryGrid
+      <UserStoryGridForCard
         featureId={feature.id}
         storyIds={feature.user_story_ids}
         isLocalCollapsed={isLocalCollapsed}
