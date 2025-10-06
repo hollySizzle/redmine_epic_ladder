@@ -73,13 +73,19 @@ module EpicGrid
       grid_index = {}
       epic_ids = []
       feature_order_by_epic = {}
-      version_ids = versions.pluck(:id).map(&:to_s)
+      # Version: 期日なし→先頭ID順、期日あり→期日昇順
+      version_ids = versions
+                      .order(Arel.sql("CASE WHEN effective_date IS NULL THEN 0 ELSE 1 END, effective_date ASC, id ASC"))
+                      .pluck(:id)
+                      .map(&:to_s)
 
-      epics.order(:created_on).each do |epic|
+      # Epic: 開始日なし→先頭ID順、開始日あり→開始日昇順
+      epics.order(Arel.sql("CASE WHEN start_date IS NULL THEN 0 ELSE 1 END, start_date ASC, id ASC")).each do |epic|
         epic_ids << epic.id.to_s
 
-        # Epic配下のFeature
-        epic_features = features.where(parent_id: epic.id).order(:created_on)
+        # Feature: 開始日なし→先頭ID順、開始日あり→開始日昇順
+        epic_features = features.where(parent_id: epic.id)
+                                .order(Arel.sql("CASE WHEN start_date IS NULL THEN 0 ELSE 1 END, start_date ASC, id ASC"))
 
         # Epic配下の全Feature IDsを記録
         feature_order_by_epic[epic.id.to_s] = epic_features.pluck(:id).map(&:to_s)
