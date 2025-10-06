@@ -261,38 +261,65 @@ module EpicGridE2EHelpers
   # 実装詳細レイヤー（将来の変更ポイント）
   # ========================================
 
-  # ダイアログ処理（現在: prompt() / 将来: カスタムダイアログ）
+  # ダイアログ処理（モーダル式）
   def handle_creation_dialog(item_type, item_name, button)
-    # 現在の実装: ブラウザネイティブのprompt()を使用
-    @playwright_page.on('dialog', lambda { |dialog|
-      puts "[E2E] Dialog detected for #{item_type}: #{dialog.message}"
-      dialog.accept(item_name)
-    })
-
+    # モーダル式の実装
     button.click
 
-    # 将来の実装例（カスタムダイアログに変更する場合）:
-    # button.click
-    # @playwright_page.wait_for_selector(".custom-dialog[data-type='#{item_type}']")
-    # @playwright_page.fill('.custom-dialog input[name="subject"]', item_name)
-    # @playwright_page.click('.custom-dialog button[type="submit"]')
+    # モーダル内の入力フィールドが表示されるまで待機
+    if item_type == 'version'
+      # Version用のフォーム
+      input_selector = '.version-form-modal input#version-name'
+      submit_selector = '.version-form-modal button.btn-submit'
+    else
+      # Issue用のフォーム（Epic, Feature, UserStory, Task, Test, Bug）
+      input_selector = '.issue-form-modal input#issue-subject'
+      submit_selector = '.issue-form-modal button.btn-submit'
+    end
+
+    # 入力フィールドが表示されるまで待機
+    @playwright_page.wait_for_selector(input_selector, state: 'attached', timeout: 5000)
+    @playwright_page.wait_for_function("() => document.querySelector('#{input_selector}').offsetParent !== null", timeout: 5000)
+
+    # フォームに入力
+    @playwright_page.fill(input_selector, item_name)
+
+    # 送信ボタンをクリック
+    @playwright_page.click(submit_selector)
+
+    # 入力フィールドが消えるまで待機（モーダルが閉じた）
+    @playwright_page.wait_for_function("() => {
+      const el = document.querySelector('#{input_selector}');
+      return !el || el.offsetParent === null;
+    }", timeout: 5000)
   end
 
-  # キャンセル処理（現在: prompt() dismiss / 将来: カスタムダイアログ）
+  # キャンセル処理（モーダル式）
   def handle_creation_dialog_cancel(item_type, button)
-    # 現在の実装: ブラウザネイティブのprompt()をdismiss
-    @playwright_page.on('dialog', lambda { |dialog|
-      puts "[E2E] Dialog detected for #{item_type}, dismissing..."
-      dialog.dismiss
-    })
-
+    # モーダル式の実装
     button.click
-    sleep 0.5 # キャンセル処理の完了待ち
 
-    # 将来の実装例（カスタムダイアログに変更する場合）:
-    # button.click
-    # @playwright_page.wait_for_selector(".custom-dialog[data-type='#{item_type}']")
-    # @playwright_page.click('.custom-dialog button[data-action="cancel"]')
+    # モーダル内のキャンセルボタンが表示されるまで待機
+    if item_type == 'version'
+      cancel_selector = '.version-form-modal button.btn-cancel'
+      input_selector = '.version-form-modal input#version-name'
+    else
+      cancel_selector = '.issue-form-modal button.btn-cancel'
+      input_selector = '.issue-form-modal input#issue-subject'
+    end
+
+    # キャンセルボタンが表示されるまで待機
+    @playwright_page.wait_for_selector(cancel_selector, state: 'attached', timeout: 5000)
+    @playwright_page.wait_for_function("() => document.querySelector('#{cancel_selector}').offsetParent !== null", timeout: 5000)
+
+    # キャンセルボタンをクリック
+    @playwright_page.click(cancel_selector)
+
+    # 入力フィールドが消えるまで待機（モーダルが閉じた）
+    @playwright_page.wait_for_function("() => {
+      const el = document.querySelector('#{input_selector}');
+      return !el || el.offsetParent === null;
+    }", timeout: 5000)
   end
 
   # アイテム作成完了待機

@@ -231,7 +231,9 @@
       "Bash(RAILS_ENV=development rails runner \"\n# Journalの自動作成を無効にする\nSetting[''notified_events''] = []\n\nIssue.create!(\n  project_id: 1,\n  tracker_id: 101,\n  subject: ''テストEpic'',\n  author_id: 1,\n  status_id: 1\n)\n\nputs ''✅ Issue作成成功（Journalなし）''\n\")",
       "Bash(mv:*)",
       "mcp__serena__think_about_whether_you_are_done",
-      "WebFetch(domain:developer.1password.com)"
+      "WebFetch(domain:developer.1password.com)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:18 --format documentation)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:35 --format documentation)"
     ],
     "deny": [],
     "ask": [],
