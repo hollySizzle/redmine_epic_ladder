@@ -52,19 +52,19 @@ RSpec.describe 'Bug Creation E2E', type: :system, js: true do
       sleep 0.5 # 展開アニメーション待機
 
       # Step 5: "Add Bug" ボタンを見つける（明示的待機）
-      @playwright_page.wait_for_selector('.bug-container button[data-add-button="bug"]', timeout: 10000)
-      add_bug_button = @playwright_page.query_selector('.bug-container button[data-add-button="bug"]')
+      add_bug_button = @playwright_page.wait_for_selector('.bug-container button[data-add-button="bug"]', state: 'visible', timeout: 10000)
       expect(add_bug_button).not_to be_nil, 'Add Bug button not found'
 
-      # Step 6: ボタンをクリック（プロンプト対応）
-      @playwright_page.once('dialog', ->(dialog) {
+      # Step 6: Dialogリスナーを設定（クリック前に設定）
+      @playwright_page.on('dialog', ->(dialog) {
         expect(dialog.message).to include('Bug名を入力してください')
         dialog.accept('New Bug Report')
       })
 
+      # Step 7: ボタンをクリック
       add_bug_button.click
 
-      # Step 7: 新しいBugが表示されることを確認
+      # Step 8: 新しいBugが表示されることを確認
       @playwright_page.wait_for_selector('.bug-item >> text="New Bug Report"', timeout: 10000)
       expect_text_visible('New Bug Report')
 
@@ -80,12 +80,11 @@ RSpec.describe 'Bug Creation E2E', type: :system, js: true do
       expand_button&.click
       sleep 0.5
 
-      @playwright_page.wait_for_selector('.bug-container button[data-add-button="bug"]', timeout: 10000)
-      add_bug_button = @playwright_page.query_selector('.bug-container button[data-add-button="bug"]')
+      add_bug_button = @playwright_page.wait_for_selector('.bug-container button[data-add-button="bug"]', state: 'visible', timeout: 10000)
       expect(add_bug_button).not_to be_nil
 
-      # プロンプトをキャンセル
-      @playwright_page.once('dialog', ->(dialog) {
+      # Dialogリスナーを設定（キャンセル）
+      @playwright_page.on('dialog', ->(dialog) {
         dialog.dismiss
       })
 

@@ -395,21 +395,36 @@ module EpicGrid
       old_epic_id = old_feature&.parent_id
       new_epic_id = new_feature.parent_id
 
-      # 古いセルキーを削除（全てのversionに対して）
+      # 古いセルから移動したUserStoryを削除
       if old_epic_id && old_feature
-        @project.versions.pluck(:id).each do |v_id|
-          old_cell_key = "#{old_epic_id}:#{old_feature.id}:#{v_id}"
-          updates[old_cell_key] = [] # 空配列で削除を表現
-        end
-        # version未設定の場合
-        old_none_key = "#{old_epic_id}:#{old_feature.id}:none"
-        updates[old_none_key] = []
+        old_version_key = old_version_id || 'none'
+        old_cell_key = "#{old_epic_id}:#{old_feature.id}:#{old_version_key}"
+
+        # 古いセルの現在のUserStory一覧を取得（移動するものを除く）
+        old_cell_user_stories = old_feature.children
+          .where(tracker: @project.trackers.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:user_story]))
+          .where(fixed_version_id: old_version_id)
+          .where.not(id: user_story.id)
+          .pluck(:id)
+          .map(&:to_s)
+
+        updates[old_cell_key] = old_cell_user_stories
       end
 
-      # 新しいセルキーに追加
+      # 新しいセルに移動したUserStoryを追加
       new_version_key = new_version_id || 'none'
       new_cell_key = "#{new_epic_id}:#{new_feature.id}:#{new_version_key}"
-      updates[new_cell_key] = [user_story.id.to_s]
+
+      # 新しいセルの現在のUserStory一覧を取得（移動するものを追加）
+      new_cell_user_stories = new_feature.children
+        .where(tracker: @project.trackers.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:user_story]))
+        .where(fixed_version_id: new_version_id)
+        .pluck(:id)
+        .map(&:to_s)
+
+      # 重複を避けつつ追加
+      new_cell_user_stories << user_story.id.to_s unless new_cell_user_stories.include?(user_story.id.to_s)
+      updates[new_cell_key] = new_cell_user_stories
 
       updates
     end

@@ -42,19 +42,19 @@ RSpec.describe 'UserStory Creation E2E', type: :system, js: true do
       expect_text_visible('v1.0.0')
 
       # Step 4: "Add User Story" ボタンを見つける（Feature×Versionセル内、明示的待機）
-      @playwright_page.wait_for_selector('.us-cell button[data-add-button="user-story"]', timeout: 10000)
-      add_userstory_button = @playwright_page.query_selector('.us-cell button[data-add-button="user-story"]')
+      add_userstory_button = @playwright_page.wait_for_selector('.us-cell button[data-add-button="user-story"]', state: 'visible', timeout: 10000)
       expect(add_userstory_button).not_to be_nil, 'Add User Story button not found'
 
-      # Step 5: ボタンをクリック（プロンプト対応）
-      @playwright_page.once('dialog', ->(dialog) {
+      # Step 5: Dialogリスナーを設定（クリック前に設定）
+      @playwright_page.on('dialog', ->(dialog) {
         expect(dialog.message).to include('User Story名を入力してください')
         dialog.accept('New Test UserStory')
       })
 
+      # Step 6: ボタンをクリック
       add_userstory_button.click
 
-      # Step 6: 新しいUserStoryが表示されることを確認
+      # Step 7: 新しいUserStoryが表示されることを確認
       @playwright_page.wait_for_selector('.user-story-card >> text="New Test UserStory"', timeout: 10000)
       expect_text_visible('New Test UserStory')
 
@@ -65,12 +65,11 @@ RSpec.describe 'UserStory Creation E2E', type: :system, js: true do
       login_as(user)
       goto_kanban(project)
 
-      @playwright_page.wait_for_selector('.us-cell button[data-add-button="user-story"]', timeout: 10000)
-      add_userstory_button = @playwright_page.query_selector('.us-cell button[data-add-button="user-story"]')
+      add_userstory_button = @playwright_page.wait_for_selector('.us-cell button[data-add-button="user-story"]', state: 'visible', timeout: 10000)
       expect(add_userstory_button).not_to be_nil
 
-      # プロンプトをキャンセル
-      @playwright_page.once('dialog', ->(dialog) {
+      # Dialogリスナーを設定（キャンセル）
+      @playwright_page.on('dialog', ->(dialog) {
         dialog.dismiss
       })
 

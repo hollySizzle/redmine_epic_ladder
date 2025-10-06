@@ -36,19 +36,19 @@ RSpec.describe 'Feature Creation E2E', type: :system, js: true do
       expect_text_visible('Test Epic for Feature')
 
       # Step 4: "Add Feature" ボタンを見つける（Epic内、明示的待機）
-      @playwright_page.wait_for_selector('.epic-cell button[data-add-button="feature"]', timeout: 10000)
-      add_feature_button = @playwright_page.query_selector('.epic-cell button[data-add-button="feature"]')
+      add_feature_button = @playwright_page.wait_for_selector('.epic-cell button[data-add-button="feature"]', state: 'visible', timeout: 10000)
       expect(add_feature_button).not_to be_nil, 'Add Feature button not found'
 
-      # Step 5: ボタンをクリック（プロンプト対応）
-      @playwright_page.once('dialog', ->(dialog) {
+      # Step 5: Dialogリスナーを設定（クリック前に設定）
+      @playwright_page.on('dialog', ->(dialog) {
         expect(dialog.message).to include('Feature名を入力してください')
         dialog.accept('New Test Feature')
       })
 
+      # Step 6: ボタンをクリック
       add_feature_button.click
 
-      # Step 6: 新しいFeatureが表示されることを確認
+      # Step 7: 新しいFeatureが表示されることを確認
       @playwright_page.wait_for_selector('.feature-cell >> text="New Test Feature"', timeout: 10000)
       expect_text_visible('New Test Feature')
 
@@ -59,12 +59,11 @@ RSpec.describe 'Feature Creation E2E', type: :system, js: true do
       login_as(user)
       goto_kanban(project)
 
-      @playwright_page.wait_for_selector('.epic-cell button[data-add-button="feature"]', timeout: 10000)
-      add_feature_button = @playwright_page.query_selector('.epic-cell button[data-add-button="feature"]')
+      add_feature_button = @playwright_page.wait_for_selector('.epic-cell button[data-add-button="feature"]', state: 'visible', timeout: 10000)
       expect(add_feature_button).not_to be_nil
 
-      # プロンプトをキャンセル
-      @playwright_page.once('dialog', ->(dialog) {
+      # Dialogリスナーを設定（キャンセル）
+      @playwright_page.on('dialog', ->(dialog) {
         dialog.dismiss
       })
 

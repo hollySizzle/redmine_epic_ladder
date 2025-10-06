@@ -1142,6 +1142,23 @@ export const handlers = [
     // タイムスタンプ更新
     lastUpdateTimestamp = new Date().toISOString();
 
+    // 部分的なグリッドインデックス更新を構築 (バックエンドと同じ動作)
+    const partialGridIndex: Record<string, string[]> = {};
+
+    // 古いセルの更新された値を追加
+    currentData.grid.version_order.forEach(vId => {
+      const oldEpicId = oldFeature?.parent_epic_id;
+      if (oldEpicId) {
+        const oldCellKey = `${oldEpicId}:${oldFeatureId}:${vId}`;
+        if (currentData.grid.index[oldCellKey]) {
+          partialGridIndex[oldCellKey] = currentData.grid.index[oldCellKey];
+        }
+      }
+    });
+
+    // 新しいセルを追加 (既に上で定義済みの変数を再利用)
+    partialGridIndex[newCellKey] = currentData.grid.index[newCellKey];
+
     // レスポンス構築
     const response: MoveUserStoryResponse = {
       success: true,
@@ -1154,7 +1171,7 @@ export const handlers = [
           ...(oldFeature ? { [oldFeatureId]: oldFeature } : {})
         }
       },
-      updated_grid_index: currentData.grid.index,
+      updated_grid_index: partialGridIndex,
       propagation_result: {
         affected_issue_ids: affectedIssueIds,
         conflicts: []

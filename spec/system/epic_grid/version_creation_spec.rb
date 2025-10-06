@@ -30,23 +30,24 @@ RSpec.describe 'Version Creation E2E', type: :system, js: true do
       # Step 2: カンバンページに移動
       goto_kanban(project)
 
-      # Step 3: グリッド構造確認（初期状態）
-      verify_kanban_structure
+      # Step 3: グリッドヘッダーが表示されることを確認
+      expect_text_visible('Epic')
+      expect_text_visible('Feature')
 
       # Step 4: "New Version" ボタンを見つける（明示的待機）
-      @playwright_page.wait_for_selector('button[data-add-button="version"]', timeout: 10000)
-      add_version_button = @playwright_page.query_selector('button[data-add-button="version"]')
+      add_version_button = @playwright_page.wait_for_selector('button[data-add-button="version"]', state: 'visible', timeout: 10000)
       expect(add_version_button).not_to be_nil, 'Add Version button not found'
 
-      # Step 5: ボタンをクリック（プロンプト対応）
-      @playwright_page.once('dialog', ->(dialog) {
+      # Step 5: Dialogリスナーを設定（クリック前に設定）
+      @playwright_page.on('dialog', ->(dialog) {
         expect(dialog.message).to include('Version名を入力してください')
         dialog.accept('v2.0.0')
       })
 
+      # Step 6: ボタンをクリック
       add_version_button.click
 
-      # Step 6: 新しいVersionがヘッダーに表示されることを確認
+      # Step 7: 新しいVersionがヘッダーに表示されることを確認
       @playwright_page.wait_for_selector('.version-header >> text="v2.0.0"', timeout: 10000)
       expect_text_visible('v2.0.0')
 
@@ -57,12 +58,11 @@ RSpec.describe 'Version Creation E2E', type: :system, js: true do
       login_as(user)
       goto_kanban(project)
 
-      @playwright_page.wait_for_selector('button[data-add-button="version"]', timeout: 10000)
-      add_version_button = @playwright_page.query_selector('button[data-add-button="version"]')
+      add_version_button = @playwright_page.wait_for_selector('button[data-add-button="version"]', state: 'visible', timeout: 10000)
       expect(add_version_button).not_to be_nil
 
-      # プロンプトをキャンセル
-      @playwright_page.once('dialog', ->(dialog) {
+      # Dialogリスナーを設定（キャンセル）
+      @playwright_page.on('dialog', ->(dialog) {
         dialog.dismiss
       })
 
