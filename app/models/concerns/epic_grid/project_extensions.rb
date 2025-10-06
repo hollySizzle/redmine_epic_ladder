@@ -60,13 +60,15 @@ module EpicGrid
     # グリッドインデックス構築（public - Controller から呼び出される）
     # ========================================
 
-    # グリッドインデックスを構築
+    # グリッドインデックスを構築 (3次元: Epic × Feature × Version)
     def epic_grid_index
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
+      user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
 
       epics = issues.joins(:tracker).where(trackers: { name: epic_tracker })
       features = issues.joins(:tracker).where(trackers: { name: feature_tracker })
+      user_stories = issues.joins(:tracker).where(trackers: { name: user_story_tracker })
 
       grid_index = {}
       epic_ids = []
@@ -76,23 +78,22 @@ module EpicGrid
       epics.order(:created_on).each do |epic|
         epic_ids << epic.id.to_s
 
-        # Epic配下のFeatureをバージョン別に分類
+        # Epic配下のFeature
         epic_features = features.where(parent_id: epic.id).order(:created_on)
 
         # Epic配下の全Feature IDsを記録
         feature_order_by_epic[epic.id.to_s] = epic_features.pluck(:id).map(&:to_s)
 
-        # バージョンありのFeature
-        epic_features.where.not(fixed_version_id: nil).group_by(&:fixed_version_id).each do |version_id, version_features|
-          key = "#{epic.id}:#{version_id}"
-          grid_index[key] = version_features.map { |f| f.id.to_s }
-        end
+        # 各Featureについて、バージョン別にUserStoryをグループ化
+        epic_features.each do |feature|
+          feature_user_stories = user_stories.where(parent_id: feature.id)
 
-        # バージョンなしのFeature
-        no_version_features = epic_features.where(fixed_version_id: nil)
-        if no_version_features.any?
-          key = "#{epic.id}:none"
-          grid_index[key] = no_version_features.map { |f| f.id.to_s }
+          # Featureのバージョンを取得（UserStoryはFeatureのバージョンを継承）
+          feature_version_id = feature.fixed_version_id&.to_s || 'none'
+
+          # 3次元キー: {epicId}:{featureId}:{versionId}
+          cell_key = "#{epic.id}:#{feature.id}:#{feature_version_id}"
+          grid_index[cell_key] = feature_user_stories.order(:created_on).pluck(:id).map(&:to_s)
         end
       end
 

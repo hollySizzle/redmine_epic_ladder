@@ -5,20 +5,18 @@ import { handlers } from './handlers';
 export const worker = setupWorker(...handlers);
 
 // 開発モードでワーカーを起動
-// data-disable-msw="true" 属性がある場合はスキップ（E2Eテスト用）
+// MSWは npm run dev (localhost:8080) でのみ動作
+// Redmine本番/テスト環境では実APIを使用
 export const startMocking = async () => {
-  const rootElement = document.getElementById('kanban-root');
-  const disableMSW = rootElement?.getAttribute('data-disable-msw') === 'true';
+  // localhost:8080 (webpack dev server) でのみMSWを起動
+  const isLocalDev = window.location.hostname === 'localhost' && window.location.port === '8080';
 
-  if (disableMSW) {
-    console.log('[MSW] Disabled via data-disable-msw attribute (E2E test mode)');
-    return;
-  }
-
-  if (process.env.NODE_ENV === 'development') {
-    await worker.start();
-    console.log('[MSW] Mock Service Worker started');
+  if (isLocalDev) {
+    await worker.start({
+      onUnhandledRequest: 'bypass' // 未定義のリクエストは実APIに通す
+    });
+    console.log('[MSW] ✅ Mock Service Worker started (localhost:8080 development mode)');
   } else {
-    console.log('[MSW] Skipped (production mode)');
+    console.log('[MSW] ⏭️  Skipped - Using real API (hostname:', window.location.hostname, 'port:', window.location.port, ')');
   }
 };

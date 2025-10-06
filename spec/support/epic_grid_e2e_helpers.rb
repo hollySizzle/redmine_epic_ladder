@@ -66,9 +66,9 @@ module EpicGridE2EHelpers
 
   # カンバングリッドの基本構造確認
   def verify_kanban_structure
-    expect(@playwright_page.query_selector('.epic-version-grid')).not_to be_nil
-    expect(@playwright_page.query_selector('.feature-card-grid')).not_to be_nil
-    expect(@playwright_page.query_selector('.user-story-grid')).not_to be_nil
+    expect(@playwright_page.query_selector('.epic-feature-version-grid')).not_to be_nil
+    expect(@playwright_page.query_selector('.epic-cell')).not_to be_nil
+    expect(@playwright_page.query_selector('.feature-cell')).not_to be_nil
   end
 
   # 要素が表示されるまで待機
