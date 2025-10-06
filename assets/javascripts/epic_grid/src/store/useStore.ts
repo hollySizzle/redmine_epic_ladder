@@ -245,7 +245,7 @@ export const useStore = create<StoreState>()(
                 state.grid.index[cellKey] = [];
               }
               if (!state.grid.index[cellKey].includes(newStory.id)) {
-                state.grid.index[cellKey].push(newStory.id);
+                state.grid.index[cellKey] = [...state.grid.index[cellKey], newStory.id];
               }
             }
           });
@@ -432,20 +432,16 @@ export const useStore = create<StoreState>()(
             const oldCellKey = `${sourceFeature.parent_epic_id}:${sourceFeature.fixed_version_id || 'none'}`;
             const newCellKey = `${targetData.epicId}:${targetData.versionId || 'none'}`;
 
-            // 古いセルから削除
-            const oldCell = state.grid.index[oldCellKey];
-            if (oldCell) {
-              const index = oldCell.indexOf(sourceId);
-              if (index !== -1) {
-                oldCell.splice(index, 1);
-              }
+            // 古いセルから削除（イミュータブル）
+            if (state.grid.index[oldCellKey]) {
+              state.grid.index[oldCellKey] = state.grid.index[oldCellKey].filter(id => id !== sourceId);
             }
 
-            // 新しいセルに追加
+            // 新しいセルに追加（イミュータブル）
             if (!state.grid.index[newCellKey]) {
               state.grid.index[newCellKey] = [];
             }
-            state.grid.index[newCellKey].push(sourceId);
+            state.grid.index[newCellKey] = [...state.grid.index[newCellKey], sourceId];
 
             // Featureエンティティ更新
             sourceFeature.parent_epic_id = targetData.epicId;
@@ -463,7 +459,7 @@ export const useStore = create<StoreState>()(
           const sourceCellKey = `${sourceFeature.parent_epic_id}:${sourceFeature.fixed_version_id || 'none'}`;
           const targetCellKey = `${targetFeature.parent_epic_id}:${targetFeature.fixed_version_id || 'none'}`;
 
-          // 同じセル内での並び替え
+          // 同じセル内での並び替え（イミュータブル）
           if (sourceCellKey === targetCellKey) {
             const cell = state.grid.index[sourceCellKey];
             if (cell) {
@@ -471,13 +467,15 @@ export const useStore = create<StoreState>()(
               const targetIndex = cell.indexOf(targetId);
 
               if (sourceIndex !== -1 && targetIndex !== -1) {
-                cell.splice(sourceIndex, 1);
-                const newTargetIndex = cell.indexOf(targetId);
-                cell.splice(newTargetIndex + 1, 0, sourceId);
+                const newCell = [...cell];
+                newCell.splice(sourceIndex, 1);
+                const newTargetIndex = newCell.indexOf(targetId);
+                newCell.splice(newTargetIndex + 1, 0, sourceId);
+                state.grid.index[sourceCellKey] = newCell;
               }
             }
           }
-          // 異なるセル間の移動
+          // 異なるセル間の移動（イミュータブル）
           else {
             const sourceCell = state.grid.index[sourceCellKey];
             const targetCell = state.grid.index[targetCellKey];
@@ -485,11 +483,13 @@ export const useStore = create<StoreState>()(
             if (sourceCell && targetCell) {
               const sourceIndex = sourceCell.indexOf(sourceId);
               if (sourceIndex !== -1) {
-                sourceCell.splice(sourceIndex, 1);
+                state.grid.index[sourceCellKey] = sourceCell.filter(id => id !== sourceId);
               }
 
               const targetIndex = targetCell.indexOf(targetId);
-              targetCell.splice(targetIndex + 1, 0, sourceId);
+              const newTargetCell = [...targetCell];
+              newTargetCell.splice(targetIndex + 1, 0, sourceId);
+              state.grid.index[targetCellKey] = newTargetCell;
 
               // Featureエンティティ更新
               sourceFeature.parent_epic_id = targetFeature.parent_epic_id;
@@ -511,27 +511,31 @@ export const useStore = create<StoreState>()(
 
           if (!sourceFeature || !targetFeature) return;
 
-          // 同じFeature内の並び替え
+          // 同じFeature内の並び替え（イミュータブル）
           if (sourceStory.parent_feature_id === targetStory.parent_feature_id) {
             const stories = sourceFeature.user_story_ids;
             const sourceIndex = stories.indexOf(sourceId);
             const targetIndex = stories.indexOf(targetId);
 
             if (sourceIndex !== -1 && targetIndex !== -1) {
-              stories.splice(sourceIndex, 1);
-              const newTargetIndex = stories.indexOf(targetId);
-              stories.splice(newTargetIndex + 1, 0, sourceId);
+              const newStories = [...stories];
+              newStories.splice(sourceIndex, 1);
+              const newTargetIndex = newStories.indexOf(targetId);
+              newStories.splice(newTargetIndex + 1, 0, sourceId);
+              sourceFeature.user_story_ids = newStories;
             }
           }
-          // 異なるFeature間の移動
+          // 異なるFeature間の移動（イミュータブル）
           else {
             const sourceIndex = sourceFeature.user_story_ids.indexOf(sourceId);
             if (sourceIndex !== -1) {
-              sourceFeature.user_story_ids.splice(sourceIndex, 1);
+              sourceFeature.user_story_ids = sourceFeature.user_story_ids.filter(id => id !== sourceId);
             }
 
             const targetIndex = targetFeature.user_story_ids.indexOf(targetId);
-            targetFeature.user_story_ids.splice(targetIndex + 1, 0, sourceId);
+            const newTargetStories = [...targetFeature.user_story_ids];
+            newTargetStories.splice(targetIndex + 1, 0, sourceId);
+            targetFeature.user_story_ids = newTargetStories;
 
             // UserStoryの親Feature更新
             sourceStory.parent_feature_id = targetStory.parent_feature_id;
@@ -574,14 +578,11 @@ export const useStore = create<StoreState>()(
           }
           state.grid.index[newCellKey] = [...state.grid.index[newCellKey], storyId];
 
-          // 古いFeatureから削除
-          const oldIndex = oldFeature.user_story_ids.indexOf(storyId);
-          if (oldIndex !== -1) {
-            oldFeature.user_story_ids.splice(oldIndex, 1);
-          }
+          // 古いFeatureから削除（イミュータブル）
+          oldFeature.user_story_ids = oldFeature.user_story_ids.filter(id => id !== storyId);
 
-          // 新しいFeatureに追加
-          newFeature.user_story_ids.push(storyId);
+          // 新しいFeatureに追加（イミュータブル）
+          newFeature.user_story_ids = [...newFeature.user_story_ids, storyId];
 
           // UserStoryの親Feature更新
           story.parent_feature_id = featureId;
@@ -628,27 +629,31 @@ export const useStore = create<StoreState>()(
 
           if (!sourceStory || !targetStory) return;
 
-          // 同じStory内の並び替え
+          // 同じStory内の並び替え（イミュータブル）
           if (sourceTask.parent_user_story_id === targetTask.parent_user_story_id) {
             const tasks = sourceStory.task_ids;
             const sourceIndex = tasks.indexOf(sourceId);
             const targetIndex = tasks.indexOf(targetId);
 
             if (sourceIndex !== -1 && targetIndex !== -1) {
-              tasks.splice(sourceIndex, 1);
-              const newTargetIndex = tasks.indexOf(targetId);
-              tasks.splice(newTargetIndex + 1, 0, sourceId);
+              const newTasks = [...tasks];
+              newTasks.splice(sourceIndex, 1);
+              const newTargetIndex = newTasks.indexOf(targetId);
+              newTasks.splice(newTargetIndex + 1, 0, sourceId);
+              sourceStory.task_ids = newTasks;
             }
           }
-          // 異なるStory間の移動
+          // 異なるStory間の移動（イミュータブル）
           else {
             const sourceIndex = sourceStory.task_ids.indexOf(sourceId);
             if (sourceIndex !== -1) {
-              sourceStory.task_ids.splice(sourceIndex, 1);
+              sourceStory.task_ids = sourceStory.task_ids.filter(id => id !== sourceId);
             }
 
             const targetIndex = targetStory.task_ids.indexOf(targetId);
-            targetStory.task_ids.splice(targetIndex + 1, 0, sourceId);
+            const newTargetTasks = [...targetStory.task_ids];
+            newTargetTasks.splice(targetIndex + 1, 0, sourceId);
+            targetStory.task_ids = newTargetTasks;
 
             // Taskの親Story更新
             sourceTask.parent_user_story_id = targetTask.parent_user_story_id;
@@ -668,27 +673,31 @@ export const useStore = create<StoreState>()(
 
           if (!sourceStory || !targetStory) return;
 
-          // 同じStory内の並び替え
+          // 同じStory内の並び替え（イミュータブル）
           if (sourceTest.parent_user_story_id === targetTest.parent_user_story_id) {
             const tests = sourceStory.test_ids;
             const sourceIndex = tests.indexOf(sourceId);
             const targetIndex = tests.indexOf(targetId);
 
             if (sourceIndex !== -1 && targetIndex !== -1) {
-              tests.splice(sourceIndex, 1);
-              const newTargetIndex = tests.indexOf(targetId);
-              tests.splice(newTargetIndex + 1, 0, sourceId);
+              const newTests = [...tests];
+              newTests.splice(sourceIndex, 1);
+              const newTargetIndex = newTests.indexOf(targetId);
+              newTests.splice(newTargetIndex + 1, 0, sourceId);
+              sourceStory.test_ids = newTests;
             }
           }
-          // 異なるStory間の移動
+          // 異なるStory間の移動（イミュータブル）
           else {
             const sourceIndex = sourceStory.test_ids.indexOf(sourceId);
             if (sourceIndex !== -1) {
-              sourceStory.test_ids.splice(sourceIndex, 1);
+              sourceStory.test_ids = sourceStory.test_ids.filter(id => id !== sourceId);
             }
 
             const targetIndex = targetStory.test_ids.indexOf(targetId);
-            targetStory.test_ids.splice(targetIndex + 1, 0, sourceId);
+            const newTargetTests = [...targetStory.test_ids];
+            newTargetTests.splice(targetIndex + 1, 0, sourceId);
+            targetStory.test_ids = newTargetTests;
 
             // Testの親Story更新
             sourceTest.parent_user_story_id = targetTest.parent_user_story_id;
@@ -708,27 +717,31 @@ export const useStore = create<StoreState>()(
 
           if (!sourceStory || !targetStory) return;
 
-          // 同じStory内の並び替え
+          // 同じStory内の並び替え（イミュータブル）
           if (sourceBug.parent_user_story_id === targetBug.parent_user_story_id) {
             const bugs = sourceStory.bug_ids;
             const sourceIndex = bugs.indexOf(sourceId);
             const targetIndex = bugs.indexOf(targetId);
 
             if (sourceIndex !== -1 && targetIndex !== -1) {
-              bugs.splice(sourceIndex, 1);
-              const newTargetIndex = bugs.indexOf(targetId);
-              bugs.splice(newTargetIndex + 1, 0, sourceId);
+              const newBugs = [...bugs];
+              newBugs.splice(sourceIndex, 1);
+              const newTargetIndex = newBugs.indexOf(targetId);
+              newBugs.splice(newTargetIndex + 1, 0, sourceId);
+              sourceStory.bug_ids = newBugs;
             }
           }
-          // 異なるStory間の移動
+          // 異なるStory間の移動（イミュータブル）
           else {
             const sourceIndex = sourceStory.bug_ids.indexOf(sourceId);
             if (sourceIndex !== -1) {
-              sourceStory.bug_ids.splice(sourceIndex, 1);
+              sourceStory.bug_ids = sourceStory.bug_ids.filter(id => id !== sourceId);
             }
 
             const targetIndex = targetStory.bug_ids.indexOf(targetId);
-            targetStory.bug_ids.splice(targetIndex + 1, 0, sourceId);
+            const newTargetBugs = [...targetStory.bug_ids];
+            newTargetBugs.splice(targetIndex + 1, 0, sourceId);
+            targetStory.bug_ids = newTargetBugs;
 
             // Bugの親Story更新
             sourceBug.parent_user_story_id = targetBug.parent_user_story_id;
@@ -744,15 +757,18 @@ export const useStore = create<StoreState>()(
 
           if (sourceIndex === -1 || targetIndex === -1) return;
 
-          // 配列から削除
-          epicOrder.splice(sourceIndex, 1);
+          // イミュータブルに並び替え
+          const newEpicOrder = [...epicOrder];
+          newEpicOrder.splice(sourceIndex, 1);
 
           // 新しい位置を計算（削除後のインデックスを考慮）
-          const newTargetIndex = epicOrder.indexOf(targetId);
-          epicOrder.splice(newTargetIndex + 1, 0, sourceId);
+          const newTargetIndex = newEpicOrder.indexOf(targetId);
+          newEpicOrder.splice(newTargetIndex + 1, 0, sourceId);
+
+          state.grid.epic_order = newEpicOrder;
 
           // Dirty state更新: epic順序を保存
-          state.pendingChanges.reorderedEpics = [...epicOrder];
+          state.pendingChanges.reorderedEpics = newEpicOrder;
           state.isDirty = true;
 
           console.log('✅ [Local] Reordered Epics:', epicOrder);
@@ -767,15 +783,18 @@ export const useStore = create<StoreState>()(
 
           if (sourceIndex === -1 || targetIndex === -1) return;
 
-          // 配列から削除
-          versionOrder.splice(sourceIndex, 1);
+          // イミュータブルに並び替え
+          const newVersionOrder = [...versionOrder];
+          newVersionOrder.splice(sourceIndex, 1);
 
           // 新しい位置を計算（削除後のインデックスを考慮）
-          const newTargetIndex = versionOrder.indexOf(targetId);
-          versionOrder.splice(newTargetIndex + 1, 0, sourceId);
+          const newTargetIndex = newVersionOrder.indexOf(targetId);
+          newVersionOrder.splice(newTargetIndex + 1, 0, sourceId);
+
+          state.grid.version_order = newVersionOrder;
 
           // Dirty state更新: version順序を保存
-          state.pendingChanges.reorderedVersions = [...versionOrder];
+          state.pendingChanges.reorderedVersions = newVersionOrder;
           state.isDirty = true;
 
           console.log('✅ [Local] Reordered Versions:', versionOrder);
