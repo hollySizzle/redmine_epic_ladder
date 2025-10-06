@@ -486,6 +486,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 4.0,
         spent_hours: 3.5,
         done_ratio: 80,
+        due_date: '2025-11-25',
         created_on: '2025-02-20T09:00:00Z',
         updated_on: '2025-09-20T16:00:00Z',
         tracker_id: 4
@@ -502,6 +503,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 6.0,
         spent_hours: 5.0,
         done_ratio: 100,
+        due_date: '2025-11-20',
         created_on: '2025-02-21T10:30:00Z',
         updated_on: '2025-08-25T14:00:00Z',
         tracker_id: 4
@@ -518,6 +520,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 5.0,
         spent_hours: 0.0,
         done_ratio: 0,
+        due_date: '2025-12-10',
         created_on: '2025-02-22T11:00:00Z',
         updated_on: '2025-09-10T10:00:00Z',
         tracker_id: 4
@@ -534,6 +537,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 8.0,
         spent_hours: 7.5,
         done_ratio: 100,
+        due_date: null,
         created_on: '2025-03-10T13:00:00Z',
         updated_on: '2025-08-10T15:30:00Z',
         tracker_id: 4
@@ -550,6 +554,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 12.0,
         spent_hours: 2.0,
         done_ratio: 15,
+        due_date: '2025-12-20',
         created_on: '2025-03-15T14:00:00Z',
         updated_on: '2025-09-05T11:30:00Z',
         tracker_id: 4
@@ -566,6 +571,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 10.0,
         spent_hours: 0.0,
         done_ratio: 0,
+        due_date: '2025-12-25',
         created_on: '2025-03-16T15:30:00Z',
         updated_on: '2025-09-01T09:00:00Z',
         tracker_id: 4
@@ -582,6 +588,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 6.0,
         spent_hours: 5.5,
         done_ratio: 100,
+        due_date: null,
         created_on: '2025-04-02T10:00:00Z',
         updated_on: '2025-09-20T14:00:00Z',
         tracker_id: 4
@@ -598,6 +605,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 8.0,
         spent_hours: 4.0,
         done_ratio: 50,
+        due_date: '2025-11-28',
         created_on: '2025-04-03T11:30:00Z',
         updated_on: '2025-09-24T16:20:00Z',
         tracker_id: 4
@@ -614,6 +622,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 4.0,
         spent_hours: 0.0,
         done_ratio: 0,
+        due_date: '2025-11-15',
         created_on: '2025-04-06T09:15:00Z',
         updated_on: '2025-09-22T10:30:00Z',
         tracker_id: 4
@@ -630,6 +639,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 6.0,
         spent_hours: 0.0,
         done_ratio: 0,
+        due_date: '2025-11-18',
         created_on: '2025-04-07T14:00:00Z',
         updated_on: '2025-09-21T11:45:00Z',
         tracker_id: 4
@@ -646,6 +656,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 5.0,
         spent_hours: 0.0,
         done_ratio: 0,
+        due_date: null,
         created_on: '2025-04-08T10:20:00Z',
         updated_on: '2025-09-20T09:00:00Z',
         tracker_id: 4
@@ -662,6 +673,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 8.0,
         spent_hours: 7.0,
         done_ratio: 100,
+        due_date: '2026-01-10',
         created_on: '2025-04-11T11:00:00Z',
         updated_on: '2025-09-27T15:30:00Z',
         tracker_id: 4
@@ -678,6 +690,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 7.0,
         spent_hours: 3.5,
         done_ratio: 50,
+        due_date: '2026-01-12',
         created_on: '2025-04-12T09:30:00Z',
         updated_on: '2025-09-26T12:15:00Z',
         tracker_id: 4
@@ -694,6 +707,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 4.0,
         spent_hours: 0.0,
         done_ratio: 0,
+        due_date: null,
         created_on: '2025-04-16T10:00:00Z',
         updated_on: '2025-09-25T13:40:00Z',
         tracker_id: 4
@@ -710,6 +724,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         estimated_hours: 6.0,
         spent_hours: 0.0,
         done_ratio: 0,
+        due_date: null,
         created_on: '2025-04-17T11:15:00Z',
         updated_on: '2025-09-24T14:50:00Z',
         tracker_id: 4
@@ -727,6 +742,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v1',
         test_result: 'pending',
         assigned_to_id: 401,
+        due_date: '2025-11-22',
         created_on: '2025-02-25T10:00:00Z',
         updated_on: '2025-09-12T13:00:00Z',
         tracker_id: 5
@@ -741,6 +757,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v2',
         test_result: 'passed',
         assigned_to_id: 401,
+        due_date: null,
         created_on: '2025-04-04T09:30:00Z',
         updated_on: '2025-09-21T15:00:00Z',
         tracker_id: 5
@@ -755,6 +772,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v2',
         test_result: 'pending',
         assigned_to_id: 402,
+        due_date: '2025-11-26',
         created_on: '2025-04-05T10:15:00Z',
         updated_on: '2025-09-25T11:30:00Z',
         tracker_id: 5
@@ -769,6 +787,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v2',
         test_result: 'pending',
         assigned_to_id: 403,
+        due_date: '2025-11-19',
         created_on: '2025-04-09T11:00:00Z',
         updated_on: '2025-09-22T14:20:00Z',
         tracker_id: 5
@@ -783,6 +802,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v3',
         test_result: 'pending',
         assigned_to_id: 401,
+        due_date: '2026-01-11',
         created_on: '2025-04-13T09:45:00Z',
         updated_on: '2025-09-27T16:10:00Z',
         tracker_id: 5
@@ -797,6 +817,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v3',
         test_result: 'pending',
         assigned_to_id: 402,
+        due_date: null,
         created_on: '2025-04-18T10:30:00Z',
         updated_on: '2025-09-25T12:45:00Z',
         tracker_id: 5
@@ -811,6 +832,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v3',
         test_result: 'pending',
         assigned_to_id: 403,
+        due_date: null,
         created_on: '2025-04-19T11:15:00Z',
         updated_on: '2025-09-24T13:50:00Z',
         tracker_id: 5
@@ -828,6 +850,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v1',
         severity: 'minor',
         assigned_to_id: 301,
+        due_date: '2025-11-20',
         created_on: '2025-09-18T16:30:00Z',
         updated_on: '2025-09-20T10:00:00Z',
         tracker_id: 6
@@ -842,6 +865,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v2',
         severity: 'major',
         assigned_to_id: 302,
+        due_date: '2025-11-28',
         created_on: '2025-09-23T10:15:00Z',
         updated_on: '2025-09-24T14:30:00Z',
         tracker_id: 6
@@ -856,6 +880,7 @@ export const normalizedMockData: NormalizedAPIResponse = {
         fixed_version_id: 'v3',
         severity: 'critical',
         assigned_to_id: 303,
+        due_date: null,
         created_on: '2025-09-26T09:00:00Z',
         updated_on: '2025-09-28T16:45:00Z',
         tracker_id: 6

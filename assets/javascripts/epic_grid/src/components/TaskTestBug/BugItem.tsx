@@ -10,6 +10,13 @@ interface BugItemProps {
 export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   const bug = useStore(state => state.entities.bugs[bugId]);
   const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
+  const isDueDateVisible = useStore(state => state.isDueDateVisible);
+
+  // 担当者情報を取得
+  const assignedUser = useStore(state =>
+    bug?.assigned_to_id ? state.entities.users[bug.assigned_to_id] : undefined
+  );
 
   if (!bug) return null;
 
@@ -31,7 +38,19 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   return (
     <div ref={ref} className={className} data-bug={bug.id} onClick={handleClick}>
       <StatusIndicator status={bug.status} />
-      {bug.title}
+      <span className="title-wrapper">
+        {bug.title}
+      </span>
+      {isAssignedToVisible && assignedUser && (
+        <span className="assigned_to-name-wrapper">
+          {assignedUser.lastname} {assignedUser.firstname}
+        </span>
+      )}
+      {isDueDateVisible && bug.due_date && (
+        <span className="due-date-wrapper">
+          📅 {bug.due_date}
+        </span>
+      )}
     </div>
   );
 };

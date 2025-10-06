@@ -10,6 +10,13 @@ interface TaskItemProps {
 export const TaskItem: React.FC<TaskItemProps> = ({ taskId }) => {
   const task = useStore(state => state.entities.tasks[taskId]);
   const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
+  const isDueDateVisible = useStore(state => state.isDueDateVisible);
+
+  // 担当者情報を取得
+  const assignedUser = useStore(state =>
+    task?.assigned_to_id ? state.entities.users[task.assigned_to_id] : undefined
+  );
 
   if (!task) return null;
 
@@ -31,7 +38,19 @@ export const TaskItem: React.FC<TaskItemProps> = ({ taskId }) => {
   return (
     <div ref={ref} className={className} data-task={task.id} onClick={handleClick}>
       <StatusIndicator status={task.status} />
-      {task.title}
+      <span className="title-wrapper">
+        {task.title}
+      </span>
+      {isAssignedToVisible && assignedUser && (
+        <span className="assigned_to-name-wrapper">
+          {assignedUser.lastname} {assignedUser.firstname}
+        </span>
+      )}
+      {isDueDateVisible && task.due_date && (
+        <span className="due-date-wrapper">
+          📅 {task.due_date}
+        </span>
+      )}
     </div>
   );
 };

@@ -110,21 +110,24 @@ module EpicGrid
           assigned_to_id: assigned_to_id,
           estimated_hours: estimated_hours,
           spent_hours: 0.0,
-          done_ratio: done_ratio || 0
+          done_ratio: done_ratio || 0,
+          due_date: due_date&.to_s
         )
       when EpicGrid::TrackerHierarchy.tracker_names[:test]
         base.merge(
           title: subject,
           parent_user_story_id: parent_id&.to_s,
           test_result: 'pending',
-          assigned_to_id: assigned_to_id
+          assigned_to_id: assigned_to_id,
+          due_date: due_date&.to_s
         )
       when EpicGrid::TrackerHierarchy.tracker_names[:bug]
         base.merge(
           title: subject,
           parent_user_story_id: parent_id&.to_s,
           severity: 'minor',
-          assigned_to_id: assigned_to_id
+          assigned_to_id: assigned_to_id,
+          due_date: due_date&.to_s
         )
       else
         base

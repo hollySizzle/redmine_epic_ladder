@@ -166,6 +166,7 @@ export interface Task {
   estimated_hours?: number;
   spent_hours?: number;
   done_ratio?: number;
+  due_date?: string | null;
 
   // メタデータ
   created_on: string;
@@ -190,6 +191,7 @@ export interface Test {
 
   // メタデータ
   assigned_to_id?: number;
+  due_date?: string | null;
   created_on: string;
   updated_on: string;
   tracker_id: number;
@@ -212,6 +214,7 @@ export interface Bug {
 
   // メタデータ
   assigned_to_id?: number;
+  due_date?: string | null;
   created_on: string;
   updated_on: string;
   tracker_id: number;
