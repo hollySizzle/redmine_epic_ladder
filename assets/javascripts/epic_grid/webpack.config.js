@@ -4,6 +4,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map',
   entry: './src/index.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -36,6 +37,12 @@ module.exports = {
   },
   module: {
     rules: [
+      {
+        test: /\.(js|mjs)$/,
+        enforce: 'pre',
+        use: ['source-map-loader'],
+        exclude: /node_modules/,
+      },
       {
         test: /\.(ts|tsx)$/,
         exclude: [

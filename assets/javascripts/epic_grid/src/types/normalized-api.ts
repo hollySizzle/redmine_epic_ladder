@@ -216,6 +216,15 @@ export interface Bug {
   tracker_id: number;
 }
 
+export interface User {
+  id: number;
+  login: string;
+  firstname: string;
+  lastname: string;
+  mail?: string;
+  admin?: boolean;
+}
+
 // ========================================
 // グリッドインデックス型定義
 // ========================================
@@ -285,6 +294,7 @@ export interface NormalizedAPIResponse {
     tasks: Record<string, Task>;
     tests: Record<string, Test>;
     bugs: Record<string, Bug>;
+    users: Record<number, User>;
   };
 
   grid: GridIndex;

@@ -130,7 +130,8 @@ module EpicGrid
         tasks: build_entity_hash(scope, task_tracker),
         tests: build_entity_hash(scope, test_tracker),
         bugs: build_entity_hash(scope, bug_tracker),
-        versions: build_versions_hash
+        versions: build_versions_hash,
+        users: build_users_hash
       }
     end
 
@@ -153,6 +154,23 @@ module EpicGrid
           effective_date: version.effective_date&.iso8601,
           created_on: version.created_on.iso8601,
           updated_on: version.updated_on.iso8601
+        }
+      end
+    end
+
+    # ユーザーのエンティティハッシュを構築
+    def build_users_hash
+      # プロジェクトメンバーのユーザーを取得
+      member_users = members.includes(:user).map(&:user).compact.uniq
+
+      member_users.index_by(&:id).transform_values do |user|
+        {
+          id: user.id,
+          login: user.login,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          mail: user.mail,
+          admin: user.admin?
         }
       end
     end

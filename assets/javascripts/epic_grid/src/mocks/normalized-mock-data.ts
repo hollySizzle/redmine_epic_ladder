@@ -852,6 +852,129 @@ export const normalizedMockData: NormalizedAPIResponse = {
         updated_on: '2025-09-28T16:45:00Z',
         tracker_id: 6
       }
+    },
+
+    users: {
+      101: {
+        id: 101,
+        login: 'yamada',
+        firstname: '太郎',
+        lastname: '山田',
+        mail: 'yamada@example.com',
+        admin: false
+      },
+      102: {
+        id: 102,
+        login: 'tanaka',
+        firstname: '花子',
+        lastname: '田中',
+        mail: 'tanaka@example.com',
+        admin: false
+      },
+      103: {
+        id: 103,
+        login: 'suzuki',
+        firstname: '一郎',
+        lastname: '鈴木',
+        mail: 'suzuki@example.com',
+        admin: false
+      },
+      201: {
+        id: 201,
+        login: 'sato',
+        firstname: '次郎',
+        lastname: '佐藤',
+        mail: 'sato@example.com',
+        admin: false
+      },
+      202: {
+        id: 202,
+        login: 'watanabe',
+        firstname: '三郎',
+        lastname: '渡辺',
+        mail: 'watanabe@example.com',
+        admin: false
+      },
+      301: {
+        id: 301,
+        login: 'kobayashi',
+        firstname: '四郎',
+        lastname: '小林',
+        mail: 'kobayashi@example.com',
+        admin: false
+      },
+      302: {
+        id: 302,
+        login: 'ito',
+        firstname: '五郎',
+        lastname: '伊藤',
+        mail: 'ito@example.com',
+        admin: false
+      },
+      303: {
+        id: 303,
+        login: 'takahashi',
+        firstname: '六郎',
+        lastname: '高橋',
+        mail: 'takahashi@example.com',
+        admin: false
+      },
+      401: {
+        id: 401,
+        login: 'nakamura',
+        firstname: '七郎',
+        lastname: '中村',
+        mail: 'nakamura@example.com',
+        admin: false
+      },
+      402: {
+        id: 402,
+        login: 'kato',
+        firstname: '八郎',
+        lastname: '加藤',
+        mail: 'kato@example.com',
+        admin: false
+      },
+      403: {
+        id: 403,
+        login: 'yoshida',
+        firstname: '九郎',
+        lastname: '吉田',
+        mail: 'yoshida@example.com',
+        admin: false
+      },
+      404: {
+        id: 404,
+        login: 'ikeda',
+        firstname: '十郎',
+        lastname: '池田',
+        mail: 'ikeda@example.com',
+        admin: false
+      },
+      405: {
+        id: 405,
+        login: 'yamamoto',
+        firstname: '十一郎',
+        lastname: '山本',
+        mail: 'yamamoto@example.com',
+        admin: false
+      },
+      501: {
+        id: 501,
+        login: 'matsumoto',
+        firstname: '十二郎',
+        lastname: '松本',
+        mail: 'matsumoto@example.com',
+        admin: false
+      },
+      502: {
+        id: 502,
+        login: 'inoue',
+        firstname: '十三郎',
+        lastname: '井上',
+        mail: 'inoue@example.com',
+        admin: false
+      }
     }
   },
 

@@ -1,8 +1,8 @@
 import React from 'react';
-import { StatusIndicator } from '../common/StatusIndicator';
-import { TaskTestBugGrid } from '../TaskTestBug/TaskTestBugGrid';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
+import { StatusIndicator } from '../common/StatusIndicator';
+import { TaskTestBugGrid } from '../TaskTestBug/TaskTestBugGrid';
 
 interface UserStoryProps {
   storyId: string;
@@ -13,6 +13,12 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
   // ストアから直接UserStoryを取得
   const story = useStore(state => state.entities.user_stories[storyId]);
   const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
+
+  // 担当者情報を取得
+  const assignedUser = useStore(state =>
+    story?.assigned_to_id ? state.entities.users[story.assigned_to_id] : undefined
+  );
 
   if (!story) return null;
 
@@ -35,7 +41,14 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
     <div ref={ref} className={className} data-story={story.id}>
       <div className="user-story-header" onClick={handleHeaderClick}>
         <StatusIndicator status={story.status} />
-        {story.title}
+        <span className="title-wrapper">
+          {story.title}
+        </span>
+        {isAssignedToVisible && assignedUser && (
+          <span className="assigned_to-name-wrapper">
+            {assignedUser.lastname} {assignedUser.firstname}
+          </span>
+        )}
       </div>
       <TaskTestBugGrid
         userStoryId={story.id}

@@ -245,7 +245,12 @@
       "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/user_story_creation_spec.rb --format progress)",
       "Bash(timeout 120 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/task_creation_spec.rb --format progress)",
       "Bash(timeout:*)",
-      "Bash(perl:*)"
+      "Bash(perl:*)",
+      "mcp__serena__insert_after_symbol",
+      "mcp__serena__replace_symbol_body",
+      "Bash(netstat:*)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb --format documentation)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models --format progress)"
     ],
     "deny": [],
     "ask": [],

@@ -10,6 +10,7 @@ import type {
   Task,
   Test,
   Bug,
+  User,
   CreateEpicRequest,
   CreateFeatureRequest,
   CreateUserStoryRequest,
@@ -62,6 +63,7 @@ interface StoreState {
     tasks: Record<string, Task>;
     tests: Record<string, Test>;
     bugs: Record<string, Bug>;
+    users: Record<number, User>;
   };
 
   // グリッドインデックス
@@ -87,6 +89,10 @@ interface StoreState {
   // 縦書きモード
   isVerticalMode: boolean;
   toggleVerticalMode: () => void;
+
+  // 担当者名表示
+  isAssignedToVisible: boolean;
+  toggleAssignedToVisible: () => void;
 
   // UserStory配下の折り畳み（Task/Test/Bug）
   isUserStoryChildrenCollapsed: boolean;
@@ -134,7 +140,8 @@ export const useStore = create<StoreState>()(
         user_stories: {},
         tasks: {},
         tests: {},
-        bugs: {}
+        bugs: {},
+        users: {}
       },
 
       grid: {
@@ -178,6 +185,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isVerticalMode;
         localStorage.setItem('kanban_vertical_mode', String(newValue));
         return { isVerticalMode: newValue };
+      }),
+
+      // 担当者名表示の初期状態
+      isAssignedToVisible: (() => {
+        const saved = localStorage.getItem('kanban_assigned_to_visible');
+        return saved !== null ? saved === 'true' : true; // デフォルトON
+      })(),
+      toggleAssignedToVisible: () => set((state) => {
+        const newValue = !state.isAssignedToVisible;
+        localStorage.setItem('kanban_assigned_to_visible', String(newValue));
+        return { isAssignedToVisible: newValue };
       }),
 
       // UserStory配下の折り畳み（Task/Test/Bug）の初期状態

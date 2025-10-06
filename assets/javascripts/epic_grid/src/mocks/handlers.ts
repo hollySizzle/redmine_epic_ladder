@@ -31,7 +31,8 @@ import type {
   Task,
   Test,
   Bug,
-  Version
+  Version,
+  User
 } from '../types/normalized-api';
 import type { BatchUpdateRequest, BatchUpdateResponse } from '../api/kanban-api';
 import { normalizedMockData } from './normalized-mock-data';

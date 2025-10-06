@@ -46,7 +46,8 @@ RSpec.describe EpicGrid::GridController, type: :controller do
         'user_stories',
         'tasks',
         'tests',
-        'bugs'
+        'bugs',
+        'users'
       )
     end
 
