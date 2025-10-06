@@ -233,7 +233,8 @@
       "mcp__serena__think_about_whether_you_are_done",
       "WebFetch(domain:developer.1password.com)",
       "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:18 --format documentation)",
-      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:35 --format documentation)"
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb:35 --format documentation)",
+      "Bash(timeout 90 env RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/ --format documentation)"
     ],
     "deny": [],
     "ask": [],
