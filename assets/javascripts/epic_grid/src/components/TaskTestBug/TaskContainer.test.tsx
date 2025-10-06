@@ -5,8 +5,7 @@ import React from 'react';
 import { TaskContainer } from './TaskContainer';
 import { useStore } from '../../store/useStore';
 
-// モックプロンプト
-global.prompt = vi.fn();
+// モックアラート
 global.alert = vi.fn();
 
 describe('TaskContainer', () => {
@@ -84,7 +83,35 @@ describe('TaskContainer', () => {
   });
 
   describe('Add Task functionality', () => {
-    it('should call createTask when + Add Task is clicked', async () => {
+    it('should open modal when + Add Task is clicked', async () => {
+      const user = userEvent.setup();
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: { index: {}, epic_order: [], version_order: [] },
+        isLoading: false,
+        error: null,
+        projectId: 'project1'
+      });
+
+      render(<TaskContainer userStoryId="us1" taskIds={[]} />);
+
+      const addButton = screen.getByText('+ Add Task');
+      await user.click(addButton);
+
+      expect(screen.getByText('新しいTaskを追加')).toBeTruthy();
+      expect(screen.getByLabelText(/Task名/)).toBeTruthy();
+    });
+
+    it('should call createTask when modal form is submitted', async () => {
       const user = userEvent.setup();
       const createTaskMock = vi.fn().mockResolvedValue(undefined);
 
@@ -105,14 +132,14 @@ describe('TaskContainer', () => {
         createTask: createTaskMock
       });
 
-      (global.prompt as any).mockReturnValue('New Task');
-
       render(<TaskContainer userStoryId="us1" taskIds={[]} />);
 
       const addButton = screen.getByText('+ Add Task');
       await user.click(addButton);
 
-      expect(global.prompt).toHaveBeenCalledWith('Task名を入力してください:');
+      await user.type(screen.getByLabelText(/Task名/), 'New Task');
+      await user.click(screen.getByText('作成'));
+
       expect(createTaskMock).toHaveBeenCalledWith('us1', {
         subject: 'New Task',
         description: '',
@@ -120,7 +147,7 @@ describe('TaskContainer', () => {
       });
     });
 
-    it('should not call createTask when prompt is cancelled', async () => {
+    it('should not call createTask when modal is cancelled', async () => {
       const user = userEvent.setup();
       const createTaskMock = vi.fn();
 
@@ -141,12 +168,12 @@ describe('TaskContainer', () => {
         createTask: createTaskMock
       });
 
-      (global.prompt as any).mockReturnValue(null);
-
       render(<TaskContainer userStoryId="us1" taskIds={[]} />);
 
       const addButton = screen.getByText('+ Add Task');
       await user.click(addButton);
+
+      await user.click(screen.getByText('キャンセル'));
 
       expect(createTaskMock).not.toHaveBeenCalled();
     });
@@ -172,14 +199,17 @@ describe('TaskContainer', () => {
         createTask: createTaskMock
       });
 
-      (global.prompt as any).mockReturnValue('New Task');
-
       render(<TaskContainer userStoryId="us1" taskIds={[]} />);
 
       const addButton = screen.getByText('+ Add Task');
       await user.click(addButton);
 
-      expect(global.alert).toHaveBeenCalledWith('Task作成に失敗しました: API Error');
+      await user.type(screen.getByLabelText(/Task名/), 'New Task');
+      await user.click(screen.getByText('作成'));
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith('Task作成に失敗しました: API Error');
+      });
     });
   });
 });

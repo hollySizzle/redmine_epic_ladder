@@ -5,8 +5,7 @@ import React from 'react';
 import { TestContainer } from './TestContainer';
 import { useStore } from '../../store/useStore';
 
-// モックプロンプト
-global.prompt = vi.fn();
+// モックアラート
 global.alert = vi.fn();
 
 describe('TestContainer', () => {
@@ -84,7 +83,35 @@ describe('TestContainer', () => {
   });
 
   describe('Add Test functionality', () => {
-    it('should call createTest when + Add Test is clicked', async () => {
+    it('should open modal when + Add Test is clicked', async () => {
+      const user = userEvent.setup();
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: { index: {}, epic_order: [], version_order: [] },
+        isLoading: false,
+        error: null,
+        projectId: 'project1'
+      });
+
+      render(<TestContainer userStoryId="us1" testIds={[]} />);
+
+      const addButton = screen.getByText('+ Add Test');
+      await user.click(addButton);
+
+      expect(screen.getByText('新しいTestを追加')).toBeTruthy();
+      expect(screen.getByLabelText(/Test名/)).toBeTruthy();
+    });
+
+    it('should call createTest when modal form is submitted', async () => {
       const user = userEvent.setup();
       const createTestMock = vi.fn().mockResolvedValue(undefined);
 
@@ -105,14 +132,14 @@ describe('TestContainer', () => {
         createTest: createTestMock
       });
 
-      (global.prompt as any).mockReturnValue('New Test');
-
       render(<TestContainer userStoryId="us1" testIds={[]} />);
 
       const addButton = screen.getByText('+ Add Test');
       await user.click(addButton);
 
-      expect(global.prompt).toHaveBeenCalledWith('Test名を入力してください:');
+      await user.type(screen.getByLabelText(/Test名/), 'New Test');
+      await user.click(screen.getByText('作成'));
+
       expect(createTestMock).toHaveBeenCalledWith('us1', {
         subject: 'New Test',
         description: '',
@@ -120,7 +147,7 @@ describe('TestContainer', () => {
       });
     });
 
-    it('should not call createTest when prompt is cancelled', async () => {
+    it('should not call createTest when modal is cancelled', async () => {
       const user = userEvent.setup();
       const createTestMock = vi.fn();
 
@@ -141,12 +168,12 @@ describe('TestContainer', () => {
         createTest: createTestMock
       });
 
-      (global.prompt as any).mockReturnValue(null);
-
       render(<TestContainer userStoryId="us1" testIds={[]} />);
 
       const addButton = screen.getByText('+ Add Test');
       await user.click(addButton);
+
+      await user.click(screen.getByText('キャンセル'));
 
       expect(createTestMock).not.toHaveBeenCalled();
     });
@@ -172,14 +199,17 @@ describe('TestContainer', () => {
         createTest: createTestMock
       });
 
-      (global.prompt as any).mockReturnValue('New Test');
-
       render(<TestContainer userStoryId="us1" testIds={[]} />);
 
       const addButton = screen.getByText('+ Add Test');
       await user.click(addButton);
 
-      expect(global.alert).toHaveBeenCalledWith('Test作成に失敗しました: API Error');
+      await user.type(screen.getByLabelText(/Test名/), 'New Test');
+      await user.click(screen.getByText('作成'));
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith('Test作成に失敗しました: API Error');
+      });
     });
   });
 });

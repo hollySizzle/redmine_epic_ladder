@@ -288,7 +288,6 @@ module EpicGrid
           name: version.name,
           description: version.description || '',
           effective_date: version.effective_date&.iso8601,
-          due_date: version.effective_date&.iso8601,
           status: version.status,
           created_on: version.created_on.iso8601,
           updated_on: version.updated_on.iso8601
@@ -519,7 +518,6 @@ module EpicGrid
         name: version.name,
         description: version.description,
         effective_date: version.effective_date,
-        due_date: version.effective_date, # 互換性のため
         status: version.status,
         created_on: version.created_on.iso8601,
         updated_on: version.updated_on.iso8601,

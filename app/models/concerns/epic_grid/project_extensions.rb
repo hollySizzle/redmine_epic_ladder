@@ -150,7 +150,7 @@ module EpicGrid
           name: version.name,
           description: version.description,
           status: version.status,
-          due_date: version.due_date&.iso8601,
+          effective_date: version.effective_date&.iso8601,
           created_on: version.created_on.iso8601,
           updated_on: version.updated_on.iso8601
         }

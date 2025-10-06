@@ -43,7 +43,6 @@ module MswContracts
         name: String,
         description: String,
         effective_date: [String, NilClass],
-        due_date: [String, NilClass],
         status: String,
         created_on: String,
         updated_on: String

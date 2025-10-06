@@ -5,8 +5,7 @@ import React from 'react';
 import { UserStoryGrid } from './UserStoryGrid';
 import { useStore } from '../../store/useStore';
 
-// モックプロンプト
-global.prompt = vi.fn();
+// モックアラート
 global.alert = vi.fn();
 
 describe('UserStoryGrid', () => {
@@ -28,7 +27,7 @@ describe('UserStoryGrid', () => {
         projectId: 'project1'
       });
 
-      render(<UserStoryGrid featureId="f1" storyIds={[]} />);
+      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       expect(addButton).toBeTruthy();
@@ -54,7 +53,7 @@ describe('UserStoryGrid', () => {
         projectId: 'project1'
       });
 
-      render(<UserStoryGrid featureId="f1" storyIds={['us1', 'us2']} />);
+      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={['us1', 'us2']} />);
 
       expect(screen.getByText('User Story 1')).toBeTruthy();
       expect(screen.getByText('User Story 2')).toBeTruthy();
@@ -62,7 +61,35 @@ describe('UserStoryGrid', () => {
   });
 
   describe('Add User Story functionality', () => {
-    it('should call createUserStory when + Add User Story is clicked', async () => {
+    it('should open modal when + Add User Story is clicked', async () => {
+      const user = userEvent.setup();
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: { f1: { id: 'f1', title: 'Feature 1', status: 'open', parent_epic_id: 'e1', user_story_ids: [], fixed_version_id: null, version_source: 'none' } },
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: { index: {}, epic_order: [], version_order: [] },
+        isLoading: false,
+        error: null,
+        projectId: 'project1'
+      });
+
+      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+
+      const addButton = screen.getByText('+ Add User Story');
+      await user.click(addButton);
+
+      expect(screen.getByText('新しいUser Storyを追加')).toBeTruthy();
+      expect(screen.getByLabelText(/User Story名/)).toBeTruthy();
+    });
+
+    it('should call createUserStory when modal form is submitted', async () => {
       const user = userEvent.setup();
       const createUserStoryMock = vi.fn().mockResolvedValue(undefined);
 
@@ -83,14 +110,14 @@ describe('UserStoryGrid', () => {
         createUserStory: createUserStoryMock
       });
 
-      (global.prompt as any).mockReturnValue('New User Story');
-
-      render(<UserStoryGrid featureId="f1" storyIds={[]} />);
+      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       await user.click(addButton);
 
-      expect(global.prompt).toHaveBeenCalledWith('User Story名を入力してください:');
+      await user.type(screen.getByLabelText(/User Story名/), 'New User Story');
+      await user.click(screen.getByText('作成'));
+
       expect(createUserStoryMock).toHaveBeenCalledWith('f1', {
         subject: 'New User Story',
         description: '',
@@ -98,7 +125,7 @@ describe('UserStoryGrid', () => {
       });
     });
 
-    it('should not call createUserStory when prompt is cancelled', async () => {
+    it('should not call createUserStory when modal is cancelled', async () => {
       const user = userEvent.setup();
       const createUserStoryMock = vi.fn();
 
@@ -119,12 +146,12 @@ describe('UserStoryGrid', () => {
         createUserStory: createUserStoryMock
       });
 
-      (global.prompt as any).mockReturnValue(null);
-
-      render(<UserStoryGrid featureId="f1" storyIds={[]} />);
+      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       await user.click(addButton);
+
+      await user.click(screen.getByText('キャンセル'));
 
       expect(createUserStoryMock).not.toHaveBeenCalled();
     });
@@ -150,14 +177,17 @@ describe('UserStoryGrid', () => {
         createUserStory: createUserStoryMock
       });
 
-      (global.prompt as any).mockReturnValue('New User Story');
-
-      render(<UserStoryGrid featureId="f1" storyIds={[]} />);
+      render(<UserStoryGrid epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
 
       const addButton = screen.getByText('+ Add User Story');
       await user.click(addButton);
 
-      expect(global.alert).toHaveBeenCalledWith('User Story作成に失敗しました: API Error');
+      await user.type(screen.getByLabelText(/User Story名/), 'New User Story');
+      await user.click(screen.getByText('作成'));
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith('User Story作成に失敗しました: API Error');
+      });
     });
   });
 });

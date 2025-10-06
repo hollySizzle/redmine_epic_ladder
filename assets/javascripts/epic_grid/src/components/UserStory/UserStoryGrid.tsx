@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserStory } from './UserStory';
 import { AddButton } from '../common/AddButton';
+import { IssueFormModal, IssueFormData } from '../common/IssueFormModal';
 import { useStore } from '../../store/useStore';
 
 interface UserStoryGridProps {
@@ -12,36 +13,50 @@ interface UserStoryGridProps {
 
 export const UserStoryGrid: React.FC<UserStoryGridProps> = ({ epicId, featureId, versionId, storyIds }) => {
   const createUserStory = useStore((state) => state.createUserStory);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleAddUserStory = async () => {
-    const subject = prompt('User Story名を入力してください:');
-    if (!subject) return;
+  const handleAddUserStory = () => {
+    setIsModalOpen(true);
+  };
 
+  const handleSubmit = async (data: IssueFormData) => {
     try {
       await createUserStory(featureId, {
-        subject,
-        description: '',
+        subject: data.subject,
+        description: data.description,
         parent_feature_id: featureId
       });
     } catch (error) {
       alert(`User Story作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error; // モーダルでエラー処理するため再スロー
     }
   };
 
   return (
-    <div className="user-story-grid">
-      {storyIds.map(storyId => (
-        <UserStory key={storyId} storyId={storyId} />
-      ))}
-      <AddButton
-        type="user-story"
-        label="+ Add User Story"
-        dataAddButton="user-story"
-        epicId={epicId}
-        featureId={featureId}
-        versionId={versionId}
-        onClick={handleAddUserStory}
+    <>
+      <div className="user-story-grid">
+        {storyIds.map(storyId => (
+          <UserStory key={storyId} storyId={storyId} />
+        ))}
+        <AddButton
+          type="user-story"
+          label="+ Add User Story"
+          dataAddButton="user-story"
+          epicId={epicId}
+          featureId={featureId}
+          versionId={versionId}
+          onClick={handleAddUserStory}
+        />
+      </div>
+
+      <IssueFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+        title="新しいUser Storyを追加"
+        subjectLabel="User Story名"
+        subjectPlaceholder="例: ユーザーがログインできる"
       />
-    </div>
+    </>
   );
 };

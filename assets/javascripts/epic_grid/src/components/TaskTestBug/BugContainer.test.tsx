@@ -5,8 +5,7 @@ import React from 'react';
 import { BugContainer } from './BugContainer';
 import { useStore } from '../../store/useStore';
 
-// モックプロンプト
-global.prompt = vi.fn();
+// モックアラート
 global.alert = vi.fn();
 
 describe('BugContainer', () => {
@@ -84,7 +83,35 @@ describe('BugContainer', () => {
   });
 
   describe('Add Bug functionality', () => {
-    it('should call createBug when + Add Bug is clicked', async () => {
+    it('should open modal when + Add Bug is clicked', async () => {
+      const user = userEvent.setup();
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: { index: {}, epic_order: [], version_order: [] },
+        isLoading: false,
+        error: null,
+        projectId: 'project1'
+      });
+
+      render(<BugContainer userStoryId="us1" bugIds={[]} />);
+
+      const addButton = screen.getByText('+ Add Bug');
+      await user.click(addButton);
+
+      expect(screen.getByText('新しいBugを追加')).toBeTruthy();
+      expect(screen.getByLabelText(/Bug名/)).toBeTruthy();
+    });
+
+    it('should call createBug when modal form is submitted', async () => {
       const user = userEvent.setup();
       const createBugMock = vi.fn().mockResolvedValue(undefined);
 
@@ -105,14 +132,14 @@ describe('BugContainer', () => {
         createBug: createBugMock
       });
 
-      (global.prompt as any).mockReturnValue('New Bug');
-
       render(<BugContainer userStoryId="us1" bugIds={[]} />);
 
       const addButton = screen.getByText('+ Add Bug');
       await user.click(addButton);
 
-      expect(global.prompt).toHaveBeenCalledWith('Bug名を入力してください:');
+      await user.type(screen.getByLabelText(/Bug名/), 'New Bug');
+      await user.click(screen.getByText('作成'));
+
       expect(createBugMock).toHaveBeenCalledWith('us1', {
         subject: 'New Bug',
         description: '',
@@ -120,7 +147,7 @@ describe('BugContainer', () => {
       });
     });
 
-    it('should not call createBug when prompt is cancelled', async () => {
+    it('should not call createBug when modal is cancelled', async () => {
       const user = userEvent.setup();
       const createBugMock = vi.fn();
 
@@ -141,12 +168,12 @@ describe('BugContainer', () => {
         createBug: createBugMock
       });
 
-      (global.prompt as any).mockReturnValue(null);
-
       render(<BugContainer userStoryId="us1" bugIds={[]} />);
 
       const addButton = screen.getByText('+ Add Bug');
       await user.click(addButton);
+
+      await user.click(screen.getByText('キャンセル'));
 
       expect(createBugMock).not.toHaveBeenCalled();
     });
@@ -172,14 +199,17 @@ describe('BugContainer', () => {
         createBug: createBugMock
       });
 
-      (global.prompt as any).mockReturnValue('New Bug');
-
       render(<BugContainer userStoryId="us1" bugIds={[]} />);
 
       const addButton = screen.getByText('+ Add Bug');
       await user.click(addButton);
 
-      expect(global.alert).toHaveBeenCalledWith('Bug作成に失敗しました: API Error');
+      await user.type(screen.getByLabelText(/Bug名/), 'New Bug');
+      await user.click(screen.getByText('作成'));
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith('Bug作成に失敗しました: API Error');
+      });
     });
   });
 });

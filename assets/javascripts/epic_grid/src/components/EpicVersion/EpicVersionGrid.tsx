@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserStoryGrid } from '../UserStory/UserStoryGrid';
 import { AddButton } from '../common/AddButton';
 import { VersionFormModal, VersionFormData } from '../common/VersionFormModal';
+import { IssueFormModal, IssueFormData } from '../common/IssueFormModal';
 import { useStore } from '../../store/useStore';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useDropTarget } from '../../hooks/useDropTarget';
@@ -81,6 +82,9 @@ export const EpicVersionGrid: React.FC = () => {
 
   // モーダル開閉状態
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+  const [isEpicModalOpen, setIsEpicModalOpen] = useState(false);
+  const [isFeatureModalOpen, setIsFeatureModalOpen] = useState(false);
+  const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null);
 
   // versionの数を動的に取得
   const versionCount = grid.version_order.length;
@@ -88,27 +92,20 @@ export const EpicVersionGrid: React.FC = () => {
   // grid-template-columnsを動的に生成 (Epic列 + Feature列 + Version列×N)
   const gridTemplateColumns = `var(--epic-width) var(--feature-width) repeat(${versionCount}, var(--version-width))`;
 
-  const handleAddEpic = async () => {
-    console.log('[DEBUG] handleAddEpic called');
-    console.log('[DEBUG] About to call prompt()...');
-    const subject = prompt('Epic名を入力してください:');
-    console.log('[DEBUG] prompt() returned:', subject);
-    if (!subject) {
-      console.log('[DEBUG] prompt() cancelled or empty, returning');
-      return;
-    }
+  const handleAddEpic = () => {
+    setIsEpicModalOpen(true);
+  };
 
+  const handleEpicSubmit = async (data: IssueFormData) => {
     try {
-      console.log('[DEBUG] Creating epic with subject:', subject);
       await createEpic({
-        subject,
-        description: '',
+        subject: data.subject,
+        description: data.description,
         status: 'open'
       });
-      console.log('[DEBUG] Epic created successfully');
     } catch (error) {
-      console.error('[DEBUG] Epic creation failed:', error);
       alert(`Epic作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error; // モーダルでエラー処理するため再スロー
     }
   };
 
@@ -130,19 +127,24 @@ export const EpicVersionGrid: React.FC = () => {
     }
   };
 
-  const handleAddFeature = async (epicId: string) => {
-    const subject = prompt('Feature名を入力してください:');
-    if (!subject) return;
+  const handleAddFeature = (epicId: string) => {
+    setSelectedEpicId(epicId);
+    setIsFeatureModalOpen(true);
+  };
+
+  const handleFeatureSubmit = async (data: IssueFormData) => {
+    if (!selectedEpicId) return;
 
     try {
       await createFeature({
-        subject,
-        description: '',
-        parent_epic_id: epicId,
+        subject: data.subject,
+        description: data.description,
+        parent_epic_id: selectedEpicId,
         fixed_version_id: null,
       });
     } catch (error) {
       alert(`Feature作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error; // モーダルでエラー処理するため再スロー
     }
   };
 
@@ -262,6 +264,24 @@ export const EpicVersionGrid: React.FC = () => {
         isOpen={isVersionModalOpen}
         onClose={() => setIsVersionModalOpen(false)}
         onSubmit={handleVersionSubmit}
+      />
+
+      <IssueFormModal
+        isOpen={isEpicModalOpen}
+        onClose={() => setIsEpicModalOpen(false)}
+        onSubmit={handleEpicSubmit}
+        title="新しいEpicを追加"
+        subjectLabel="Epic名"
+        subjectPlaceholder="例: ユーザー管理機能"
+      />
+
+      <IssueFormModal
+        isOpen={isFeatureModalOpen}
+        onClose={() => setIsFeatureModalOpen(false)}
+        onSubmit={handleFeatureSubmit}
+        title="新しいFeatureを追加"
+        subjectLabel="Feature名"
+        subjectPlaceholder="例: ログイン機能"
       />
     </div>
   );
