@@ -78,15 +78,10 @@ export const App: React.FC = () => {
         if (targetData.isAddButton) {
           console.log('📦 Drop on AddButton:', targetData);
 
+          // UserStoryのAddButton/Cellへのドロップは EpicVersionGrid.tsx の onDrop で処理される
           if (sourceType === 'user-story' && targetType === 'user-story') {
-            // UserStory → AddButton: そのセルの最後に移動
-            moveUserStoryToCell(
-              sourceId,
-              targetData.epicId,
-              targetData.featureId,
-              targetData.versionId
-            );
-            console.log('✅ UserStory moved to AddButton position (end of list)');
+            console.log('ℹ️ UserStory drop on AddButton will be handled by EpicVersionGrid onDrop');
+            return;
           }
           return;
         }
@@ -95,14 +90,10 @@ export const App: React.FC = () => {
         if (targetId.startsWith('cell-')) {
           console.log('📦 Drop on cell:', targetData);
 
+          // UserStoryのCellへのドロップは EpicVersionGrid.tsx の onDrop で処理される
           if (sourceType === 'user-story' && targetData.cellType === 'us-cell') {
-            moveUserStoryToCell(
-              sourceId,
-              targetData.epicId,
-              targetData.featureId,
-              targetData.versionId
-            );
-            console.log('✅ UserStory moved to cell');
+            console.log('ℹ️ UserStory drop on cell will be handled by EpicVersionGrid onDrop');
+            return;
           }
           return;
         }
