@@ -559,23 +559,20 @@ export const useStore = create<StoreState>()(
             return;
           }
 
-          // 古いセルから削除
+          // 古いセルから削除（イミュータブル）
           const oldEpicId = oldFeature.parent_epic_id;
           const oldCellKey = `${oldEpicId}:${oldFeatureId}:${oldVersionId || 'none'}`;
 
           if (state.grid.index[oldCellKey]) {
-            const oldCellIndex = state.grid.index[oldCellKey].indexOf(storyId);
-            if (oldCellIndex !== -1) {
-              state.grid.index[oldCellKey].splice(oldCellIndex, 1);
-            }
+            state.grid.index[oldCellKey] = state.grid.index[oldCellKey].filter(id => id !== storyId);
           }
 
-          // 新しいセルに追加
+          // 新しいセルに追加（イミュータブル）
           const newCellKey = `${epicId}:${featureId}:${versionId}`;
           if (!state.grid.index[newCellKey]) {
             state.grid.index[newCellKey] = [];
           }
-          state.grid.index[newCellKey].push(storyId);
+          state.grid.index[newCellKey] = [...state.grid.index[newCellKey], storyId];
 
           // 古いFeatureから削除
           const oldIndex = oldFeature.user_story_ids.indexOf(storyId);

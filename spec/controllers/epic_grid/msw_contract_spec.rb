@@ -451,12 +451,12 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         expect(response_body).to include(:success, :updated_entities, :updated_grid_index)
         expect(response_body[:success]).to eq(true)
 
-        # updated_entities構造確認
+        # updated_entities構造確認（symbolize_names: trueなのでキーは全てシンボル）
         expect(response_body[:updated_entities]).to include(:user_stories, :features)
-        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story1.id.to_s)
-        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story2.id.to_s)
-        expect(response_body[:updated_entities][:features]).to have_key(feature1.id.to_s)
-        expect(response_body[:updated_entities][:features]).to have_key(feature2.id.to_s)
+        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story1.id.to_s.to_sym)
+        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story2.id.to_s.to_sym)
+        expect(response_body[:updated_entities][:features]).to have_key(feature1.id.to_s.to_sym)
+        expect(response_body[:updated_entities][:features]).to have_key(feature2.id.to_s.to_sym)
 
         # updated_grid_indexの部分更新確認（全セルではなく変更されたセルのみ）
         expect(response_body[:updated_grid_index]).to be_a(Hash)
@@ -517,8 +517,8 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         )
         expect(response_body[:success]).to eq(true)
 
-        # 各種更新の確認
-        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story1.id.to_s)
+        # 各種更新の確認（symbolize_names: trueなのでキーは全てシンボル）
+        expect(response_body[:updated_entities][:user_stories]).to have_key(user_story1.id.to_s.to_sym)
         expect(response_body[:updated_epic_order]).to eq([epic2.id.to_s, epic1.id.to_s])
         expect(response_body[:updated_version_order]).to eq([version2.id.to_s, version1.id.to_s])
       end
