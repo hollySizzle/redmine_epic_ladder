@@ -94,6 +94,10 @@ interface StoreState {
   isAssignedToVisible: boolean;
   toggleAssignedToVisible: () => void;
 
+  // 期日表示
+  isDueDateVisible: boolean;
+  toggleDueDateVisible: () => void;
+
   // UserStory配下の折り畳み（Task/Test/Bug）
   isUserStoryChildrenCollapsed: boolean;
   toggleUserStoryChildrenCollapsed: () => void;
@@ -196,6 +200,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isAssignedToVisible;
         localStorage.setItem('kanban_assigned_to_visible', String(newValue));
         return { isAssignedToVisible: newValue };
+      }),
+
+      // 期日表示の初期状態
+      isDueDateVisible: (() => {
+        const saved = localStorage.getItem('kanban_due_date_visible');
+        return saved !== null ? saved === 'true' : true; // デフォルトON
+      })(),
+      toggleDueDateVisible: () => set((state) => {
+        const newValue = !state.isDueDateVisible;
+        localStorage.setItem('kanban_due_date_visible', String(newValue));
+        return { isDueDateVisible: newValue };
       }),
 
       // UserStory配下の折り畳み（Task/Test/Bug）の初期状態

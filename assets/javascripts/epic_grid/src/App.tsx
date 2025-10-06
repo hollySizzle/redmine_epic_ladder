@@ -7,6 +7,7 @@ import { Legend } from './components/Legend';
 import { DetailPaneToggle } from './components/common/DetailPaneToggle';
 import { VerticalModeToggle } from './components/common/VerticalModeToggle';
 import { AssignedToToggle } from './components/common/AssignedToToggle';
+import { DueDateToggle } from './components/common/DueDateToggle';
 import { UserStoryChildrenToggle } from './components/common/UserStoryChildrenToggle';
 import { useStore } from './store/useStore';
 import './styles.scss';
@@ -235,6 +236,7 @@ export const App: React.FC = () => {
           <UserStoryChildrenToggle />
           <VerticalModeToggle />
           <AssignedToToggle />
+          <DueDateToggle />
           <DetailPaneToggle />
         </div>
       </div>

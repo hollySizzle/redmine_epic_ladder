@@ -14,6 +14,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
   const story = useStore(state => state.entities.user_stories[storyId]);
   const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
+  const isDueDateVisible = useStore(state => state.isDueDateVisible);
 
   // 担当者情報を取得
   const assignedUser = useStore(state =>
@@ -47,6 +48,11 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
         {isAssignedToVisible && assignedUser && (
           <span className="assigned_to-name-wrapper">
             {assignedUser.lastname} {assignedUser.firstname}
+          </span>
+        )}
+        {isDueDateVisible && story.due_date && (
+          <span className="due-date-wrapper">
+            📅 {story.due_date}
           </span>
         )}
       </div>

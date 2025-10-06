@@ -143,6 +143,7 @@ export interface UserStory {
   assigned_to_id?: number;
   estimated_hours?: number;
   done_ratio?: number;
+  due_date?: string | null;
   created_on: string;
   updated_on: string;
   tracker_id: number;

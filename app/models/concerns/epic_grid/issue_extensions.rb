@@ -100,7 +100,8 @@ module EpicGrid
             completion_percentage: 0
           },
           assigned_to_id: assigned_to_id,
-          estimated_hours: estimated_hours
+          estimated_hours: estimated_hours,
+          due_date: due_date&.to_s
         )
       when EpicGrid::TrackerHierarchy.tracker_names[:task]
         base.merge(
