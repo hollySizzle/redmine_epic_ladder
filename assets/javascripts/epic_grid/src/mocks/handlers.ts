@@ -808,7 +808,7 @@ export const handlers = [
     await delay(200);
 
     const body = (await request.json()) as CreateVersionRequest;
-    const { name, description, due_date, status } = body;
+    const { name, description, effective_date, status } = body;
 
     // バリデーション: name必須
     if (!name || name.trim() === '') {
@@ -840,7 +840,7 @@ export const handlers = [
       id: newVersionId,
       name: name.trim(),
       description: description || '',
-      effective_date: due_date,
+      effective_date,
       status: status || 'open',
       issue_count: 0,
       statistics: {

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserStoryGrid } from '../UserStory/UserStoryGrid';
 import { AddButton } from '../common/AddButton';
+import { VersionFormModal, VersionFormData } from '../common/VersionFormModal';
 import { useStore } from '../../store/useStore';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useDropTarget } from '../../hooks/useDropTarget';
@@ -77,7 +78,9 @@ export const EpicVersionGrid: React.FC = () => {
   const createEpic = useStore(state => state.createEpic);
   const createVersion = useStore(state => state.createVersion);
   const createFeature = useStore(state => state.createFeature);
-  
+
+  // モーダル開閉状態
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
 
   // versionの数を動的に取得
   const versionCount = grid.version_order.length;
@@ -109,18 +112,21 @@ export const EpicVersionGrid: React.FC = () => {
     }
   };
 
-  const handleAddVersion = async () => {
-    const name = prompt('Version名を入力してください:');
-    if (!name) return;
+  const handleAddVersion = () => {
+    setIsVersionModalOpen(true);
+  };
 
+  const handleVersionSubmit = async (data: VersionFormData) => {
     try {
       await createVersion({
-        name,
+        name: data.name,
         description: '',
-        status: 'open'
+        status: 'open',
+        effective_date: data.effective_date || undefined
       });
     } catch (error) {
       alert(`Version作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error; // モーダルでエラー処理するため再スロー
     }
   };
 
@@ -251,6 +257,12 @@ export const EpicVersionGrid: React.FC = () => {
           onClick={handleAddEpic}
         />
       </div>
+
+      <VersionFormModal
+        isOpen={isVersionModalOpen}
+        onClose={() => setIsVersionModalOpen(false)}
+        onSubmit={handleVersionSubmit}
+      />
     </div>
   );
 };

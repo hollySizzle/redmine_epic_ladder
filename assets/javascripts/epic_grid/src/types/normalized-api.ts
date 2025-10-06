@@ -587,7 +587,7 @@ export interface CreateEpicResponse {
 export interface CreateVersionRequest {
   name: string;
   description?: string;
-  due_date?: string;
+  effective_date?: string;
   status?: VersionStatus;
 }
 

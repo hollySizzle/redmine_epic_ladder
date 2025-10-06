@@ -530,7 +530,7 @@ describe('MSW Handlers', () => {
       const createRequest: CreateVersionRequest = {
         name: 'v2.1.0',
         description: 'Q2 Release',
-        due_date: '2025-06-30',
+        effective_date: '2025-06-30',
         status: 'open'
       };
 

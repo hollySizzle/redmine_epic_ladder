@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { EpicVersionGrid } from './EpicVersionGrid';
 import { useStore } from '../../store/useStore';
@@ -696,6 +697,210 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
 
       // moveUserStory should not be called during render
       expect(mockMoveUserStory).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Version creation with modal', () => {
+    it('should open modal when "+ New Version" button is clicked', async () => {
+      const user = userEvent.setup();
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: [],
+          version_order: [],
+          feature_order_by_epic: {},
+          index: {}
+        },
+        isLoading: false,
+        error: null
+      });
+
+      render(<EpicVersionGrid />);
+
+      const addVersionBtn = screen.getByText('+ New Version');
+      await user.click(addVersionBtn);
+
+      // モーダルが開いているか確認
+      expect(screen.getByText('新しいVersionを追加')).toBeTruthy();
+      expect(screen.getByLabelText(/Version名/)).toBeTruthy();
+    });
+
+    it('should call createVersion when modal form is submitted', async () => {
+      const user = userEvent.setup();
+      const mockCreateVersion = vi.fn().mockResolvedValue(undefined);
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: [],
+          version_order: [],
+          feature_order_by_epic: {},
+          index: {}
+        },
+        isLoading: false,
+        error: null,
+        createVersion: mockCreateVersion
+      });
+
+      render(<EpicVersionGrid />);
+
+      const addVersionBtn = screen.getByText('+ New Version');
+      await user.click(addVersionBtn);
+
+      const nameInput = screen.getByLabelText(/Version名/);
+      const effectiveDateInput = screen.getByLabelText('期日');
+      const submitButton = screen.getByText('作成');
+
+      await user.type(nameInput, 'v1.0.0');
+      await user.type(effectiveDateInput, '2025-12-31');
+      await user.click(submitButton);
+
+      expect(mockCreateVersion).toHaveBeenCalledWith({
+        name: 'v1.0.0',
+        description: '',
+        status: 'open',
+        effective_date: '2025-12-31'
+      });
+    });
+
+    it('should call createVersion without effective_date when not provided', async () => {
+      const user = userEvent.setup();
+      const mockCreateVersion = vi.fn().mockResolvedValue(undefined);
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: [],
+          version_order: [],
+          feature_order_by_epic: {},
+          index: {}
+        },
+        isLoading: false,
+        error: null,
+        createVersion: mockCreateVersion
+      });
+
+      render(<EpicVersionGrid />);
+
+      const addVersionBtn = screen.getByText('+ New Version');
+      await user.click(addVersionBtn);
+
+      const nameInput = screen.getByLabelText(/Version名/);
+      const submitButton = screen.getByText('作成');
+
+      await user.type(nameInput, 'v2.0.0');
+      await user.click(submitButton);
+
+      expect(mockCreateVersion).toHaveBeenCalledWith({
+        name: 'v2.0.0',
+        description: '',
+        status: 'open',
+        effective_date: undefined
+      });
+    });
+
+    it('should close modal when cancel button is clicked', async () => {
+      const user = userEvent.setup();
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: [],
+          version_order: [],
+          feature_order_by_epic: {},
+          index: {}
+        },
+        isLoading: false,
+        error: null
+      });
+
+      render(<EpicVersionGrid />);
+
+      const addVersionBtn = screen.getByText('+ New Version');
+      await user.click(addVersionBtn);
+
+      expect(screen.getByText('新しいVersionを追加')).toBeTruthy();
+
+      const cancelButton = screen.getByText('キャンセル');
+      await user.click(cancelButton);
+
+      expect(screen.queryByText('新しいVersionを追加')).toBeNull();
+    });
+
+    it('should show alert when version creation fails', async () => {
+      const user = userEvent.setup();
+      const mockCreateVersion = vi.fn().mockRejectedValue(new Error('API Error'));
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+      useStore.setState({
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: [],
+          version_order: [],
+          feature_order_by_epic: {},
+          index: {}
+        },
+        isLoading: false,
+        error: null,
+        createVersion: mockCreateVersion
+      });
+
+      render(<EpicVersionGrid />);
+
+      const addVersionBtn = screen.getByText('+ New Version');
+      await user.click(addVersionBtn);
+
+      const nameInput = screen.getByLabelText(/Version名/);
+      const submitButton = screen.getByText('作成');
+
+      await user.type(nameInput, 'v1.0.0');
+      await user.click(submitButton);
+
+      expect(mockCreateVersion).toHaveBeenCalled();
+      expect(alertSpy).toHaveBeenCalledWith('Version作成に失敗しました: API Error');
+
+      alertSpy.mockRestore();
     });
   });
 });
