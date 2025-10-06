@@ -1,6 +1,5 @@
 import React, { useState, FormEvent } from 'react';
 import { Dialog } from '@headlessui/react';
-import './VersionFormModal.css';
 
 export interface VersionFormData {
   name: string;
