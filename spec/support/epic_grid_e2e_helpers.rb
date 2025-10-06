@@ -202,13 +202,16 @@ module EpicGridE2EHelpers
     # Step 1: ボタンを見つけてクリック
     button_selector = if parent_info[:epic_id]
       # Feature作成: Epic内のボタン
-      ".epic-cell[data-epic='#{parent_info[:epic_id]}'] .add-feature-btn"
+      ".epic-cell[data-epic='#{parent_info[:epic_id]}'] button[data-add-button='feature']"
     elsif parent_info[:feature_id]
-      # UserStory/Task/Test/Bug作成: Feature内のボタン
-      ".feature-card[data-feature='#{parent_info[:feature_id]}'] .add-#{item_type}-btn"
+      # UserStory作成: Feature×Versionセル内のボタン
+      ".us-cell button[data-add-button='user-story']"
+    elsif parent_info[:user_story_subject]
+      # Task/Test/Bug作成: UserStory内のボタン
+      ".#{item_type}-container button[data-add-button='#{item_type}']"
     else
       # Epic/Version作成: グローバルボタン
-      ".add-#{item_type}-btn"
+      "button[data-add-button='#{item_type}']"
     end
 
     button = @playwright_page.wait_for_selector(button_selector, state: 'visible', timeout: 15000)
@@ -238,6 +241,36 @@ module EpicGridE2EHelpers
   # UserStory作成（簡易版）
   def create_user_story_via_ui(feature_id, story_name)
     create_item_via_ui('user-story', story_name, parent_info: { feature_id: feature_id })
+  end
+
+  # Task作成（簡易版）
+  def create_task_via_ui(user_story_subject, task_name)
+    expand_user_story(user_story_subject)
+    create_item_via_ui('task', task_name, parent_info: { user_story_subject: user_story_subject })
+  end
+
+  # Test作成（簡易版）
+  def create_test_via_ui(user_story_subject, test_name)
+    expand_user_story(user_story_subject)
+    create_item_via_ui('test', test_name, parent_info: { user_story_subject: user_story_subject })
+  end
+
+  # Bug作成（簡易版）
+  def create_bug_via_ui(user_story_subject, bug_name)
+    expand_user_story(user_story_subject)
+    create_item_via_ui('bug', bug_name, parent_info: { user_story_subject: user_story_subject })
+  end
+
+  # UserStoryカードを展開
+  def expand_user_story(user_story_subject)
+    user_story_card = @playwright_page.query_selector(".user-story-card >> text=\"#{user_story_subject}\"")
+    raise "UserStory '#{user_story_subject}' not found" unless user_story_card
+
+    # 展開ボタンをクリック（存在すれば）
+    expand_button = user_story_card.query_selector('.expand-button')
+    expand_button&.click
+
+    sleep 0.5 # 展開アニメーション待機
   end
 
   # キャンセル操作（汎用）

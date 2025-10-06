@@ -35,39 +35,21 @@ RSpec.describe 'Feature Creation E2E', type: :system, js: true do
       # Step 3: Epicが表示されることを確認
       expect_text_visible('Test Epic for Feature')
 
-      # Step 4: "Add Feature" ボタンを見つける（Epic内、明示的待機）
-      add_feature_button = @playwright_page.wait_for_selector('.epic-cell button[data-add-button="feature"]', state: 'visible', timeout: 10000)
-      expect(add_feature_button).not_to be_nil, 'Add Feature button not found'
+      # Step 4: create_feature_via_uiヘルパーを使用
+      create_feature_via_ui(@epic1.id, 'New Test Feature')
 
-      # Step 5: Dialogリスナーを設定（クリック前に設定）
-      @playwright_page.on('dialog', ->(dialog) {
-        expect(dialog.message).to include('Feature名を入力してください')
-        dialog.accept('New Test Feature')
-      })
-
-      # Step 6: ボタンをクリック
-      add_feature_button.click
-
-      # Step 7: 新しいFeatureが表示されることを確認
-      @playwright_page.wait_for_selector('.feature-cell >> text="New Test Feature"', timeout: 10000)
+      # Step 5: 新しいFeatureが表示されることを確認
       expect_text_visible('New Test Feature')
 
       puts "\n✅ Feature Creation E2E Test Passed"
     end
 
-    it 'cancels Feature creation when prompt is dismissed' do
+    it 'cancels Feature creation when modal is dismissed' do
       login_as(user)
       goto_kanban(project)
 
-      add_feature_button = @playwright_page.wait_for_selector('.epic-cell button[data-add-button="feature"]', state: 'visible', timeout: 10000)
-      expect(add_feature_button).not_to be_nil
-
-      # Dialogリスナーを設定（キャンセル）
-      @playwright_page.on('dialog', ->(dialog) {
-        dialog.dismiss
-      })
-
-      add_feature_button.click
+      # キャンセル操作を実行
+      cancel_item_creation_via_ui('feature', parent_info: { epic_id: @epic1.id })
 
       # Featureが作成されていないことを確認
       sleep 1

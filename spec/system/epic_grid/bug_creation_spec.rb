@@ -41,54 +41,24 @@ RSpec.describe 'Bug Creation E2E', type: :system, js: true do
       # Step 3: UserStoryが表示されることを確認
       expect_text_visible('Test UserStory')
 
-      # Step 4: UserStoryカードを展開（Task/Test/Bugコンテナを表示）
-      user_story_card = @playwright_page.query_selector('.user-story-card >> text="Test UserStory"')
-      expect(user_story_card).not_to be_nil
+      # Step 4: create_bug_via_uiヘルパーを使用
+      create_bug_via_ui('Test UserStory', 'New Bug Report')
 
-      # 展開ボタンをクリック（実装に応じて調整）
-      expand_button = user_story_card.query_selector('.expand-button')
-      expand_button&.click
-
-      sleep 0.5 # 展開アニメーション待機
-
-      # Step 5: "Add Bug" ボタンを見つける（明示的待機）
-      add_bug_button = @playwright_page.wait_for_selector('.bug-container button[data-add-button="bug"]', state: 'visible', timeout: 10000)
-      expect(add_bug_button).not_to be_nil, 'Add Bug button not found'
-
-      # Step 6: Dialogリスナーを設定（クリック前に設定）
-      @playwright_page.on('dialog', ->(dialog) {
-        expect(dialog.message).to include('Bug名を入力してください')
-        dialog.accept('New Bug Report')
-      })
-
-      # Step 7: ボタンをクリック
-      add_bug_button.click
-
-      # Step 8: 新しいBugが表示されることを確認
-      @playwright_page.wait_for_selector('.bug-item >> text="New Bug Report"', timeout: 10000)
+      # Step 5: 新しいBugが表示されることを確認
       expect_text_visible('New Bug Report')
 
       puts "\n✅ Bug Creation E2E Test Passed"
     end
 
-    it 'cancels Bug creation when prompt is dismissed' do
+    it 'cancels Bug creation when modal is dismissed' do
       login_as(user)
       goto_kanban(project)
 
-      user_story_card = @playwright_page.query_selector('.user-story-card >> text="Test UserStory"')
-      expand_button = user_story_card&.query_selector('.expand-button')
-      expand_button&.click
-      sleep 0.5
+      # UserStoryを展開
+      expand_user_story('Test UserStory')
 
-      add_bug_button = @playwright_page.wait_for_selector('.bug-container button[data-add-button="bug"]', state: 'visible', timeout: 10000)
-      expect(add_bug_button).not_to be_nil
-
-      # Dialogリスナーを設定（キャンセル）
-      @playwright_page.on('dialog', ->(dialog) {
-        dialog.dismiss
-      })
-
-      add_bug_button.click
+      # キャンセル操作を実行
+      cancel_item_creation_via_ui('bug', parent_info: { user_story_subject: 'Test UserStory' })
 
       # Bugが作成されていないことを確認
       sleep 1

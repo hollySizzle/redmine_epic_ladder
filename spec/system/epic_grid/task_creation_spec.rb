@@ -41,54 +41,24 @@ RSpec.describe 'Task Creation E2E', type: :system, js: true do
       # Step 3: UserStoryが表示されることを確認
       expect_text_visible('Test UserStory')
 
-      # Step 4: UserStoryカードを展開（Task/Test/Bugコンテナを表示）
-      user_story_card = @playwright_page.query_selector('.user-story-card >> text="Test UserStory"')
-      expect(user_story_card).not_to be_nil
+      # Step 4: create_task_via_uiヘルパーを使用
+      create_task_via_ui('Test UserStory', 'New Test Task')
 
-      # 展開ボタンをクリック（実装に応じて調整）
-      expand_button = user_story_card.query_selector('.expand-button')
-      expand_button&.click
-
-      sleep 0.5 # 展開アニメーション待機
-
-      # Step 5: "Add Task" ボタンを見つける（明示的待機）
-      add_task_button = @playwright_page.wait_for_selector('.task-container button[data-add-button="task"]', state: 'visible', timeout: 10000)
-      expect(add_task_button).not_to be_nil, 'Add Task button not found'
-
-      # Step 6: Dialogリスナーを設定（クリック前に設定）
-      @playwright_page.on('dialog', ->(dialog) {
-        expect(dialog.message).to include('Task名を入力してください')
-        dialog.accept('New Test Task')
-      })
-
-      # Step 7: ボタンをクリック
-      add_task_button.click
-
-      # Step 8: 新しいTaskが表示されることを確認
-      @playwright_page.wait_for_selector('.task-item >> text="New Test Task"', timeout: 10000)
+      # Step 5: 新しいTaskが表示されることを確認
       expect_text_visible('New Test Task')
 
       puts "\n✅ Task Creation E2E Test Passed"
     end
 
-    it 'cancels Task creation when prompt is dismissed' do
+    it 'cancels Task creation when modal is dismissed' do
       login_as(user)
       goto_kanban(project)
 
-      user_story_card = @playwright_page.query_selector('.user-story-card >> text="Test UserStory"')
-      expand_button = user_story_card&.query_selector('.expand-button')
-      expand_button&.click
-      sleep 0.5
+      # UserStoryを展開
+      expand_user_story('Test UserStory')
 
-      add_task_button = @playwright_page.wait_for_selector('.task-container button[data-add-button="task"]', state: 'visible', timeout: 10000)
-      expect(add_task_button).not_to be_nil
-
-      # Dialogリスナーを設定（キャンセル）
-      @playwright_page.on('dialog', ->(dialog) {
-        dialog.dismiss
-      })
-
-      add_task_button.click
+      # キャンセル操作を実行
+      cancel_item_creation_via_ui('task', parent_info: { user_story_subject: 'Test UserStory' })
 
       # Taskが作成されていないことを確認
       sleep 1

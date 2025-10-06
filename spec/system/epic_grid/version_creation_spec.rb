@@ -34,39 +34,21 @@ RSpec.describe 'Version Creation E2E', type: :system, js: true do
       expect_text_visible('Epic')
       expect_text_visible('Feature')
 
-      # Step 4: "New Version" ボタンを見つける（明示的待機）
-      add_version_button = @playwright_page.wait_for_selector('button[data-add-button="version"]', state: 'visible', timeout: 10000)
-      expect(add_version_button).not_to be_nil, 'Add Version button not found'
+      # Step 4: create_version_via_uiヘルパーを使用
+      create_version_via_ui('v2.0.0')
 
-      # Step 5: Dialogリスナーを設定（クリック前に設定）
-      @playwright_page.on('dialog', ->(dialog) {
-        expect(dialog.message).to include('Version名を入力してください')
-        dialog.accept('v2.0.0')
-      })
-
-      # Step 6: ボタンをクリック
-      add_version_button.click
-
-      # Step 7: 新しいVersionがヘッダーに表示されることを確認
-      @playwright_page.wait_for_selector('.version-header >> text="v2.0.0"', timeout: 10000)
+      # Step 5: 新しいVersionがヘッダーに表示されることを確認
       expect_text_visible('v2.0.0')
 
       puts "\n✅ Version Creation E2E Test Passed"
     end
 
-    it 'cancels Version creation when prompt is dismissed' do
+    it 'cancels Version creation when modal is dismissed' do
       login_as(user)
       goto_kanban(project)
 
-      add_version_button = @playwright_page.wait_for_selector('button[data-add-button="version"]', state: 'visible', timeout: 10000)
-      expect(add_version_button).not_to be_nil
-
-      # Dialogリスナーを設定（キャンセル）
-      @playwright_page.on('dialog', ->(dialog) {
-        dialog.dismiss
-      })
-
-      add_version_button.click
+      # キャンセル操作を実行
+      cancel_item_creation_via_ui('version')
 
       # Versionが作成されていないことを確認（エラーがないこと）
       sleep 1

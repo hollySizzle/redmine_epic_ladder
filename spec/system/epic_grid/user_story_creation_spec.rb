@@ -41,39 +41,21 @@ RSpec.describe 'UserStory Creation E2E', type: :system, js: true do
       expect_text_visible('Test Feature')
       expect_text_visible('v1.0.0')
 
-      # Step 4: "Add User Story" ボタンを見つける（Feature×Versionセル内、明示的待機）
-      add_userstory_button = @playwright_page.wait_for_selector('.us-cell button[data-add-button="user-story"]', state: 'visible', timeout: 10000)
-      expect(add_userstory_button).not_to be_nil, 'Add User Story button not found'
+      # Step 4: create_user_story_via_uiヘルパーを使用
+      create_user_story_via_ui(@feature1.id, 'New Test UserStory')
 
-      # Step 5: Dialogリスナーを設定（クリック前に設定）
-      @playwright_page.on('dialog', ->(dialog) {
-        expect(dialog.message).to include('User Story名を入力してください')
-        dialog.accept('New Test UserStory')
-      })
-
-      # Step 6: ボタンをクリック
-      add_userstory_button.click
-
-      # Step 7: 新しいUserStoryが表示されることを確認
-      @playwright_page.wait_for_selector('.user-story-card >> text="New Test UserStory"', timeout: 10000)
+      # Step 5: 新しいUserStoryが表示されることを確認
       expect_text_visible('New Test UserStory')
 
       puts "\n✅ UserStory Creation E2E Test Passed"
     end
 
-    it 'cancels UserStory creation when prompt is dismissed' do
+    it 'cancels UserStory creation when modal is dismissed' do
       login_as(user)
       goto_kanban(project)
 
-      add_userstory_button = @playwright_page.wait_for_selector('.us-cell button[data-add-button="user-story"]', state: 'visible', timeout: 10000)
-      expect(add_userstory_button).not_to be_nil
-
-      # Dialogリスナーを設定（キャンセル）
-      @playwright_page.on('dialog', ->(dialog) {
-        dialog.dismiss
-      })
-
-      add_userstory_button.click
+      # キャンセル操作を実行
+      cancel_item_creation_via_ui('user-story', parent_info: { feature_id: @feature1.id })
 
       # UserStoryが作成されていないことを確認
       sleep 1
