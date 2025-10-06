@@ -64,6 +64,7 @@ export const EpicVersionGrid: React.FC = () => {
   const createEpic = useStore(state => state.createEpic);
   const createVersion = useStore(state => state.createVersion);
   const createFeature = useStore(state => state.createFeature);
+  
 
   // versionの数を動的に取得
   const versionCount = grid.version_order.length;
@@ -125,9 +126,11 @@ export const EpicVersionGrid: React.FC = () => {
         <div className="header-label">Feature</div>
         {grid.version_order.map(versionId => {
           const version = versions[versionId];
+          // 'none' の場合はバージョン未設定として表示
+          const versionName = version ? version.name : '(未設定)';
           return (
             <div key={versionId} className="version-header">
-              {version.name}
+              {versionName}
             </div>
           );
         })}

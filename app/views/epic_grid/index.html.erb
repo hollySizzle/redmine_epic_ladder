@@ -17,7 +17,8 @@
 <div id="kanban-root"
      data-project-id="<%= @project.id %>"
      data-current-user='<%= @current_user_data.to_json.html_safe %>'
-     data-api-base-url="/kanban/projects/<%= @project.id %>">
+     data-api-base-url="/kanban/projects/<%= @project.id %>"
+     data-disable-msw="<%= Rails.env.test? || Rails.env.production? %>">
   <!-- React Kanban アプリがここにマウントされます -->
   <div class="loading-spinner">
     <p>カンバンを読み込み中...</p>

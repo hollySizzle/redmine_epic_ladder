@@ -5,6 +5,7 @@ import { Legend } from './components/Legend';
 import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { IssueDetailPane } from './components/IssueDetail/IssueDetailPane';
 import { DetailPaneToggle } from './components/common/DetailPaneToggle';
+import { VerticalModeToggle } from './components/common/VerticalModeToggle';
 import { useStore } from './store/useStore';
 import './styles.scss';
 
@@ -16,6 +17,7 @@ export const App: React.FC = () => {
   const projectId = useStore(state => state.projectId);
   const selectedIssueId = useStore(state => state.selectedIssueId);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
+  const isVerticalMode = useStore(state => state.isVerticalMode);
   const reorderFeatures = useStore(state => state.reorderFeatures);
   const reorderUserStories = useStore(state => state.reorderUserStories);
   const moveUserStoryToCell = useStore(state => state.moveUserStoryToCell);
@@ -33,6 +35,18 @@ export const App: React.FC = () => {
     console.log('📊 Loading grid for project ID:', dataProjectId);
     fetchGridData(dataProjectId);
   }, [fetchGridData]);
+
+  // 縦書きモード時にkanban-rootにvertical-modeクラスを追加
+  useEffect(() => {
+    const rootElement = document.getElementById('kanban-root');
+    if (!rootElement) return;
+
+    if (isVerticalMode) {
+      rootElement.classList.add('vertical-mode');
+    } else {
+      rootElement.classList.remove('vertical-mode');
+    }
+  }, [isVerticalMode]);
 
   // グローバルなドロップイベント監視
   useEffect(() => {
@@ -141,7 +155,10 @@ export const App: React.FC = () => {
     <>
       <div className="kanban-header">
         <h1>🔬 ネストGrid検証 - 4層Grid構造テスト (正規化API対応)</h1>
-        <DetailPaneToggle />
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <VerticalModeToggle />
+          <DetailPaneToggle />
+        </div>
       </div>
 
       <div className="test-info">

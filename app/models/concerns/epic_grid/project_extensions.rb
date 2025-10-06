@@ -70,13 +70,17 @@ module EpicGrid
 
       grid_index = {}
       epic_ids = []
+      feature_order_by_epic = {}
       version_ids = versions.pluck(:id).map(&:to_s)
 
       epics.order(:created_on).each do |epic|
         epic_ids << epic.id.to_s
 
         # Epic配下のFeatureをバージョン別に分類
-        epic_features = features.where(parent_id: epic.id)
+        epic_features = features.where(parent_id: epic.id).order(:created_on)
+
+        # Epic配下の全Feature IDsを記録
+        feature_order_by_epic[epic.id.to_s] = epic_features.pluck(:id).map(&:to_s)
 
         # バージョンありのFeature
         epic_features.where.not(fixed_version_id: nil).group_by(&:fixed_version_id).each do |version_id, version_features|
@@ -95,6 +99,7 @@ module EpicGrid
       {
         index: grid_index,
         epic_order: epic_ids,
+        feature_order_by_epic: feature_order_by_epic,
         version_order: version_ids + ['none']
       }
     end

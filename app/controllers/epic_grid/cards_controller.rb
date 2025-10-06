@@ -39,8 +39,8 @@ module EpicGrid
         return render_error('Featureトラッカーが設定されていません', :unprocessable_entity)
       end
 
-      # Feature作成
-      feature = Issue.create!(
+      # Feature作成 (Redmine標準動作: 無効なparent_idは無視される)
+      feature = Issue.new(
         project: @project,
         tracker: feature_tracker,
         author: User.current,
@@ -48,8 +48,12 @@ module EpicGrid
         **feature_params
       )
 
-      # 親Epicを取得してリロード
-      parent_epic = feature.parent.reload if feature.parent_id
+      unless feature.save
+        return render_validation_error(feature.errors)
+      end
+
+      # 親Epicを取得してリロード (Redmine標準: invalid parent_idはnilになる)
+      parent_epic = feature.parent&.reload
       version = feature.fixed_version
 
       # MSW準拠のレスポンス構築
@@ -72,18 +76,20 @@ module EpicGrid
         updated_on: version.updated_on.iso8601
       }} if version
 
-      cell_key = "#{feature.parent_id}:#{feature.fixed_version_id || 'none'}"
+      # grid_updatesの構築 (invalid parent_idの場合はskip)
+      grid_updates = {}
+      if feature.parent_id
+        cell_key = "#{feature.parent_id}:#{feature.fixed_version_id || 'none'}"
+        grid_index = @project.epic_grid_index
+        grid_updates[:index] = { cell_key => grid_index[:index][cell_key] || [feature.id.to_s] }
+      end
 
       render_normalized_success(
         created_entity: feature.epic_grid_as_normalized_json,
         updated_entities: updated_entities,
-        grid_updates: {
-          index: { cell_key => @project.epic_grid_index[:index][cell_key] || [feature.id.to_s] }
-        },
+        grid_updates: grid_updates,
         status: :created
       )
-    rescue ActiveRecord::RecordInvalid => e
-      render_validation_error(e.record.errors)
     end
 
     # Feature Card更新

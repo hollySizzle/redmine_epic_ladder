@@ -64,6 +64,10 @@ interface StoreState {
   isDetailPaneVisible: boolean;
   toggleDetailPane: () => void;
 
+  // 縦書きモード
+  isVerticalMode: boolean;
+  toggleVerticalMode: () => void;
+
   // CRUD操作
   createFeature: (data: CreateFeatureRequest) => Promise<void>;
   createUserStory: (featureId: string, data: CreateUserStoryRequest) => Promise<void>;
@@ -122,6 +126,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isDetailPaneVisible;
         localStorage.setItem('kanban_detail_pane_visible', String(newValue));
         return { isDetailPaneVisible: newValue };
+      }),
+
+      // 縦書きモードの初期状態
+      isVerticalMode: (() => {
+        const saved = localStorage.getItem('kanban_vertical_mode');
+        return saved !== null ? saved === 'true' : false; // デフォルトOFF
+      })(),
+      toggleVerticalMode: () => set((state) => {
+        const newValue = !state.isVerticalMode;
+        localStorage.setItem('kanban_vertical_mode', String(newValue));
+        return { isVerticalMode: newValue };
       }),
 
       // グリッドデータ取得
