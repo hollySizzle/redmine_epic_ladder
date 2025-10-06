@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import React, { useEffect } from 'react';
 import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
-import { Legend } from './components/Legend';
-import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { IssueDetailPane } from './components/IssueDetail/IssueDetailPane';
+import { SplitLayout } from './components/IssueDetail/SplitLayout';
+import { Legend } from './components/Legend';
 import { DetailPaneToggle } from './components/common/DetailPaneToggle';
 import { VerticalModeToggle } from './components/common/VerticalModeToggle';
 import { useStore } from './store/useStore';
@@ -228,9 +228,6 @@ export const App: React.FC = () => {
               >
                 ✖ 破棄
               </button>
-              <span style={{ color: '#ff9800', fontWeight: 'bold' }}>
-                ⚠️ 未保存の変更があります
-              </span>
             </>
           )}
           <VerticalModeToggle />
