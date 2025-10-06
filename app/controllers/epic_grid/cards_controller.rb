@@ -78,7 +78,7 @@ module EpicGrid
 
       # grid_updatesの構築 (invalid parent_idの場合はskip)
       grid_updates = {}
-      if feature.parent_id
+      if feature.parent_id && parent_epic
         cell_key = "#{feature.parent_id}:#{feature.fixed_version_id || 'none'}"
         grid_index = @project.epic_grid_index
         grid_updates[:index] = { cell_key => grid_index[:index][cell_key] || [feature.id.to_s] }
