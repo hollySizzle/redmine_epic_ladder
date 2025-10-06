@@ -296,4 +296,98 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
       end
     end
   end
+
+  # GridController - UserStory移動テスト
+  describe EpicGrid::GridController do
+    let(:project) { create(:project) }
+    let(:user) { create(:user) }
+    let(:role) { create(:role, permissions: [:view_issues, :edit_issues, :manage_versions]) }
+    let(:member) { create(:member, project: project, user: user, roles: [role]) }
+    let(:epic_tracker) { create(:epic_tracker) }
+    let(:feature_tracker) { create(:feature_tracker) }
+    let(:user_story_tracker) { create(:user_story_tracker) }
+    let(:epic) { create(:issue, project: project, tracker: epic_tracker, subject: 'Test Epic') }
+    let(:source_feature) { create(:issue, project: project, tracker: feature_tracker, parent: epic, subject: 'Source Feature') }
+    let(:target_feature) { create(:issue, project: project, tracker: feature_tracker, parent: epic, subject: 'Target Feature') }
+    let(:user_story) { create(:issue, project: project, tracker: user_story_tracker, parent: source_feature, subject: 'Test User Story') }
+    let(:version) { create(:version, project: project, name: 'v1.0.0') }
+
+    before do
+      member
+      project.trackers << [epic_tracker, feature_tracker, user_story_tracker]
+      epic
+      source_feature
+      target_feature
+      user_story
+      version
+      allow(User).to receive(:current).and_return(user)
+      @request.session[:user_id] = user.id
+    end
+
+    describe 'POST #move_user_story' do
+      it 'conforms to MSW MOVE_USER_STORY_RESPONSE contract' do
+        post :move_user_story, params: {
+          project_id: project.id,
+          user_story_id: user_story.id,
+          target_feature_id: target_feature.id,
+          target_version_id: version.id
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:MOVE_USER_STORY_RESPONSE)
+
+        # 基本的な検証
+        expect(response_body[:success]).to eq(true)
+        expect(response_body[:updated_entities][:user_stories]).to be_a(Hash)
+        expect(response_body[:updated_entities][:features]).to be_a(Hash)
+        expect(response_body[:updated_grid_index]).to be_a(Hash)
+        expect(response_body[:propagation_result][:affected_issue_ids]).to be_an(Array)
+        expect(response_body[:propagation_result][:conflicts]).to be_an(Array)
+      end
+
+      it 'handles version_id = null' do
+        post :move_user_story, params: {
+          project_id: project.id,
+          user_story_id: user_story.id,
+          target_feature_id: target_feature.id,
+          target_version_id: nil
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body).to conform_to_msw_contract(:MOVE_USER_STORY_RESPONSE)
+      end
+
+      it 'returns 404 for non-existent user_story' do
+        post :move_user_story, params: {
+          project_id: project.id,
+          user_story_id: 99999,
+          target_feature_id: target_feature.id,
+          target_version_id: version.id
+        }
+
+        expect(response).to have_http_status(:not_found)
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body[:success]).to eq(false)
+        expect(response_body[:error][:code]).to eq('not_found')
+      end
+
+      it 'returns 404 for non-existent target_feature' do
+        post :move_user_story, params: {
+          project_id: project.id,
+          user_story_id: user_story.id,
+          target_feature_id: 99999,
+          target_version_id: version.id
+        }
+
+        expect(response).to have_http_status(:not_found)
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        expect(response_body[:success]).to eq(false)
+        expect(response_body[:error][:code]).to eq('not_found')
+      end
+    end
+  end
 end

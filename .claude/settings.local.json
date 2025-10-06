@@ -208,7 +208,10 @@
       "Bash(git log:*)",
       "WebFetch(domain:css-tricks.com)",
       "Bash(npm --prefix plugins/redmine_epic_grid/assets/javascripts/epic_grid run build)",
-      "mcp__serena__think_about_collected_information"
+      "mcp__serena__think_about_collected_information",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/epic_grid/epic_creation_spec.rb --format documentation)",
+      "Bash(RAILS_ENV=test bundle exec rspec spec/controllers/epic_grid/msw_contract_spec.rb:327 --format documentation)",
+      "Bash(RAILS_ENV=test bundle exec rspec spec/controllers/epic_grid/msw_contract_spec.rb --format progress)"
     ],
     "deny": [],
     "ask": [],

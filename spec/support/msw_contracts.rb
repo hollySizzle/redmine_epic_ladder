@@ -237,6 +237,21 @@ module MswContracts
     }
   }.freeze
 
+  # UserStory移動レスポンス契約
+  MOVE_USER_STORY_RESPONSE = {
+    success: true,
+    updated_entities: {
+      user_stories: Hash,
+      features: Hash
+      # tasks, tests, bugs: optional - 子要素がある場合のみ
+    },
+    updated_grid_index: Hash,
+    propagation_result: {
+      affected_issue_ids: Array,
+      conflicts: Array
+    }
+  }.freeze
+
   # エラーレスポンス契約
   ERROR_RESPONSE = {
     success: false,

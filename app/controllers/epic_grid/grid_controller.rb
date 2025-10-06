@@ -4,7 +4,7 @@ module EpicGrid
   # グリッドデータ管理コントローラー
   # Epic×Version マトリクスデータ取得・操作API提供
   class GridController < BaseApiController
-    before_action :find_issue, only: [:move_feature, :create_epic]
+    before_action :find_issue, only: [:move_feature, :move_user_story, :create_epic]
 
     # Grid Data取得 (API001)
     # MSW NormalizedAPIResponse形式を直接返す
@@ -79,6 +79,87 @@ module EpicGrid
       })
     rescue ActiveRecord::RecordNotFound
       render_error('指定されたFeatureが見つかりません', :not_found)
+    rescue ActiveRecord::RecordInvalid => e
+      render_validation_error(e.record.errors)
+    end
+
+    # UserStory移動 (API新規)
+    def move_user_story
+      # パラメータ取得
+      user_story_id = params[:user_story_id]
+      target_feature_id = params[:target_feature_id]
+      target_version_id = params[:target_version_id].presence
+
+      # UserStory存在確認
+      user_story = Issue.find_by(id: user_story_id)
+      unless user_story
+        return render_error('UserStoryが見つかりません', :not_found, {
+          field: 'user_story_id',
+          value: user_story_id
+        })
+      end
+
+      # Feature存在確認
+      target_feature = Issue.find_by(id: target_feature_id)
+      unless target_feature
+        return render_error('移動先のFeatureが見つかりません', :not_found, {
+          field: 'target_feature_id',
+          value: target_feature_id
+        })
+      end
+
+      # 権限チェック
+      unless User.current.allowed_to?(:edit_issues, @project)
+        return render_error('権限が不足しています', :forbidden, {
+          required_permission: 'edit_issues',
+          resource_type: 'Project',
+          resource_id: @project.id
+        })
+      end
+
+      # 移動前の状態を保存
+      old_feature = user_story.parent
+      old_version_id = user_story.fixed_version_id
+
+      # UserStory移動実行
+      user_story.parent_issue_id = target_feature_id
+      user_story.fixed_version_id = target_version_id
+      user_story.save!
+
+      # 子要素（Task/Test/Bug）のVersion伝播
+      affected_issue_ids = [user_story.id]
+      user_story.children.each do |child|
+        child.update!(fixed_version_id: target_version_id)
+        affected_issue_ids << child.id
+      end
+
+      # MSW準拠レスポンス構築
+      response_data = {
+        success: true,
+        updated_entities: {
+          user_stories: {
+            user_story.id.to_s => user_story.epic_grid_as_normalized_json
+          },
+          features: {}
+        },
+        updated_grid_index: build_grid_index_updates(user_story, old_feature, target_feature, old_version_id, target_version_id),
+        propagation_result: {
+          affected_issue_ids: affected_issue_ids,
+          conflicts: []
+        }
+      }
+
+      # 移動元Featureを更新
+      if old_feature
+        response_data[:updated_entities][:features][old_feature.id.to_s] = old_feature.reload.epic_grid_as_normalized_json
+      end
+
+      # 移動先Featureを更新
+      response_data[:updated_entities][:features][target_feature.id.to_s] = target_feature.reload.epic_grid_as_normalized_json
+
+      render json: response_data, status: :ok
+    rescue ActiveRecord::RecordNotFound => e
+      render_error('指定されたリソースが見つかりません', :not_found)
     rescue ActiveRecord::RecordInvalid => e
       render_validation_error(e.record.errors)
     end
@@ -304,6 +385,33 @@ module EpicGrid
 
     def find_issue
       @issue = Issue.find(params[:issue_id]) if params[:issue_id]
+    end
+
+    # UserStory移動用のGrid Index更新データ構築
+    def build_grid_index_updates(user_story, old_feature, new_feature, old_version_id, new_version_id)
+      updates = {}
+
+      # Epic IDを取得
+      old_epic_id = old_feature&.parent_id
+      new_epic_id = new_feature.parent_id
+
+      # 古いセルキーを削除（全てのversionに対して）
+      if old_epic_id && old_feature
+        @project.versions.pluck(:id).each do |v_id|
+          old_cell_key = "#{old_epic_id}:#{old_feature.id}:#{v_id}"
+          updates[old_cell_key] = [] # 空配列で削除を表現
+        end
+        # version未設定の場合
+        old_none_key = "#{old_epic_id}:#{old_feature.id}:none"
+        updates[old_none_key] = []
+      end
+
+      # 新しいセルキーに追加
+      new_version_key = new_version_id || 'none'
+      new_cell_key = "#{new_epic_id}:#{new_feature.id}:#{new_version_key}"
+      updates[new_cell_key] = [user_story.id.to_s]
+
+      updates
     end
 
     def project_metadata
