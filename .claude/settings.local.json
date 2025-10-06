@@ -207,7 +207,8 @@
       "Bash(pgrep:*)",
       "Bash(git log:*)",
       "WebFetch(domain:css-tricks.com)",
-      "Bash(npm --prefix plugins/redmine_epic_grid/assets/javascripts/epic_grid run build)"
+      "Bash(npm --prefix plugins/redmine_epic_grid/assets/javascripts/epic_grid run build)",
+      "mcp__serena__think_about_collected_information"
     ],
     "deny": [],
     "ask": [],

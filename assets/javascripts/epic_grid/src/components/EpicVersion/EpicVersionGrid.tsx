@@ -30,11 +30,26 @@ const UserStoryCell: React.FC<{
   versionId: string;
   storyIds: string[];
 }> = ({ epicId, featureId, versionId, storyIds }) => {
+  const moveUserStory = useStore(state => state.moveUserStory);
+
   const ref = useDropTarget({
     type: 'user-story',
     id: `cell-${epicId}-${featureId}-${versionId}`,
     data: { epicId, featureId, versionId, cellType: 'us-cell' },
     canDrop: (sourceData) => sourceData.type === 'user-story',
+    onDrop: async (sourceData) => {
+      console.log('UserStory dropped on cell:', sourceData.id, '→', { epicId, featureId, versionId });
+
+      try {
+        await moveUserStory(
+          sourceData.id,
+          featureId,
+          versionId === 'none' ? null : versionId
+        );
+      } catch (error) {
+        console.error('Failed to move UserStory:', error);
+      }
+    }
   });
 
   return (

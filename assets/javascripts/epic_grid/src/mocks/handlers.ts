@@ -3,6 +3,8 @@ import type {
   NormalizedAPIResponse,
   MoveFeatureRequest,
   MoveFeatureResponse,
+  MoveUserStoryRequest,
+  MoveUserStoryResponse,
   ReorderEpicsRequest,
   ReorderEpicsResponse,
   ReorderVersionsRequest,
@@ -1012,6 +1014,150 @@ export const handlers = [
       meta: {
         timestamp: new Date().toISOString(),
         request_id: `req_${Math.random().toString(36).substring(7)}`
+      }
+    };
+
+    return HttpResponse.json(response);
+  }),
+
+  // POST /api/epic_grid/projects/:projectId/grid/move_user_story
+  // UserStory移動処理
+  http.post('/api/epic_grid/projects/:projectId/grid/move_user_story', async ({ request }: { request: Request }) => {
+    await delay(200);
+
+    const body = (await request.json()) as MoveUserStoryRequest;
+    const { user_story_id, target_feature_id, target_version_id } = body;
+
+    // UserStory存在確認
+    const userStory = currentData.entities.user_stories[user_story_id];
+    if (!userStory) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `UserStory ${user_story_id} not found`,
+          details: {
+            field: 'user_story_id'
+          }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    // Feature存在確認
+    const targetFeature = currentData.entities.features[target_feature_id];
+    if (!targetFeature) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'not_found',
+          message: `Feature ${target_feature_id} not found`,
+          details: {
+            field: 'target_feature_id'
+          }
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          request_id: `req_${Math.random().toString(36).substring(7)}`
+        }
+      };
+      return HttpResponse.json(errorResponse, { status: 404 });
+    }
+
+    const oldFeatureId = userStory.parent_feature_id;
+    const oldVersionId = userStory.fixed_version_id;
+    const oldFeature = currentData.entities.features[oldFeatureId];
+
+    // 古いFeatureからUserStoryを削除
+    if (oldFeature) {
+      oldFeature.user_story_ids = oldFeature.user_story_ids.filter(id => id !== user_story_id);
+      oldFeature.statistics.total_user_stories -= 1;
+      oldFeature.updated_on = new Date().toISOString();
+    }
+
+    // 新しいFeatureにUserStoryを追加
+    if (!targetFeature.user_story_ids.includes(user_story_id)) {
+      targetFeature.user_story_ids.push(user_story_id);
+      targetFeature.statistics.total_user_stories += 1;
+    }
+    targetFeature.updated_on = new Date().toISOString();
+
+    // UserStoryエンティティ更新
+    userStory.parent_feature_id = target_feature_id;
+    userStory.fixed_version_id = target_version_id;
+    userStory.version_source = 'direct';
+    userStory.updated_on = new Date().toISOString();
+
+    // grid.indexを更新 (3D Grid対応)
+    const affectedIssueIds: string[] = [user_story_id];
+
+    // 古いセルから削除
+    currentData.grid.version_order.forEach(vId => {
+      const oldEpicId = oldFeature?.parent_epic_id;
+      if (oldEpicId) {
+        const oldCellKey = `${oldEpicId}:${oldFeatureId}:${vId}`;
+        if (currentData.grid.index[oldCellKey]) {
+          currentData.grid.index[oldCellKey] = currentData.grid.index[oldCellKey].filter(id => id !== user_story_id);
+        }
+      }
+    });
+
+    // 新しいセルに追加
+    const newEpicId = targetFeature.parent_epic_id;
+    const newCellKey = `${newEpicId}:${target_feature_id}:${target_version_id || 'none'}`;
+    if (!currentData.grid.index[newCellKey]) {
+      currentData.grid.index[newCellKey] = [];
+    }
+    if (!currentData.grid.index[newCellKey].includes(user_story_id)) {
+      currentData.grid.index[newCellKey].push(user_story_id);
+    }
+
+    // Task/Test/Bug も更新
+    [...userStory.task_ids, ...userStory.test_ids, ...userStory.bug_ids].forEach(childId => {
+      const task = currentData.entities.tasks[childId];
+      const test = currentData.entities.tests[childId];
+      const bug = currentData.entities.bugs[childId];
+
+      if (task) {
+        task.fixed_version_id = target_version_id;
+        task.updated_on = new Date().toISOString();
+        affectedIssueIds.push(childId);
+      }
+      if (test) {
+        test.fixed_version_id = target_version_id;
+        test.updated_on = new Date().toISOString();
+        affectedIssueIds.push(childId);
+      }
+      if (bug) {
+        bug.fixed_version_id = target_version_id;
+        bug.updated_on = new Date().toISOString();
+        affectedIssueIds.push(childId);
+      }
+    });
+
+    // タイムスタンプ更新
+    lastUpdateTimestamp = new Date().toISOString();
+
+    // レスポンス構築
+    const response: MoveUserStoryResponse = {
+      success: true,
+      updated_entities: {
+        user_stories: {
+          [user_story_id]: userStory
+        },
+        features: {
+          [target_feature_id]: targetFeature,
+          ...(oldFeature ? { [oldFeatureId]: oldFeature } : {})
+        }
+      },
+      updated_grid_index: currentData.grid.index,
+      propagation_result: {
+        affected_issue_ids: affectedIssueIds,
+        conflicts: []
       }
     };
 

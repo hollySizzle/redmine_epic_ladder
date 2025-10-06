@@ -80,6 +80,9 @@ interface StoreState {
   // Feature移動
   moveFeature: (featureId: string, targetEpicId: string, targetVersionId: string | null) => Promise<void>;
 
+  // UserStory移動
+  moveUserStory: (userStoryId: string, targetFeatureId: string, targetVersionId: string | null) => Promise<void>;
+
   // ドラッグ&ドロップ操作
   reorderFeatures: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
   reorderUserStories: (sourceId: string, targetId: string, targetData?: DropTargetData) => void;
@@ -339,6 +342,46 @@ export const useStore = create<StoreState>()(
           });
         } catch (error) {
           console.error('Failed to move feature:', error);
+          set({ error: error instanceof Error ? error.message : 'Unknown error' });
+          throw error;
+        }
+      },
+
+      // UserStory移動API呼び出し
+      moveUserStory: async (userStoryId: string, targetFeatureId: string, targetVersionId: string | null) => {
+        const projectId = get().projectId;
+        if (!projectId) throw new Error('Project ID not set');
+
+        try {
+          const result = await API.moveUserStory(projectId, {
+            user_story_id: userStoryId,
+            target_feature_id: targetFeatureId,
+            target_version_id: targetVersionId
+          });
+
+          // 更新されたエンティティとグリッドインデックスを反映
+          set((state) => {
+            if (result.updated_entities.user_stories) {
+              Object.assign(state.entities.user_stories, result.updated_entities.user_stories);
+            }
+            if (result.updated_entities.features) {
+              Object.assign(state.entities.features, result.updated_entities.features);
+            }
+            if (result.updated_entities.tasks) {
+              Object.assign(state.entities.tasks, result.updated_entities.tasks);
+            }
+            if (result.updated_entities.tests) {
+              Object.assign(state.entities.tests, result.updated_entities.tests);
+            }
+            if (result.updated_entities.bugs) {
+              Object.assign(state.entities.bugs, result.updated_entities.bugs);
+            }
+            if (result.updated_grid_index) {
+              Object.assign(state.grid.index, result.updated_grid_index);
+            }
+          });
+        } catch (error) {
+          console.error('Failed to move user story:', error);
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
         }

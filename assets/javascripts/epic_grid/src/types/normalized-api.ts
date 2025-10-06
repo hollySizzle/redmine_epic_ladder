@@ -330,6 +330,36 @@ export interface MoveFeatureResponse {
   };
 }
 
+export interface MoveUserStoryRequest {
+  user_story_id: string;
+  target_feature_id: string;
+  target_version_id: string | null;
+  position?: number;
+}
+
+export interface MoveUserStoryResponse {
+  success: boolean;
+
+  updated_entities: {
+    user_stories?: Record<string, UserStory>;
+    features?: Record<string, Feature>;
+    versions?: Record<string, Version>;
+    tasks?: Record<string, Task>;
+    tests?: Record<string, Test>;
+    bugs?: Record<string, Bug>;
+  };
+
+  updated_grid_index: Record<string, string[]>;
+
+  propagation_result?: {
+    affected_issue_ids: string[];
+    conflicts: Array<{
+      issue_id: string;
+      message: string;
+    }>;
+  };
+}
+
 export interface ReorderEpicsRequest {
   source_epic_id: string;
   target_epic_id: string;
@@ -657,7 +687,7 @@ export interface ErrorResponse {
 }
 
 // ========================================
-// 型インデックス（エクスポート確認用）
+// 型インデックス(エクスポート確認用)
 // ========================================
 
 /**
@@ -691,6 +721,8 @@ export interface ErrorResponse {
  * - GridDataRequest
  * - MoveFeatureRequest
  * - MoveFeatureResponse
+ * - MoveUserStoryRequest
+ * - MoveUserStoryResponse
  * - UpdatesRequest
  * - UpdatesResponse
  * - ErrorResponse

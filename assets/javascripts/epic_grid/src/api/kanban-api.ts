@@ -23,6 +23,8 @@ import type {
   CreateVersionResponse,
   MoveFeatureRequest,
   MoveFeatureResponse,
+  MoveUserStoryRequest,
+  MoveUserStoryResponse,
   ReorderEpicsRequest,
   ReorderEpicsResponse,
   ReorderVersionsRequest,
@@ -235,6 +237,21 @@ export async function moveFeature(
     body: JSON.stringify(data)
   });
   return handleResponse<MoveFeatureResponse>(response);
+}
+
+/**
+ * UserStory移動
+ */
+export async function moveUserStory(
+  projectId: number | string,
+  data: MoveUserStoryRequest
+): Promise<MoveUserStoryResponse> {
+  const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/move_user_story`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return handleResponse<MoveUserStoryResponse>(response);
 }
 
 /**

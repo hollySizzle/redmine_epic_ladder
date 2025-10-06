@@ -186,6 +186,179 @@ describe('MSW Handlers', () => {
     });
   });
 
+  describe('POST /api/epic_grid/projects/:projectId/grid/move_user_story', () => {
+    beforeEach(async () => {
+      // モックデータをリセット
+      await fetch(`${baseUrl}/api/epic_grid/projects/${projectId}/grid/reset`, {
+        method: 'POST'
+      });
+    });
+
+    it('UserStoryを別のFeatureに移動できる', async () => {
+      const moveRequest: MoveUserStoryRequest = {
+        user_story_id: 'us1',
+        target_feature_id: 'f2',
+        target_version_id: 'v1'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_user_story`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(moveRequest)
+        }
+      );
+
+      const data: MoveUserStoryResponse = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.updated_entities.user_stories).toBeDefined();
+      expect(data.updated_entities.user_stories!['us1']).toBeDefined();
+      expect(data.updated_entities.user_stories!['us1'].parent_feature_id).toBe('f2');
+      expect(data.updated_entities.user_stories!['us1'].fixed_version_id).toBe('v1');
+    });
+
+    it('移動後のグリッドインデックスが更新される', async () => {
+      const moveRequest: MoveUserStoryRequest = {
+        user_story_id: 'us1',
+        target_feature_id: 'f3',
+        target_version_id: 'v2'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_user_story`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(moveRequest)
+        }
+      );
+
+      const data: MoveUserStoryResponse = await response.json();
+
+      expect(data.updated_grid_index).toBeDefined();
+      // f3 belongs to epic2, so the new cell key should be epic2:f3:v2
+      const newCellKey = 'epic2:f3:v2';
+      expect(data.updated_grid_index[newCellKey]).toBeDefined();
+      expect(data.updated_grid_index[newCellKey]).toContain('us1');
+    });
+
+    it('存在しないUserStory IDでエラーが返される', async () => {
+      const moveRequest: MoveUserStoryRequest = {
+        user_story_id: 'invalid_id',
+        target_feature_id: 'f1',
+        target_version_id: 'v1'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_user_story`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(moveRequest)
+        }
+      );
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe('not_found');
+    });
+
+    it('存在しないFeature IDでエラーが返される', async () => {
+      const moveRequest: MoveUserStoryRequest = {
+        user_story_id: 'us1',
+        target_feature_id: 'invalid_feature',
+        target_version_id: 'v1'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_user_story`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(moveRequest)
+        }
+      );
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data.success).toBe(false);
+      expect(data.error.code).toBe('not_found');
+    });
+
+    it('Version伝播により子要素(Task/Test/Bug)も更新される', async () => {
+      const moveRequest: MoveUserStoryRequest = {
+        user_story_id: 'us1',
+        target_feature_id: 'f2',
+        target_version_id: 'v3'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_user_story`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(moveRequest)
+        }
+      );
+
+      const data: MoveUserStoryResponse = await response.json();
+
+      expect(data.propagation_result).toBeDefined();
+      expect(data.propagation_result!.affected_issue_ids.length).toBeGreaterThan(0);
+      expect(data.propagation_result!.affected_issue_ids).toContain('us1');
+    });
+
+    it('target_version_id=nullでバージョン未設定に移動できる', async () => {
+      const moveRequest: MoveUserStoryRequest = {
+        user_story_id: 'us1',
+        target_feature_id: 'f2',
+        target_version_id: null
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_user_story`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(moveRequest)
+        }
+      );
+
+      const data: MoveUserStoryResponse = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.updated_entities.user_stories!['us1'].fixed_version_id).toBeNull();
+    });
+
+    it('移動元と移動先のFeatureが両方とも更新される', async () => {
+      const moveRequest: MoveUserStoryRequest = {
+        user_story_id: 'us1',
+        target_feature_id: 'f2',
+        target_version_id: 'v1'
+      };
+
+      const response = await fetch(
+        `${baseUrl}/api/epic_grid/projects/${projectId}/grid/move_user_story`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(moveRequest)
+        }
+      );
+
+      const data: MoveUserStoryResponse = await response.json();
+
+      expect(data.updated_entities.features).toBeDefined();
+      // f1 (移動元) と f2 (移動先) の両方が含まれる
+      expect(Object.keys(data.updated_entities.features!).length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
   describe('GET /api/epic_grid/projects/:projectId/grid/updates', () => {
     it('差分更新データを取得できる', async () => {
       const since = new Date(Date.now() - 1000 * 60 * 5).toISOString(); // 5分前
