@@ -3,7 +3,7 @@
 require File.expand_path('../../rails_helper', __dir__)
 
 # ============================================================
-# Epic作成E2Eテスト
+# Epic作成E2Eテスト（抽象化レイヤー使用）
 # ============================================================
 
 RSpec.describe 'Epic Creation E2E', type: :system, js: true do
@@ -14,47 +14,36 @@ RSpec.describe 'Epic Creation E2E', type: :system, js: true do
     # 既存データなし（Epicボタンのみ表示）
   end
 
-  # Dialog handler (公式推奨のmethod形式)
-  def handle_epic_creation_dialog(dialog)
-    puts "✅ Dialog detected: #{dialog.message}"
-    expect(dialog.message).to include('Epic名を入力してください')
-    dialog.accept('New Test Epic')
-  end
-
   describe 'Epic Creation Flow' do
     it 'creates a new Epic via Add Epic button' do
-      # Step 1: ログイン
       login_as(user)
-
-      # Step 2: カンバンページに移動
       goto_kanban(project)
 
-      # Step 3: グリッドヘッダーが表示されることを確認
+      # グリッドヘッダーが表示されることを確認
       expect_text_visible('Epic')
       expect_text_visible('Feature')
 
-      # Step 4: "Add Epic" ボタンを見つける
-      add_epic_button = @playwright_page.wait_for_selector('.add-epic-btn', state: 'visible', timeout: 15000)
-      expect(add_epic_button).not_to be_nil, 'Add Epic button not found'
+      # ✅ 抽象化ヘルパー使用（将来のカスタムダイアログ対応済み）
+      create_epic_via_ui('New Test Epic')
 
-      puts "\n✅ Step 4: Add Epic button found"
-
-      # Step 5: Dialogハンドラを先に設定（method形式 - 公式推奨）
-      @playwright_page.on('dialog', method(:handle_epic_creation_dialog))
-
-      puts "✅ Step 5: Dialog handler registered"
-
-      # Step 6: ボタンをクリック
-      puts "✅ Step 6: About to click button..."
-      add_epic_button.click
-
-      puts "✅ Step 7: Button clicked, waiting for Epic to appear"
-
-      # Step 8: 新しいEpicが表示されることを確認（タイムアウトを長めに）
-      @playwright_page.wait_for_selector('.epic-cell:has-text("New Test Epic")', timeout: 15000)
+      # 作成されたEpicが表示されることを確認
       expect_text_visible('New Test Epic')
 
       puts "\n✅ Epic Creation E2E Test Passed"
+    end
+
+    it 'cancels Epic creation when prompt is dismissed' do
+      login_as(user)
+      goto_kanban(project)
+
+      # ✅ 抽象化ヘルパー使用（キャンセル操作）
+      cancel_item_creation_via_ui('epic')
+
+      # Epicが作成されていないことを確認
+      epic_cells = @playwright_page.query_selector_all('.epic-cell')
+      expect(epic_cells.length).to eq(0)
+
+      puts "\n✅ Epic Creation Cancel Test Passed"
     end
   end
 end

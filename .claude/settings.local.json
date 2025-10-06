@@ -226,7 +226,9 @@
       "Bash(tee:*)",
       "Bash(wget:*)",
       "Bash(RAILS_ENV=development bundle exec rails runner:*)",
-      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation)"
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb --format documentation)",
+      "Bash(RAILS_ENV=development rails runner \"\nputs ''=== データベースクリア開始 ===''\nIssue.destroy_all\nputs ''Issues削除完了''\nVersion.destroy_all\nputs ''Versions削除完了''\nProject.where(identifier: [''sakura-ec'', ''sakura-mobile'', ''naisys'', ''ai-recommend'']).destroy_all\nputs ''プロジェクト削除完了''\nUser.where(login: [''tanaka'', ''suzuki'', ''sato'', ''watanabe'', ''yamada'', ''admin_kanban'']).destroy_all\nputs ''テストユーザー削除完了''\nputs ''=== クリア完了 ===''\n\")",
+      "Bash(RAILS_ENV=development rails runner \"\n# Journalの自動作成を無効にする\nSetting[''notified_events''] = []\n\nIssue.create!(\n  project_id: 1,\n  tracker_id: 101,\n  subject: ''テストEpic'',\n  author_id: 1,\n  status_id: 1\n)\n\nputs ''✅ Issue作成成功（Journalなし）''\n\")"
     ],
     "deny": [],
     "ask": [],
