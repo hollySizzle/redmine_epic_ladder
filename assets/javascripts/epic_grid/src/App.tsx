@@ -4,11 +4,11 @@ import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
 import { IssueDetailPane } from './components/IssueDetail/IssueDetailPane';
 import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { Legend } from './components/Legend';
-import { DetailPaneToggle } from './components/common/DetailPaneToggle';
-import { VerticalModeToggle } from './components/common/VerticalModeToggle';
 import { AssignedToToggle } from './components/common/AssignedToToggle';
+import { DetailPaneToggle } from './components/common/DetailPaneToggle';
 import { DueDateToggle } from './components/common/DueDateToggle';
 import { UserStoryChildrenToggle } from './components/common/UserStoryChildrenToggle';
+import { VerticalModeToggle } from './components/common/VerticalModeToggle';
 import { useStore } from './store/useStore';
 import './styles.scss';
 
@@ -196,7 +196,6 @@ export const App: React.FC = () => {
   const kanbanContent = (
     <>
       <div className="kanban-header">
-        <h1>🔬 ネストGrid検証 - 4層Grid構造テスト (正規化API対応)</h1>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {isDirty && (
             <>
@@ -239,13 +238,6 @@ export const App: React.FC = () => {
           <DueDateToggle />
           <DetailPaneToggle />
         </div>
-      </div>
-
-      <div className="test-info">
-        <strong>検証目的:</strong> Epic×Version Grid の中に FeatureCardGrid → UserStoryGrid → TaskGrid が4層ネストできるかを検証<br />
-        <strong>技術:</strong> CSS Grid + Pragmatic Drag and Drop + Normalized API + MSW<br />
-        <strong>操作:</strong> 各レベルのカード（Feature/UserStory/Task/Test/Bug）をドラッグ&ドロップしてみてください<br />
-        <strong>✅ React + TypeScript + Zustand + Pragmatic Drag and Drop + MSW で実装</strong>
       </div>
 
       <EpicVersionGrid />
