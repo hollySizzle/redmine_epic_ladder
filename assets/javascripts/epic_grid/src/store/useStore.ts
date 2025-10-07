@@ -315,6 +315,14 @@ export const useStore = create<StoreState>()(
 
             console.log('[DEBUG] After grid updates - feature_order_by_epic:', state.grid.feature_order_by_epic);
           });
+
+          // 作成したFeatureを詳細ペインで表示
+          const createdId = result.data.created_entity.id;
+          if (!get().isDetailPaneVisible) {
+            set({ isDetailPaneVisible: true });
+            localStorage.setItem('kanban_detail_pane_visible', 'true');
+          }
+          get().setSelectedEntity('issue', createdId);
         } catch (error) {
           console.error('[DEBUG] createFeature error:', error);
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
@@ -351,6 +359,14 @@ export const useStore = create<StoreState>()(
               }
             }
           });
+
+          // 作成したUserStoryを詳細ペインで表示
+          const createdId = result.data.created_entity.id;
+          if (!get().isDetailPaneVisible) {
+            set({ isDetailPaneVisible: true });
+            localStorage.setItem('kanban_detail_pane_visible', 'true');
+          }
+          get().setSelectedEntity('issue', createdId);
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
@@ -369,6 +385,14 @@ export const useStore = create<StoreState>()(
             Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
             Object.assign(state.entities.tasks, result.data.updated_entities.tasks || {});
           });
+
+          // 作成したTaskを詳細ペインで表示
+          const createdId = result.data.created_entity.id;
+          if (!get().isDetailPaneVisible) {
+            set({ isDetailPaneVisible: true });
+            localStorage.setItem('kanban_detail_pane_visible', 'true');
+          }
+          get().setSelectedEntity('issue', createdId);
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
@@ -387,6 +411,14 @@ export const useStore = create<StoreState>()(
             Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
             Object.assign(state.entities.tests, result.data.updated_entities.tests || {});
           });
+
+          // 作成したTestを詳細ペインで表示
+          const createdId = result.data.created_entity.id;
+          if (!get().isDetailPaneVisible) {
+            set({ isDetailPaneVisible: true });
+            localStorage.setItem('kanban_detail_pane_visible', 'true');
+          }
+          get().setSelectedEntity('issue', createdId);
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
@@ -405,6 +437,14 @@ export const useStore = create<StoreState>()(
             Object.assign(state.entities.user_stories, result.data.updated_entities.user_stories || {});
             Object.assign(state.entities.bugs, result.data.updated_entities.bugs || {});
           });
+
+          // 作成したBugを詳細ペインで表示
+          const createdId = result.data.created_entity.id;
+          if (!get().isDetailPaneVisible) {
+            set({ isDetailPaneVisible: true });
+            localStorage.setItem('kanban_detail_pane_visible', 'true');
+          }
+          get().setSelectedEntity('issue', createdId);
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
@@ -427,6 +467,14 @@ export const useStore = create<StoreState>()(
               state.grid.epic_order = result.data.grid_updates.epic_order;
             }
           });
+
+          // 作成したEpicを詳細ペインで表示
+          const createdId = result.data.created_entity.id;
+          if (!get().isDetailPaneVisible) {
+            set({ isDetailPaneVisible: true });
+            localStorage.setItem('kanban_detail_pane_visible', 'true');
+          }
+          get().setSelectedEntity('issue', createdId);
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;
@@ -449,6 +497,14 @@ export const useStore = create<StoreState>()(
               state.grid.version_order = result.data.grid_updates.version_order;
             }
           });
+
+          // 作成したVersionを詳細ペインで表示
+          const createdId = result.data.created_entity.id;
+          if (!get().isDetailPaneVisible) {
+            set({ isDetailPaneVisible: true });
+            localStorage.setItem('kanban_detail_pane_visible', 'true');
+          }
+          get().setSelectedEntity('version', createdId);
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error' });
           throw error;

@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useStore } from './useStore';
 import { normalizedMockData } from '../mocks/normalized-mock-data';
+import * as API from '../api/kanban-api';
 
 describe('useStore - Normalized API (3D Grid)', () => {
   beforeEach(() => {
@@ -11,6 +12,7 @@ describe('useStore - Normalized API (3D Grid)', () => {
       isLoading: false,
       error: null,
       projectId: '1',
+      selectedEntity: null,
       selectedIssueId: null,
       isDetailPaneVisible: false
     });
@@ -229,6 +231,131 @@ describe('useStore - Normalized API (3D Grid)', () => {
     it('should have createUserStory action', () => {
       const { createUserStory } = useStore.getState();
       expect(typeof createUserStory).toBe('function');
+    });
+
+    it('should show created Epic in detail pane after createEpic', async () => {
+      // APIレスポンスをモック
+      const mockResponse = {
+        success: true,
+        data: {
+          created_entity: { id: 'new-epic-1', subject: 'New Epic', description: '', status: 'open' },
+          updated_entities: {
+            epics: { 'new-epic-1': { id: 'new-epic-1', subject: 'New Epic', description: '', status: 'open' } }
+          },
+          grid_updates: {
+            epic_order: ['new-epic-1']
+          }
+        },
+        meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+      };
+
+      vi.spyOn(API, 'createEpic').mockResolvedValue(mockResponse);
+
+      const { createEpic } = useStore.getState();
+      await createEpic({ subject: 'New Epic', description: '' });
+
+      const state = useStore.getState();
+      expect(state.selectedEntity).toEqual({ type: 'issue', id: 'new-epic-1' });
+      expect(state.isDetailPaneVisible).toBe(true);
+    });
+
+    it('should show created Version in detail pane after createVersion', async () => {
+      // APIレスポンスをモック
+      const mockResponse = {
+        success: true,
+        data: {
+          created_entity: { id: 'new-v1', name: 'v1.0', status: 'open' },
+          updated_entities: {
+            versions: { 'new-v1': { id: 'new-v1', name: 'v1.0', status: 'open' } }
+          },
+          grid_updates: {
+            version_order: ['new-v1']
+          }
+        },
+        meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-456' }
+      };
+
+      vi.spyOn(API, 'createVersion').mockResolvedValue(mockResponse);
+
+      const { createVersion } = useStore.getState();
+      await createVersion({ name: 'v1.0', status: 'open' });
+
+      const state = useStore.getState();
+      expect(state.selectedEntity).toEqual({ type: 'version', id: 'new-v1' });
+      expect(state.isDetailPaneVisible).toBe(true);
+    });
+
+    it('should show created Feature in detail pane after createFeature', async () => {
+      // APIレスポンスをモック
+      const mockResponse = {
+        success: true,
+        data: {
+          created_entity: {
+            id: 'new-f1',
+            title: 'New Feature',
+            subject: 'New Feature',
+            parent_epic_id: 'e1',
+            fixed_version_id: null,
+            user_story_ids: [],
+            status: 'open'
+          },
+          updated_entities: {
+            features: {
+              'new-f1': {
+                id: 'new-f1',
+                title: 'New Feature',
+                subject: 'New Feature',
+                parent_epic_id: 'e1',
+                fixed_version_id: null,
+                user_story_ids: [],
+                status: 'open'
+              }
+            }
+          },
+          grid_updates: {
+            index: {},
+            feature_order_by_epic: { 'e1': ['new-f1'] }
+          }
+        },
+        meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-789' }
+      };
+
+      vi.spyOn(API, 'createFeature').mockResolvedValue(mockResponse);
+
+      const { createFeature } = useStore.getState();
+      await createFeature({ subject: 'New Feature', description: '', parent_epic_id: 'e1' });
+
+      const state = useStore.getState();
+      expect(state.selectedEntity).toEqual({ type: 'issue', id: 'new-f1' });
+      expect(state.isDetailPaneVisible).toBe(true);
+    });
+
+    it('should keep detail pane open if already visible', async () => {
+      // 詳細ペインを事前に開いておく
+      useStore.setState({ isDetailPaneVisible: true });
+
+      const mockResponse = {
+        success: true,
+        data: {
+          created_entity: { id: 'new-epic-2', subject: 'Another Epic', description: '', status: 'open' },
+          updated_entities: {
+            epics: { 'new-epic-2': { id: 'new-epic-2', subject: 'Another Epic', description: '', status: 'open' } }
+          },
+          grid_updates: {
+            epic_order: ['new-epic-2']
+          }
+        },
+        meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-abc' }
+      };
+
+      vi.spyOn(API, 'createEpic').mockResolvedValue(mockResponse);
+
+      const { createEpic } = useStore.getState();
+      await createEpic({ subject: 'Another Epic', description: '' });
+
+      const state = useStore.getState();
+      expect(state.selectedEntity).toEqual({ type: 'issue', id: 'new-epic-2' });
+      expect(state.isDetailPaneVisible).toBe(true); // Still true
     });
   });
 
