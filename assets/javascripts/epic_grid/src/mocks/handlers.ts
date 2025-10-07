@@ -1,6 +1,7 @@
 import { http, HttpResponse, delay, PathParams } from 'msw';
 import type {
   NormalizedAPIResponse,
+  RansackFilterParams,
   MoveFeatureRequest,
   MoveFeatureResponse,
   MoveUserStoryRequest,
@@ -44,6 +45,136 @@ let currentData: NormalizedAPIResponse = JSON.parse(JSON.stringify(normalizedMoc
 let lastUpdateTimestamp = new Date().toISOString();
 
 // ========================================
+// フィルタヘルパー関数
+// ========================================
+
+/**
+ * Ransackフィルタを適用してエンティティをフィルタリング
+ * 基本的なフィルタのみ対応（_in, _eq, _null）
+ */
+function applyRansackFilters<T extends { fixed_version_id?: string | null; status?: string; assigned_to_id?: number; tracker_id?: number }>(
+  entities: Record<string, T>,
+  filters: RansackFilterParams
+): Record<string, T> {
+  if (!filters || Object.keys(filters).length === 0) {
+    return entities;
+  }
+
+  const filtered: Record<string, T> = {};
+
+  Object.entries(entities).forEach(([id, entity]) => {
+    let matches = true;
+
+    // バージョンフィルタ (fixed_version_id_in)
+    if (filters.fixed_version_id_in && filters.fixed_version_id_in.length > 0) {
+      const versionId = entity.fixed_version_id;
+      if (!versionId || !filters.fixed_version_id_in.includes(versionId)) {
+        matches = false;
+      }
+    }
+
+    // バージョンフィルタ (fixed_version_id_eq)
+    if (filters.fixed_version_id_eq !== undefined) {
+      if (entity.fixed_version_id !== filters.fixed_version_id_eq) {
+        matches = false;
+      }
+    }
+
+    // バージョンNULLフィルタ
+    if (filters.fixed_version_id_null !== undefined) {
+      const isNull = entity.fixed_version_id === null || entity.fixed_version_id === undefined;
+      if (filters.fixed_version_id_null !== isNull) {
+        matches = false;
+      }
+    }
+
+    // ステータスフィルタ (status_id_in) - statusを文字列から推測
+    // MSWモックでは status: 'open' | 'closed' なので、簡易マッピング
+    if (filters.status_id_in && filters.status_id_in.length > 0) {
+      // 簡易実装: status文字列をIDに変換（実際のRedmineではID使用）
+      // open=1, in_progress=2, closed=5 と仮定
+      const statusIdMap: Record<string, number> = { open: 1, in_progress: 2, closed: 5 };
+      const statusId = entity.status ? statusIdMap[entity.status] : undefined;
+      if (!statusId || !filters.status_id_in.includes(statusId)) {
+        matches = false;
+      }
+    }
+
+    // 担当者フィルタ (assigned_to_id_in)
+    if (filters.assigned_to_id_in && filters.assigned_to_id_in.length > 0) {
+      if (!entity.assigned_to_id || !filters.assigned_to_id_in.includes(entity.assigned_to_id)) {
+        matches = false;
+      }
+    }
+
+    // 担当者NULLフィルタ
+    if (filters.assigned_to_id_null !== undefined) {
+      const isNull = entity.assigned_to_id === null || entity.assigned_to_id === undefined;
+      if (filters.assigned_to_id_null !== isNull) {
+        matches = false;
+      }
+    }
+
+    // トラッカーフィルタ (tracker_id_in)
+    if (filters.tracker_id_in && filters.tracker_id_in.length > 0) {
+      if (!entity.tracker_id || !filters.tracker_id_in.includes(entity.tracker_id)) {
+        matches = false;
+      }
+    }
+
+    if (matches) {
+      filtered[id] = entity;
+    }
+  });
+
+  return filtered;
+}
+
+/**
+ * URLクエリパラメータからRansackフィルタを抽出
+ */
+function extractFiltersFromURL(url: URL): RansackFilterParams {
+  const filters: RansackFilterParams = {};
+
+  // fixed_version_id_in (カンマ区切り)
+  const versionIds = url.searchParams.get('fixed_version_id_in');
+  if (versionIds) {
+    filters.fixed_version_id_in = versionIds.split(',');
+  }
+
+  // status_id_in (カンマ区切り)
+  const statusIds = url.searchParams.get('status_id_in');
+  if (statusIds) {
+    filters.status_id_in = statusIds.split(',').map(Number);
+  }
+
+  // assigned_to_id_in (カンマ区切り)
+  const assigneeIds = url.searchParams.get('assigned_to_id_in');
+  if (assigneeIds) {
+    filters.assigned_to_id_in = assigneeIds.split(',').map(Number);
+  }
+
+  // tracker_id_in (カンマ区切り)
+  const trackerIds = url.searchParams.get('tracker_id_in');
+  if (trackerIds) {
+    filters.tracker_id_in = trackerIds.split(',').map(Number);
+  }
+
+  // _null フィルタ
+  const versionNull = url.searchParams.get('fixed_version_id_null');
+  if (versionNull !== null) {
+    filters.fixed_version_id_null = versionNull === 'true';
+  }
+
+  const assigneeNull = url.searchParams.get('assigned_to_id_null');
+  if (assigneeNull !== null) {
+    filters.assigned_to_id_null = assigneeNull === 'true';
+  }
+
+  return filters;
+}
+
+// ========================================
 // API Handlers
 // ========================================
 
@@ -54,11 +185,26 @@ export const handlers = [
     const url = new URL(request.url);
     const includeClosed = url.searchParams.get('include_closed') === 'true';
 
+    // Ransackフィルタを抽出
+    const filters = extractFiltersFromURL(url);
+
     // リアルなAPI遅延をシミュレート (開発時は削除可能)
     await delay(300);
 
-    // include_closed=false の場合、closedステータスをフィルタ
+    // データをディープコピー
     let responseData = JSON.parse(JSON.stringify(currentData));
+
+    // Ransackフィルタを適用
+    if (Object.keys(filters).length > 0) {
+      responseData.entities.epics = applyRansackFilters(responseData.entities.epics, filters);
+      responseData.entities.features = applyRansackFilters(responseData.entities.features, filters);
+      responseData.entities.user_stories = applyRansackFilters(responseData.entities.user_stories, filters);
+      responseData.entities.tasks = applyRansackFilters(responseData.entities.tasks, filters);
+      responseData.entities.tests = applyRansackFilters(responseData.entities.tests, filters);
+      responseData.entities.bugs = applyRansackFilters(responseData.entities.bugs, filters);
+    }
+
+    // include_closed=false の場合、closedステータスをフィルタ (既存ロジック維持)
 
     if (!includeClosed) {
       // Featureからclosedを除外
@@ -86,6 +232,28 @@ export const handlers = [
       Object.keys(responseData.grid.feature_order_by_epic).forEach(epicId => {
         responseData.grid.feature_order_by_epic[epicId] = responseData.grid.feature_order_by_epic[epicId].filter(
           (featureId: string) => responseData.entities.features[featureId]
+        );
+      });
+    }
+
+    // Ransackフィルタ適用後のgrid更新
+    if (Object.keys(filters).length > 0) {
+      // epic_order: フィルタ後に存在するEpicのみ
+      responseData.grid.epic_order = responseData.grid.epic_order.filter(
+        (epicId: string) => responseData.entities.epics[epicId]
+      );
+
+      // feature_order_by_epic: フィルタ後に存在するFeatureのみ
+      Object.keys(responseData.grid.feature_order_by_epic).forEach(epicId => {
+        responseData.grid.feature_order_by_epic[epicId] = responseData.grid.feature_order_by_epic[epicId].filter(
+          (featureId: string) => responseData.entities.features[featureId]
+        );
+      });
+
+      // grid.index: フィルタ後に存在するUserStoryのみ
+      Object.keys(responseData.grid.index).forEach(key => {
+        responseData.grid.index[key] = responseData.grid.index[key].filter(
+          (userStoryId: string) => responseData.entities.user_stories[userStoryId]
         );
       });
     }

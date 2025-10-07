@@ -10,11 +10,12 @@ module EpicGrid
 
     # Epic Gridのデータを正規化APIレスポンス形式で取得
     # @param include_closed [Boolean] closedステータスを含めるか
+    # @param filters [Hash] Ransackフィルタパラメータ (例: { status_id_in: [1,2], fixed_version_id_eq: 3 })
     # @return [Hash] MSW NormalizedAPIResponse準拠のHash
-    def epic_grid_data(include_closed: true)
+    def epic_grid_data(include_closed: true, filters: {})
       {
-        entities: epic_grid_entities(include_closed: include_closed),
-        grid: epic_grid_index,
+        entities: epic_grid_entities(include_closed: include_closed, filters: filters),
+        grid: epic_grid_index(filters: filters),
         metadata: epic_grid_metadata
       }
     end
@@ -61,14 +62,17 @@ module EpicGrid
     # ========================================
 
     # グリッドインデックスを構築 (3次元: Epic × Feature × Version)
-    def epic_grid_index
+    # @param filters [Hash] Ransackフィルタパラメータ
+    def epic_grid_index(filters: {})
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
 
-      epics = issues.joins(:tracker).where(trackers: { name: epic_tracker })
-      features = issues.joins(:tracker).where(trackers: { name: feature_tracker })
-      user_stories = issues.joins(:tracker).where(trackers: { name: user_story_tracker })
+      base_scope = apply_ransack_filters(issues, filters)
+
+      epics = base_scope.joins(:tracker).where(trackers: { name: epic_tracker })
+      features = base_scope.joins(:tracker).where(trackers: { name: feature_tracker })
+      user_stories = base_scope.joins(:tracker).where(trackers: { name: user_story_tracker })
 
       grid_index = {}
       epic_ids = []
@@ -117,8 +121,26 @@ module EpicGrid
 
     private
 
+    # Ransackフィルタを適用
+    # @param scope [ActiveRecord::Relation] フィルタ対象のスコープ
+    # @param filters [Hash] Ransackフィルタパラメータ
+    # @return [ActiveRecord::Relation] フィルタ適用後のスコープ
+    def apply_ransack_filters(scope, filters)
+      return scope if filters.blank?
+
+      # AssociationRelationをRelationに変換してからRansackを適用
+      # issues アソシエーションは AssociationRelation なので、.all で Relation に変換
+      relation = scope.is_a?(ActiveRecord::AssociationRelation) ? scope.all : scope
+
+      # Ransack検索オブジェクトを作成
+      search = relation.ransack(filters)
+      search.result
+    end
+
     # エンティティハッシュを構築
-    def epic_grid_entities(include_closed: true)
+    # @param include_closed [Boolean] closedステータスを含めるか
+    # @param filters [Hash] Ransackフィルタパラメータ
+    def epic_grid_entities(include_closed: true, filters: {})
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
@@ -128,6 +150,7 @@ module EpicGrid
 
       scope = issues.includes(:tracker, :status, :fixed_version)
       scope = scope.joins(:status).where.not(issue_statuses: { is_closed: true }) unless include_closed
+      scope = apply_ransack_filters(scope, filters)
 
       {
         epics: build_entity_hash(scope, epic_tracker),

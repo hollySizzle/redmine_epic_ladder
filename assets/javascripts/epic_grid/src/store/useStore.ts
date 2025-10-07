@@ -17,7 +17,8 @@ import type {
   CreateTaskRequest,
   CreateTestRequest,
   CreateBugRequest,
-  CreateVersionRequest
+  CreateVersionRequest,
+  RansackFilterParams
 } from '../types/normalized-api';
 import * as API from '../api/kanban-api';
 
@@ -101,6 +102,11 @@ interface StoreState {
   // UserStory配下の折り畳み（Task/Test/Bug）
   isUserStoryChildrenCollapsed: boolean;
   toggleUserStoryChildrenCollapsed: () => void;
+
+  // フィルタリング
+  filters: RansackFilterParams;
+  setFilters: (filters: RansackFilterParams) => void;
+  clearFilters: () => void;
 
   // Dirty state管理（未保存変更の追跡）
   isDirty: boolean;
@@ -224,12 +230,32 @@ export const useStore = create<StoreState>()(
         return { isUserStoryChildrenCollapsed: newValue };
       }),
 
+      // フィルタリングの初期状態
+      filters: {},
+      setFilters: (filters: RansackFilterParams) => {
+        set({ filters });
+        // フィルタ変更時に自動的にデータを再取得
+        const projectId = get().projectId;
+        if (projectId) {
+          get().fetchGridData(projectId);
+        }
+      },
+      clearFilters: () => {
+        set({ filters: {} });
+        // フィルタクリア時に自動的にデータを再取得
+        const projectId = get().projectId;
+        if (projectId) {
+          get().fetchGridData(projectId);
+        }
+      },
+
       // グリッドデータ取得
       fetchGridData: async (projectId: string) => {
         set({ isLoading: true, error: null, projectId });
 
         try {
-          const data = await API.fetchGridData(projectId);
+          const filters = get().filters;
+          const data = await API.fetchGridData(projectId, { filters });
 
           set({
             entities: data.entities,

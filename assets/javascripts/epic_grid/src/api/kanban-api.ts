@@ -108,11 +108,25 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function fetchGridData(
   projectId: number | string,
-  options: { include_closed?: boolean } = {}
+  options: { include_closed?: boolean; filters?: Record<string, any> } = {}
 ): Promise<NormalizedAPIResponse> {
   const params = new URLSearchParams();
   if (options.include_closed !== undefined) {
     params.append('include_closed', String(options.include_closed));
+  }
+
+  // Ransackフィルタをクエリパラメータに追加
+  if (options.filters) {
+    Object.entries(options.filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          // 配列の場合は filters[key][] として複数追加
+          value.forEach(v => params.append(`filters[${key}][]`, String(v)));
+        } else {
+          params.append(`filters[${key}]`, String(value));
+        }
+      }
+    });
   }
 
   const url = `/api/epic_grid/projects/${projectId}/grid${params.toString() ? `?${params}` : ''}`;

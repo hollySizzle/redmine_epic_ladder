@@ -1,6 +1,7 @@
 import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import React, { useEffect } from 'react';
 import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
+import { FilterPanel } from './components/FilterPanel';
 import { IssueDetailPane } from './components/IssueDetail/IssueDetailPane';
 import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { Legend } from './components/Legend';
@@ -232,6 +233,7 @@ export const App: React.FC = () => {
               </button>
             </>
           )}
+          <FilterPanel />
           <UserStoryChildrenToggle />
           <VerticalModeToggle />
           <AssignedToToggle />

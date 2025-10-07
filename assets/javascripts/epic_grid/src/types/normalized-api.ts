@@ -306,11 +306,96 @@ export interface NormalizedAPIResponse {
 }
 
 // ========================================
+// Ransackフィルタパラメータ型定義
+// ========================================
+
+/**
+ * Ransack検索パラメータ
+ * Ransack predicatesについて:
+ * - _eq: 等しい (例: status_id_eq: 1)
+ * - _in: 含まれる (例: status_id_in: [1,2,3])
+ * - _cont: 部分一致 (例: subject_cont: "test")
+ * - _gteq: 以上 (例: created_on_gteq: "2025-01-01")
+ * - _lteq: 以下 (例: created_on_lteq: "2025-12-31")
+ * - _null: NULL判定 (例: fixed_version_id_null: true)
+ *
+ * 使用例:
+ * ```typescript
+ * const filters: RansackFilterParams = {
+ *   status_id_in: [1, 2],           // ステータスID 1または2
+ *   fixed_version_id_eq: "5",       // バージョンID 5
+ *   assigned_to_id_null: false,     // 担当者が設定されている
+ *   subject_cont: "機能",            // 件名に「機能」を含む
+ *   created_on_gteq: "2025-01-01",  // 2025年以降作成
+ * };
+ * ```
+ */
+export interface RansackFilterParams {
+  // ステータスフィルタ
+  status_id_eq?: number;
+  status_id_in?: number[];
+
+  // トラッカーフィルタ
+  tracker_id_eq?: number;
+  tracker_id_in?: number[];
+
+  // バージョンフィルタ
+  fixed_version_id_eq?: string;
+  fixed_version_id_in?: string[];
+  fixed_version_id_null?: boolean;
+
+  // 担当者フィルタ
+  assigned_to_id_eq?: number;
+  assigned_to_id_in?: number[];
+  assigned_to_id_null?: boolean;
+
+  // 親Issueフィルタ
+  parent_id_eq?: string;
+  parent_id_in?: string[];
+  parent_id_null?: boolean;
+
+  // 優先度フィルタ
+  priority_id_eq?: number;
+  priority_id_in?: number[];
+
+  // 件名フィルタ
+  subject_cont?: string;
+  subject_eq?: string;
+
+  // 日付フィルタ
+  created_on_gteq?: string;  // YYYY-MM-DD
+  created_on_lteq?: string;
+  updated_on_gteq?: string;
+  updated_on_lteq?: string;
+  start_date_gteq?: string;
+  start_date_lteq?: string;
+  due_date_gteq?: string;
+  due_date_lteq?: string;
+
+  // 進捗フィルタ
+  done_ratio_gteq?: number;
+  done_ratio_lteq?: number;
+  estimated_hours_gteq?: number;
+  estimated_hours_lteq?: number;
+
+  // 関連オブジェクトでの検索
+  tracker_name_eq?: string;
+  tracker_name_in?: string[];
+  status_name_eq?: string;
+  status_name_in?: string[];
+}
+
+// ========================================
 // API リクエスト型定義
 // ========================================
 
 export interface GridDataRequest {
   include_closed?: boolean;
+
+  // Ransackフィルタパラメータ
+  filters?: RansackFilterParams;
+
+  // 旧形式（後方互換性のため残す）
   epic_ids?: string[];
   version_ids?: string[];
   assigned_to_ids?: number[];

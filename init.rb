@@ -3,10 +3,12 @@
 # Concern ファイルを先にrequire
 require_relative 'app/models/concerns/epic_grid/issue_extensions'
 require_relative 'app/models/concerns/epic_grid/project_extensions'
+require_relative 'app/models/concerns/epic_grid/ransackable_config'
 
 # Redmine コアモデルに即座にinclude
 ActiveSupport.on_load(:active_record) do
   Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
+  Issue.include(EpicGrid::RansackableConfig) unless Issue.included_modules.include?(EpicGrid::RansackableConfig)
   Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
   Rails.logger.info '[EpicGrid] ✅ Model extensions loaded in init.rb'
 end
@@ -14,6 +16,7 @@ end
 # 念のためto_prepareでも実行（リロード対策）
 Rails.application.config.to_prepare do
   Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
+  Issue.include(EpicGrid::RansackableConfig) unless Issue.included_modules.include?(EpicGrid::RansackableConfig)
   Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
   Rails.logger.info '[EpicGrid] ✅ Model extensions reloaded in to_prepare'
 end

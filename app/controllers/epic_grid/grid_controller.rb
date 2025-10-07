@@ -11,7 +11,11 @@ module EpicGrid
     def show
       # Fat Model使用: Project#epic_grid_data
       include_closed = params[:include_closed] != 'false'
-      grid_data = @project.epic_grid_data(include_closed: include_closed)
+
+      # Ransackフィルタパラメータを取得（filters[key][] 形式をサポート）
+      filters = extract_ransack_filters
+
+      grid_data = @project.epic_grid_data(include_closed: include_closed, filters: filters)
 
       # MSW準拠レスポンス: NormalizedAPIResponse形式（success/dataラッパーなし）
       response_data = {
@@ -381,6 +385,28 @@ module EpicGrid
     end
 
     private
+
+    # Ransackフィルタパラメータを抽出
+    # フロントエンドから filters[key]=value または filters[key][]=value1&filters[key][]=value2 形式で送信
+    def extract_ransack_filters
+      return {} unless params[:filters].present?
+
+      filters_param = params[:filters]
+      ransack_filters = {}
+
+      filters_param.each do |key, value|
+        # 配列の場合
+        if value.is_a?(Array)
+          ransack_filters[key.to_sym] = value
+        # スカラー値の場合
+        else
+          ransack_filters[key.to_sym] = value
+        end
+      end
+
+      Rails.logger.info "Extracted Ransack filters: #{ransack_filters.inspect}"
+      ransack_filters
+    end
 
     def find_issue
       @issue = Issue.find(params[:issue_id]) if params[:issue_id]
