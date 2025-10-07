@@ -71,6 +71,49 @@ export interface BatchUpdateResponse {
 }
 
 // ========================================
+// 認証ヘルパー
+// ========================================
+
+/**
+ * CSRFトークンを取得
+ */
+function getCSRFToken(): string | null {
+  // Redmineのメタタグからトークン取得
+  const metaTag = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement;
+  if (metaTag) {
+    return metaTag.content;
+  }
+  
+  // フォールバック: authenticity_tokenフィールドから取得
+  const tokenField = document.querySelector('input[name="authenticity_token"]') as HTMLInputElement;
+  if (tokenField) {
+    return tokenField.value;
+  }
+  
+  return null;
+}
+
+/**
+ * 共通のリクエストヘッダーを生成
+ */
+function getRequestHeaders(includeContentType: boolean = false): HeadersInit {
+  const headers: HeadersInit = {
+    'X-Requested-With': 'XMLHttpRequest' // Ajaxリクエストであることを示す
+  };
+  
+  const csrfToken = getCSRFToken();
+  if (csrfToken) {
+    headers['X-CSRF-Token'] = csrfToken;
+  }
+  
+  if (includeContentType) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  return headers;
+}
+
+// ========================================
 // エラーハンドリング
 // ========================================
 
@@ -130,7 +173,10 @@ export async function fetchGridData(
   }
 
   const url = `/api/epic_grid/projects/${projectId}/grid${params.toString() ? `?${params}` : ''}`;
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    credentials: 'same-origin', // セッションクッキーを含める
+    headers: getRequestHeaders()
+  });
   return handleResponse<NormalizedAPIResponse>(response);
 }
 
@@ -142,7 +188,10 @@ export async function fetchUpdates(
   since: string
 ): Promise<UpdatesResponse> {
   const url = `/api/epic_grid/projects/${projectId}/grid/updates?since=${encodeURIComponent(since)}`;
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    credentials: 'same-origin',
+    headers: getRequestHeaders()
+  });
   return handleResponse<UpdatesResponse>(response);
 }
 
@@ -159,7 +208,8 @@ export async function createEpic(
 ): Promise<CreateEpicResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/epics`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<CreateEpicResponse>(response);
@@ -174,7 +224,8 @@ export async function createFeature(
 ): Promise<CreateFeatureResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/cards`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<CreateFeatureResponse>(response);
@@ -192,7 +243,8 @@ export async function createUserStory(
     `/api/epic_grid/projects/${projectId}/cards/${featureId}/user_stories`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: getRequestHeaders(true),
       body: JSON.stringify(data)
     }
   );
@@ -211,7 +263,8 @@ export async function createTask(
     `/api/epic_grid/projects/${projectId}/cards/user_stories/${userStoryId}/tasks`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: getRequestHeaders(true),
       body: JSON.stringify(data)
     }
   );
@@ -230,7 +283,8 @@ export async function createTest(
     `/api/epic_grid/projects/${projectId}/cards/user_stories/${userStoryId}/tests`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: getRequestHeaders(true),
       body: JSON.stringify(data)
     }
   );
@@ -249,7 +303,8 @@ export async function createBug(
     `/api/epic_grid/projects/${projectId}/cards/user_stories/${userStoryId}/bugs`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: getRequestHeaders(true),
       body: JSON.stringify(data)
     }
   );
@@ -265,7 +320,8 @@ export async function createVersion(
 ): Promise<CreateVersionResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/versions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<CreateVersionResponse>(response);
@@ -284,7 +340,8 @@ export async function moveFeature(
 ): Promise<MoveFeatureResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/move_feature`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<MoveFeatureResponse>(response);
@@ -299,7 +356,8 @@ export async function moveUserStory(
 ): Promise<MoveUserStoryResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/move_user_story`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<MoveUserStoryResponse>(response);
@@ -314,7 +372,8 @@ export async function reorderEpics(
 ): Promise<ReorderEpicsResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/reorder_epics`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<ReorderEpicsResponse>(response);
@@ -329,7 +388,8 @@ export async function reorderVersions(
 ): Promise<ReorderVersionsResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/reorder_versions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<ReorderVersionsResponse>(response);
@@ -344,7 +404,8 @@ export async function batchUpdate(
 ): Promise<BatchUpdateResponse> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/batch_update`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers: getRequestHeaders(true),
     body: JSON.stringify(data)
   });
   return handleResponse<BatchUpdateResponse>(response);
@@ -382,7 +443,9 @@ export async function batchUpdate(
  */
 export async function resetMockData(projectId: number | string): Promise<void> {
   const response = await fetch(`/api/epic_grid/projects/${projectId}/grid/reset`, {
-    method: 'POST'
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: getRequestHeaders()
   });
   await handleResponse(response);
 }
