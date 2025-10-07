@@ -207,7 +207,7 @@ export const useStore = create<StoreState>()(
       // 縦書きモードの初期状態
       isVerticalMode: (() => {
         const saved = localStorage.getItem('kanban_vertical_mode');
-        return saved !== null ? saved === 'true' : false; // デフォルトOFF
+        return saved !== null ? saved === 'true' : true; // デフォルトON
       })(),
       toggleVerticalMode: () => set((state) => {
         const newValue = !state.isVerticalMode;
