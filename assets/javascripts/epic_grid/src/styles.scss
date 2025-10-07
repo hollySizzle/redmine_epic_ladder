@@ -381,7 +381,7 @@
       }
 
       .assigned_to-name-wrapper,
-      .due-date-wrapper {
+      .date-range-wrapper {
         font-size: 0.75rem;
         color: #666;
         white-space: nowrap;
@@ -487,6 +487,7 @@
       align-items: center;
       flex: 1;
       overflow: hidden;
+      width: 100%s;
     }
 
     .title-wrapper {
@@ -506,7 +507,7 @@
     }
 
     .assigned_to-name-wrapper,
-    .due-date-wrapper {
+    .date-range-wrapper {
       font-size: 0.6rem;
       color: #666;
       white-space: nowrap;

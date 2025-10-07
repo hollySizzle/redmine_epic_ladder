@@ -101,6 +101,7 @@ module EpicGrid
           },
           assigned_to_id: assigned_to_id,
           estimated_hours: estimated_hours,
+          start_date: start_date&.to_s,
           due_date: due_date&.to_s
         )
       when EpicGrid::TrackerHierarchy.tracker_names[:task]
@@ -111,6 +112,7 @@ module EpicGrid
           estimated_hours: estimated_hours,
           spent_hours: 0.0,
           done_ratio: done_ratio || 0,
+          start_date: start_date&.to_s,
           due_date: due_date&.to_s
         )
       when EpicGrid::TrackerHierarchy.tracker_names[:test]
@@ -119,6 +121,7 @@ module EpicGrid
           parent_user_story_id: parent_id&.to_s,
           test_result: 'pending',
           assigned_to_id: assigned_to_id,
+          start_date: start_date&.to_s,
           due_date: due_date&.to_s
         )
       when EpicGrid::TrackerHierarchy.tracker_names[:bug]
@@ -127,6 +130,7 @@ module EpicGrid
           parent_user_story_id: parent_id&.to_s,
           severity: 'minor',
           assigned_to_id: assigned_to_id,
+          start_date: start_date&.to_s,
           due_date: due_date&.to_s
         )
       else

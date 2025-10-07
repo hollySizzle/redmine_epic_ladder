@@ -2,6 +2,7 @@ import React from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
+import { formatDateRange } from '../../utils/dateFormat';
 
 interface TestItemProps {
   testId: string;
@@ -49,9 +50,9 @@ export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
             {assignedUser.lastname} {assignedUser.firstname}
           </span>
         )}
-        {isDueDateVisible && test.due_date && (
-          <span className="due-date-wrapper">
-            📅 {test.due_date}
+        {isDueDateVisible && formatDateRange(test.start_date, test.due_date) && (
+          <span className="date-range-wrapper">
+            {formatDateRange(test.start_date, test.due_date)}
           </span>
         )}
       </div>

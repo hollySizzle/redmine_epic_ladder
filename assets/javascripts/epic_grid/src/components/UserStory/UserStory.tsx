@@ -3,6 +3,7 @@ import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget
 import { useStore } from '../../store/useStore';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { TaskTestBugGrid } from '../TaskTestBug/TaskTestBugGrid';
+import { formatDateRange } from '../../utils/dateFormat';
 
 interface UserStoryProps {
   storyId: string;
@@ -53,9 +54,9 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
               {assignedUser.lastname} {assignedUser.firstname}
             </span>
           )}
-          {isDueDateVisible && story.due_date && (
-            <span className="due-date-wrapper">
-              📅 {story.due_date}
+          {isDueDateVisible && formatDateRange(story.start_date, story.due_date) && (
+            <span className="date-range-wrapper">
+              {formatDateRange(story.start_date, story.due_date)}
             </span>
           )}
         </div>

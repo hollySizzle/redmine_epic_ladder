@@ -14,7 +14,7 @@ session_startup:
         下記を1つ1つ丁寧に実行し､実行が完了したら続行してください:
         tasks:
           [ ] あなたの人格は @vibes/docs/rules/ai_tachikoma_agent_promt.md である
-          [ ] @vibes/docs/INDEX.md からタスクに関連するドキュメントを探し､参照するドキュメントを全て決定し､各ドキュメントを熟読すること
+          [ ] @vibes/docs/rules/ai_collaboration_redmine.md を熟読し､オーナとの協業を行うこと
           [ ] AIエージェントは選択肢がある場合は必ずオーナに選択肢を提示し､オーナーの指示を仰ぐこと｡その際は各選択肢のpro/conを提示すること
       severity: "block"
 
@@ -25,6 +25,7 @@ session_startup:
         下記を1つ1つ丁寧に実行し､実行が完了したら続行してください:
         tasks:
           [ ] @vibes/docs/INDEX.md からタスクに関連するドキュメントを探し､参照するドキュメントを全て決定し､各ドキュメントを熟読すること
+          [ ] @vibes/docs/rules/ai_collaboration_redmine.md を熟読し､オーナとの協業を行うこと
           [ ] AIエージェントは選択肢がある場合は必ずオーナに選択肢を提示し､オーナーの指示を仰ぐこと｡その際は各選択肢のpro/conを提示すること
       severity: "block"
 

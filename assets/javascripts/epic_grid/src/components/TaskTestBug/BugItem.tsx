@@ -2,6 +2,7 @@ import React from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
+import { formatDateRange } from '../../utils/dateFormat';
 
 interface BugItemProps {
   bugId: string;
@@ -49,9 +50,9 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
             {assignedUser.lastname} {assignedUser.firstname}
           </span>
         )}
-        {isDueDateVisible && bug.due_date && (
-          <span className="due-date-wrapper">
-            📅 {bug.due_date}
+        {isDueDateVisible && formatDateRange(bug.start_date, bug.due_date) && (
+          <span className="date-range-wrapper">
+            {formatDateRange(bug.start_date, bug.due_date)}
           </span>
         )}
       </div>

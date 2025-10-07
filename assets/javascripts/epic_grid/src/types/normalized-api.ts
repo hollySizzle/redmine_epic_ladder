@@ -143,6 +143,7 @@ export interface UserStory {
   assigned_to_id?: number;
   estimated_hours?: number;
   done_ratio?: number;
+  start_date?: string | null;
   due_date?: string | null;
   created_on: string;
   updated_on: string;
@@ -166,6 +167,7 @@ export interface Task {
   estimated_hours?: number;
   spent_hours?: number;
   done_ratio?: number;
+  start_date?: string | null;
   due_date?: string | null;
 
   // メタデータ
@@ -191,6 +193,7 @@ export interface Test {
 
   // メタデータ
   assigned_to_id?: number;
+  start_date?: string | null;
   due_date?: string | null;
   created_on: string;
   updated_on: string;
@@ -214,6 +217,7 @@ export interface Bug {
 
   // メタデータ
   assigned_to_id?: number;
+  start_date?: string | null;
   due_date?: string | null;
   created_on: string;
   updated_on: string;
