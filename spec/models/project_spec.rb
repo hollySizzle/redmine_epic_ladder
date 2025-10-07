@@ -636,5 +636,37 @@ RSpec.describe Project, type: :model do
         expect(epic2_feature2_keys).not_to be_empty
       end
     end
+
+    context 'UserStory階層的フィルタリング（Task担当者のみのケース）' do
+      let!(:epic1) { create(:epic, project: project, author: user, assigned_to: nil) }
+      let!(:feature1) { create(:feature, project: project, author: user, parent_issue_id: epic1.id, assigned_to: nil) }
+      let!(:user_story1) { create(:user_story, project: project, author: user, parent_issue_id: feature1.id, assigned_to: nil) }
+      let!(:task1) { create(:task, project: project, author: user, parent_issue_id: user_story1.id, assigned_to: assignee1) }
+
+      it 'Task担当者でフィルタすると、祖先のUserStory/Feature/Epicも取得される' do
+        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+
+        # Taskのみ直接該当だが、祖先も階層的に取得される
+        expect(result[:entities][:epics].keys).to include(epic1.id.to_s)
+        expect(result[:entities][:features].keys).to include(feature1.id.to_s)
+        expect(result[:entities][:user_stories].keys).to include(user_story1.id.to_s)
+        expect(result[:entities][:tasks].keys).to include(task1.id.to_s)
+      end
+
+      it 'grid構造も正しく構築される' do
+        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+
+        expect(result[:grid][:epic_order]).to include(epic1.id.to_s)
+        expect(result[:grid][:feature_order_by_epic][epic1.id.to_s]).to include(feature1.id.to_s)
+      end
+
+      it 'UserStoryに直接担当者がいなくてもグリッドが壊れない' do
+        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+
+        # UserStoryが取得されるため、グリッドセルが構築される
+        cell_keys = result[:grid][:index].keys.select { |k| k.include?("#{feature1.id}:") }
+        expect(cell_keys).not_to be_empty
+      end
+    end
   end
 end

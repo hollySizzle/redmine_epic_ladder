@@ -74,10 +74,10 @@ module EpicGrid
 
       base_scope = apply_ransack_filters(issues, filters_without_assignee)
 
-      # Epic/Featureは階層的フィルタを適用
+      # Epic/Feature/UserStoryは階層的フィルタを適用
       epics = apply_hierarchical_filter(base_scope, epic_tracker, assignee_ids)
       features = apply_hierarchical_filter(base_scope, feature_tracker, assignee_ids)
-      user_stories = apply_direct_filter(base_scope, user_story_tracker, assignee_ids)
+      user_stories = apply_hierarchical_filter(base_scope, user_story_tracker, assignee_ids)
 
       grid_index = {}
       epic_ids = []
@@ -162,11 +162,11 @@ module EpicGrid
       scope = apply_ransack_filters(scope, filters_without_assignee)
 
       {
-        # Epic/Featureは階層的フィルタ（子孫に該当担当者がいる祖先も含める）
+        # Epic/Feature/UserStoryは階層的フィルタ（子孫に該当担当者がいる祖先も含める）
         epics: build_entity_hash_hierarchical(scope, epic_tracker, assignee_ids),
         features: build_entity_hash_hierarchical(scope, feature_tracker, assignee_ids),
-        # UserStory以下は直接フィルタ
-        user_stories: build_entity_hash_direct(scope, user_story_tracker, assignee_ids),
+        user_stories: build_entity_hash_hierarchical(scope, user_story_tracker, assignee_ids),
+        # Task/Test/Bugは直接フィルタ
         tasks: build_entity_hash_direct(scope, task_tracker, assignee_ids),
         tests: build_entity_hash_direct(scope, test_tracker, assignee_ids),
         bugs: build_entity_hash_direct(scope, bug_tracker, assignee_ids),
