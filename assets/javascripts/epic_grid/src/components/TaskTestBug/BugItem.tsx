@@ -37,20 +37,24 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
 
   return (
     <div ref={ref} className={className} data-bug={bug.id} onClick={handleClick}>
-      <StatusIndicator status={bug.status} />
-      <span className="title-wrapper">
-        {bug.title}
-      </span>
-      {isAssignedToVisible && assignedUser && (
-        <span className="assigned_to-name-wrapper">
-          {assignedUser.lastname} {assignedUser.firstname}
+      <div className="main-info-wrapper">
+        <StatusIndicator status={bug.status} />
+        <span className="title-wrapper">
+          {bug.title}
         </span>
-      )}
-      {isDueDateVisible && bug.due_date && (
-        <span className="due-date-wrapper">
-          📅 {bug.due_date}
-        </span>
-      )}
+      </div>
+      <div className="essential-info-wrapper">
+        {isAssignedToVisible && assignedUser && (
+          <span className="assigned_to-name-wrapper">
+            {assignedUser.lastname} {assignedUser.firstname}
+          </span>
+        )}
+        {isDueDateVisible && bug.due_date && (
+          <span className="due-date-wrapper">
+            📅 {bug.due_date}
+          </span>
+        )}
+      </div>
     </div>
   );
 };

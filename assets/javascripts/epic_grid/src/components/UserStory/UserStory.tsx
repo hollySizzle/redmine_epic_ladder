@@ -41,20 +41,24 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
   return (
     <div ref={ref} className={className} data-story={story.id}>
       <div className="user-story-header" onClick={handleHeaderClick}>
-        <StatusIndicator status={story.status} />
-        <span className="title-wrapper">
-          {story.title}
-        </span>
-        {isAssignedToVisible && assignedUser && (
-          <span className="assigned_to-name-wrapper">
-            {assignedUser.lastname} {assignedUser.firstname}
+        <div className="main-info-wrapper">
+          <StatusIndicator status={story.status} />
+          <span className="title-wrapper">
+            {story.title}
           </span>
-        )}
-        {isDueDateVisible && story.due_date && (
-          <span className="due-date-wrapper">
-            📅 {story.due_date}
-          </span>
-        )}
+        </div>
+        <div className="essential-info-wrapper">
+          {isAssignedToVisible && assignedUser && (
+            <span className="assigned_to-name-wrapper">
+              {assignedUser.lastname} {assignedUser.firstname}
+            </span>
+          )}
+          {isDueDateVisible && story.due_date && (
+            <span className="due-date-wrapper">
+              📅 {story.due_date}
+            </span>
+          )}
+        </div>
       </div>
       <TaskTestBugGrid
         userStoryId={story.id}

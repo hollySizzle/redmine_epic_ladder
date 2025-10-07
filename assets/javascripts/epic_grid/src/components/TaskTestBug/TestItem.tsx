@@ -37,20 +37,24 @@ export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
 
   return (
     <div ref={ref} className={className} data-test={test.id} onClick={handleClick}>
-      <StatusIndicator status={test.status} />
-      <span className="title-wrapper">
-        {test.title}
-      </span>
-      {isAssignedToVisible && assignedUser && (
-        <span className="assigned_to-name-wrapper">
-          {assignedUser.lastname} {assignedUser.firstname}
+      <div className="main-info-wrapper">
+        <StatusIndicator status={test.status} />
+        <span className="title-wrapper">
+          {test.title}
         </span>
-      )}
-      {isDueDateVisible && test.due_date && (
-        <span className="due-date-wrapper">
-          📅 {test.due_date}
-        </span>
-      )}
+      </div>
+      <div className="essential-info-wrapper">
+        {isAssignedToVisible && assignedUser && (
+          <span className="assigned_to-name-wrapper">
+            {assignedUser.lastname} {assignedUser.firstname}
+          </span>
+        )}
+        {isDueDateVisible && test.due_date && (
+          <span className="due-date-wrapper">
+            📅 {test.due_date}
+          </span>
+        )}
+      </div>
     </div>
   );
 };

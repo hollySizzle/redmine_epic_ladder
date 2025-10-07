@@ -102,6 +102,29 @@ rules:
   # フロントエンド実装規約
   # ===========================================
 
+  # CSS/SCSS実装規約
+  - name: "CSS/SCSS実装規約"
+    patterns:
+      - "**/assets/javascripts/epic_grid/src/**/*.css"
+      - "**/assets/javascripts/epic_grid/src/**/*.scss"
+      - "**/assets/stylesheets/**/*.css"
+      - "**/assets/stylesheets/**/*.scss"
+    severity: "block"
+    token_threshold: 15000
+    message: |
+      📋 CSS/SCSS実装前にCSS規約を確認してください
+      必読: @vibes/rules/css_standards.md (CSS規約)
+
+      ✅ CSS規約の要点:
+      - px指定非推奨 → 相対単位またはCSS変数を使用
+      - ネスト構造推奨 → 影響範囲を明確にする
+      - margin非推奨 → paddingを優先して使用
+
+      ✅ 変更後の必須作業:
+      1. cd assets/javascripts/epic_grid
+      2. npm test  # 全テスト実行（168 tests）
+      3. テスト全通過を確認してから完了報告
+
   # フロントエンド全体（包括的テスト要求）
   - name: "フロントエンド実装規約（包括的）"
     patterns:

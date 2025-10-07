@@ -37,20 +37,24 @@ export const TaskItem: React.FC<TaskItemProps> = ({ taskId }) => {
 
   return (
     <div ref={ref} className={className} data-task={task.id} onClick={handleClick}>
-      <StatusIndicator status={task.status} />
-      <span className="title-wrapper">
-        {task.title}
-      </span>
-      {isAssignedToVisible && assignedUser && (
-        <span className="assigned_to-name-wrapper">
-          {assignedUser.lastname} {assignedUser.firstname}
+      <div className="main-info-wrapper">
+        <StatusIndicator status={task.status} />
+        <span className="title-wrapper">
+          {task.title}
         </span>
-      )}
-      {isDueDateVisible && task.due_date && (
-        <span className="due-date-wrapper">
-          📅 {task.due_date}
-        </span>
-      )}
+      </div>
+      <div className="essential-info-wrapper">
+        {isAssignedToVisible && assignedUser && (
+          <span className="assigned_to-name-wrapper">
+            {assignedUser.lastname} {assignedUser.firstname}
+          </span>
+        )}
+        {isDueDateVisible && task.due_date && (
+          <span className="due-date-wrapper">
+            📅 {task.due_date}
+          </span>
+        )}
+      </div>
     </div>
   );
 };
