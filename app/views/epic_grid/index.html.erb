@@ -1,6 +1,6 @@
 <%# app/views/epic_grid/index.html.erb %>
 <% content_for :header_tags do %>
-  <%= javascript_include_tag 'kanban_bundle.js', plugin: 'redmine_epic_grid', defer: true %>
+  <script src="<%= "#{Redmine::Utils.relative_url_root}/plugin_assets/redmine_epic_grid/kanban_bundle.js" %>" defer></script>
   <%# MSW Service Worker registration %>
   <script>
     // MSW Service Worker のパスを設定（ルートディレクトリから配信）
