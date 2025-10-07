@@ -68,11 +68,16 @@ module EpicGrid
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
 
-      base_scope = apply_ransack_filters(issues, filters)
+      # 担当者フィルタを分離（階層的フィルタリングのため）
+      assignee_ids = filters[:assigned_to_id_in]&.map(&:to_i)
+      filters_without_assignee = filters.except(:assigned_to_id_in)
 
-      epics = base_scope.joins(:tracker).where(trackers: { name: epic_tracker })
-      features = base_scope.joins(:tracker).where(trackers: { name: feature_tracker })
-      user_stories = base_scope.joins(:tracker).where(trackers: { name: user_story_tracker })
+      base_scope = apply_ransack_filters(issues, filters_without_assignee)
+
+      # Epic/Featureは階層的フィルタを適用
+      epics = apply_hierarchical_filter(base_scope, epic_tracker, assignee_ids)
+      features = apply_hierarchical_filter(base_scope, feature_tracker, assignee_ids)
+      user_stories = apply_direct_filter(base_scope, user_story_tracker, assignee_ids)
 
       grid_index = {}
       epic_ids = []
@@ -148,28 +153,97 @@ module EpicGrid
       test_tracker = EpicGrid::TrackerHierarchy.tracker_names[:test]
       bug_tracker = EpicGrid::TrackerHierarchy.tracker_names[:bug]
 
+      # 担当者フィルタを分離（階層的フィルタリングのため）
+      assignee_ids = filters[:assigned_to_id_in]&.map(&:to_i)
+      filters_without_assignee = filters.except(:assigned_to_id_in)
+
       scope = issues.includes(:tracker, :status, :fixed_version)
       scope = scope.joins(:status).where.not(issue_statuses: { is_closed: true }) unless include_closed
-      scope = apply_ransack_filters(scope, filters)
+      scope = apply_ransack_filters(scope, filters_without_assignee)
 
       {
-        epics: build_entity_hash(scope, epic_tracker),
-        features: build_entity_hash(scope, feature_tracker),
-        user_stories: build_entity_hash(scope, user_story_tracker),
-        tasks: build_entity_hash(scope, task_tracker),
-        tests: build_entity_hash(scope, test_tracker),
-        bugs: build_entity_hash(scope, bug_tracker),
+        # Epic/Featureは階層的フィルタ（子孫に該当担当者がいる祖先も含める）
+        epics: build_entity_hash_hierarchical(scope, epic_tracker, assignee_ids),
+        features: build_entity_hash_hierarchical(scope, feature_tracker, assignee_ids),
+        # UserStory以下は直接フィルタ
+        user_stories: build_entity_hash_direct(scope, user_story_tracker, assignee_ids),
+        tasks: build_entity_hash_direct(scope, task_tracker, assignee_ids),
+        tests: build_entity_hash_direct(scope, test_tracker, assignee_ids),
+        bugs: build_entity_hash_direct(scope, bug_tracker, assignee_ids),
         versions: build_versions_hash,
         users: build_users_hash
       }
     end
 
-    # トラッカー別のエンティティハッシュを構築
+    # トラッカー別のエンティティハッシュを構築（従来の挙動、後方互換性のため残す）
     def build_entity_hash(scope, tracker_name)
       scope.joins(:tracker)
            .where(trackers: { name: tracker_name })
            .index_by { |issue| issue.id.to_s }
            .transform_values(&:epic_grid_as_normalized_json)
+    end
+
+    # 階層的フィルタリング（Epic/Feature用）
+    # 自分または子孫に該当担当者がいるIssueを取得
+    # @param scope [ActiveRecord::Relation] ベーススコープ
+    # @param tracker_name [String] トラッカー名
+    # @param assignee_ids [Array<Integer>] 担当者IDの配列
+    # @return [Hash] Issue IDをキーとするハッシュ
+    def build_entity_hash_hierarchical(scope, tracker_name, assignee_ids)
+      base_scope = apply_hierarchical_filter(scope, tracker_name, assignee_ids)
+      base_scope.index_by { |issue| issue.id.to_s }
+               .transform_values(&:epic_grid_as_normalized_json)
+    end
+
+    # 直接フィルタリング（UserStory以下用）
+    # 自分の担当者のみでフィルタ（従来通り）
+    # @param scope [ActiveRecord::Relation] ベーススコープ
+    # @param tracker_name [String] トラッカー名
+    # @param assignee_ids [Array<Integer>] 担当者IDの配列
+    # @return [Hash] Issue IDをキーとするハッシュ
+    def build_entity_hash_direct(scope, tracker_name, assignee_ids)
+      base_scope = apply_direct_filter(scope, tracker_name, assignee_ids)
+      base_scope.index_by { |issue| issue.id.to_s }
+               .transform_values(&:epic_grid_as_normalized_json)
+    end
+
+    # 階層的フィルタをActiveRecord::Relationとして返す（epic_grid_index用）
+    # @param scope [ActiveRecord::Relation] ベーススコープ
+    # @param tracker_name [String] トラッカー名
+    # @param assignee_ids [Array<Integer>] 担当者IDの配列
+    # @return [ActiveRecord::Relation] フィルタ適用後のRelation
+    def apply_hierarchical_filter(scope, tracker_name, assignee_ids)
+      base_scope = scope.joins(:tracker).where(trackers: { name: tracker_name })
+
+      if assignee_ids.present? && assignee_ids.any?
+        base_scope = base_scope.where(
+          "issues.assigned_to_id IN (:assignee_ids) OR EXISTS (
+            SELECT 1 FROM issues descendants
+            WHERE descendants.lft > issues.lft
+              AND descendants.rgt < issues.rgt
+              AND descendants.root_id = issues.root_id
+              AND descendants.assigned_to_id IN (:assignee_ids)
+          )",
+          assignee_ids: assignee_ids
+        )
+      end
+
+      base_scope
+    end
+
+    # 直接フィルタをActiveRecord::Relationとして返す（epic_grid_index用）
+    # @param scope [ActiveRecord::Relation] ベーススコープ
+    # @param tracker_name [String] トラッカー名
+    # @param assignee_ids [Array<Integer>] 担当者IDの配列
+    # @return [ActiveRecord::Relation] フィルタ適用後のRelation
+    def apply_direct_filter(scope, tracker_name, assignee_ids)
+      base_scope = scope.joins(:tracker).where(trackers: { name: tracker_name })
+
+      if assignee_ids.present? && assignee_ids.any?
+        base_scope = base_scope.where(assigned_to_id: assignee_ids)
+      end
+
+      base_scope
     end
 
     # バージョンのエンティティハッシュを構築
