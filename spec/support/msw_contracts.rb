@@ -118,6 +118,8 @@ module MswContracts
         statistics: Hash,
         assigned_to_id: [Integer, NilClass],
         estimated_hours: [Float, NilClass],
+        start_date: [String, NilClass],
+        due_date: [String, NilClass],
         created_on: String,
         updated_on: String,
         tracker_id: Integer
@@ -150,6 +152,8 @@ module MswContracts
         estimated_hours: [Float, NilClass],
         spent_hours: [Float, NilClass],
         done_ratio: Integer,
+        start_date: [String, NilClass],
+        due_date: [String, NilClass],
         created_on: String,
         updated_on: String,
         tracker_id: Integer
@@ -180,6 +184,8 @@ module MswContracts
         fixed_version_id: [String, NilClass],
         test_result: String, # 'pending' | 'passed' | 'failed'
         assigned_to_id: [Integer, NilClass],
+        start_date: [String, NilClass],
+        due_date: [String, NilClass],
         created_on: String,
         updated_on: String,
         tracker_id: Integer
@@ -208,6 +214,8 @@ module MswContracts
         fixed_version_id: [String, NilClass],
         severity: String,
         assigned_to_id: [Integer, NilClass],
+        start_date: [String, NilClass],
+        due_date: [String, NilClass],
         created_on: String,
         updated_on: String,
         tracker_id: Integer
