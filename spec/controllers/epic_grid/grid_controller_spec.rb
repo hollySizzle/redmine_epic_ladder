@@ -263,6 +263,27 @@ RSpec.describe EpicGrid::GridController, type: :controller do
         expect(epic_ids).not_to include(epic2.id.to_s)
         expect(feature_ids).not_to include(feature2.id.to_s)
       end
+
+      it 'returns ancestors when filtering by feature (Feature → Epic)' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { parent_id_in: [feature1.id] }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+        feature_ids = json['entities']['features'].keys
+
+        # Feature自身も返されること
+        expect(feature_ids).to include(feature1.id.to_s)
+        # 親Epicも返されること（祖先の取得）
+        expect(epic_ids).to include(epic1.id.to_s)
+        # 別のEpicとFeatureは返されないこと
+        expect(epic_ids).not_to include(epic2.id.to_s)
+        expect(feature_ids).not_to include(feature2.id.to_s)
+      end
     end
 
     context 'when user lacks view_issues permission' do

@@ -144,7 +144,8 @@ module EpicGrid
       # 通常のRansackフィルタを適用
       relation = relation.ransack(filters_copy).result if filters_copy.present?
 
-      # parent_id_in がある場合は階層検索を適用（指定されたIssue自身 + その子孫全て）
+      # parent_id_in がある場合は階層検索を適用
+      # 指定されたIssueの祖先 + Issue自身 + その子孫全て
       # Redmineのネストセット（lft/rgt）を利用
       if parent_ids.present? && parent_ids.any?
         # 文字列IDを整数に変換
@@ -157,6 +158,12 @@ module EpicGrid
               AND issues.lft > parents.lft
               AND issues.rgt < parents.rgt
               AND issues.root_id = parents.root_id
+          ) OR EXISTS (
+            SELECT 1 FROM issues descendants
+            WHERE descendants.id IN (:ids)
+              AND issues.lft < descendants.lft
+              AND issues.rgt > descendants.rgt
+              AND issues.root_id = descendants.root_id
           )",
           ids: parent_ids
         )
