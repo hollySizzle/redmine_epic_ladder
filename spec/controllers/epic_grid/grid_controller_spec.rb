@@ -220,8 +220,11 @@ RSpec.describe EpicGrid::GridController, type: :controller do
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
         feature_ids = json['entities']['features'].keys
 
+        # epic1自身も返されること（階層検索）
+        expect(epic_ids).to include(epic1.id.to_s)
         # epic1配下のfeature1のみが返されること
         expect(feature_ids).to include(feature1.id.to_s)
         expect(feature_ids).not_to include(feature2.id.to_s)
@@ -283,6 +286,133 @@ RSpec.describe EpicGrid::GridController, type: :controller do
         # 別のEpicとFeatureは返されないこと
         expect(epic_ids).not_to include(epic2.id.to_s)
         expect(feature_ids).not_to include(feature2.id.to_s)
+      end
+
+      context 'with deeper hierarchy (Epic → Feature → UserStory → Task)' do
+        let!(:user_story_tracker) { create(:user_story_tracker) }
+        let!(:task_tracker) { create(:task_tracker) }
+
+        before do
+          project.trackers << [user_story_tracker, task_tracker]
+        end
+
+        let!(:user_story1) { create(:user_story, project: project, parent: feature1, author: user, subject: 'US 1') }
+        let!(:task1) { create(:task, project: project, parent: user_story1, author: user, subject: 'Task 1') }
+
+        it 'returns all ancestors and descendants when filtering by UserStory' do
+          get :show, params: {
+            project_id: project.id,
+            filters: { parent_id_in: [user_story1.id] }
+          }
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          epic_ids = json['entities']['epics'].keys
+          feature_ids = json['entities']['features'].keys
+          user_story_ids = json['entities']['user_stories'].keys
+          task_ids = json['entities']['tasks'].keys
+
+          # 祖父Epic、親Feature、UserStory自身、子Taskすべて返されること
+          expect(epic_ids).to include(epic1.id.to_s)
+          expect(feature_ids).to include(feature1.id.to_s)
+          expect(user_story_ids).to include(user_story1.id.to_s)
+          expect(task_ids).to include(task1.id.to_s)
+
+          # 別の階層ツリーは返されないこと
+          expect(epic_ids).not_to include(epic2.id.to_s)
+          expect(feature_ids).not_to include(feature2.id.to_s)
+        end
+
+        it 'returns entire hierarchy when filtering by Task (deepest level)' do
+          get :show, params: {
+            project_id: project.id,
+            filters: { parent_id_in: [task1.id] }
+          }
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          epic_ids = json['entities']['epics'].keys
+          feature_ids = json['entities']['features'].keys
+          user_story_ids = json['entities']['user_stories'].keys
+          task_ids = json['entities']['tasks'].keys
+
+          # 曽祖父Epic、祖父Feature、親UserStory、Task自身すべて返されること
+          expect(epic_ids).to include(epic1.id.to_s)
+          expect(feature_ids).to include(feature1.id.to_s)
+          expect(user_story_ids).to include(user_story1.id.to_s)
+          expect(task_ids).to include(task1.id.to_s)
+
+          # 別の階層ツリーは返されないこと
+          expect(epic_ids).not_to include(epic2.id.to_s)
+          expect(feature_ids).not_to include(feature2.id.to_s)
+        end
+      end
+
+      context 'with multiple parent_id_in values' do
+        let!(:user_story_tracker) { create(:user_story_tracker) }
+
+        before do
+          project.trackers << [user_story_tracker]
+        end
+
+        let!(:user_story1) { create(:user_story, project: project, parent: feature1, author: user, subject: 'US 1') }
+        let!(:user_story2) { create(:user_story, project: project, parent: feature2, author: user, subject: 'US 2') }
+
+        it 'returns both hierarchy trees without duplication' do
+          get :show, params: {
+            project_id: project.id,
+            filters: { parent_id_in: [user_story1.id, user_story2.id] }
+          }
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          epic_ids = json['entities']['epics'].keys
+          feature_ids = json['entities']['features'].keys
+          user_story_ids = json['entities']['user_stories'].keys
+
+          # 両方の階層ツリーが返されること
+          expect(epic_ids).to include(epic1.id.to_s)
+          expect(epic_ids).to include(epic2.id.to_s)
+          expect(feature_ids).to include(feature1.id.to_s)
+          expect(feature_ids).to include(feature2.id.to_s)
+          expect(user_story_ids).to include(user_story1.id.to_s)
+          expect(user_story_ids).to include(user_story2.id.to_s)
+
+          # 重複なく各Issueは1回のみ
+          expect(epic_ids.count(epic1.id.to_s)).to eq(1)
+          expect(epic_ids.count(epic2.id.to_s)).to eq(1)
+        end
+
+        it 'handles selecting both parent and child without duplication' do
+          # Epic1とその配下のFeature1の両方を選択
+          get :show, params: {
+            project_id: project.id,
+            filters: { parent_id_in: [epic1.id, feature1.id] }
+          }
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          epic_ids = json['entities']['epics'].keys
+          feature_ids = json['entities']['features'].keys
+          user_story_ids = json['entities']['user_stories'].keys
+
+          # Epic1、Feature1、UserStory1すべて返されること
+          expect(epic_ids).to include(epic1.id.to_s)
+          expect(feature_ids).to include(feature1.id.to_s)
+          expect(user_story_ids).to include(user_story1.id.to_s)
+
+          # Epic2の階層は返されないこと
+          expect(epic_ids).not_to include(epic2.id.to_s)
+          expect(feature_ids).not_to include(feature2.id.to_s)
+
+          # 重複なく各Issueは1回のみ
+          expect(epic_ids.count(epic1.id.to_s)).to eq(1)
+          expect(feature_ids.count(feature1.id.to_s)).to eq(1)
+        end
       end
     end
 
