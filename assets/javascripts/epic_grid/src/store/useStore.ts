@@ -75,6 +75,9 @@ interface StoreState {
     version_order: string[];
   };
 
+  // メタデータ（フィルタ用マスターデータを含む）
+  metadata: Metadata | null;
+
   // データ取得・初期化
   fetchGridData: (projectId: string) => Promise<void>;
   isLoading: boolean;
@@ -160,6 +163,8 @@ export const useStore = create<StoreState>()(
         feature_order_by_epic: {},
         version_order: []
       },
+
+      metadata: null,
 
       isLoading: false,
       error: null,
@@ -260,6 +265,7 @@ export const useStore = create<StoreState>()(
           set({
             entities: data.entities,
             grid: data.grid,
+            metadata: data.metadata,
             isLoading: false
           });
         } catch (error) {

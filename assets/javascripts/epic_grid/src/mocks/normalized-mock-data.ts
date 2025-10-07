@@ -1082,6 +1082,24 @@ export const normalizedMockData: NormalizedAPIResponse = {
       ]
     },
 
+    // フィルタ用マスターデータ（環境依存）
+    available_statuses: [
+      { id: 1, name: '新規', is_closed: false },
+      { id: 2, name: '進行中', is_closed: false },
+      { id: 3, name: 'レビュー中', is_closed: false },
+      { id: 5, name: '完了', is_closed: true },
+      { id: 6, name: '却下', is_closed: true }
+    ],
+
+    available_trackers: [
+      { id: 1, name: 'Epic', description: 'エピック（大規模機能群）' },
+      { id: 2, name: 'Feature', description: '機能' },
+      { id: 3, name: 'UserStory', description: 'ユーザーストーリー' },
+      { id: 4, name: 'Task', description: 'タスク' },
+      { id: 5, name: 'Test', description: 'テスト' },
+      { id: 6, name: 'Bug', description: 'バグ' }
+    ],
+
     api_version: 'v2',
     timestamp: new Date().toISOString(),
     request_id: 'req_mock_' + Math.random().toString(36).substring(7)

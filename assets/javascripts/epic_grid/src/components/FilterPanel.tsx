@@ -12,6 +12,7 @@ import type { RansackFilterParams } from '../types/normalized-api';
  */
 export const FilterPanel: React.FC = () => {
   const entities = useStore(state => state.entities);
+  const metadata = useStore(state => state.metadata);
   const filters = useStore(state => state.filters);
   const setFilters = useStore(state => state.setFilters);
   const clearFilters = useStore(state => state.clearFilters);
@@ -33,17 +34,29 @@ export const FilterPanel: React.FC = () => {
     return Object.values(entities.users).sort((a, b) => a.id - b.id);
   }, [entities.users]);
 
-  // トラッカーリスト（静的）
-  // 実際のトラッカーIDはRedmineのデータベースに依存するため、
-  // 動的に取得する方が望ましいが、ここでは基本的なトラッカーを想定
-  const trackers = useMemo(() => [
-    { id: 1, name: 'Epic' },
-    { id: 2, name: 'Feature' },
-    { id: 3, name: 'UserStory' },
-    { id: 4, name: 'Task' },
-    { id: 5, name: 'Test' },
-    { id: 6, name: 'Bug' }
-  ], []);
+  // ステータスリスト（環境依存、metadataから取得）
+  const statuses = useMemo(() => {
+    return metadata?.available_statuses || [];
+  }, [metadata?.available_statuses]);
+
+  // トラッカーリスト（環境依存、metadataから取得）
+  const trackers = useMemo(() => {
+    return metadata?.available_trackers || [];
+  }, [metadata?.available_trackers]);
+
+  // Epicリストを取得（フィルタ用）
+  const epics = useMemo(() => {
+    return Object.values(entities.epics).sort((a, b) =>
+      parseInt(a.id) - parseInt(b.id)
+    );
+  }, [entities.epics]);
+
+  // Featureリストを取得（フィルタ用）
+  const features = useMemo(() => {
+    return Object.values(entities.features).sort((a, b) =>
+      parseInt(a.id) - parseInt(b.id)
+    );
+  }, [entities.features]);
 
   // バージョン選択ハンドラー
   const handleVersionChange = (versionId: string, checked: boolean) => {
@@ -90,6 +103,51 @@ export const FilterPanel: React.FC = () => {
     });
   };
 
+  // ステータス選択ハンドラー
+  const handleStatusChange = (statusId: number, checked: boolean) => {
+    setLocalFilters(prev => {
+      const currentStatuses = prev.status_id_in || [];
+      const newStatuses = checked
+        ? [...currentStatuses, statusId]
+        : currentStatuses.filter(id => id !== statusId);
+
+      return {
+        ...prev,
+        status_id_in: newStatuses.length > 0 ? newStatuses : undefined
+      };
+    });
+  };
+
+  // Epic選択ハンドラー
+  const handleEpicChange = (epicId: string, checked: boolean) => {
+    setLocalFilters(prev => {
+      const currentEpics = prev.parent_id_in || [];
+      const newEpics = checked
+        ? [...currentEpics, epicId]
+        : currentEpics.filter(id => id !== epicId);
+
+      return {
+        ...prev,
+        parent_id_in: newEpics.length > 0 ? newEpics : undefined
+      };
+    });
+  };
+
+  // Feature選択ハンドラー
+  const handleFeatureChange = (featureId: string, checked: boolean) => {
+    setLocalFilters(prev => {
+      const currentFeatures = prev.parent_id_in || [];
+      const newFeatures = checked
+        ? [...currentFeatures, featureId]
+        : currentFeatures.filter(id => id !== featureId);
+
+      return {
+        ...prev,
+        parent_id_in: newFeatures.length > 0 ? newFeatures : undefined
+      };
+    });
+  };
+
   // フィルタ適用
   const handleApply = () => {
     setFilters(localFilters);
@@ -109,6 +167,8 @@ export const FilterPanel: React.FC = () => {
     if (filters.fixed_version_id_in && filters.fixed_version_id_in.length > 0) count++;
     if (filters.assigned_to_id_in && filters.assigned_to_id_in.length > 0) count++;
     if (filters.tracker_id_in && filters.tracker_id_in.length > 0) count++;
+    if (filters.status_id_in && filters.status_id_in.length > 0) count++;
+    if (filters.parent_id_in && filters.parent_id_in.length > 0) count++;
     return count;
   }, [filters]);
 
@@ -166,16 +226,80 @@ export const FilterPanel: React.FC = () => {
           <div className="filter-section">
             <h4>トラッカー</h4>
             <div className="filter-options">
-              {trackers.map(tracker => (
-                <label key={tracker.id} className="filter-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={localFilters.tracker_id_in?.includes(tracker.id) || false}
-                    onChange={(e) => handleTrackerChange(tracker.id, e.target.checked)}
-                  />
-                  <span>{tracker.name}</span>
-                </label>
-              ))}
+              {trackers.length > 0 ? (
+                trackers.map(tracker => (
+                  <label key={tracker.id} className="filter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={localFilters.tracker_id_in?.includes(tracker.id) || false}
+                      onChange={(e) => handleTrackerChange(tracker.id, e.target.checked)}
+                    />
+                    <span>{tracker.name}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="no-options">トラッカーがありません</p>
+              )}
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <h4>ステータス</h4>
+            <div className="filter-options">
+              {statuses.length > 0 ? (
+                statuses.map(status => (
+                  <label key={status.id} className="filter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={localFilters.status_id_in?.includes(status.id) || false}
+                      onChange={(e) => handleStatusChange(status.id, e.target.checked)}
+                    />
+                    <span>{status.name}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="no-options">ステータスがありません</p>
+              )}
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <h4>Epic</h4>
+            <div className="filter-options">
+              {epics.length > 0 ? (
+                epics.map(epic => (
+                  <label key={epic.id} className="filter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={localFilters.parent_id_in?.includes(epic.id) || false}
+                      onChange={(e) => handleEpicChange(epic.id, e.target.checked)}
+                    />
+                    <span>{epic.subject}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="no-options">Epicがありません</p>
+              )}
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <h4>Feature</h4>
+            <div className="filter-options">
+              {features.length > 0 ? (
+                features.map(feature => (
+                  <label key={feature.id} className="filter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={localFilters.parent_id_in?.includes(feature.id) || false}
+                      onChange={(e) => handleFeatureChange(feature.id, e.target.checked)}
+                    />
+                    <span>{feature.title}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="no-options">Featureがありません</p>
+              )}
             </div>
           </div>
 

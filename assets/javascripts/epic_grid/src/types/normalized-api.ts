@@ -229,6 +229,26 @@ export interface User {
   admin?: boolean;
 }
 
+/**
+ * IssueStatusEntity
+ * Redmineの環境に依存するIssueStatus情報
+ */
+export interface IssueStatusEntity {
+  id: number;
+  name: string;
+  is_closed: boolean;
+}
+
+/**
+ * TrackerEntity
+ * プロジェクトで利用可能なTracker情報
+ */
+export interface TrackerEntity {
+  id: number;
+  name: string;
+  description?: string;
+}
+
 // ========================================
 // グリッドインデックス型定義
 // ========================================
@@ -278,6 +298,10 @@ export interface Metadata {
     show_closed_issues: boolean;
     columns: ColumnConfig[];
   };
+
+  // フィルタ用マスターデータ（環境依存）
+  available_statuses: IssueStatusEntity[];
+  available_trackers: TrackerEntity[];
 
   api_version: string;
   timestamp: string;

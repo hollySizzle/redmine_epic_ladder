@@ -133,13 +133,36 @@ module EpicGrid
     def apply_ransack_filters(scope, filters)
       return scope if filters.blank?
 
+      # parent_id_in を特別扱い（階層検索のため、Ransackに渡さない）
+      filters_copy = filters.dup
+      parent_ids = filters_copy.delete(:parent_id_in)
+
       # AssociationRelationをRelationに変換してからRansackを適用
       # issues アソシエーションは AssociationRelation なので、.all で Relation に変換
       relation = scope.is_a?(ActiveRecord::AssociationRelation) ? scope.all : scope
 
-      # Ransack検索オブジェクトを作成
-      search = relation.ransack(filters)
-      search.result
+      # 通常のRansackフィルタを適用
+      relation = relation.ransack(filters_copy).result if filters_copy.present?
+
+      # parent_id_in がある場合は階層検索を適用（指定されたIssue自身 + その子孫全て）
+      # Redmineのネストセット（lft/rgt）を利用
+      if parent_ids.present? && parent_ids.any?
+        # 文字列IDを整数に変換
+        parent_ids = parent_ids.map(&:to_i)
+
+        relation = relation.where(
+          "issues.id IN (:ids) OR EXISTS (
+            SELECT 1 FROM issues parents
+            WHERE parents.id IN (:ids)
+              AND issues.lft > parents.lft
+              AND issues.rgt < parents.rgt
+              AND issues.root_id = parents.root_id
+          )",
+          ids: parent_ids
+        )
+      end
+
+      relation
     end
 
     # エンティティハッシュを構築
@@ -288,10 +311,35 @@ module EpicGrid
           description: description,
           created_on: created_on.iso8601
         },
+        # フィルタ用マスターデータ（環境依存）
+        available_statuses: build_available_statuses,
+        available_trackers: build_available_trackers,
         api_version: 'v2',
         timestamp: Time.current.iso8601,
         request_id: "req_#{SecureRandom.hex(8)}"
       }
+    end
+
+    # フィルタ用：利用可能なステータス一覧
+    def build_available_statuses
+      IssueStatus.all.order(:position).map do |status|
+        {
+          id: status.id,
+          name: status.name,
+          is_closed: status.is_closed
+        }
+      end
+    end
+
+    # フィルタ用：利用可能なトラッカー一覧
+    def build_available_trackers
+      trackers.order(:position).map do |tracker|
+        {
+          id: tracker.id,
+          name: tracker.name,
+          description: tracker.description
+        }
+      end
     end
   end
 end

@@ -258,7 +258,9 @@
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb:130 --format progress)",
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb:544 --format documentation)",
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb:603 --format documentation)",
-      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb:640 --format documentation)"
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb:640 --format documentation)",
+      "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb --format documentation --dry-run)",
+      "Bash(/dev/null)"
     ],
     "deny": [],
     "ask": [],

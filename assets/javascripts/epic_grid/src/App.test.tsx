@@ -11,6 +11,7 @@ describe('App - Integration Tests (Normalized API)', () => {
     useStore.setState({
       entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
       grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
+      metadata: JSON.parse(JSON.stringify(normalizedMockData.metadata)),
       isLoading: false,
       error: null
     });
@@ -20,9 +21,12 @@ describe('App - Integration Tests (Normalized API)', () => {
     render(<App />);
 
     await waitFor(() => {
-      // タイトルが表示されること
-      expect(screen.getByText(/🔬 ネストGrid検証/)).toBeInTheDocument();
+      // グリッドのヘッダーラベルが表示されること
+      expect(screen.getByText('Epic')).toBeInTheDocument();
     });
+
+    // Feature ヘッダーラベルが表示されること
+    expect(screen.getByText('Feature')).toBeInTheDocument();
 
     // Epic ヘッダーが表示されること
     expect(screen.getByText('施設・ユーザー管理')).toBeInTheDocument();

@@ -52,7 +52,15 @@ let lastUpdateTimestamp = new Date().toISOString();
  * Ransackフィルタを適用してエンティティをフィルタリング
  * 基本的なフィルタのみ対応（_in, _eq, _null）
  */
-function applyRansackFilters<T extends { fixed_version_id?: string | null; status?: string; assigned_to_id?: number; tracker_id?: number }>(
+function applyRansackFilters<T extends {
+  fixed_version_id?: string | null;
+  status?: string;
+  assigned_to_id?: number;
+  tracker_id?: number;
+  parent_epic_id?: string;
+  parent_feature_id?: string;
+  parent_user_story_id?: string;
+}>(
   entities: Record<string, T>,
   filters: RansackFilterParams
 ): Record<string, T> {
@@ -122,6 +130,14 @@ function applyRansackFilters<T extends { fixed_version_id?: string | null; statu
       }
     }
 
+    // 親IDフィルタ (parent_id_in) - Epic/Feature/UserStoryの親子関係
+    if (filters.parent_id_in && filters.parent_id_in.length > 0) {
+      const parentId = entity.parent_epic_id || entity.parent_feature_id || entity.parent_user_story_id;
+      if (!parentId || !filters.parent_id_in.includes(parentId)) {
+        matches = false;
+      }
+    }
+
     if (matches) {
       filtered[id] = entity;
     }
@@ -158,6 +174,12 @@ function extractFiltersFromURL(url: URL): RansackFilterParams {
   const trackerIds = url.searchParams.get('tracker_id_in');
   if (trackerIds) {
     filters.tracker_id_in = trackerIds.split(',').map(Number);
+  }
+
+  // parent_id_in (カンマ区切り) - Epic/Featureフィルタ用
+  const parentIds = url.searchParams.get('parent_id_in');
+  if (parentIds) {
+    filters.parent_id_in = parentIds.split(',');
   }
 
   // _null フィルタ

@@ -63,6 +63,208 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       )
     end
 
+    it 'includes available_statuses in metadata for filtering' do
+      get :show, params: { project_id: project.id }
+
+      json = JSON.parse(response.body)
+
+      expect(json['metadata']).to have_key('available_statuses')
+      expect(json['metadata']['available_statuses']).to be_an(Array)
+
+      # 少なくとも1つのステータスがあること
+      expect(json['metadata']['available_statuses'].length).to be > 0
+
+      # 各ステータスが正しい構造を持つこと
+      first_status = json['metadata']['available_statuses'].first
+      expect(first_status).to include(
+        'id',
+        'name',
+        'is_closed'
+      )
+      expect(first_status['id']).to be_a(Integer)
+      expect(first_status['name']).to be_a(String)
+      expect([true, false]).to include(first_status['is_closed'])
+    end
+
+    it 'includes available_trackers in metadata for filtering' do
+      get :show, params: { project_id: project.id }
+
+      json = JSON.parse(response.body)
+
+      expect(json['metadata']).to have_key('available_trackers')
+      expect(json['metadata']['available_trackers']).to be_an(Array)
+
+      # プロジェクトに割り当てられたトラッカーのみが含まれること
+      # （新規プロジェクトの場合は0個の可能性もある）
+      expect(json['metadata']['available_trackers']).to be_an(Array)
+
+      # トラッカーがある場合、正しい構造を持つこと
+      if json['metadata']['available_trackers'].any?
+        first_tracker = json['metadata']['available_trackers'].first
+        expect(first_tracker).to include(
+          'id',
+          'name'
+        )
+        expect(first_tracker['id']).to be_a(Integer)
+        expect(first_tracker['name']).to be_a(String)
+        # description は optional なので存在チェックのみ
+        expect(first_tracker.keys).to include('description')
+      end
+    end
+
+    context 'when filtering by status_id_in' do
+      let!(:epic_tracker) { create(:epic_tracker) }
+      let!(:status_new) { IssueStatus.where(is_closed: false).first }
+      let!(:status_in_progress) { IssueStatus.where(is_closed: false).offset(1).first }
+
+      before do
+        project.trackers << epic_tracker
+
+        # 異なるステータスが存在することを確認
+        unless status_new && status_in_progress && status_new.id != status_in_progress.id
+          skip 'Need at least 2 different open statuses'
+        end
+      end
+
+      let!(:epic_with_status_new) do
+        create(:epic, project: project, author: user, status_id: status_new.id)
+      end
+
+      let!(:epic_with_status_in_progress) do
+        create(:epic, project: project, author: user, status_id: status_in_progress.id)
+      end
+
+      it 'filters epics by status_id_in parameter' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { status_id_in: [status_new.id] }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+
+        # status_newのEpicのみが返されること
+        expect(epic_ids).to include(epic_with_status_new.id.to_s)
+        expect(epic_ids).not_to include(epic_with_status_in_progress.id.to_s)
+      end
+
+      it 'filters epics by multiple status_id_in values' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { status_id_in: [status_new.id, status_in_progress.id] }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+
+        # 両方のEpicが返されること
+        expect(epic_ids).to include(epic_with_status_new.id.to_s)
+        expect(epic_ids).to include(epic_with_status_in_progress.id.to_s)
+      end
+    end
+
+    context 'when filtering by tracker_id_in' do
+      let!(:epic_tracker) { create(:epic_tracker) }
+      let!(:feature_tracker) { create(:feature_tracker) }
+
+      before do
+        project.trackers << [epic_tracker, feature_tracker]
+      end
+
+      let!(:epic) { create(:epic, project: project, author: user) }
+      let!(:feature) { create(:feature, project: project, parent: epic, author: user) }
+
+      it 'filters issues by tracker_id_in parameter' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { tracker_id_in: [epic_tracker.id] }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+
+        # Epic trackerのIssueのみが返されること
+        epic_ids = json['entities']['epics'].keys
+        feature_ids = json['entities']['features'].keys
+
+        expect(epic_ids).to include(epic.id.to_s)
+        # Featureはepic_trackerではないのでフィルタされる
+        expect(feature_ids).not_to include(feature.id.to_s)
+      end
+    end
+
+    context 'when filtering by parent_id_in (Epic filter)' do
+      let!(:epic_tracker) { create(:epic_tracker) }
+      let!(:feature_tracker) { create(:feature_tracker) }
+
+      before do
+        project.trackers << [epic_tracker, feature_tracker]
+      end
+
+      let!(:epic1) { create(:epic, project: project, author: user, subject: 'Epic 1') }
+      let!(:epic2) { create(:epic, project: project, author: user, subject: 'Epic 2') }
+      let!(:feature1) { create(:feature, project: project, parent: epic1, author: user, subject: 'Feature 1') }
+      let!(:feature2) { create(:feature, project: project, parent: epic2, author: user, subject: 'Feature 2') }
+
+      it 'filters features by parent_id_in parameter' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { parent_id_in: [epic1.id] }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        feature_ids = json['entities']['features'].keys
+
+        # epic1配下のfeature1のみが返されること
+        expect(feature_ids).to include(feature1.id.to_s)
+        expect(feature_ids).not_to include(feature2.id.to_s)
+      end
+
+      it 'filters features by multiple parent_id_in values' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { parent_id_in: [epic1.id, epic2.id] }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        feature_ids = json['entities']['features'].keys
+
+        # 両方のFeatureが返されること
+        expect(feature_ids).to include(feature1.id.to_s)
+        expect(feature_ids).to include(feature2.id.to_s)
+      end
+
+      it 'returns the parent epic itself along with its descendants (hierarchical search)' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { parent_id_in: [epic1.id] }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+        feature_ids = json['entities']['features'].keys
+
+        # Epic自身も返されること（階層検索）
+        expect(epic_ids).to include(epic1.id.to_s)
+        # Epic配下のFeatureも返されること
+        expect(feature_ids).to include(feature1.id.to_s)
+        # 別のEpicとそのFeatureは返されないこと
+        expect(epic_ids).not_to include(epic2.id.to_s)
+        expect(feature_ids).not_to include(feature2.id.to_s)
+      end
+    end
+
     context 'when user lacks view_issues permission' do
       let(:unauthorized_role) { create(:role, permissions: []) }
       let(:unauthorized_member) { create(:member, project: project, user: user, roles: [unauthorized_role]) }
