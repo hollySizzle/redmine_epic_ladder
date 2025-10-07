@@ -10,7 +10,9 @@ interface TestItemProps {
 
 export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
   const test = useStore(state => state.entities.tests[testId]);
-  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
 
@@ -33,7 +35,10 @@ export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedIssueId(test.id);
+    if (!isDetailPaneVisible) {
+      toggleDetailPane();
+    }
+    setSelectedEntity('issue', test.id);
   };
 
   return (

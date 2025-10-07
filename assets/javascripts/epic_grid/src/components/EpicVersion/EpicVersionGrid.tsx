@@ -80,6 +80,9 @@ export const EpicVersionGrid: React.FC = () => {
   const createEpic = useStore(state => state.createEpic);
   const createVersion = useStore(state => state.createVersion);
   const createFeature = useStore(state => state.createFeature);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
 
   // モーダル開閉状態
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
@@ -168,8 +171,25 @@ export const EpicVersionGrid: React.FC = () => {
           // 'none' の場合はバージョン未設定として表示
           const versionName = version ? version.name : '(未設定)';
           const effectiveDate = version ? formatDate(version.effective_date) : null;
+
+          const handleVersionClick = () => {
+            // 詳細ペインが非表示の場合は開く
+            if (!isDetailPaneVisible) {
+              toggleDetailPane();
+            }
+            // versionIdが'none'の場合はクリック無効
+            if (versionId !== 'none' && version) {
+              setSelectedEntity('version', versionId);
+            }
+          };
+
           return (
-            <div key={versionId} className="version-header">
+            <div
+              key={versionId}
+              className={`version-header ${versionId !== 'none' && version ? 'clickable' : ''}`}
+              onClick={handleVersionClick}
+              style={{ cursor: versionId !== 'none' && version ? 'pointer' : 'default' }}
+            >
               <div className="version-name">{versionName}</div>
               {effectiveDate && (
                 <div className="version-date">{effectiveDate}</div>

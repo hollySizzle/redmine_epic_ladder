@@ -11,7 +11,9 @@ interface FeatureCardProps {
 export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
   // ストアから直接Featureを取得
   const feature = useStore(state => state.entities.features[featureId]);
-  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
 
   // 個別折り畳み状態（保存しない）
   const [isLocalCollapsed, setIsLocalCollapsed] = useState(false);
@@ -30,7 +32,10 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
 
   const handleHeaderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedIssueId(feature.id);
+    if (!isDetailPaneVisible) {
+      toggleDetailPane();
+    }
+    setSelectedEntity('issue', feature.id);
   };
 
   const handleToggleCollapse = (e: React.MouseEvent) => {

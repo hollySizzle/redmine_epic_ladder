@@ -21,6 +21,14 @@ export type VersionSource = 'direct' | 'inherited' | 'none';
 export type TestResult = 'passed' | 'failed' | 'pending';
 export type BugSeverity = 'critical' | 'major' | 'minor';
 
+// Detail Pane用のエンティティタイプ
+export type EntityType = 'issue' | 'version';
+
+export interface SelectedEntity {
+  type: EntityType;
+  id: string;
+}
+
 // ========================================
 // エンティティ型定義
 // ========================================

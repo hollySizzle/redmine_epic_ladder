@@ -181,13 +181,32 @@ describe('useStore - Normalized API (3D Grid)', () => {
       expect(finalState.isDetailPaneVisible).toBe(false);
     });
 
-    it('should set selected issue ID', () => {
-      const { setSelectedIssueId } = useStore.getState();
+    it('should set selected entity', () => {
+      const { setSelectedEntity } = useStore.getState();
 
-      setSelectedIssueId('us1');
+      setSelectedEntity('issue', 'us1');
+
+      const state = useStore.getState();
+      expect(state.selectedEntity).toEqual({ type: 'issue', id: 'us1' });
+    });
+
+    it('should provide backward compatibility with selectedIssueId getter', () => {
+      const { setSelectedEntity } = useStore.getState();
+
+      setSelectedEntity('issue', 'us1');
 
       const state = useStore.getState();
       expect(state.selectedIssueId).toBe('us1');
+    });
+
+    it('should return null for selectedIssueId when version is selected', () => {
+      const { setSelectedEntity } = useStore.getState();
+
+      setSelectedEntity('version', 'v1');
+
+      const state = useStore.getState();
+      expect(state.selectedIssueId).toBeNull();
+      expect(state.selectedEntity).toEqual({ type: 'version', id: 'v1' });
     });
   });
 

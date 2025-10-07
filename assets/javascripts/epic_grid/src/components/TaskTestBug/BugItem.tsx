@@ -10,7 +10,9 @@ interface BugItemProps {
 
 export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   const bug = useStore(state => state.entities.bugs[bugId]);
-  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
 
@@ -33,7 +35,10 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedIssueId(bug.id);
+    if (!isDetailPaneVisible) {
+      toggleDetailPane();
+    }
+    setSelectedEntity('issue', bug.id);
   };
 
   return (

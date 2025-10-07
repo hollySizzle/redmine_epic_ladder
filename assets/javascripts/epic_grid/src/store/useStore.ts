@@ -18,7 +18,9 @@ import type {
   CreateTestRequest,
   CreateBugRequest,
   CreateVersionRequest,
-  RansackFilterParams
+  RansackFilterParams,
+  EntityType,
+  SelectedEntity
 } from '../types/normalized-api';
 import * as API from '../api/kanban-api';
 
@@ -84,11 +86,15 @@ interface StoreState {
   error: string | null;
   projectId: string | null;
 
-  // Issue詳細表示
-  selectedIssueId: string | null;
-  setSelectedIssueId: (issueId: string | null) => void;
+  // 詳細ペイン表示（Issue/Version）
+  selectedEntity: SelectedEntity | null;
+  setSelectedEntity: (type: EntityType, id: string) => void;
+  clearSelectedEntity: () => void;
   isDetailPaneVisible: boolean;
   toggleDetailPane: () => void;
+
+  // 後方互換性のためのプロパティ
+  selectedIssueId: string | null;
 
   // 縦書きモード
   isVerticalMode: boolean;
@@ -178,9 +184,16 @@ export const useStore = create<StoreState>()(
         reorderedVersions: null
       },
 
-      // Issue詳細表示の初期状態
-      selectedIssueId: null,
-      setSelectedIssueId: (issueId: string | null) => set({ selectedIssueId: issueId }),
+      // 詳細ペイン表示の初期状態（Issue/Version）
+      selectedEntity: null,
+      selectedIssueId: null, // 後方互換性のため
+      setSelectedEntity: (type: EntityType, id: string) =>
+        set({
+          selectedEntity: { type, id },
+          selectedIssueId: type === 'issue' ? id : null
+        }),
+      clearSelectedEntity: () =>
+        set({ selectedEntity: null, selectedIssueId: null }),
       isDetailPaneVisible: (() => {
         const saved = localStorage.getItem('kanban_detail_pane_visible');
         return saved !== null ? saved === 'true' : true; // デフォルトON

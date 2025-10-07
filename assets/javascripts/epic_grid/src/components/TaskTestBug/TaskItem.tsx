@@ -10,7 +10,9 @@ interface TaskItemProps {
 
 export const TaskItem: React.FC<TaskItemProps> = ({ taskId }) => {
   const task = useStore(state => state.entities.tasks[taskId]);
-  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
 
@@ -33,7 +35,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({ taskId }) => {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedIssueId(task.id);
+    if (!isDetailPaneVisible) {
+      toggleDetailPane();
+    }
+    setSelectedEntity('issue', task.id);
   };
 
   return (

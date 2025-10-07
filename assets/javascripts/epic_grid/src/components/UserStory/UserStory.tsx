@@ -13,7 +13,9 @@ interface UserStoryProps {
 export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed = false }) => {
   // ストアから直接UserStoryを取得
   const story = useStore(state => state.entities.user_stories[storyId]);
-  const setSelectedIssueId = useStore(state => state.setSelectedIssueId);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
 
@@ -36,7 +38,10 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
 
   const handleHeaderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedIssueId(story.id);
+    if (!isDetailPaneVisible) {
+      toggleDetailPane();
+    }
+    setSelectedEntity('issue', story.id);
   };
 
   return (

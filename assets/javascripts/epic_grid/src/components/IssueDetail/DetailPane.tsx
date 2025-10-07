@@ -1,67 +1,69 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type { SelectedEntity } from '../../types/normalized-api';
+import { useStore } from '../../store/useStore';
 
-interface IssueDetailPaneProps {
-  issueId: string | null;
+interface DetailPaneProps {
+  entity: SelectedEntity | null;
   projectId: string | null;
-  onIssueUpdate?: (issueId: string, data: any) => void;
-  pollingInterval?: number;
-  refreshKey?: number;
 }
 
 /**
- * Issue詳細ペインコンポーネント
- * Redmineのチケット詳細ページをiframeで表示
+ * 詳細ペインコンポーネント（汎用）
+ * RedmineのIssue/Version詳細ページをiframeで表示
  */
-export const IssueDetailPane: React.FC<IssueDetailPaneProps> = ({
-  issueId,
+export const DetailPane: React.FC<DetailPaneProps> = ({
+  entity,
   projectId,
-  onIssueUpdate,
-  pollingInterval = 30000,
-  refreshKey = 0
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const previousIssueIdRef = useRef(issueId);
+  const previousEntityRef = useRef(entity);
 
-  // iframeのURL生成
-  const getIframeUrl = useCallback(() => {
-    if (!issueId) return null;
-    return `/issues/${issueId}`;
-  }, [issueId]);
+  // Zustand storeからVersionデータ取得（タイトル表示用）
+  const versions = useStore(state => state.entities.versions);
 
-  // Issue IDが変更されたときの処理
-  useEffect(() => {
-    if (issueId !== previousIssueIdRef.current) {
-      previousIssueIdRef.current = issueId;
+  // iframeのURL生成（汎用化）
+  const getIframeUrl = useCallback((): string | null => {
+    if (!entity) return null;
+
+    switch (entity.type) {
+      case 'issue':
+        return `/issues/${entity.id}`;
+      case 'version':
+        return `/versions/${entity.id}`;
+      default:
+        return null;
     }
+  }, [entity]);
 
-    if (issueId) {
-      setIsLoading(true);
-      setError(null);
-    }
-  }, [issueId]);
+  // タイトル生成（汎用化）
+  const getTitle = useCallback((): string => {
+    if (!entity) return '';
 
-  // refreshKey が変更されたときの iframe 強制リロード
-  useEffect(() => {
-    if (refreshKey > 0 && iframeRef.current && issueId) {
-      console.log('IssueDetailPane: refreshKey変更によりiframeをリロード', { issueId, refreshKey });
-      setIsLoading(true);
-      setError(null);
-
-      // iframeのsrcを一度空にしてから再設定することで強制リロード
-      const currentSrc = getIframeUrl();
-      if (currentSrc) {
-        iframeRef.current.src = 'about:blank';
-
-        setTimeout(() => {
-          if (iframeRef.current && currentSrc) {
-            iframeRef.current.src = currentSrc + '?t=' + Date.now(); // キャッシュバスターを追加
-          }
-        }, 100);
+    switch (entity.type) {
+      case 'issue':
+        return `チケット #${entity.id}`;
+      case 'version': {
+        const version = versions[entity.id];
+        return version ? `バージョン: ${version.name}` : `バージョン #${entity.id}`;
       }
+      default:
+        return '';
     }
-  }, [refreshKey, issueId, getIframeUrl]);
+  }, [entity, versions]);
+
+  // Entity IDが変更されたときの処理
+  useEffect(() => {
+    if (entity !== previousEntityRef.current) {
+      previousEntityRef.current = entity;
+    }
+
+    if (entity) {
+      setIsLoading(true);
+      setError(null);
+    }
+  }, [entity]);
 
   // iframeの読み込み完了処理
   const handleIframeLoad = useCallback(() => {
@@ -94,7 +96,7 @@ export const IssueDetailPane: React.FC<IssueDetailPaneProps> = ({
   // iframeのエラー処理
   const handleIframeError = useCallback(() => {
     setIsLoading(false);
-    setError('チケット詳細の読み込みに失敗しました');
+    setError('詳細の読み込みに失敗しました');
   }, []);
 
   // リロードボタンのハンドラ
@@ -109,7 +111,7 @@ export const IssueDetailPane: React.FC<IssueDetailPaneProps> = ({
     }
   }, [getIframeUrl]);
 
-  if (!issueId) {
+  if (!entity) {
     return (
       <div className="issue-detail-pane issue-detail-pane--empty">
         <div className="issue-detail-pane__placeholder">
@@ -118,7 +120,7 @@ export const IssueDetailPane: React.FC<IssueDetailPaneProps> = ({
             <rect x="8" y="8" width="48" height="48" rx="4" stroke="#ccc" strokeWidth="2" fill="none"/>
           </svg>
           <p className="issue-detail-pane__placeholder-text">
-            チケットを選択すると詳細が表示されます
+            チケットまたはバージョンを選択すると詳細が表示されます
           </p>
         </div>
       </div>
@@ -126,12 +128,13 @@ export const IssueDetailPane: React.FC<IssueDetailPaneProps> = ({
   }
 
   const iframeUrl = getIframeUrl();
+  const title = getTitle();
 
   return (
     <div className="issue-detail-pane">
       <div className="issue-detail-pane__header">
         <h3 className="issue-detail-pane__title">
-          チケット #{issueId}
+          {title}
         </h3>
         <div className="issue-detail-pane__actions">
           <button
@@ -169,7 +172,7 @@ export const IssueDetailPane: React.FC<IssueDetailPaneProps> = ({
             src={iframeUrl}
             onLoad={handleIframeLoad}
             onError={handleIframeError}
-            title={`チケット #${issueId} の詳細`}
+            title={title}
             style={{ display: isLoading || error ? 'none' : 'block' }}
           />
         )}

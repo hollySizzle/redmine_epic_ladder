@@ -2,7 +2,7 @@ import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/ad
 import React, { useEffect } from 'react';
 import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
 import { FilterPanel } from './components/FilterPanel';
-import { IssueDetailPane } from './components/IssueDetail/IssueDetailPane';
+import { DetailPane } from './components/IssueDetail/DetailPane';
 import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { Legend } from './components/Legend';
 import { AssignedToToggle } from './components/common/AssignedToToggle';
@@ -19,7 +19,7 @@ export const App: React.FC = () => {
   const isLoading = useStore(state => state.isLoading);
   const error = useStore(state => state.error);
   const projectId = useStore(state => state.projectId);
-  const selectedIssueId = useStore(state => state.selectedIssueId);
+  const selectedEntity = useStore(state => state.selectedEntity);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isVerticalMode = useStore(state => state.isVerticalMode);
   const reorderFeatures = useStore(state => state.reorderFeatures);
@@ -254,8 +254,8 @@ export const App: React.FC = () => {
         <SplitLayout
           leftPane={kanbanContent}
           rightPane={
-            <IssueDetailPane
-              issueId={selectedIssueId}
+            <DetailPane
+              entity={selectedEntity}
               projectId={projectId}
             />
           }
