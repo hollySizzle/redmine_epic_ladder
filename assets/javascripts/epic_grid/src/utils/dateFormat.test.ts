@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDateRange } from './dateFormat';
+import { formatDateRange, formatDate } from './dateFormat';
 
 describe('formatDateRange', () => {
   describe('Both dates present', () => {
@@ -90,6 +90,44 @@ describe('formatDateRange', () => {
 
     it('should handle year end and new year', () => {
       expect(formatDateRange('2025-12-31', '2026-01-01')).toBe('12/31~1/1');
+    });
+  });
+});
+
+describe('formatDate', () => {
+  describe('Valid date strings', () => {
+    it('should format date in mm/dd format', () => {
+      expect(formatDate('2025-12-25')).toBe('12/25');
+      expect(formatDate('2025-01-05')).toBe('1/5');
+    });
+
+    it('should handle single-digit months and days', () => {
+      expect(formatDate('2025-01-01')).toBe('1/1');
+      expect(formatDate('2025-03-09')).toBe('3/9');
+    });
+
+    it('should handle double-digit months and days', () => {
+      expect(formatDate('2025-10-15')).toBe('10/15');
+      expect(formatDate('2025-12-31')).toBe('12/31');
+    });
+
+    it('should handle year boundaries', () => {
+      expect(formatDate('2025-01-01')).toBe('1/1');
+      expect(formatDate('2025-12-31')).toBe('12/31');
+    });
+  });
+
+  describe('Null/undefined/empty handling', () => {
+    it('should return null when date is null', () => {
+      expect(formatDate(null)).toBeNull();
+    });
+
+    it('should return null when date is undefined', () => {
+      expect(formatDate(undefined)).toBeNull();
+    });
+
+    it('should return null when date is empty string', () => {
+      expect(formatDate('')).toBeNull();
     });
   });
 });

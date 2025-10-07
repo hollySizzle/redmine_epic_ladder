@@ -18,6 +18,24 @@ function formatToMonthDay(dateStr: string): string {
 }
 
 /**
+ * 単一の日付を mm/dd 形式でフォーマット (Version期日表示用)
+ *
+ * @param date - ISO8601形式の日付文字列 or null
+ * @returns mm/dd 形式の文字列、または null
+ *
+ * @example
+ * formatDate("2025-12-25")  // "12/25"
+ * formatDate(null)          // null
+ * formatDate("")            // null
+ */
+export function formatDate(date: string | null | undefined): string | null {
+  if (!date || date === '') {
+    return null;
+  }
+  return formatToMonthDay(date);
+}
+
+/**
  * 開始日と期日を "mm/dd~mm/dd" 形式でフォーマット
  *
  * @param startDate - 開始日 (ISO8601形式 or null)
