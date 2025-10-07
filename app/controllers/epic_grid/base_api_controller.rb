@@ -34,6 +34,7 @@ module EpicGrid
   # 統一API基底コントローラー
   # API統合仕様書準拠の標準化されたレスポンス・エラーハンドリング提供
   class BaseApiController < ApplicationController
+    skip_before_action :check_if_login_required
     before_action :api_require_login, :find_project, :authorize_kanban_access
     before_action :set_start_time
 
