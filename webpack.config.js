@@ -8,7 +8,7 @@ module.exports = {
   entry: "./assets/javascripts/epic_grid/src/index.tsx",
   output: {
     filename: "kanban_bundle.js",
-    path: path.resolve(__dirname, "assets/javascripts/epic_grid/dist"),
+    path: path.resolve(__dirname, "assets/build"),
     clean: true,
   },
   optimization: {
@@ -66,7 +66,7 @@ module.exports = {
   devServer: {
     static: [
       {
-        directory: path.resolve(__dirname, "assets/javascripts/epic_grid/dist"),
+        directory: path.resolve(__dirname, "assets/build"),
         publicPath: "/",
       },
       {
@@ -110,7 +110,7 @@ module.exports = {
         // MSW用ファイル
         {
           from: path.resolve(__dirname, "assets/javascripts/epic_grid/public"),
-          to: path.resolve(__dirname, "assets/javascripts/epic_grid/dist"),
+          to: path.resolve(__dirname, "assets/build"),
           noErrorOnMissing: true,
         },
       ],
@@ -122,7 +122,7 @@ module.exports = {
           const fs = require("fs");
           const srcPath = path.resolve(
             __dirname,
-            "assets/javascripts/epic_grid/dist/kanban_bundle.js"
+            "assets/build/kanban_bundle.js"
           );
           const destPath =
             "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/kanban_bundle.js";
