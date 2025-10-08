@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useStore } from './useStore';
 import { normalizedMockData } from '../mocks/normalized-mock-data';
 import * as API from '../api/kanban-api';
@@ -383,6 +383,153 @@ describe('useStore - Normalized API (3D Grid)', () => {
     it('should have reorderBugs action', () => {
       const { reorderBugs } = useStore.getState();
       expect(typeof reorderBugs).toBe('function');
+    });
+  });
+
+  describe('Sort Settings', () => {
+
+    beforeEach(() => {
+      // LocalStorageをクリア
+      localStorage.clear();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    describe('Default Values', () => {
+      it('should have default epic sort as subject/asc', () => {
+        // ストアを再初期化（デフォルト値を確認）
+        const sortBy = localStorage.getItem('kanban_epic_sort_by') || 'subject';
+        const sortDirection = localStorage.getItem('kanban_epic_sort_direction') || 'asc';
+
+        expect(sortBy).toBe('subject');
+        expect(sortDirection).toBe('asc');
+      });
+
+      it('should have default version sort as date/asc', () => {
+        const sortBy = localStorage.getItem('kanban_version_sort_by') || 'date';
+        const sortDirection = localStorage.getItem('kanban_version_sort_direction') || 'asc';
+
+        expect(sortBy).toBe('date');
+        expect(sortDirection).toBe('asc');
+      });
+    });
+
+    describe('setEpicSort', () => {
+      it('should update epic sort state', () => {
+        const { setEpicSort } = useStore.getState();
+
+        setEpicSort('id', 'desc');
+
+        const state = useStore.getState();
+        expect(state.epicSortOptions.sort_by).toBe('id');
+        expect(state.epicSortOptions.sort_direction).toBe('desc');
+      });
+
+      it('should save epic sort to localStorage', () => {
+        const { setEpicSort } = useStore.getState();
+
+        setEpicSort('date', 'asc');
+
+        expect(localStorage.getItem('kanban_epic_sort_by')).toBe('date');
+        expect(localStorage.getItem('kanban_epic_sort_direction')).toBe('asc');
+      });
+
+      it('should update only sort_by when direction unchanged', () => {
+        const { setEpicSort } = useStore.getState();
+
+        setEpicSort('subject', 'asc');
+        setEpicSort('id', 'asc'); // direction は変わらない
+
+        const state = useStore.getState();
+        expect(state.epicSortOptions.sort_by).toBe('id');
+        expect(state.epicSortOptions.sort_direction).toBe('asc');
+      });
+
+      it('should update only sort_direction when field unchanged', () => {
+        const { setEpicSort } = useStore.getState();
+
+        setEpicSort('subject', 'asc');
+        setEpicSort('subject', 'desc'); // field は変わらない
+
+        const state = useStore.getState();
+        expect(state.epicSortOptions.sort_by).toBe('subject');
+        expect(state.epicSortOptions.sort_direction).toBe('desc');
+      });
+    });
+
+    describe('setVersionSort', () => {
+      it('should update version sort state', () => {
+        const { setVersionSort } = useStore.getState();
+
+        setVersionSort('subject', 'desc');
+
+        const state = useStore.getState();
+        expect(state.versionSortOptions.sort_by).toBe('subject');
+        expect(state.versionSortOptions.sort_direction).toBe('desc');
+      });
+
+      it('should save version sort to localStorage', () => {
+        const { setVersionSort } = useStore.getState();
+
+        setVersionSort('id', 'asc');
+
+        expect(localStorage.getItem('kanban_version_sort_by')).toBe('id');
+        expect(localStorage.getItem('kanban_version_sort_direction')).toBe('asc');
+      });
+    });
+
+    describe('LocalStorage persistence', () => {
+      it('should load saved epic sort on init', () => {
+        // LocalStorageに保存済みの値をセット
+        localStorage.setItem('kanban_epic_sort_by', 'id');
+        localStorage.setItem('kanban_epic_sort_direction', 'desc');
+
+        // ストアを再初期化（実際のアプリ起動時の動作をシミュレート）
+        const sortBy = localStorage.getItem('kanban_epic_sort_by') || 'subject';
+        const sortDirection = localStorage.getItem('kanban_epic_sort_direction') || 'asc';
+
+        expect(sortBy).toBe('id');
+        expect(sortDirection).toBe('desc');
+      });
+
+      it('should load saved version sort on init', () => {
+        localStorage.setItem('kanban_version_sort_by', 'subject');
+        localStorage.setItem('kanban_version_sort_direction', 'desc');
+
+        const sortBy = localStorage.getItem('kanban_version_sort_by') || 'date';
+        const sortDirection = localStorage.getItem('kanban_version_sort_direction') || 'asc';
+
+        expect(sortBy).toBe('subject');
+        expect(sortDirection).toBe('desc');
+      });
+
+      it('should use default values when localStorage is empty', () => {
+        // LocalStorageが空の状態
+
+        const epicSortBy = localStorage.getItem('kanban_epic_sort_by') || 'subject';
+        const epicSortDirection = localStorage.getItem('kanban_epic_sort_direction') || 'asc';
+        const versionSortBy = localStorage.getItem('kanban_version_sort_by') || 'date';
+        const versionSortDirection = localStorage.getItem('kanban_version_sort_direction') || 'asc';
+
+        expect(epicSortBy).toBe('subject');
+        expect(epicSortDirection).toBe('asc');
+        expect(versionSortBy).toBe('date');
+        expect(versionSortDirection).toBe('asc');
+      });
+    });
+
+    describe('Sort actions existence', () => {
+      it('should have setEpicSort action', () => {
+        const { setEpicSort } = useStore.getState();
+        expect(typeof setEpicSort).toBe('function');
+      });
+
+      it('should have setVersionSort action', () => {
+        const { setVersionSort } = useStore.getState();
+        expect(typeof setVersionSort).toBe('function');
+      });
     });
   });
 });

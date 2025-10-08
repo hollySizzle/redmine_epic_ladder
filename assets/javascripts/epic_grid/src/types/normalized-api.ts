@@ -422,6 +422,49 @@ export interface RansackFilterParams {
 }
 
 // ========================================
+// ソート設定型定義
+// ========================================
+
+/**
+ * ソートフィールド
+ * - date: 日付順（Epic: start_date, Version: effective_date）
+ * - id: ID順
+ * - subject: 件名順（Epicのみ、Versionはname）
+ */
+export type SortField = 'date' | 'id' | 'subject';
+
+/**
+ * ソート方向
+ * - asc: 昇順
+ * - desc: 降順
+ */
+export type SortDirection = 'asc' | 'desc';
+
+/**
+ * Epicソート設定
+ */
+export interface EpicSortOptions {
+  sort_by: SortField;
+  sort_direction: SortDirection;
+}
+
+/**
+ * Versionソート設定
+ */
+export interface VersionSortOptions {
+  sort_by: SortField;
+  sort_direction: SortDirection;
+}
+
+/**
+ * グリッドソート設定
+ */
+export interface GridSortOptions {
+  epic?: EpicSortOptions;
+  version?: VersionSortOptions;
+}
+
+// ========================================
 // API リクエスト型定義
 // ========================================
 
@@ -433,6 +476,9 @@ export interface GridDataRequest {
 
   // Ransackフィルタパラメータ
   filters?: RansackFilterParams;
+
+  // ソート設定（フロントエンド実装、将来的にバックエンド対応）
+  sort_options?: GridSortOptions;
 
   // 旧形式（後方互換性のため残す）
   epic_ids?: string[];

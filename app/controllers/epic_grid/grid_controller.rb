@@ -16,10 +16,14 @@ module EpicGrid
       # Ransackフィルタパラメータを取得（filters[key][] 形式をサポート）
       filters = extract_ransack_filters
 
+      # ソートオプションを取得
+      sort_options = extract_sort_options
+
       grid_data = @project.epic_grid_data(
         include_closed: include_closed,
         exclude_closed_versions: exclude_closed_versions,
-        filters: filters
+        filters: filters,
+        sort_options: sort_options
       )
 
       # MSW準拠レスポンス: NormalizedAPIResponse形式（success/dataラッパーなし）
@@ -411,6 +415,35 @@ module EpicGrid
 
       Rails.logger.info "Extracted Ransack filters: #{ransack_filters.inspect}"
       ransack_filters
+    end
+
+    # ソートオプションパラメータを抽出
+    # フロントエンドから sort_options[epic][sort_by]=subject 形式で送信
+    def extract_sort_options
+      return {} unless params[:sort_options].present?
+
+      sort_options = {}
+
+      # Epic & Feature のソート設定
+      if params[:sort_options][:epic].present?
+        epic_params = params[:sort_options][:epic]
+        sort_options[:epic] = {
+          sort_by: (epic_params[:sort_by] || 'subject').to_sym,
+          sort_direction: (epic_params[:sort_direction] || 'asc').to_sym
+        }
+      end
+
+      # Version のソート設定
+      if params[:sort_options][:version].present?
+        version_params = params[:sort_options][:version]
+        sort_options[:version] = {
+          sort_by: (version_params[:sort_by] || 'date').to_sym,
+          sort_direction: (version_params[:sort_direction] || 'asc').to_sym
+        }
+      end
+
+      Rails.logger.info "Extracted Sort options: #{sort_options.inspect}"
+      sort_options
     end
 
     def find_issue

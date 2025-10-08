@@ -20,7 +20,11 @@ import type {
   CreateVersionRequest,
   RansackFilterParams,
   EntityType,
-  SelectedEntity
+  SelectedEntity,
+  SortField,
+  SortDirection,
+  EpicSortOptions,
+  VersionSortOptions
 } from '../types/normalized-api';
 import * as API from '../api/kanban-api';
 
@@ -120,6 +124,12 @@ interface StoreState {
   // クローズ済みバージョン非表示（デフォルト: true）
   excludeClosedVersions: boolean;
   toggleExcludeClosedVersions: () => void;
+
+  // ソート設定
+  epicSortOptions: EpicSortOptions;
+  versionSortOptions: VersionSortOptions;
+  setEpicSort: (sortBy: SortField, sortDirection: SortDirection) => void;
+  setVersionSort: (sortBy: SortField, sortDirection: SortDirection) => void;
 
   // Dirty state管理（未保存変更の追跡）
   isDirty: boolean;
@@ -288,6 +298,44 @@ export const useStore = create<StoreState>()(
         }
       },
 
+      // ソート設定の初期状態
+      epicSortOptions: (() => {
+        const sortBy = localStorage.getItem('kanban_epic_sort_by') as SortField || 'subject';
+        const sortDirection = localStorage.getItem('kanban_epic_sort_direction') as SortDirection || 'asc';
+        return { sort_by: sortBy, sort_direction: sortDirection };
+      })(),
+      versionSortOptions: (() => {
+        const sortBy = localStorage.getItem('kanban_version_sort_by') as SortField || 'date';
+        const sortDirection = localStorage.getItem('kanban_version_sort_direction') as SortDirection || 'asc';
+        return { sort_by: sortBy, sort_direction: sortDirection };
+      })(),
+      setEpicSort: (sortBy: SortField, sortDirection: SortDirection) => {
+        localStorage.setItem('kanban_epic_sort_by', sortBy);
+        localStorage.setItem('kanban_epic_sort_direction', sortDirection);
+        set((state) => {
+          state.epicSortOptions = { sort_by: sortBy, sort_direction: sortDirection };
+        });
+
+        // ソート変更時に自動的にデータを再取得
+        const projectId = get().projectId;
+        if (projectId) {
+          get().fetchGridData(projectId);
+        }
+      },
+      setVersionSort: (sortBy: SortField, sortDirection: SortDirection) => {
+        localStorage.setItem('kanban_version_sort_by', sortBy);
+        localStorage.setItem('kanban_version_sort_direction', sortDirection);
+        set((state) => {
+          state.versionSortOptions = { sort_by: sortBy, sort_direction: sortDirection };
+        });
+
+        // ソート変更時に自動的にデータを再取得
+        const projectId = get().projectId;
+        if (projectId) {
+          get().fetchGridData(projectId);
+        }
+      },
+
       // グリッドデータ取得
       fetchGridData: async (projectId: string) => {
         set({ isLoading: true, error: null, projectId });
@@ -295,9 +343,16 @@ export const useStore = create<StoreState>()(
         try {
           const filters = get().filters;
           const excludeClosedVersions = get().excludeClosedVersions;
+          const epicSortOptions = get().epicSortOptions;
+          const versionSortOptions = get().versionSortOptions;
+
           const data = await API.fetchGridData(projectId, {
             filters,
-            exclude_closed_versions: excludeClosedVersions
+            exclude_closed_versions: excludeClosedVersions,
+            sort_options: {
+              epic: epicSortOptions,
+              version: versionSortOptions
+            }
           });
 
           set({

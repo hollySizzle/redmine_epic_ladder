@@ -151,7 +151,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function fetchGridData(
   projectId: number | string,
-  options: { include_closed?: boolean; exclude_closed_versions?: boolean; filters?: Record<string, any> } = {}
+  options: {
+    include_closed?: boolean;
+    exclude_closed_versions?: boolean;
+    filters?: Record<string, any>;
+    sort_options?: GridSortOptions;
+  } = {}
 ): Promise<NormalizedAPIResponse> {
   const params = new URLSearchParams();
   if (options.include_closed !== undefined) {
@@ -173,6 +178,18 @@ export async function fetchGridData(
         }
       }
     });
+  }
+
+  // ソートオプションをクエリパラメータに追加
+  if (options.sort_options) {
+    if (options.sort_options.epic) {
+      params.append('sort_options[epic][sort_by]', options.sort_options.epic.sort_by);
+      params.append('sort_options[epic][sort_direction]', options.sort_options.epic.sort_direction);
+    }
+    if (options.sort_options.version) {
+      params.append('sort_options[version][sort_by]', options.sort_options.version.sort_by);
+      params.append('sort_options[version][sort_direction]', options.sort_options.version.sort_direction);
+    }
   }
 
   const url = `/api/epic_grid/projects/${projectId}/grid${params.toString() ? `?${params}` : ''}`;

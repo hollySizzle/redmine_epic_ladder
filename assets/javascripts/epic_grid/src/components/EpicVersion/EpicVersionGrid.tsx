@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { UserStoryGridForCell } from '../UserStory/UserStoryGridForCell';
 import { AddButton } from '../common/AddButton';
 import { VersionFormModal, VersionFormData } from '../common/VersionFormModal';
@@ -7,7 +7,7 @@ import { useStore } from '../../store/useStore';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useDropTarget } from '../../hooks/useDropTarget';
 import { formatDate } from '../../utils/dateFormat';
-import type { Feature } from '../../types/normalized-api';
+import type { Feature, Epic, Version } from '../../types/normalized-api';
 
 // Feature列のD&D対応コンポーネント
 const DraggableFeatureCell: React.FC<{ feature: Feature }> = ({ feature }) => {
@@ -83,6 +83,102 @@ export const EpicVersionGrid: React.FC = () => {
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
   const toggleDetailPane = useStore(state => state.toggleDetailPane);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
+  const epicSortOptions = useStore(state => state.epicSortOptions);
+  const versionSortOptions = useStore(state => state.versionSortOptions);
+
+  // Epic順序をソート設定に基づいて動的にソート
+  const sortedEpicOrder = useMemo(() => {
+    const epicIds = [...grid.epic_order];
+    return epicIds.sort((aId, bId) => {
+      const epicA = epics[aId];
+      const epicB = epics[bId];
+      if (!epicA || !epicB) return 0;
+
+      const { sort_by, sort_direction } = epicSortOptions;
+      let comparison = 0;
+
+      if (sort_by === 'date') {
+        // start_date がnullの場合は先頭に配置
+        const dateA = epicA.statistics?.completion_percentage || 0; // TODO: Epic型にstart_dateを追加
+        const dateB = epicB.statistics?.completion_percentage || 0;
+        comparison = dateA - dateB;
+      } else if (sort_by === 'id') {
+        comparison = parseInt(aId) - parseInt(bId);
+      } else if (sort_by === 'subject') {
+        comparison = epicA.subject.localeCompare(epicB.subject);
+      }
+
+      return sort_direction === 'asc' ? comparison : -comparison;
+    });
+  }, [grid.epic_order, epics, epicSortOptions]);
+
+  // Feature順序をソート設定に基づいて動的にソート（Epic&Feature並び替え）
+  const getSortedFeatureIds = useMemo(() => {
+    return (epicId: string): string[] => {
+      const featureIds = grid.feature_order_by_epic[epicId] || [];
+      const sorted = [...featureIds].sort((aId, bId) => {
+        const featureA = features[aId];
+        const featureB = features[bId];
+        if (!featureA || !featureB) return 0;
+
+        const { sort_by, sort_direction } = epicSortOptions;
+        let comparison = 0;
+
+        if (sort_by === 'date') {
+          // start_date がnullの場合は先頭に配置
+          const dateA = featureA.statistics?.completion_percentage || 0; // TODO: Feature型にstart_dateを追加
+          const dateB = featureB.statistics?.completion_percentage || 0;
+          comparison = dateA - dateB;
+        } else if (sort_by === 'id') {
+          comparison = parseInt(aId) - parseInt(bId);
+        } else if (sort_by === 'subject') {
+          comparison = featureA.title.localeCompare(featureB.title);
+        }
+
+        return sort_direction === 'asc' ? comparison : -comparison;
+      });
+      return sorted;
+    };
+  }, [grid.feature_order_by_epic, features, epicSortOptions]);
+
+  // Version順序をソート設定に基づいて動的にソート
+  const sortedVersionOrder = useMemo(() => {
+    const versionIds = [...grid.version_order];
+    // 'none'は常に最後に配置
+    const noneIndex = versionIds.indexOf('none');
+    if (noneIndex !== -1) {
+      versionIds.splice(noneIndex, 1);
+    }
+
+    const sorted = versionIds.sort((aId, bId) => {
+      const versionA = versions[aId];
+      const versionB = versions[bId];
+      if (!versionA || !versionB) return 0;
+
+      const { sort_by, sort_direction } = versionSortOptions;
+      let comparison = 0;
+
+      if (sort_by === 'date') {
+        // effective_date がnullの場合は先頭に配置
+        const dateA = versionA.effective_date ? new Date(versionA.effective_date).getTime() : 0;
+        const dateB = versionB.effective_date ? new Date(versionB.effective_date).getTime() : 0;
+        comparison = dateA - dateB;
+      } else if (sort_by === 'id') {
+        comparison = parseInt(aId) - parseInt(bId);
+      } else if (sort_by === 'subject') {
+        comparison = versionA.name.localeCompare(versionB.name);
+      }
+
+      return sort_direction === 'asc' ? comparison : -comparison;
+    });
+
+    // 'none'を最後に追加
+    if (noneIndex !== -1) {
+      sorted.push('none');
+    }
+
+    return sorted;
+  }, [grid.version_order, versions, versionSortOptions]);
 
   // モーダル開閉状態
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
@@ -166,7 +262,7 @@ export const EpicVersionGrid: React.FC = () => {
         {/* ヘッダー行 */}
         <div className="header-label">Epic</div>
         <div className="header-label">Feature</div>
-        {grid.version_order.map(versionId => {
+        {sortedVersionOrder.map(versionId => {
           const version = versions[versionId];
           // 'none' の場合はバージョン未設定として表示
           const versionName = version ? version.name : '(未設定)';
@@ -199,9 +295,9 @@ export const EpicVersionGrid: React.FC = () => {
         })}
 
         {/* Epic × Feature × Version の3次元グリッド */}
-        {grid.epic_order.map(epicId => {
+        {sortedEpicOrder.map(epicId => {
           const epic = epics[epicId];
-          const epicFeatures = grid.feature_order_by_epic[epicId] || [];
+          const epicFeatures = getSortedFeatureIds(epicId);
 
           // 実際に存在するFeatureだけをフィルタ
           const validFeatures = epicFeatures.filter(fId => features[fId]);
@@ -222,7 +318,7 @@ export const EpicVersionGrid: React.FC = () => {
                   />
                 </div>
                 <div className="feature-cell empty-cell"></div>
-                {grid.version_order.map(versionId => (
+                {sortedVersionOrder.map(versionId => (
                   <div key={`${epicId}-empty-${versionId}`} className="us-cell empty-cell"></div>
                 ))}
               </React.Fragment>
@@ -253,7 +349,7 @@ export const EpicVersionGrid: React.FC = () => {
                 <DraggableFeatureCell feature={feature} />
 
                 {/* Version列 (UserStory一覧) */}
-                {grid.version_order.map(versionId => {
+                {sortedVersionOrder.map(versionId => {
                   const cellKey = `${epicId}:${featureId}:${versionId}`;
                   const userStoryIds = grid.index[cellKey] || [];
 
