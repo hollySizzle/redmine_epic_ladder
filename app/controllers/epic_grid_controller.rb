@@ -121,7 +121,7 @@ class EpicGridController < ApplicationController
   end
 
   def determine_hierarchy_level(tracker_name)
-    tracker_names = Kanban::TrackerHierarchy.tracker_names
+    tracker_names = EpicGrid::TrackerHierarchy.tracker_names
     hierarchy_map = {
       tracker_names[:epic] => 1,
       tracker_names[:feature] => 2,
@@ -146,7 +146,7 @@ class EpicGridController < ApplicationController
   end
 
   def find_epic_name(issue)
-    epic_tracker_name = Kanban::TrackerHierarchy.tracker_names[:epic]
+    epic_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:epic]
     current = issue.parent
     while current
       return current.subject if current.tracker.name == epic_tracker_name
