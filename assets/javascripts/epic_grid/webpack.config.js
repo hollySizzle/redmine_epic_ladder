@@ -7,7 +7,7 @@ module.exports = {
   devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map',
   entry: './src/index.tsx',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, '../../build'),
     filename: 'kanban_bundle.js',
     clean: true,
   },
@@ -17,7 +17,7 @@ module.exports = {
   devServer: {
     static: [
       {
-        directory: path.join(__dirname, 'dist'),
+        directory: path.resolve(__dirname, '../../build'),
       },
       {
         directory: path.join(__dirname, 'public'),

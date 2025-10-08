@@ -260,7 +260,11 @@
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb:603 --format documentation)",
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models/project_spec.rb:640 --format documentation)",
       "Bash(RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/controllers/epic_grid/grid_controller_spec.rb --format documentation --dry-run)",
-      "Bash(/dev/null)"
+      "Bash(/dev/null)",
+      "WebFetch(domain:www.redmine.org)",
+      "Bash(RAILS_ENV=development bundle exec rake assets:precompile)",
+      "Bash(RAILS_ENV=production bundle exec rake assets:precompile)",
+      "Bash(chown:*)"
     ],
     "deny": [],
     "ask": [],

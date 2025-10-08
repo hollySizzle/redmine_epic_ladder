@@ -428,6 +428,9 @@ export interface RansackFilterParams {
 export interface GridDataRequest {
   include_closed?: boolean;
 
+  // バージョンフィルタ（デフォルト: クローズ済みバージョンを除外）
+  exclude_closed_versions?: boolean;
+
   // Ransackフィルタパラメータ
   filters?: RansackFilterParams;
 

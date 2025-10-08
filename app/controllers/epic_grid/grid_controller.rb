@@ -11,11 +11,16 @@ module EpicGrid
     def show
       # Fat Model使用: Project#epic_grid_data
       include_closed = params[:include_closed] != 'false'
+      exclude_closed_versions = params[:exclude_closed_versions] != 'false'
 
       # Ransackフィルタパラメータを取得（filters[key][] 形式をサポート）
       filters = extract_ransack_filters
 
-      grid_data = @project.epic_grid_data(include_closed: include_closed, filters: filters)
+      grid_data = @project.epic_grid_data(
+        include_closed: include_closed,
+        exclude_closed_versions: exclude_closed_versions,
+        filters: filters
+      )
 
       # MSW準拠レスポンス: NormalizedAPIResponse形式（success/dataラッパーなし）
       response_data = {

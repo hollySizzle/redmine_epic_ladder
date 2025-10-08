@@ -206,6 +206,7 @@ export const handlers = [
   http.get('/api/epic_grid/projects/:projectId/grid', async ({ params, request }: { params: PathParams; request: Request }) => {
     const url = new URL(request.url);
     const includeClosed = url.searchParams.get('include_closed') === 'true';
+    const excludeClosedVersions = url.searchParams.get('exclude_closed_versions') === 'true';
 
     // Ransackフィルタを抽出
     const filters = extractFiltersFromURL(url);
@@ -224,6 +225,30 @@ export const handlers = [
       responseData.entities.tasks = applyRansackFilters(responseData.entities.tasks, filters);
       responseData.entities.tests = applyRansackFilters(responseData.entities.tests, filters);
       responseData.entities.bugs = applyRansackFilters(responseData.entities.bugs, filters);
+    }
+
+    // exclude_closed_versions=true の場合、クローズ済みバージョンを除外
+    if (excludeClosedVersions) {
+      // Versionからclosedを除外
+      Object.keys(responseData.entities.versions).forEach(id => {
+        if (responseData.entities.versions[id].status === 'closed') {
+          delete responseData.entities.versions[id];
+        }
+      });
+
+      // version_order からも削除
+      responseData.grid.version_order = responseData.grid.version_order.filter(
+        (vId: string) => responseData.entities.versions[vId]
+      );
+
+      // grid.index からクローズ済みバージョンのセルを削除
+      Object.keys(responseData.grid.index).forEach(cellKey => {
+        // cellKey = "epicId:featureId:versionId"
+        const versionId = cellKey.split(':')[2];
+        if (versionId !== 'none' && !responseData.entities.versions[versionId]) {
+          delete responseData.grid.index[cellKey];
+        }
+      });
     }
 
     // include_closed=false の場合、closedステータスをフィルタ (既存ロジック維持)

@@ -245,6 +245,9 @@
     display: flex;
     align-items: center;
     min-height: 3.125rem;
+    position: sticky;
+    left: var(--epic-width);
+    z-index: 99;
 
     // D&D対応Feature列
     &.draggable {
