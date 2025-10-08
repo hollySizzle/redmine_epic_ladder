@@ -151,11 +151,14 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function fetchGridData(
   projectId: number | string,
-  options: { include_closed?: boolean; filters?: Record<string, any> } = {}
+  options: { include_closed?: boolean; exclude_closed_versions?: boolean; filters?: Record<string, any> } = {}
 ): Promise<NormalizedAPIResponse> {
   const params = new URLSearchParams();
   if (options.include_closed !== undefined) {
     params.append('include_closed', String(options.include_closed));
+  }
+  if (options.exclude_closed_versions !== undefined) {
+    params.append('exclude_closed_versions', String(options.exclude_closed_versions));
   }
 
   // Ransackフィルタをクエリパラメータに追加

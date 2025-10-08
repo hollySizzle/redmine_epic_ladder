@@ -10,12 +10,13 @@ module EpicGrid
 
     # Epic Gridのデータを正規化APIレスポンス形式で取得
     # @param include_closed [Boolean] closedステータスを含めるか
+    # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか（デフォルト: true）
     # @param filters [Hash] Ransackフィルタパラメータ (例: { status_id_in: [1,2], fixed_version_id_eq: 3 })
     # @return [Hash] MSW NormalizedAPIResponse準拠のHash
-    def epic_grid_data(include_closed: true, filters: {})
+    def epic_grid_data(include_closed: true, exclude_closed_versions: true, filters: {})
       {
-        entities: epic_grid_entities(include_closed: include_closed, filters: filters),
-        grid: epic_grid_index(filters: filters),
+        entities: epic_grid_entities(include_closed: include_closed, exclude_closed_versions: exclude_closed_versions, filters: filters),
+        grid: epic_grid_index(exclude_closed_versions: exclude_closed_versions, filters: filters),
         metadata: epic_grid_metadata
       }
     end
@@ -62,8 +63,9 @@ module EpicGrid
     # ========================================
 
     # グリッドインデックスを構築 (3次元: Epic × Feature × Version)
+    # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
     # @param filters [Hash] Ransackフィルタパラメータ
-    def epic_grid_index(filters: {})
+    def epic_grid_index(exclude_closed_versions: true, filters: {})
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
@@ -83,7 +85,9 @@ module EpicGrid
       epic_ids = []
       feature_order_by_epic = {}
       # Version: 期日なし→先頭ID順、期日あり→期日昇順
-      version_ids = versions
+      version_scope = versions
+      version_scope = version_scope.where.not(status: 'closed') if exclude_closed_versions
+      version_ids = version_scope
                       .order(Arel.sql("CASE WHEN effective_date IS NULL THEN 0 ELSE 1 END, effective_date ASC, id ASC"))
                       .pluck(:id)
                       .map(&:to_s)
@@ -174,8 +178,9 @@ module EpicGrid
 
     # エンティティハッシュを構築
     # @param include_closed [Boolean] closedステータスを含めるか
+    # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
     # @param filters [Hash] Ransackフィルタパラメータ
-    def epic_grid_entities(include_closed: true, filters: {})
+    def epic_grid_entities(include_closed: true, exclude_closed_versions: true, filters: {})
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
@@ -200,7 +205,7 @@ module EpicGrid
         tasks: build_entity_hash_direct(scope, task_tracker, assignee_ids),
         tests: build_entity_hash_direct(scope, test_tracker, assignee_ids),
         bugs: build_entity_hash_direct(scope, bug_tracker, assignee_ids),
-        versions: build_versions_hash,
+        versions: build_versions_hash(exclude_closed_versions: exclude_closed_versions),
         users: build_users_hash
       }
     end
@@ -277,8 +282,12 @@ module EpicGrid
     end
 
     # バージョンのエンティティハッシュを構築
-    def build_versions_hash
-      versions.index_by { |v| v.id.to_s }.transform_values do |version|
+    # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
+    def build_versions_hash(exclude_closed_versions: true)
+      version_scope = versions
+      version_scope = version_scope.where.not(status: 'closed') if exclude_closed_versions
+
+      version_scope.index_by { |v| v.id.to_s }.transform_values do |version|
         {
           id: version.id.to_s,
           name: version.name,

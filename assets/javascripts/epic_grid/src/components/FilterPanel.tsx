@@ -16,6 +16,8 @@ export const FilterPanel: React.FC = () => {
   const filters = useStore(state => state.filters);
   const setFilters = useStore(state => state.setFilters);
   const clearFilters = useStore(state => state.clearFilters);
+  const excludeClosedVersions = useStore(state => state.excludeClosedVersions);
+  const toggleExcludeClosedVersions = useStore(state => state.toggleExcludeClosedVersions);
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -183,6 +185,18 @@ export const FilterPanel: React.FC = () => {
 
       {isExpanded && (
         <div className="filter-dropdown">
+          {/* クローズ済みバージョン非表示トグル */}
+          <div className="filter-section">
+            <label className="filter-checkbox">
+              <input
+                type="checkbox"
+                checked={excludeClosedVersions}
+                onChange={() => toggleExcludeClosedVersions()}
+              />
+              <span>クローズ済みバージョンを非表示</span>
+            </label>
+          </div>
+
           <div className="filter-section">
             <h4>バージョン</h4>
             <div className="filter-options">

@@ -76,6 +76,54 @@ RSpec.describe 'MSW Contract Compliance', type: :controller do
         expect(response_body).to conform_to_msw_contract(:CREATE_VERSION_RESPONSE)
       end
     end
+
+    describe 'GET #show' do
+      let!(:epic_tracker) { create(:epic_tracker) }
+      let!(:version_open) { create(:version, project: project, status: 'open', name: 'v1.0') }
+      let!(:version_closed) { create(:version, project: project, status: 'closed', name: 'v2.0') }
+
+      before do
+        project.trackers << epic_tracker
+      end
+
+      it 'conforms to MSW NORMALIZED_API_RESPONSE contract with exclude_closed_versions=true' do
+        get :show, params: {
+          project_id: project.id,
+          exclude_closed_versions: 'true'
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+
+        # MSW NormalizedAPIResponse形式の検証
+        expect(response_body).to have_key(:entities)
+        expect(response_body).to have_key(:grid)
+        expect(response_body).to have_key(:metadata)
+        expect(response_body).to have_key(:statistics)
+
+        # closedバージョンが除外されていることを確認
+        version_ids = response_body[:entities][:versions].keys.map(&:to_s)
+        expect(version_ids).to include(version_open.id.to_s)
+        expect(version_ids).not_to include(version_closed.id.to_s)
+      end
+
+      it 'conforms to MSW NORMALIZED_API_RESPONSE contract with exclude_closed_versions=false' do
+        get :show, params: {
+          project_id: project.id,
+          exclude_closed_versions: 'false'
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        response_body = JSON.parse(response.body, symbolize_names: true)
+
+        # すべてのバージョンが含まれることを確認
+        version_ids = response_body[:entities][:versions].keys.map(&:to_s)
+        expect(version_ids).to include(version_open.id.to_s)
+        expect(version_ids).to include(version_closed.id.to_s)
+      end
+    end
   end
 
   # CardsControllerのテスト

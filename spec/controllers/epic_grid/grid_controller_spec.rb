@@ -431,6 +431,47 @@ RSpec.describe EpicGrid::GridController, type: :controller do
         expect(response).to have_http_status(:forbidden)
       end
     end
+
+    context 'when exclude_closed_versions parameter is provided' do
+      let!(:version_open) { create(:version, project: project, status: 'open', name: 'v1.0') }
+      let!(:version_closed) { create(:version, project: project, status: 'closed', name: 'v2.0') }
+
+      it 'excludes closed versions by default (exclude_closed_versions=true)' do
+        get :show, params: {
+          project_id: project.id,
+          exclude_closed_versions: 'true'
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        version_ids = json['entities']['versions'].keys
+
+        # openバージョンのみが返されること
+        expect(version_ids).to include(version_open.id.to_s)
+        expect(version_ids).not_to include(version_closed.id.to_s)
+
+        # version_orderにもclosedが含まれないこと
+        expect(json['grid']['version_order']).to include(version_open.id.to_s)
+        expect(json['grid']['version_order']).not_to include(version_closed.id.to_s)
+      end
+
+      it 'includes closed versions when exclude_closed_versions=false' do
+        get :show, params: {
+          project_id: project.id,
+          exclude_closed_versions: 'false'
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        version_ids = json['entities']['versions'].keys
+
+        # すべてのバージョンが返されること
+        expect(version_ids).to include(version_open.id.to_s)
+        expect(version_ids).to include(version_closed.id.to_s)
+      end
+    end
   end
 
   describe 'POST #move_feature' do

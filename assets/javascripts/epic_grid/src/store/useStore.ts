@@ -117,6 +117,10 @@ interface StoreState {
   setFilters: (filters: RansackFilterParams) => void;
   clearFilters: () => void;
 
+  // クローズ済みバージョン非表示（デフォルト: true）
+  excludeClosedVersions: boolean;
+  toggleExcludeClosedVersions: () => void;
+
   // Dirty state管理（未保存変更の追跡）
   isDirty: boolean;
   pendingChanges: PendingChanges;
@@ -267,13 +271,34 @@ export const useStore = create<StoreState>()(
         }
       },
 
+      // クローズ済みバージョン非表示の初期状態
+      excludeClosedVersions: (() => {
+        const saved = localStorage.getItem('kanban_exclude_closed_versions');
+        return saved !== null ? saved === 'true' : true; // デフォルトON（非表示）
+      })(),
+      toggleExcludeClosedVersions: () => {
+        const newValue = !get().excludeClosedVersions;
+        localStorage.setItem('kanban_exclude_closed_versions', String(newValue));
+        set({ excludeClosedVersions: newValue });
+
+        // トグル時に自動的にデータを再取得
+        const projectId = get().projectId;
+        if (projectId) {
+          get().fetchGridData(projectId);
+        }
+      },
+
       // グリッドデータ取得
       fetchGridData: async (projectId: string) => {
         set({ isLoading: true, error: null, projectId });
 
         try {
           const filters = get().filters;
-          const data = await API.fetchGridData(projectId, { filters });
+          const excludeClosedVersions = get().excludeClosedVersions;
+          const data = await API.fetchGridData(projectId, {
+            filters,
+            exclude_closed_versions: excludeClosedVersions
+          });
 
           set({
             entities: data.entities,
