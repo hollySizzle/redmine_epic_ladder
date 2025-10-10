@@ -67,7 +67,7 @@ module Kanban
       end
 
       def validate_hierarchy_change(issue)
-        unless TrackerHierarchy.validate_hierarchy(issue)
+        unless EpicGrid::TrackerHierarchy.validate_hierarchy(issue)
           Rails.logger.warn "階層制約違反: Issue##{issue.id} - #{issue.tracker.name} -> #{issue.parent&.tracker&.name}"
         end
       end
