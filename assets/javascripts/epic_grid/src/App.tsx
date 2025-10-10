@@ -5,12 +5,7 @@ import { FilterPanel } from './components/FilterPanel';
 import { DetailPane } from './components/IssueDetail/DetailPane';
 import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { Legend } from './components/Legend';
-import { AssignedToToggle } from './components/common/AssignedToToggle';
-import { DetailPaneToggle } from './components/common/DetailPaneToggle';
-import { DueDateToggle } from './components/common/DueDateToggle';
-import { SortSelector } from './components/common/SortSelector';
-import { UserStoryChildrenToggle } from './components/common/UserStoryChildrenToggle';
-import { VerticalModeToggle } from './components/common/VerticalModeToggle';
+import { SettingsDropdown } from './components/common/SettingsDropdown';
 import { useStore } from './store/useStore';
 import './styles.scss';
 
@@ -198,54 +193,48 @@ export const App: React.FC = () => {
   const kanbanContent = (
     <>
       <div className="kanban-header">
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {isDirty && (
-            <>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="save-btn"
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isSaving ? 'wait' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                {isSaving ? '保存中...' : `💾 保存 (${changesCount}件)`}
-              </button>
-              <button
-                onClick={handleDiscard}
-                disabled={isSaving}
-                className="discard-btn"
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isSaving ? 'not-allowed' : 'pointer'
-                }}
-              >
-                ✖ 破棄
-              </button>
-            </>
-          )}
-          <FilterPanel />
-          <UserStoryChildrenToggle />
-          <VerticalModeToggle />
-          <AssignedToToggle />
-          <DueDateToggle />
-          <DetailPaneToggle />
-        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {isDirty && (
+              <>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="save-btn"
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isSaving ? 'wait' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {isSaving ? '保存中...' : `💾 保存 (${changesCount}件)`}
+                </button>
+                <button
+                  onClick={handleDiscard}
+                  disabled={isSaving}
+                  className="discard-btn"
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isSaving ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  ✖ 破棄
+                </button>
+              </>
+            )}
+            <FilterPanel />
+          </div>
 
-        {/* ソート設定UI */}
-        <div className="sort-controls">
-          <SortSelector type="epic" label="Epic&Feature並び替え" />
-          <SortSelector type="version" label="Version並び替え" />
+          {/* 表示設定ドロップダウン（右端） */}
+          <SettingsDropdown />
         </div>
       </div>
 
