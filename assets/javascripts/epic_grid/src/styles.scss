@@ -980,6 +980,69 @@
       }
     }
   }
+
+  // ========================================
+  // Sort Controls (ソート設定UI)
+  // ========================================
+  .sort-controls {
+    display: flex;
+    gap: 1rem;
+    padding: var(--space-md);
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius-lg);
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .sort-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &__label {
+      font-size: 0.8125rem; // 13px
+      font-weight: bold;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    &__controls {
+      display: flex;
+      gap: 0.375rem; // 6px
+    }
+
+    &__field,
+    &__direction {
+      padding: 0.375rem 0.5rem; // 6px 8px
+      font-size: 0.8125rem; // 13px
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background-color: #fff;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #999;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: #628db6;
+        box-shadow: 0 0 3px rgba(98, 141, 182, 0.3);
+      }
+    }
+
+    &__field {
+      min-width: 5rem; // 80px
+    }
+
+    &__direction {
+      min-width: 4rem; // 64px
+    }
+  }
 } // #kanban-root
 
 // ========================================

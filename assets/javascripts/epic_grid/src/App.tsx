@@ -8,6 +8,7 @@ import { Legend } from './components/Legend';
 import { AssignedToToggle } from './components/common/AssignedToToggle';
 import { DetailPaneToggle } from './components/common/DetailPaneToggle';
 import { DueDateToggle } from './components/common/DueDateToggle';
+import { SortSelector } from './components/common/SortSelector';
 import { UserStoryChildrenToggle } from './components/common/UserStoryChildrenToggle';
 import { VerticalModeToggle } from './components/common/VerticalModeToggle';
 import { useStore } from './store/useStore';
@@ -239,6 +240,12 @@ export const App: React.FC = () => {
           <AssignedToToggle />
           <DueDateToggle />
           <DetailPaneToggle />
+        </div>
+
+        {/* ソート設定UI */}
+        <div className="sort-controls">
+          <SortSelector type="epic" label="Epic&Feature並び替え" />
+          <SortSelector type="version" label="Version並び替え" />
         </div>
       </div>
 

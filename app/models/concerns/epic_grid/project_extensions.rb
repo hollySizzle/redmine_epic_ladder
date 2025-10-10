@@ -12,11 +12,12 @@ module EpicGrid
     # @param include_closed [Boolean] closedステータスを含めるか
     # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか（デフォルト: true）
     # @param filters [Hash] Ransackフィルタパラメータ (例: { status_id_in: [1,2], fixed_version_id_eq: 3 })
+    # @param sort_options [Hash] ソートオプション (例: { epic: { sort_by: :subject, sort_direction: :asc }, version: { sort_by: :date, sort_direction: :desc } })
     # @return [Hash] MSW NormalizedAPIResponse準拠のHash
-    def epic_grid_data(include_closed: true, exclude_closed_versions: true, filters: {})
+    def epic_grid_data(include_closed: true, exclude_closed_versions: true, filters: {}, sort_options: {})
       {
         entities: epic_grid_entities(include_closed: include_closed, exclude_closed_versions: exclude_closed_versions, filters: filters),
-        grid: epic_grid_index(exclude_closed_versions: exclude_closed_versions, filters: filters),
+        grid: epic_grid_index(exclude_closed_versions: exclude_closed_versions, filters: filters, sort_options: sort_options),
         metadata: epic_grid_metadata
       }
     end
@@ -65,7 +66,8 @@ module EpicGrid
     # グリッドインデックスを構築 (3次元: Epic × Feature × Version)
     # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
     # @param filters [Hash] Ransackフィルタパラメータ
-    def epic_grid_index(exclude_closed_versions: true, filters: {})
+    # @param sort_options [Hash] ソートオプション
+    def epic_grid_index(exclude_closed_versions: true, filters: {}, sort_options: {})
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
@@ -84,21 +86,24 @@ module EpicGrid
       grid_index = {}
       epic_ids = []
       feature_order_by_epic = {}
-      # Version: 期日なし→先頭ID順、期日あり→期日昇順
+
+      # Versionソート句を構築
+      version_sort_clause = build_version_sort_clause(sort_options[:version] || {})
       version_scope = versions
       version_scope = version_scope.where.not(status: 'closed') if exclude_closed_versions
       version_ids = version_scope
-                      .order(Arel.sql("CASE WHEN effective_date IS NULL THEN 0 ELSE 1 END, effective_date ASC, id ASC"))
+                      .order(Arel.sql(version_sort_clause))
                       .pluck(:id)
                       .map(&:to_s)
 
-      # Epic: 開始日なし→先頭ID順、開始日あり→開始日昇順
-      epics.order(Arel.sql("CASE WHEN start_date IS NULL THEN 0 ELSE 1 END, start_date ASC, id ASC")).each do |epic|
+      # Epicソート句を構築（FeatureはEpicと同じソート設定を使用）
+      epic_sort_clause = build_epic_sort_clause(sort_options[:epic] || {})
+      epics.order(Arel.sql(epic_sort_clause)).each do |epic|
         epic_ids << epic.id.to_s
 
-        # Feature: 開始日なし→先頭ID順、開始日あり→開始日昇順
+        # FeatureはEpicと同じソート設定を使用
         epic_features = features.where(parent_id: epic.id)
-                                .order(Arel.sql("CASE WHEN start_date IS NULL THEN 0 ELSE 1 END, start_date ASC, id ASC"))
+                                .order(Arel.sql(epic_sort_clause))
 
         # Epic配下の全Feature IDsを記録
         feature_order_by_epic[epic.id.to_s] = epic_features.pluck(:id).map(&:to_s)
@@ -355,6 +360,50 @@ module EpicGrid
           name: tracker.name,
           description: tracker.description
         }
+      end
+    end
+
+    # Epic/Featureソート句を構築
+    # @param sort_option [Hash] { sort_by: :subject/:id/:date, sort_direction: :asc/:desc }
+    # @return [String] SQL ORDER BY句
+    def build_epic_sort_clause(sort_option)
+      sort_by = sort_option[:sort_by] || :subject
+      sort_direction = sort_option[:sort_direction] || :asc
+      direction = sort_direction.to_s.upcase
+
+      case sort_by.to_sym
+      when :date
+        # start_date でソート、nullは先頭
+        "CASE WHEN start_date IS NULL THEN 0 ELSE 1 END, start_date #{direction}, id ASC"
+      when :id
+        "id #{direction}"
+      when :subject
+        "subject #{direction}, id ASC"
+      else
+        # デフォルトはsubject昇順
+        "subject ASC, id ASC"
+      end
+    end
+
+    # Versionソート句を構築
+    # @param sort_option [Hash] { sort_by: :subject/:id/:date, sort_direction: :asc/:desc }
+    # @return [String] SQL ORDER BY句
+    def build_version_sort_clause(sort_option)
+      sort_by = sort_option[:sort_by] || :date
+      sort_direction = sort_option[:sort_direction] || :asc
+      direction = sort_direction.to_s.upcase
+
+      case sort_by.to_sym
+      when :date
+        # effective_date でソート、nullは先頭
+        "CASE WHEN effective_date IS NULL THEN 0 ELSE 1 END, effective_date #{direction}, id ASC"
+      when :id
+        "id #{direction}"
+      when :subject  # Versionの場合はname
+        "name #{direction}, id ASC"
+      else
+        # デフォルトは日付昇順
+        "CASE WHEN effective_date IS NULL THEN 0 ELSE 1 END, effective_date ASC, id ASC"
       end
     end
   end

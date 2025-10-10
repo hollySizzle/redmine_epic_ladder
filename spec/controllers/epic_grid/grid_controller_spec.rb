@@ -729,4 +729,137 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       expect(json['meta']).to have_key('request_id')
     end
   end
+
+  describe 'GET #show with sort options' do
+    let!(:epic_tracker) { create(:epic_tracker) }
+
+    before do
+      project.trackers << epic_tracker
+    end
+
+    let!(:epic1) { create(:epic, project: project, author: user, subject: 'Zebra Epic', start_date: '2025-03-01') }
+    let!(:epic2) { create(:epic, project: project, author: user, subject: 'Apple Epic', start_date: '2025-01-01') }
+    let!(:epic3) { create(:epic, project: project, author: user, subject: 'Mango Epic', start_date: '2025-02-01') }
+    let!(:version1) { create(:version, project: project, name: 'v3.0', effective_date: '2025-03-15') }
+    let!(:version2) { create(:version, project: project, name: 'v1.0', effective_date: '2025-01-10') }
+    let!(:version3) { create(:version, project: project, name: 'v2.0', effective_date: '2025-02-20') }
+
+    context 'when sorting epics by subject ascending' do
+      it 'returns epics sorted by subject in ascending order' do
+        get :show, params: {
+          project_id: project.id,
+          sort_options: {
+            epic: { sort_by: 'subject', sort_direction: 'asc' }
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        epic_order = json['grid']['epic_order']
+        expect(epic_order).to eq([epic2.id.to_s, epic3.id.to_s, epic1.id.to_s]) # Apple, Mango, Zebra
+      end
+    end
+
+    context 'when sorting epics by subject descending' do
+      it 'returns epics sorted by subject in descending order' do
+        get :show, params: {
+          project_id: project.id,
+          sort_options: {
+            epic: { sort_by: 'subject', sort_direction: 'desc' }
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        epic_order = json['grid']['epic_order']
+        expect(epic_order).to eq([epic1.id.to_s, epic3.id.to_s, epic2.id.to_s]) # Zebra, Mango, Apple
+      end
+    end
+
+    context 'when sorting epics by id ascending' do
+      it 'returns epics sorted by id in ascending order' do
+        get :show, params: {
+          project_id: project.id,
+          sort_options: {
+            epic: { sort_by: 'id', sort_direction: 'asc' }
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        epic_order = json['grid']['epic_order']
+        expect(epic_order).to eq([epic1.id.to_s, epic2.id.to_s, epic3.id.to_s])
+      end
+    end
+
+    context 'when sorting epics by date ascending' do
+      it 'returns epics sorted by start_date in ascending order' do
+        get :show, params: {
+          project_id: project.id,
+          sort_options: {
+            epic: { sort_by: 'date', sort_direction: 'asc' }
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        epic_order = json['grid']['epic_order']
+        expect(epic_order).to eq([epic2.id.to_s, epic3.id.to_s, epic1.id.to_s]) # 2025-01-01, 02-01, 03-01
+      end
+    end
+
+    context 'when sorting versions by name ascending' do
+      it 'returns versions sorted by name in ascending order' do
+        get :show, params: {
+          project_id: project.id,
+          sort_options: {
+            version: { sort_by: 'subject', sort_direction: 'asc' }
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        version_order = json['grid']['version_order']
+        # 'none' は常に最後
+        expect(version_order[0..2]).to eq([version2.id.to_s, version3.id.to_s, version1.id.to_s]) # v1.0, v2.0, v3.0
+        expect(version_order.last).to eq('none')
+      end
+    end
+
+    context 'when sorting versions by date ascending' do
+      it 'returns versions sorted by effective_date in ascending order' do
+        get :show, params: {
+          project_id: project.id,
+          sort_options: {
+            version: { sort_by: 'date', sort_direction: 'asc' }
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        version_order = json['grid']['version_order']
+        # 'none' は常に最後
+        expect(version_order[0..2]).to eq([version2.id.to_s, version3.id.to_s, version1.id.to_s]) # 01-10, 02-20, 03-15
+        expect(version_order.last).to eq('none')
+      end
+    end
+
+    context 'when sorting versions by id descending' do
+      it 'returns versions sorted by id in descending order' do
+        get :show, params: {
+          project_id: project.id,
+          sort_options: {
+            version: { sort_by: 'id', sort_direction: 'desc' }
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        version_order = json['grid']['version_order']
+        # 'none' は常に最後
+        expect(version_order[0..2]).to eq([version3.id.to_s, version2.id.to_s, version1.id.to_s])
+        expect(version_order.last).to eq('none')
+      end
+    end
+  end
 end
