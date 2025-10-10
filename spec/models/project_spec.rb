@@ -344,6 +344,265 @@ RSpec.describe Project, type: :model do
         expect(epic_ids).not_to include(epic_20.id)
       end
     end
+
+    # ========================================
+    # 自然順ソート機能のテスト
+    # ========================================
+
+    context 'with sort_options (自然順ソート)' do
+      # 自然順ソートテスト用のEpicを作成
+      let!(:epic_2) { create(:epic, project: project, author: user, subject: '2_認証機能') }
+      let!(:epic_10) { create(:epic, project: project, author: user, subject: '10_サーバ構築') }
+      let!(:epic_100) { create(:epic, project: project, author: user, subject: '100_ユーザ管理') }
+      let!(:epic_1000) { create(:epic, project: project, author: user, subject: '1000_出力管理') }
+      let!(:epic_text) { create(:epic, project: project, author: user, subject: '会員機能') }
+
+      # Feature用のテストデータ
+      let!(:feature_3) { create(:feature, project: project, parent: epic_10, author: user, subject: '3_ログイン') }
+      let!(:feature_20) { create(:feature, project: project, parent: epic_10, author: user, subject: '20_セッション') }
+      let!(:feature_100) { create(:feature, project: project, parent: epic_10, author: user, subject: '100_権限') }
+
+      describe '#natural_sort_key (private method)' do
+        it 'splits string into numeric and non-numeric parts' do
+          # privateメソッドをテスト
+          key = project.send(:natural_sort_key, '10_サーバ構築')
+          expect(key).to eq([[0, 10], [1, '_サーバ構築']])
+        end
+
+        it 'handles multiple numbers in a string' do
+          key = project.send(:natural_sort_key, '10_test_20_final')
+          expect(key).to eq([[0, 10], [1, '_test_'], [0, 20], [1, '_final']])
+        end
+
+        it 'handles pure text strings' do
+          key = project.send(:natural_sort_key, '会員機能')
+          expect(key).to eq([[1, '会員機能']])
+        end
+
+        it 'handles pure numeric strings' do
+          key = project.send(:natural_sort_key, '12345')
+          expect(key).to eq([[0, 12345]])
+        end
+
+        it 'handles empty strings' do
+          key = project.send(:natural_sort_key, '')
+          expect(key).to eq([])
+        end
+
+        it 'handles nil (converts to string)' do
+          key = project.send(:natural_sort_key, nil)
+          expect(key).to eq([])
+        end
+      end
+
+      describe '#sort_by_natural_order (private method)' do
+        let(:unsorted_epics) { [epic_100, epic_2, epic_1000, epic_10] }
+
+        it 'sorts epics in natural ascending order' do
+          sorted = project.send(:sort_by_natural_order, unsorted_epics, :asc)
+          expect(sorted.map(&:subject)).to eq([
+            '2_認証機能',
+            '10_サーバ構築',
+            '100_ユーザ管理',
+            '1000_出力管理'
+          ])
+        end
+
+        it 'sorts epics in natural descending order' do
+          sorted = project.send(:sort_by_natural_order, unsorted_epics, :desc)
+          expect(sorted.map(&:subject)).to eq([
+            '1000_出力管理',
+            '100_ユーザ管理',
+            '10_サーバ構築',
+            '2_認証機能'
+          ])
+        end
+
+        it 'handles mixed numeric and text subjects' do
+          mixed_epics = [epic_text, epic_10, epic_2]
+          sorted = project.send(:sort_by_natural_order, mixed_epics, :asc)
+
+          # 数値は数値順、テキストは辞書順
+          expect(sorted.map(&:subject)).to eq([
+            '2_認証機能',
+            '10_サーバ構築',
+            '会員機能'
+          ])
+        end
+      end
+
+      describe '#epic_grid_data with sort_options' do
+        context 'Epic sorting by subject (自然順)' do
+          it 'sorts epics in natural ascending order by default' do
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :subject, sort_direction: :asc } }
+            )
+
+            epic_order = grid_data[:grid][:epic_order]
+            epic_subjects = epic_order.map { |id| grid_data[:entities][:epics][id][:subject] }
+
+            # 数値プレフィックスが自然順でソートされる
+            expect(epic_subjects).to include('2_認証機能', '10_サーバ構築', '100_ユーザ管理', '1000_出力管理')
+
+            # 順序確認
+            idx_2 = epic_subjects.index('2_認証機能')
+            idx_10 = epic_subjects.index('10_サーバ構築')
+            idx_100 = epic_subjects.index('100_ユーザ管理')
+            idx_1000 = epic_subjects.index('1000_出力管理')
+
+            expect(idx_2).to be < idx_10
+            expect(idx_10).to be < idx_100
+            expect(idx_100).to be < idx_1000
+          end
+
+          it 'sorts epics in natural descending order' do
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :subject, sort_direction: :desc } }
+            )
+
+            epic_order = grid_data[:grid][:epic_order]
+            epic_subjects = epic_order.map { |id| grid_data[:entities][:epics][id][:subject] }
+
+            # 降順確認
+            idx_1000 = epic_subjects.index('1000_出力管理')
+            idx_100 = epic_subjects.index('100_ユーザ管理')
+            idx_10 = epic_subjects.index('10_サーバ構築')
+            idx_2 = epic_subjects.index('2_認証機能')
+
+            expect(idx_1000).to be < idx_100
+            expect(idx_100).to be < idx_10
+            expect(idx_10).to be < idx_2
+          end
+
+          it 'uses natural sort as default when sort_by is subject' do
+            # sort_direction指定なし（デフォルトはasc）
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :subject } }
+            )
+
+            epic_order = grid_data[:grid][:epic_order]
+            epic_subjects = epic_order.map { |id| grid_data[:entities][:epics][id][:subject] }
+
+            idx_2 = epic_subjects.index('2_認証機能')
+            idx_10 = epic_subjects.index('10_サーバ構築')
+
+            expect(idx_2).to be < idx_10
+          end
+        end
+
+        context 'Feature sorting (Epic配下のFeature)' do
+          it 'sorts features in natural ascending order' do
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :subject, sort_direction: :asc } }
+            )
+
+            # epic_10配下のFeature順序を確認
+            feature_order = grid_data[:grid][:feature_order_by_epic][epic_10.id.to_s]
+            feature_subjects = feature_order.map { |id| grid_data[:entities][:features][id][:subject] }
+
+            expect(feature_subjects).to eq([
+              '3_ログイン',
+              '20_セッション',
+              '100_権限'
+            ])
+          end
+
+          it 'sorts features in natural descending order' do
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :subject, sort_direction: :desc } }
+            )
+
+            feature_order = grid_data[:grid][:feature_order_by_epic][epic_10.id.to_s]
+            feature_subjects = feature_order.map { |id| grid_data[:entities][:features][id][:subject] }
+
+            expect(feature_subjects).to eq([
+              '100_権限',
+              '20_セッション',
+              '3_ログイン'
+            ])
+          end
+        end
+
+        context 'Other sort modes (ID/Date) still work' do
+          it 'sorts by ID when sort_by is :id' do
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :id, sort_direction: :asc } }
+            )
+
+            epic_order = grid_data[:grid][:epic_order]
+            epic_ids = epic_order.map(&:to_i)
+
+            # ID昇順で並んでいることを確認
+            expect(epic_ids).to eq(epic_ids.sort)
+          end
+
+          it 'sorts by ID in descending order' do
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :id, sort_direction: :desc } }
+            )
+
+            epic_order = grid_data[:grid][:epic_order]
+            epic_ids = epic_order.map(&:to_i)
+
+            # ID降順で並んでいることを確認
+            expect(epic_ids).to eq(epic_ids.sort.reverse)
+          end
+
+          it 'sorts by date when sort_by is :date' do
+            # start_dateを設定（update_columnを使用してlock_version問題を回避）
+            epic_2.update_column(:start_date, Date.today)
+            epic_10.update_column(:start_date, Date.today + 1)
+            epic_100.update_column(:start_date, Date.today + 2)
+
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :date, sort_direction: :asc } }
+            )
+
+            epic_order = grid_data[:grid][:epic_order]
+
+            # epic_2 → epic_10 → epic_100 の順序確認
+            expect(epic_order.index(epic_2.id.to_s)).to be < epic_order.index(epic_10.id.to_s)
+            expect(epic_order.index(epic_10.id.to_s)).to be < epic_order.index(epic_100.id.to_s)
+          end
+        end
+
+        context 'Edge cases (エッジケース)' do
+          let!(:epic_same_1) { create(:epic, project: project, author: user, subject: '10_AAA') }
+          let!(:epic_same_2) { create(:epic, project: project, author: user, subject: '10_ZZZ') }
+
+          it 'handles subjects with same numeric prefix (同一数値プレフィックス)' do
+            grid_data = project.epic_grid_data(
+              sort_options: { epic: { sort_by: :subject, sort_direction: :asc } }
+            )
+
+            epic_order = grid_data[:grid][:epic_order]
+            epic_subjects = epic_order.map { |id| grid_data[:entities][:epics][id][:subject] }
+
+            # 同じ数値プレフィックスの場合は後続文字列で辞書順
+            idx_aaa = epic_subjects.index('10_AAA')
+            idx_zzz = epic_subjects.index('10_ZZZ')
+            idx_server = epic_subjects.index('10_サーバ構築')
+
+            expect(idx_aaa).to be < idx_zzz
+            # 日本語は英語より後
+            expect(idx_zzz).to be < idx_server
+          end
+
+          it 'handles empty sort_options (デフォルト動作)' do
+            grid_data = project.epic_grid_data(sort_options: {})
+
+            # デフォルトはsubject昇順
+            epic_order = grid_data[:grid][:epic_order]
+            epic_subjects = epic_order.map { |id| grid_data[:entities][:epics][id][:subject] }
+
+            idx_2 = epic_subjects.index('2_認証機能')
+            idx_10 = epic_subjects.index('10_サーバ構築')
+
+            expect(idx_2).to be < idx_10
+          end
+        end
+      end
+    end
   end
 
 

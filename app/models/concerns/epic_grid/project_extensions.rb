@@ -96,17 +96,38 @@ module EpicGrid
                       .pluck(:id)
                       .map(&:to_s)
 
-      # Epicソート句を構築（FeatureはEpicと同じソート設定を使用）
-      epic_sort_clause = build_epic_sort_clause(sort_options[:epic] || {})
-      epics.order(Arel.sql(epic_sort_clause)).each do |epic|
+      # Epicソート設定を取得
+      epic_sort_by = (sort_options[:epic] || {})[:sort_by] || :subject
+      epic_sort_direction = (sort_options[:epic] || {})[:sort_direction] || :asc
+
+      # Epicの取得とソート
+      if epic_sort_by.to_sym == :subject
+        # :subject の場合はRuby側で自然順ソート（DB非依存）
+        epics_array = sort_by_natural_order(epics.order(:id).to_a, epic_sort_direction)
+      else
+        # :id や :date の場合はSQL側でソート（従来通り）
+        epic_sort_clause = build_epic_sort_clause(sort_options[:epic] || {})
+        epics_array = epics.order(Arel.sql(epic_sort_clause)).to_a
+      end
+
+      # Epic単位でループ
+      epics_array.each do |epic|
         epic_ids << epic.id.to_s
 
-        # FeatureはEpicと同じソート設定を使用
-        epic_features = features.where(parent_id: epic.id)
-                                .order(Arel.sql(epic_sort_clause))
+        # Featureも同様に処理（Epicと同じソート設定）
+        features_for_epic = features.where(parent_id: epic.id)
+
+        if epic_sort_by.to_sym == :subject
+          # :subject の場合はRuby側で自然順ソート
+          epic_features = sort_by_natural_order(features_for_epic.to_a, epic_sort_direction)
+        else
+          # :id や :date の場合はSQL側でソート
+          epic_sort_clause = build_epic_sort_clause(sort_options[:epic] || {})
+          epic_features = features_for_epic.order(Arel.sql(epic_sort_clause)).to_a
+        end
 
         # Epic配下の全Feature IDsを記録
-        feature_order_by_epic[epic.id.to_s] = epic_features.pluck(:id).map(&:to_s)
+        feature_order_by_epic[epic.id.to_s] = epic_features.map { |f| f.id.to_s }
 
         # 各Featureについて、UserStory個別のVersionでグループ化
         epic_features.each do |feature|
@@ -404,6 +425,34 @@ module EpicGrid
       else
         # デフォルトは日付昇順
         "CASE WHEN effective_date IS NULL THEN 0 ELSE 1 END, effective_date ASC, id ASC"
+      end
+    end
+
+    # 自然順ソート（Natural Sort）
+    # 文字列中の数値部分を数値として認識してソート
+    # 例: "2_認証" → "10_サーバ" → "100_ユーザ" → "1000_出力"
+    # @param records [Array<Issue>] ソート対象のIssue配列
+    # @param direction [Symbol] :asc または :desc
+    # @return [Array<Issue>] ソート済みの配列
+    def sort_by_natural_order(records, direction)
+      sorted = records.sort_by { |record| natural_sort_key(record.subject) }
+      direction.to_sym == :desc ? sorted.reverse : sorted
+    end
+
+    # 自然順ソートキー生成
+    # 文字列を数値部分と非数値部分に分解し、数値は整数として扱う
+    # 例: "10_サーバ構築" → [[0, 10], [1, "_サーバ構築"]]
+    #     "100_ユーザ管理" → [[0, 100], [1, "_ユーザ管理"]]
+    # @param str [String] ソート対象の文字列
+    # @return [Array] ソートキー配列（[型フラグ, 値]の配列）
+    #   型フラグ: 0=数値, 1=文字列 (比較時に型が揃うように)
+    def natural_sort_key(str)
+      str.to_s.scan(/(\d+|\D+)/).map do |part|
+        if part[0] =~ /\d/
+          [0, part[0].to_i]  # 数値は [0, 整数値]
+        else
+          [1, part[0]]       # 文字列は [1, 文字列]
+        end
       end
     end
   end
