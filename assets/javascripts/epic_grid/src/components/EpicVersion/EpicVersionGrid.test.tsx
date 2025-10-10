@@ -937,7 +937,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           bugs: {}
         },
         grid: {
-          epic_order: ['e1', 'e2', 'e3'], // 元の順序（ID順）
+          epic_order: ['e2', 'e3', 'e1'], // サーバー側で自然順ソート済み: Apple → Mango → Zebra
           version_order: ['v1'],
           feature_order_by_epic: {
             'e1': [],
@@ -985,7 +985,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           bugs: {}
         },
         grid: {
-          epic_order: ['e1', 'e2', 'e3'],
+          epic_order: ['e2', 'e3', 'e1'], // サーバー側で自然順ソート済み（昇順: Apple → Mango → Zebra）、フロントでreverseされて降順になる
           version_order: ['v1'],
           feature_order_by_epic: {
             'e1': [],
@@ -1106,7 +1106,7 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           epic_order: ['e1'],
           version_order: ['v1'],
           feature_order_by_epic: {
-            'e1': ['f1', 'f2', 'f3'] // 元の順序（ID順）
+            'e1': ['f2', 'f3', 'f1'] // サーバー側で自然順ソート済み: Apple → Mango → Zebra
           },
           index: {
             'e1:f1:v1': [],
@@ -1265,6 +1265,223 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
       expect(versionHeaders[0].textContent).toContain('v2.0'); // 2025-01-10
       expect(versionHeaders[1].textContent).toContain('v1.0'); // 2025-02-15
       expect(versionHeaders[2].textContent).toContain('(未設定)'); // 'none'
+    });
+
+    describe('Natural sort with numeric prefixes (Real-world use cases)', () => {
+      it('should sort epics with numeric prefixes in natural order (ascending)', () => {
+        const mockData: NormalizedAPIResponse = {
+          entities: {
+            epics: {
+              'e1': { id: 'e1', subject: '10_サーバ構築', description: '', status: 'open' },
+              'e2': { id: 'e2', subject: '2_認証機能', description: '', status: 'open' },
+              'e3': { id: 'e3', subject: '100_ユーザ管理', description: '', status: 'open' },
+              'e4': { id: 'e4', subject: '1000_出力管理', description: '', status: 'open' }
+            },
+            versions: {
+              'v1': { id: 'v1', name: 'Version 1', status: 'open' }
+            },
+            features: {},
+            user_stories: {},
+            tasks: {},
+            tests: {},
+            bugs: {}
+          },
+          grid: {
+            epic_order: ['e2', 'e1', 'e3', 'e4'], // サーバー側で自然順ソート済み: 2 → 10 → 100 → 1000
+            version_order: ['v1'],
+            feature_order_by_epic: {
+              'e1': [], 'e2': [], 'e3': [], 'e4': []
+            },
+            index: {}
+          }
+        };
+
+        useStore.setState({
+          ...mockData,
+          isLoading: false,
+          error: null,
+          epicSortOptions: { sort_by: 'subject', sort_direction: 'asc' }
+        });
+
+        const { container } = render(<EpicVersionGrid />);
+
+        const epicCells = container.querySelectorAll('.epic-cell');
+        expect(epicCells.length).toBe(4);
+
+        // 自然順ソート: 2 → 10 → 100 → 1000
+        expect(epicCells[0].textContent).toContain('2_認証機能');
+        expect(epicCells[1].textContent).toContain('10_サーバ構築');
+        expect(epicCells[2].textContent).toContain('100_ユーザ管理');
+        expect(epicCells[3].textContent).toContain('1000_出力管理');
+      });
+
+      it('should sort epics with numeric prefixes in natural order (descending)', () => {
+        const mockData: NormalizedAPIResponse = {
+          entities: {
+            epics: {
+              'e1': { id: 'e1', subject: '10_サーバ構築', description: '', status: 'open' },
+              'e2': { id: 'e2', subject: '2_認証機能', description: '', status: 'open' },
+              'e3': { id: 'e3', subject: '100_ユーザ管理', description: '', status: 'open' },
+              'e4': { id: 'e4', subject: '1000_出力管理', description: '', status: 'open' }
+            },
+            versions: {
+              'v1': { id: 'v1', name: 'Version 1', status: 'open' }
+            },
+            features: {},
+            user_stories: {},
+            tasks: {},
+            tests: {},
+            bugs: {}
+          },
+          grid: {
+            epic_order: ['e2', 'e1', 'e3', 'e4'], // サーバー側は昇順（2→10→100→1000）、フロントでreverseして降順に
+            version_order: ['v1'],
+            feature_order_by_epic: {
+              'e1': [], 'e2': [], 'e3': [], 'e4': []
+            },
+            index: {}
+          }
+        };
+
+        useStore.setState({
+          ...mockData,
+          isLoading: false,
+          error: null,
+          epicSortOptions: { sort_by: 'subject', sort_direction: 'desc' }
+        });
+
+        const { container } = render(<EpicVersionGrid />);
+
+        const epicCells = container.querySelectorAll('.epic-cell');
+
+        // 自然順ソート降順: 1000 → 100 → 10 → 2
+        expect(epicCells[0].textContent).toContain('1000_出力管理');
+        expect(epicCells[1].textContent).toContain('100_ユーザ管理');
+        expect(epicCells[2].textContent).toContain('10_サーバ構築');
+        expect(epicCells[3].textContent).toContain('2_認証機能');
+      });
+
+      it('should sort features with numeric prefixes in natural order', () => {
+        const mockData: NormalizedAPIResponse = {
+          entities: {
+            epics: {
+              'e1': { id: 'e1', subject: 'Epic 1', description: '', status: 'open' }
+            },
+            versions: {
+              'v1': { id: 'v1', name: 'Version 1', status: 'open' }
+            },
+            features: {
+              'f1': {
+                id: 'f1',
+                title: '10_基本機能',
+                subject: '10_基本機能',
+                parent_epic_id: 'e1',
+                fixed_version_id: null,
+                user_story_ids: [],
+                status: 'open'
+              },
+              'f2': {
+                id: 'f2',
+                title: '2_ログイン',
+                subject: '2_ログイン',
+                parent_epic_id: 'e1',
+                fixed_version_id: null,
+                user_story_ids: [],
+                status: 'open'
+              },
+              'f3': {
+                id: 'f3',
+                title: '100_権限管理',
+                subject: '100_権限管理',
+                parent_epic_id: 'e1',
+                fixed_version_id: null,
+                user_story_ids: [],
+                status: 'open'
+              }
+            },
+            user_stories: {},
+            tasks: {},
+            tests: {},
+            bugs: {}
+          },
+          grid: {
+            epic_order: ['e1'],
+            version_order: ['v1'],
+            feature_order_by_epic: {
+              'e1': ['f2', 'f1', 'f3'] // サーバー側で自然順ソート済み: 2 → 10 → 100
+            },
+            index: {
+              'e1:f1:v1': [],
+              'e1:f2:v1': [],
+              'e1:f3:v1': []
+            }
+          }
+        };
+
+        useStore.setState({
+          ...mockData,
+          isLoading: false,
+          error: null,
+          epicSortOptions: { sort_by: 'subject', sort_direction: 'asc' }
+        });
+
+        const { container } = render(<EpicVersionGrid />);
+
+        const featureCells = container.querySelectorAll('.feature-cell');
+        expect(featureCells.length).toBe(3);
+
+        // Feature も自然順ソート: 2 → 10 → 100
+        expect(featureCells[0].textContent).toBe('2_ログイン');
+        expect(featureCells[1].textContent).toBe('10_基本機能');
+        expect(featureCells[2].textContent).toBe('100_権限管理');
+      });
+
+      it('should handle mixed numeric and non-numeric epics in natural order', () => {
+        const mockData: NormalizedAPIResponse = {
+          entities: {
+            epics: {
+              'e1': { id: 'e1', subject: '10_サーバ構築', description: '', status: 'open' },
+              'e2': { id: 'e2', subject: 'AAA_プロジェクト', description: '', status: 'open' },
+              'e3': { id: 'e3', subject: '2_認証機能', description: '', status: 'open' },
+              'e4': { id: 'e4', subject: 'ZZZ_テスト', description: '', status: 'open' }
+            },
+            versions: {
+              'v1': { id: 'v1', name: 'Version 1', status: 'open' }
+            },
+            features: {},
+            user_stories: {},
+            tasks: {},
+            tests: {},
+            bugs: {}
+          },
+          grid: {
+            epic_order: ['e3', 'e1', 'e2', 'e4'], // サーバー側で自然順ソート済み: 2 → 10 → AAA → ZZZ（数値が文字列より優先）
+            version_order: ['v1'],
+            feature_order_by_epic: {
+              'e1': [], 'e2': [], 'e3': [], 'e4': []
+            },
+            index: {}
+          }
+        };
+
+        useStore.setState({
+          ...mockData,
+          isLoading: false,
+          error: null,
+          epicSortOptions: { sort_by: 'subject', sort_direction: 'asc' }
+        });
+
+        const { container } = render(<EpicVersionGrid />);
+
+        const epicCells = container.querySelectorAll('.epic-cell');
+        expect(epicCells.length).toBe(4);
+
+        // 数値プレフィックスが文字列より優先: 2 → 10 → AAA → ZZZ
+        expect(epicCells[0].textContent).toContain('2_認証機能');
+        expect(epicCells[1].textContent).toContain('10_サーバ構築');
+        expect(epicCells[2].textContent).toContain('AAA_プロジェクト');
+        expect(epicCells[3].textContent).toContain('ZZZ_テスト');
+      });
     });
   });
 });

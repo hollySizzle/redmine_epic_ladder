@@ -89,12 +89,19 @@ export const EpicVersionGrid: React.FC = () => {
   // Epic順序をソート設定に基づいて動的にソート
   const sortedEpicOrder = useMemo(() => {
     const epicIds = [...grid.epic_order];
+    const { sort_by, sort_direction } = epicSortOptions;
+
+    // subject ソートの場合はサーバー側の順序をそのまま使用（自然順ソート済み）
+    if (sort_by === 'subject') {
+      return sort_direction === 'asc' ? epicIds : [...epicIds].reverse();
+    }
+
+    // id, date の場合はフロントエンドでソート
     return epicIds.sort((aId, bId) => {
       const epicA = epics[aId];
       const epicB = epics[bId];
       if (!epicA || !epicB) return 0;
 
-      const { sort_by, sort_direction } = epicSortOptions;
       let comparison = 0;
 
       if (sort_by === 'date') {
@@ -104,8 +111,6 @@ export const EpicVersionGrid: React.FC = () => {
         comparison = dateA - dateB;
       } else if (sort_by === 'id') {
         comparison = parseInt(aId) - parseInt(bId);
-      } else if (sort_by === 'subject') {
-        comparison = epicA.subject.localeCompare(epicB.subject);
       }
 
       return sort_direction === 'asc' ? comparison : -comparison;
@@ -116,12 +121,19 @@ export const EpicVersionGrid: React.FC = () => {
   const getSortedFeatureIds = useMemo(() => {
     return (epicId: string): string[] => {
       const featureIds = grid.feature_order_by_epic[epicId] || [];
+      const { sort_by, sort_direction } = epicSortOptions;
+
+      // subject ソートの場合はサーバー側の順序をそのまま使用（自然順ソート済み）
+      if (sort_by === 'subject') {
+        return sort_direction === 'asc' ? featureIds : [...featureIds].reverse();
+      }
+
+      // id, date の場合はフロントエンドでソート
       const sorted = [...featureIds].sort((aId, bId) => {
         const featureA = features[aId];
         const featureB = features[bId];
         if (!featureA || !featureB) return 0;
 
-        const { sort_by, sort_direction } = epicSortOptions;
         let comparison = 0;
 
         if (sort_by === 'date') {
@@ -131,8 +143,6 @@ export const EpicVersionGrid: React.FC = () => {
           comparison = dateA - dateB;
         } else if (sort_by === 'id') {
           comparison = parseInt(aId) - parseInt(bId);
-        } else if (sort_by === 'subject') {
-          comparison = featureA.title.localeCompare(featureB.title);
         }
 
         return sort_direction === 'asc' ? comparison : -comparison;

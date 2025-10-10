@@ -37,6 +37,7 @@ import type {
 } from '../types/normalized-api';
 import type { BatchUpdateRequest, BatchUpdateResponse } from '../api/kanban-api';
 import { normalizedMockData } from './normalized-mock-data';
+import { naturalSortKey, compareNaturalSort } from '../utils/naturalSort';
 
 // モックデータのディープコピー (状態を保持するため)
 let currentData: NormalizedAPIResponse = JSON.parse(JSON.stringify(normalizedMockData));
@@ -52,6 +53,19 @@ let lastUpdateTimestamp = new Date().toISOString();
  * Ransackフィルタを適用してエンティティをフィルタリング
  * 基本的なフィルタのみ対応（_in, _eq, _null）
  */
+
+/**
+ * URLクエリパラメータからソートオプションを抽出
+ */
+function extractSortOptionsFromURL(url: URL): { epic_sort_by?: string; epic_sort_direction?: string; version_sort_by?: string; version_sort_direction?: string } {
+  return {
+    epic_sort_by: url.searchParams.get('sort_options[epic][sort_by]') || undefined,
+    epic_sort_direction: url.searchParams.get('sort_options[epic][sort_direction]') || undefined,
+    version_sort_by: url.searchParams.get('sort_options[version][sort_by]') || undefined,
+    version_sort_direction: url.searchParams.get('sort_options[version][sort_direction]') || undefined
+  };
+}
+
 function applyRansackFilters<T extends {
   fixed_version_id?: string | null;
   status?: string;
@@ -211,6 +225,9 @@ export const handlers = [
     // Ransackフィルタを抽出
     const filters = extractFiltersFromURL(url);
 
+    // ソートオプションを抽出
+    const sortOptions = extractSortOptionsFromURL(url);
+
     // リアルなAPI遅延をシミュレート (開発時は削除可能)
     await delay(300);
 
@@ -302,6 +319,57 @@ export const handlers = [
         responseData.grid.index[key] = responseData.grid.index[key].filter(
           (userStoryId: string) => responseData.entities.user_stories[userStoryId]
         );
+      });
+    }
+
+    // ========================================
+    // ソート処理（自然順ソート）
+    // ========================================
+    if (sortOptions.epic_sort_by === 'subject') {
+      // Epic順序を自然順ソート
+      const epicOrder = responseData.grid.epic_order.filter(
+        (epicId: string) => responseData.entities.epics[epicId]
+      );
+
+      const sortedEpics = epicOrder.sort((aId, bId) => {
+        const epicA = responseData.entities.epics[aId];
+        const epicB = responseData.entities.epics[bId];
+        if (!epicA || !epicB) return 0;
+
+        const keyA = naturalSortKey(epicA.subject);
+        const keyB = naturalSortKey(epicB.subject);
+        return compareNaturalSort(keyA, keyB);
+      });
+
+      // 降順の場合は逆順
+      if (sortOptions.epic_sort_direction === 'desc') {
+        sortedEpics.reverse();
+      }
+
+      responseData.grid.epic_order = sortedEpics;
+
+      // Feature順序も同様に自然順ソート（Epic内のFeature）
+      Object.keys(responseData.grid.feature_order_by_epic).forEach(epicId => {
+        const featureIds = responseData.grid.feature_order_by_epic[epicId].filter(
+          (featureId: string) => responseData.entities.features[featureId]
+        );
+
+        const sortedFeatures = featureIds.sort((aId, bId) => {
+          const featureA = responseData.entities.features[aId];
+          const featureB = responseData.entities.features[bId];
+          if (!featureA || !featureB) return 0;
+
+          const keyA = naturalSortKey(featureA.title);
+          const keyB = naturalSortKey(featureB.title);
+          return compareNaturalSort(keyA, keyB);
+        });
+
+        // 降順の場合は逆順
+        if (sortOptions.epic_sort_direction === 'desc') {
+          sortedFeatures.reverse();
+        }
+
+        responseData.grid.feature_order_by_epic[epicId] = sortedFeatures;
       });
     }
 
