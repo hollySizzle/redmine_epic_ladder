@@ -265,7 +265,9 @@
       "Bash(RAILS_ENV=development bundle exec rake assets:precompile)",
       "Bash(RAILS_ENV=production bundle exec rake assets:precompile)",
       "Bash(chown:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git submodule:*)"
     ],
     "deny": [],
     "ask": [],

@@ -5,7 +5,6 @@ assets/javascripts/epic_grid/node_modules/
 
 # Build outputs
 assets/javascripts/epic_grid/dist/
-assets/build/
 
 # Test artifacts (all in Redmine's tmp/)
 # Note: tmp/ is already ignored by Redmine core .gitignore
