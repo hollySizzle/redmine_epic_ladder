@@ -44,18 +44,18 @@
   --space-lg: 1.25rem;
   --space-xl: 0.9375rem;
 
-  // Text overflow behavior (デフォルト: 省略記号"...")
-  --title-white-space: nowrap;
-  --title-text-overflow: ellipsis;
-  --title-word-break: normal;
-}
-
-// Text overflow behavior: 折り返しモード
-// 使い方: #kanban-root に .text-wrap-mode クラスを追加
-#kanban-root.text-wrap-mode {
+  // Text overflow behavior (デフォルト: 折り返し表示)
   --title-white-space: normal;
   --title-text-overflow: clip;
   --title-word-break: break-word;
+}
+
+// Text overflow behavior: 省略記号モード
+// 使い方: #kanban-root に .text-ellipsis-mode クラスを追加
+#kanban-root.text-ellipsis-mode {
+  --title-white-space: nowrap;
+  --title-text-overflow: ellipsis;
+  --title-word-break: normal;
 }
 
 // ========================================
