@@ -198,6 +198,176 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       end
     end
 
+    context 'when filtering by fixed_version_effective_date (Ransack association search)' do
+      let!(:epic_tracker) { create(:epic_tracker) }
+      let!(:feature_tracker) { create(:feature_tracker) }
+
+      before do
+        project.trackers << [epic_tracker, feature_tracker]
+      end
+
+      # バージョン期日が 2025-01-15, 2025-02-15, 2025-03-15 のバージョンを作成
+      let!(:version_jan) { create(:version, project: project, name: 'January Release', effective_date: '2025-01-15') }
+      let!(:version_feb) { create(:version, project: project, name: 'February Release', effective_date: '2025-02-15') }
+      let!(:version_mar) { create(:version, project: project, name: 'March Release', effective_date: '2025-03-15') }
+      let!(:version_no_date) { create(:version, project: project, name: 'No Date Version', effective_date: nil) }
+
+      # 各バージョンに紐づくEpicとFeatureを作成
+      let!(:epic_jan) { create(:epic, project: project, author: user, subject: 'Epic Jan', fixed_version: version_jan) }
+      let!(:feature_jan) { create(:feature, project: project, parent: epic_jan, author: user, subject: 'Feature Jan', fixed_version: version_jan) }
+
+      let!(:epic_feb) { create(:epic, project: project, author: user, subject: 'Epic Feb', fixed_version: version_feb) }
+      let!(:feature_feb) { create(:feature, project: project, parent: epic_feb, author: user, subject: 'Feature Feb', fixed_version: version_feb) }
+
+      let!(:epic_mar) { create(:epic, project: project, author: user, subject: 'Epic Mar', fixed_version: version_mar) }
+      let!(:feature_mar) { create(:feature, project: project, parent: epic_mar, author: user, subject: 'Feature Mar', fixed_version: version_mar) }
+
+      let!(:epic_no_version) { create(:epic, project: project, author: user, subject: 'Epic No Version', fixed_version: nil) }
+      let!(:epic_no_date) { create(:epic, project: project, author: user, subject: 'Epic No Date', fixed_version: version_no_date) }
+
+      it 'filters issues by fixed_version_effective_date_gteq (期日が指定日以降)' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { fixed_version_effective_date_gteq: '2025-02-01' }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+        feature_ids = json['entities']['features'].keys
+        version_ids = json['entities']['versions'].keys
+
+        # Epic/Featureは全て表示される（Versionフィルタの影響を受けない）
+        expect(epic_ids).to include(epic_jan.id.to_s)
+        expect(epic_ids).to include(epic_feb.id.to_s)
+        expect(epic_ids).to include(epic_mar.id.to_s)
+        expect(epic_ids).to include(epic_no_version.id.to_s)
+        expect(epic_ids).to include(epic_no_date.id.to_s)
+
+        expect(feature_ids).to include(feature_jan.id.to_s)
+        expect(feature_ids).to include(feature_feb.id.to_s)
+        expect(feature_ids).to include(feature_mar.id.to_s)
+
+        # Versionは期日でフィルタされること（2月、3月のみ）
+        expect(version_ids).to include(version_feb.id.to_s)
+        expect(version_ids).to include(version_mar.id.to_s)
+        expect(version_ids).not_to include(version_jan.id.to_s)
+        expect(version_ids).not_to include(version_no_date.id.to_s)
+      end
+
+      it 'filters issues by fixed_version_effective_date_lteq (期日が指定日以前)' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { fixed_version_effective_date_lteq: '2025-02-20' }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+        feature_ids = json['entities']['features'].keys
+        version_ids = json['entities']['versions'].keys
+
+        # Epic/Featureは全て表示される（Versionフィルタの影響を受けない）
+        expect(epic_ids).to include(epic_jan.id.to_s)
+        expect(epic_ids).to include(epic_feb.id.to_s)
+        expect(epic_ids).to include(epic_mar.id.to_s)
+        expect(epic_ids).to include(epic_no_version.id.to_s)
+        expect(epic_ids).to include(epic_no_date.id.to_s)
+
+        expect(feature_ids).to include(feature_jan.id.to_s)
+        expect(feature_ids).to include(feature_feb.id.to_s)
+        expect(feature_ids).to include(feature_mar.id.to_s)
+
+        # Versionは期日でフィルタされること（1月、2月のみ）
+        expect(version_ids).to include(version_jan.id.to_s)
+        expect(version_ids).to include(version_feb.id.to_s)
+        expect(version_ids).not_to include(version_mar.id.to_s)
+        expect(version_ids).not_to include(version_no_date.id.to_s)
+      end
+
+      it 'filters issues by date range (gteq and lteq combined)' do
+        get :show, params: {
+          project_id: project.id,
+          filters: {
+            fixed_version_effective_date_gteq: '2025-01-20',
+            fixed_version_effective_date_lteq: '2025-02-28'
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+        feature_ids = json['entities']['features'].keys
+        version_ids = json['entities']['versions'].keys
+
+        # Epic/Featureは全て表示される（Versionフィルタの影響を受けない）
+        expect(epic_ids).to include(epic_jan.id.to_s)
+        expect(epic_ids).to include(epic_feb.id.to_s)
+        expect(epic_ids).to include(epic_mar.id.to_s)
+        expect(epic_ids).to include(epic_no_version.id.to_s)
+        expect(epic_ids).to include(epic_no_date.id.to_s)
+
+        expect(feature_ids).to include(feature_jan.id.to_s)
+        expect(feature_ids).to include(feature_feb.id.to_s)
+        expect(feature_ids).to include(feature_mar.id.to_s)
+
+        # Versionは期日範囲でフィルタされること（2月のみ）
+        expect(version_ids).to include(version_feb.id.to_s)
+        expect(version_ids).not_to include(version_jan.id.to_s)
+        expect(version_ids).not_to include(version_mar.id.to_s)
+        expect(version_ids).not_to include(version_no_date.id.to_s)
+      end
+
+      it 'excludes versions without effective_date when date filter is active' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { fixed_version_effective_date_gteq: '2025-01-01' }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+        version_ids = json['entities']['versions'].keys
+
+        # Epic/Featureは全て表示される（Versionなしも含む）
+        expect(epic_ids).to include(epic_no_version.id.to_s)
+        expect(epic_ids).to include(epic_jan.id.to_s)
+        expect(epic_ids).to include(epic_feb.id.to_s)
+        expect(epic_ids).to include(epic_mar.id.to_s)
+
+        # 期日なしバージョンは除外されること
+        expect(version_ids).not_to include(version_no_date.id.to_s)
+
+        # 期日ありバージョンは含まれること
+        expect(version_ids).to include(version_jan.id.to_s)
+        expect(version_ids).to include(version_feb.id.to_s)
+        expect(version_ids).to include(version_mar.id.to_s)
+      end
+
+      it 'epics are always displayed regardless of version filter' do
+        get :show, params: {
+          project_id: project.id,
+          filters: { fixed_version_effective_date_gteq: '2025-02-01' }
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        epic_ids = json['entities']['epics'].keys
+
+        # 全てのEpicが表示されること（Versionフィルタに関係なく）
+        expect(epic_ids).to include(epic_jan.id.to_s)
+        expect(epic_ids).to include(epic_feb.id.to_s)
+        expect(epic_ids).to include(epic_mar.id.to_s)
+        expect(epic_ids).to include(epic_no_version.id.to_s)
+        expect(epic_ids).to include(epic_no_date.id.to_s)
+      end
+    end
+
     context 'when filtering by parent_id_in (Epic filter)' do
       let!(:epic_tracker) { create(:epic_tracker) }
       let!(:feature_tracker) { create(:feature_tracker) }

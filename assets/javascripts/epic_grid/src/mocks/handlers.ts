@@ -152,6 +152,32 @@ function applyRansackFilters<T extends {
       }
     }
 
+    // バージョン期日フィルタ (fixed_version_effective_date_gteq/lteq)
+    // Issueのfixed_version_idからVersionエンティティを参照して期日をチェック
+    if (versions && entity.fixed_version_id) {
+      const version = versions[entity.fixed_version_id];
+      if (version && version.effective_date) {
+        // 期日がgteq（〜以降）でフィルタ
+        if (filters.fixed_version_effective_date_gteq) {
+          if (version.effective_date < filters.fixed_version_effective_date_gteq) {
+            matches = false;
+          }
+        }
+        // 期日がlteq（〜以前）でフィルタ
+        if (filters.fixed_version_effective_date_lteq) {
+          if (version.effective_date > filters.fixed_version_effective_date_lteq) {
+            matches = false;
+          }
+        }
+      } else if (filters.fixed_version_effective_date_gteq || filters.fixed_version_effective_date_lteq) {
+        // Versionが存在しない、またはeffective_dateがnullの場合は除外
+        matches = false;
+      }
+    } else if (filters.fixed_version_effective_date_gteq || filters.fixed_version_effective_date_lteq) {
+      // fixed_version_idがnullの場合は期日フィルタで除外
+      matches = false;
+    }
+
     if (matches) {
       filtered[id] = entity;
     }
@@ -207,6 +233,17 @@ function extractFiltersFromURL(url: URL): RansackFilterParams {
     filters.assigned_to_id_null = assigneeNull === 'true';
   }
 
+  // バージョン期日フィルタ
+  const effectiveDateFrom = url.searchParams.get('fixed_version_effective_date_gteq');
+  if (effectiveDateFrom) {
+    filters.fixed_version_effective_date_gteq = effectiveDateFrom;
+  }
+
+  const effectiveDateTo = url.searchParams.get('fixed_version_effective_date_lteq');
+  if (effectiveDateTo) {
+    filters.fixed_version_effective_date_lteq = effectiveDateTo;
+  }
+
   return filters;
 }
 
@@ -234,14 +271,14 @@ export const handlers = [
     // データをディープコピー
     let responseData = JSON.parse(JSON.stringify(currentData));
 
-    // Ransackフィルタを適用
+    // Ransackフィルタを適用（Versionエンティティを渡して期日フィルタを有効化）
     if (Object.keys(filters).length > 0) {
-      responseData.entities.epics = applyRansackFilters(responseData.entities.epics, filters);
-      responseData.entities.features = applyRansackFilters(responseData.entities.features, filters);
-      responseData.entities.user_stories = applyRansackFilters(responseData.entities.user_stories, filters);
-      responseData.entities.tasks = applyRansackFilters(responseData.entities.tasks, filters);
-      responseData.entities.tests = applyRansackFilters(responseData.entities.tests, filters);
-      responseData.entities.bugs = applyRansackFilters(responseData.entities.bugs, filters);
+      responseData.entities.epics = applyRansackFilters(responseData.entities.epics, filters, responseData.entities.versions);
+      responseData.entities.features = applyRansackFilters(responseData.entities.features, filters, responseData.entities.versions);
+      responseData.entities.user_stories = applyRansackFilters(responseData.entities.user_stories, filters, responseData.entities.versions);
+      responseData.entities.tasks = applyRansackFilters(responseData.entities.tasks, filters, responseData.entities.versions);
+      responseData.entities.tests = applyRansackFilters(responseData.entities.tests, filters, responseData.entities.versions);
+      responseData.entities.bugs = applyRansackFilters(responseData.entities.bugs, filters, responseData.entities.versions);
     }
 
     // exclude_closed_versions=true の場合、クローズ済みバージョンを除外

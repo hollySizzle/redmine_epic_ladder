@@ -4,12 +4,14 @@
 require_relative 'app/models/concerns/epic_grid/issue_extensions'
 require_relative 'app/models/concerns/epic_grid/project_extensions'
 require_relative 'app/models/concerns/epic_grid/ransackable_config'
+require_relative 'app/models/concerns/epic_grid/version_extensions'
 
 # Redmine コアモデルに即座にinclude
 ActiveSupport.on_load(:active_record) do
   Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
   Issue.include(EpicGrid::RansackableConfig) unless Issue.included_modules.include?(EpicGrid::RansackableConfig)
   Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
+  Version.include(EpicGrid::VersionExtensions) unless Version.included_modules.include?(EpicGrid::VersionExtensions)
   Rails.logger.info '[EpicGrid] ✅ Model extensions loaded in init.rb'
 end
 
@@ -18,6 +20,7 @@ Rails.application.config.to_prepare do
   Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
   Issue.include(EpicGrid::RansackableConfig) unless Issue.included_modules.include?(EpicGrid::RansackableConfig)
   Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
+  Version.include(EpicGrid::VersionExtensions) unless Version.included_modules.include?(EpicGrid::VersionExtensions)
   Rails.logger.info '[EpicGrid] ✅ Model extensions reloaded in to_prepare'
 end
 

@@ -408,6 +408,10 @@ export interface RansackFilterParams {
   due_date_gteq?: string;
   due_date_lteq?: string;
 
+  // バージョン期日フィルタ（Ransack関連検索）
+  fixed_version_effective_date_gteq?: string;  // YYYY-MM-DD (期日がこの日以降のバージョン)
+  fixed_version_effective_date_lteq?: string;  // YYYY-MM-DD (期日がこの日以前のバージョン)
+
   // 進捗フィルタ
   done_ratio_gteq?: number;
   done_ratio_lteq?: number;

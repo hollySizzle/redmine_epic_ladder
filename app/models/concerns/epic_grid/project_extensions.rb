@@ -11,13 +11,27 @@ module EpicGrid
     # Epic Gridのデータを正規化APIレスポンス形式で取得
     # @param include_closed [Boolean] closedステータスを含めるか
     # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか（デフォルト: true）
-    # @param filters [Hash] Ransackフィルタパラメータ (例: { status_id_in: [1,2], fixed_version_id_eq: 3 })
+    # @param filters [Hash] Ransackフィルタパラメータ (例: { status_id_in: [1,2], fixed_version_id_eq: 3, fixed_version_effective_date_gteq: '2025-01-01' })
     # @param sort_options [Hash] ソートオプション (例: { epic: { sort_by: :subject, sort_direction: :asc }, version: { sort_by: :date, sort_direction: :desc } })
     # @return [Hash] MSW NormalizedAPIResponse準拠のHash
     def epic_grid_data(include_closed: true, exclude_closed_versions: true, filters: {}, sort_options: {})
+      # Versionフィルタを分離（Versionエンティティに直接適用）
+      version_filters = filters.slice(:fixed_version_effective_date_gteq, :fixed_version_effective_date_lteq)
+      issue_filters = filters.except(:fixed_version_effective_date_gteq, :fixed_version_effective_date_lteq)
+
       {
-        entities: epic_grid_entities(include_closed: include_closed, exclude_closed_versions: exclude_closed_versions, filters: filters),
-        grid: epic_grid_index(exclude_closed_versions: exclude_closed_versions, filters: filters, sort_options: sort_options),
+        entities: epic_grid_entities(
+          include_closed: include_closed,
+          exclude_closed_versions: exclude_closed_versions,
+          filters: issue_filters,
+          version_filters: version_filters
+        ),
+        grid: epic_grid_index(
+          exclude_closed_versions: exclude_closed_versions,
+          filters: issue_filters,
+          version_filters: version_filters,
+          sort_options: sort_options
+        ),
         metadata: epic_grid_metadata
       }
     end
@@ -65,9 +79,10 @@ module EpicGrid
 
     # グリッドインデックスを構築 (3次元: Epic × Feature × Version)
     # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
-    # @param filters [Hash] Ransackフィルタパラメータ
+    # @param filters [Hash] Issueに対するRansackフィルタパラメータ
+    # @param version_filters [Hash] Versionに対するフィルタパラメータ
     # @param sort_options [Hash] ソートオプション
-    def epic_grid_index(exclude_closed_versions: true, filters: {}, sort_options: {})
+    def epic_grid_index(exclude_closed_versions: true, filters: {}, version_filters: {}, sort_options: {})
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
@@ -76,21 +91,40 @@ module EpicGrid
       assignee_ids = filters[:assigned_to_id_in]&.map(&:to_i)
       filters_without_assignee = filters.except(:assigned_to_id_in)
 
-      base_scope = apply_ransack_filters(issues, filters_without_assignee)
+      # ベーススコープ（Versionフィルタなし）- Epic/Feature用
+      base_scope_without_version = apply_ransack_filters(issues, filters_without_assignee)
 
-      # Epic/Feature/UserStoryは階層的フィルタを適用
-      epics = apply_hierarchical_filter(base_scope, epic_tracker, assignee_ids)
-      features = apply_hierarchical_filter(base_scope, feature_tracker, assignee_ids)
-      user_stories = apply_hierarchical_filter(base_scope, user_story_tracker, assignee_ids)
+      # Versionフィルタ適用スコープ（UserStory用）
+      base_scope_with_version = base_scope_without_version
+      if version_filters.present? && version_filters.any?
+        filtered_version_ids = get_filtered_version_ids(exclude_closed_versions: exclude_closed_versions, version_filters: version_filters)
+        # フィルタされたVersionに紐づくIssueのみに絞り込む
+        base_scope_with_version = base_scope_with_version.where(fixed_version_id: filtered_version_ids)
+      end
+
+      # Epic/Featureは全て表示（Versionフィルタ適用しない）
+      epics = apply_hierarchical_filter(base_scope_without_version, epic_tracker, assignee_ids)
+      features = apply_hierarchical_filter(base_scope_without_version, feature_tracker, assignee_ids)
+      # UserStoryはVersionフィルタ適用
+      user_stories = apply_hierarchical_filter(base_scope_with_version, user_story_tracker, assignee_ids)
 
       grid_index = {}
       epic_ids = []
       feature_order_by_epic = {}
 
-      # Versionソート句を構築
+      # Versionフィルタとソート句を構築
       version_sort_clause = build_version_sort_clause(sort_options[:version] || {})
       version_scope = versions
       version_scope = version_scope.where.not(status: 'closed') if exclude_closed_versions
+
+      # Version期日フィルタを適用
+      if version_filters[:fixed_version_effective_date_gteq].present?
+        version_scope = version_scope.where('effective_date >= ?', version_filters[:fixed_version_effective_date_gteq])
+      end
+      if version_filters[:fixed_version_effective_date_lteq].present?
+        version_scope = version_scope.where('effective_date <= ?', version_filters[:fixed_version_effective_date_lteq])
+      end
+
       version_ids = version_scope
                       .order(Arel.sql(version_sort_clause))
                       .pluck(:id)
@@ -205,8 +239,9 @@ module EpicGrid
     # エンティティハッシュを構築
     # @param include_closed [Boolean] closedステータスを含めるか
     # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
-    # @param filters [Hash] Ransackフィルタパラメータ
-    def epic_grid_entities(include_closed: true, exclude_closed_versions: true, filters: {})
+    # @param filters [Hash] Issueに対するRansackフィルタパラメータ
+    # @param version_filters [Hash] Versionに対するフィルタパラメータ
+    def epic_grid_entities(include_closed: true, exclude_closed_versions: true, filters: {}, version_filters: {})
       epic_tracker = EpicGrid::TrackerHierarchy.tracker_names[:epic]
       feature_tracker = EpicGrid::TrackerHierarchy.tracker_names[:feature]
       user_story_tracker = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
@@ -218,20 +253,29 @@ module EpicGrid
       assignee_ids = filters[:assigned_to_id_in]&.map(&:to_i)
       filters_without_assignee = filters.except(:assigned_to_id_in)
 
-      scope = issues.includes(:tracker, :status, :fixed_version)
-      scope = scope.joins(:status).where.not(issue_statuses: { is_closed: true }) unless include_closed
-      scope = apply_ransack_filters(scope, filters_without_assignee)
+      # ベーススコープ（Versionフィルタなし）- Epic/Feature用
+      base_scope_without_version = issues.includes(:tracker, :status, :fixed_version)
+      base_scope_without_version = base_scope_without_version.joins(:status).where.not(issue_statuses: { is_closed: true }) unless include_closed
+      base_scope_without_version = apply_ransack_filters(base_scope_without_version, filters_without_assignee)
+
+      # Versionフィルタ適用スコープ（UserStory以下用）
+      scope_with_version = base_scope_without_version
+      if version_filters.present? && version_filters.any?
+        filtered_version_ids = get_filtered_version_ids(exclude_closed_versions: exclude_closed_versions, version_filters: version_filters)
+        # フィルタされたVersionに紐づくIssueのみに絞り込む
+        scope_with_version = scope_with_version.where(fixed_version_id: filtered_version_ids)
+      end
 
       {
-        # Epic/Feature/UserStoryは階層的フィルタ（子孫に該当担当者がいる祖先も含める）
-        epics: build_entity_hash_hierarchical(scope, epic_tracker, assignee_ids),
-        features: build_entity_hash_hierarchical(scope, feature_tracker, assignee_ids),
-        user_stories: build_entity_hash_hierarchical(scope, user_story_tracker, assignee_ids),
-        # Task/Test/Bugは直接フィルタ
-        tasks: build_entity_hash_direct(scope, task_tracker, assignee_ids),
-        tests: build_entity_hash_direct(scope, test_tracker, assignee_ids),
-        bugs: build_entity_hash_direct(scope, bug_tracker, assignee_ids),
-        versions: build_versions_hash(exclude_closed_versions: exclude_closed_versions),
+        # Epic/Featureは全て表示（Versionフィルタ適用しない）
+        epics: build_entity_hash_hierarchical(base_scope_without_version, epic_tracker, assignee_ids),
+        features: build_entity_hash_hierarchical(base_scope_without_version, feature_tracker, assignee_ids),
+        # UserStory以下はVersionフィルタ適用
+        user_stories: build_entity_hash_hierarchical(scope_with_version, user_story_tracker, assignee_ids),
+        tasks: build_entity_hash_direct(scope_with_version, task_tracker, assignee_ids),
+        tests: build_entity_hash_direct(scope_with_version, test_tracker, assignee_ids),
+        bugs: build_entity_hash_direct(scope_with_version, bug_tracker, assignee_ids),
+        versions: build_versions_hash(exclude_closed_versions: exclude_closed_versions, version_filters: version_filters),
         users: build_users_hash
       }
     end
@@ -307,11 +351,39 @@ module EpicGrid
       base_scope
     end
 
-    # バージョンのエンティティハッシュを構築
+    # フィルタされたVersionのIDリストを取得
     # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
-    def build_versions_hash(exclude_closed_versions: true)
+    # @param version_filters [Hash] Versionに対するフィルタパラメータ
+    # @return [Array<Integer>] フィルタされたVersionのIDリスト
+    def get_filtered_version_ids(exclude_closed_versions: true, version_filters: {})
       version_scope = versions
       version_scope = version_scope.where.not(status: 'closed') if exclude_closed_versions
+
+      # Version期日フィルタを適用
+      if version_filters[:fixed_version_effective_date_gteq].present?
+        version_scope = version_scope.where('effective_date >= ?', version_filters[:fixed_version_effective_date_gteq])
+      end
+      if version_filters[:fixed_version_effective_date_lteq].present?
+        version_scope = version_scope.where('effective_date <= ?', version_filters[:fixed_version_effective_date_lteq])
+      end
+
+      version_scope.pluck(:id)
+    end
+
+    # バージョンのエンティティハッシュを構築
+    # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか
+    # @param version_filters [Hash] Versionに対するフィルタパラメータ
+    def build_versions_hash(exclude_closed_versions: true, version_filters: {})
+      version_scope = versions
+      version_scope = version_scope.where.not(status: 'closed') if exclude_closed_versions
+
+      # Version期日フィルタを適用
+      if version_filters[:fixed_version_effective_date_gteq].present?
+        version_scope = version_scope.where('effective_date >= ?', version_filters[:fixed_version_effective_date_gteq])
+      end
+      if version_filters[:fixed_version_effective_date_lteq].present?
+        version_scope = version_scope.where('effective_date <= ?', version_filters[:fixed_version_effective_date_lteq])
+      end
 
       version_scope.index_by { |v| v.id.to_s }.transform_values do |version|
         {

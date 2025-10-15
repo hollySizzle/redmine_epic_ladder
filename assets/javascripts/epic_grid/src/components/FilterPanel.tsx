@@ -24,6 +24,10 @@ export const FilterPanel: React.FC = () => {
   // ローカル状態（Apply前の一時的なフィルタ）
   const [localFilters, setLocalFilters] = useState<RansackFilterParams>(filters);
 
+  // バージョン期日フィルタのローカル状態
+  const [effectiveDateFrom, setEffectiveDateFrom] = useState<string>(filters.fixed_version_effective_date_gteq || '');
+  const [effectiveDateTo, setEffectiveDateTo] = useState<string>(filters.fixed_version_effective_date_lteq || '');
+
   // バージョンリストを取得（ID順）
   const versions = useMemo(() => {
     return Object.values(entities.versions).sort((a, b) =>
@@ -150,6 +154,23 @@ export const FilterPanel: React.FC = () => {
     });
   };
 
+  // バージョン期日フィルタハンドラー
+  const handleEffectiveDateFromChange = (value: string) => {
+    setEffectiveDateFrom(value);
+    setLocalFilters(prev => ({
+      ...prev,
+      fixed_version_effective_date_gteq: value || undefined
+    }));
+  };
+
+  const handleEffectiveDateToChange = (value: string) => {
+    setEffectiveDateTo(value);
+    setLocalFilters(prev => ({
+      ...prev,
+      fixed_version_effective_date_lteq: value || undefined
+    }));
+  };
+
   // フィルタ適用
   const handleApply = () => {
     setFilters(localFilters);
@@ -159,6 +180,8 @@ export const FilterPanel: React.FC = () => {
   // フィルタクリア
   const handleClear = () => {
     setLocalFilters({});
+    setEffectiveDateFrom('');
+    setEffectiveDateTo('');
     clearFilters();
     setIsExpanded(false);
   };
@@ -171,6 +194,7 @@ export const FilterPanel: React.FC = () => {
     if (filters.tracker_id_in && filters.tracker_id_in.length > 0) count++;
     if (filters.status_id_in && filters.status_id_in.length > 0) count++;
     if (filters.parent_id_in && filters.parent_id_in.length > 0) count++;
+    if (filters.fixed_version_effective_date_gteq || filters.fixed_version_effective_date_lteq) count++;
     return count;
   }, [filters]);
 
@@ -214,6 +238,33 @@ export const FilterPanel: React.FC = () => {
               ) : (
                 <p className="no-options">バージョンがありません</p>
               )}
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <h4>バージョン期日</h4>
+            <div className="filter-date-range">
+              <div className="filter-date-input">
+                <label htmlFor="effective-date-from">開始日</label>
+                <input
+                  id="effective-date-from"
+                  type="date"
+                  value={effectiveDateFrom}
+                  onChange={(e) => handleEffectiveDateFromChange(e.target.value)}
+                  placeholder="YYYY-MM-DD"
+                />
+              </div>
+              <span className="filter-date-separator">〜</span>
+              <div className="filter-date-input">
+                <label htmlFor="effective-date-to">終了日</label>
+                <input
+                  id="effective-date-to"
+                  type="date"
+                  value={effectiveDateTo}
+                  onChange={(e) => handleEffectiveDateToChange(e.target.value)}
+                  placeholder="YYYY-MM-DD"
+                />
+              </div>
             </div>
           </div>
 
