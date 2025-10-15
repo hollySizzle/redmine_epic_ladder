@@ -263,8 +263,22 @@ export const useStore = create<StoreState>()(
       }),
 
       // フィルタリングの初期状態
-      filters: {},
+      filters: (() => {
+        try {
+          const saved = localStorage.getItem('kanban_filters');
+          return saved ? JSON.parse(saved) : {};
+        } catch (error) {
+          console.warn('Failed to parse saved filters:', error);
+          return {};
+        }
+      })(),
       setFilters: (filters: RansackFilterParams) => {
+        // localStorageに保存
+        try {
+          localStorage.setItem('kanban_filters', JSON.stringify(filters));
+        } catch (error) {
+          console.warn('Failed to save filters to localStorage:', error);
+        }
         set({ filters });
         // フィルタ変更時に自動的にデータを再取得
         const projectId = get().projectId;
@@ -273,6 +287,12 @@ export const useStore = create<StoreState>()(
         }
       },
       clearFilters: () => {
+        // localStorageから削除
+        try {
+          localStorage.removeItem('kanban_filters');
+        } catch (error) {
+          console.warn('Failed to remove filters from localStorage:', error);
+        }
         set({ filters: {} });
         // フィルタクリア時に自動的にデータを再取得
         const projectId = get().projectId;
