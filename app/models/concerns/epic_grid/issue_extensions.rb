@@ -34,6 +34,22 @@ module EpicGrid
       end
     end
 
+    # バージョン変更時に開始日・終了日を自動設定
+    # Epic Grid上でバージョン間を移動した際に呼び出すことを想定
+    # @return [Boolean] 日付が設定された場合true、それ以外はfalse
+    def epic_grid_apply_version_dates!
+      return false unless fixed_version_id && fixed_version
+
+      dates = EpicGrid::VersionDateManager.update_dates_for_version_change(self, fixed_version)
+      if dates
+        self.start_date = dates[:start_date]
+        self.due_date = dates[:due_date]
+        true
+      else
+        false
+      end
+    end
+
     # ========================================
     # MSW準拠のJSON出力
     # ========================================

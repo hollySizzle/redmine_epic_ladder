@@ -137,6 +137,10 @@ module EpicGrid
       # UserStory移動実行
       user_story.parent_issue_id = target_feature_id
       user_story.fixed_version_id = target_version_id
+
+      # バージョン変更時の日付自動設定
+      user_story.epic_grid_apply_version_dates! if user_story.fixed_version_id_changed?
+
       user_story.save!
 
       # 子要素（Task/Test/Bug）のVersion伝播
@@ -708,6 +712,10 @@ module EpicGrid
           # UserStory移動実行
           user_story.parent_issue_id = target_feature_id
           user_story.fixed_version_id = target_version_id
+
+          # バージョン変更時の日付自動設定
+          user_story.epic_grid_apply_version_dates! if user_story.fixed_version_id_changed?
+
           user_story.save!
 
           # 子要素（Task/Test/Bug）のVersion伝播
