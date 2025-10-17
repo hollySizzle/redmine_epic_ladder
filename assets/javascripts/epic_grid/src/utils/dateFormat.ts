@@ -18,6 +18,17 @@ function formatToMonthDay(dateStr: string): string {
 }
 
 /**
+ * 曜日を取得 (日本語)
+ * @param dateStr - ISO8601形式の日付文字列 (例: "2025-12-25")
+ * @returns 日本語の曜日 (例: "水")
+ */
+function getDayOfWeek(dateStr: string): string {
+  const date = new Date(dateStr);
+  const daysOfWeek = ['日', '月', '火', '水', '木', '金', '土'];
+  return daysOfWeek[date.getDay()];
+}
+
+/**
  * 単一の日付を mm/dd 形式でフォーマット (Version期日表示用)
  *
  * @param date - ISO8601形式の日付文字列 or null
@@ -33,6 +44,26 @@ export function formatDate(date: string | null | undefined): string | null {
     return null;
   }
   return formatToMonthDay(date);
+}
+
+/**
+ * 単一の日付を mm/dd(曜日) 形式でフォーマット (Version期日表示用)
+ *
+ * @param date - ISO8601形式の日付文字列 or null
+ * @returns mm/dd(曜日) 形式の文字列、または null
+ *
+ * @example
+ * formatDateWithDayOfWeek("2025-01-15")  // "1/15(水)"
+ * formatDateWithDayOfWeek(null)          // null
+ * formatDateWithDayOfWeek("")            // null
+ */
+export function formatDateWithDayOfWeek(date: string | null | undefined): string | null {
+  if (!date || date === '') {
+    return null;
+  }
+  const formattedDate = formatToMonthDay(date);
+  const dayOfWeek = getDayOfWeek(date);
+  return `${formattedDate}(${dayOfWeek})`;
 }
 
 /**

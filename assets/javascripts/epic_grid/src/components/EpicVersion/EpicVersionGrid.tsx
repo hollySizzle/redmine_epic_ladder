@@ -6,7 +6,7 @@ import { IssueFormModal, IssueFormData } from '../common/IssueFormModal';
 import { useStore } from '../../store/useStore';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useDropTarget } from '../../hooks/useDropTarget';
-import { formatDate } from '../../utils/dateFormat';
+import { formatDateWithDayOfWeek } from '../../utils/dateFormat';
 import type { Feature, Epic, Version } from '../../types/normalized-api';
 
 // Feature列のD&D対応コンポーネント
@@ -276,7 +276,7 @@ export const EpicVersionGrid: React.FC = () => {
           const version = versions[versionId];
           // 'none' の場合はバージョン未設定として表示
           const versionName = version ? version.name : '(未設定)';
-          const effectiveDate = version ? formatDate(version.effective_date) : null;
+          const effectiveDate = version ? formatDateWithDayOfWeek(version.effective_date) : null;
 
           const handleVersionClick = () => {
             // 詳細ペインが非表示の場合は開く
