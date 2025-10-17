@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { UserStoryGridForCard } from '../UserStory/UserStoryGridForCard';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
@@ -14,9 +14,6 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
   const toggleDetailPane = useStore(state => state.toggleDetailPane);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
-
-  // 個別折り畳み状態（保存しない）
-  const [isLocalCollapsed, setIsLocalCollapsed] = useState(false);
 
   if (!feature) return null;
 
@@ -38,21 +35,9 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
     setSelectedEntity('issue', feature.id);
   };
 
-  const handleToggleCollapse = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLocalCollapsed(!isLocalCollapsed);
-  };
-
   return (
     <div ref={ref} className={className} data-feature={feature.id}>
       <div className="feature-header" onClick={handleHeaderClick}>
-        <button
-          className="feature-collapse-toggle"
-          onClick={handleToggleCollapse}
-          title={isLocalCollapsed ? 'UserStory配下を展開' : 'UserStory配下を折り畳み'}
-        >
-          {isLocalCollapsed ? '▶' : '▼'}
-        </button>
         <StatusIndicator status={feature.status} />
         {feature.title}
       </div>

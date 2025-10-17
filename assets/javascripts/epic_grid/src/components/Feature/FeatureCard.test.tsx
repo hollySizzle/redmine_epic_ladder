@@ -72,75 +72,34 @@ describe('FeatureCard - Collapse Functionality', () => {
   });
 
   describe('Rendering', () => {
-    it('should render feature card with collapse toggle button', () => {
+    it('should render feature card with title and status', () => {
       render(<FeatureCard featureId="f1" />);
 
       expect(screen.getByText('Test Feature')).toBeTruthy();
-
-      // 折り畳みボタンがある
-      const toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-      expect(toggleButton).toBeTruthy();
     });
 
-    it('should show ▼ icon when expanded', () => {
-      render(<FeatureCard featureId="f1" />);
+    it('should render closed class when status is closed', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          features: {
+            f1: {
+              ...useStore.getState().entities.features.f1,
+              status: 'closed'
+            }
+          }
+        }
+      });
 
-      const toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-      expect(toggleButton.textContent).toBe('▼');
-    });
+      const { container } = render(<FeatureCard featureId="f1" />);
 
-    it('should show ▶ icon when collapsed', async () => {
-      const user = userEvent.setup();
-
-      render(<FeatureCard featureId="f1" />);
-
-      const toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-
-      // クリックして折り畳み
-      await user.click(toggleButton);
-
-      // アイコンが変わる
-      const collapsedButton = screen.getByTitle('UserStory配下を展開');
-      expect(collapsedButton.textContent).toBe('▶');
+      const featureCard = container.querySelector('.feature-card.closed');
+      expect(featureCard).toBeTruthy();
     });
   });
 
   describe('Interaction', () => {
-    it('should toggle local collapse state when button clicked', async () => {
-      const user = userEvent.setup();
-
-      render(<FeatureCard featureId="f1" />);
-
-      // 初期状態: 展開中
-      let toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-      expect(toggleButton.textContent).toBe('▼');
-
-      // クリック: 折り畳み
-      await user.click(toggleButton);
-      toggleButton = screen.getByTitle('UserStory配下を展開');
-      expect(toggleButton.textContent).toBe('▶');
-
-      // もう一度クリック: 展開
-      await user.click(toggleButton);
-      toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-      expect(toggleButton.textContent).toBe('▼');
-    });
-
-    it('should not propagate click to header when toggle clicked', async () => {
-      const user = userEvent.setup();
-
-      render(<FeatureCard featureId="f1" />);
-
-      const toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-
-      // トグルボタンをクリック
-      await user.click(toggleButton);
-
-      // selectedIssueIdは設定されない（stopPropagationが効いている）
-      expect(useStore.getState().selectedIssueId).toBeNull();
-    });
-
-    it('should set selectedIssueId when header (not toggle) is clicked', async () => {
+    it('should set selectedIssueId when header is clicked', async () => {
       const user = userEvent.setup();
 
       render(<FeatureCard featureId="f1" />);
@@ -155,27 +114,13 @@ describe('FeatureCard - Collapse Functionality', () => {
     });
   });
 
-  describe('State Persistence', () => {
-    it('should not persist local collapse state (resets on remount)', async () => {
-      const user = userEvent.setup();
-
-      const { unmount } = render(<FeatureCard featureId="f1" />);
-
-      // 折り畳む
-      const toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-      await user.click(toggleButton);
-
-      // 確認: 折り畳まれている
-      expect(screen.getByTitle('UserStory配下を展開')).toBeTruthy();
-
-      // アンマウント
-      unmount();
-
-      // 再マウント
+  describe('Child Components', () => {
+    it('should display child user stories and their tasks', () => {
       render(<FeatureCard featureId="f1" />);
 
-      // 展開状態にリセットされている
-      expect(screen.getByTitle('UserStory配下を折り畳み')).toBeTruthy();
+      // UserStoryが表示されている
+      expect(screen.getByText('Test Story')).toBeTruthy();
+      // Taskが表示されている
       expect(screen.getByText('Task 1')).toBeTruthy();
     });
   });

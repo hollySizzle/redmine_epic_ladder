@@ -115,8 +115,8 @@ describe('Collapse Integration Tests', () => {
     });
   });
 
-  describe('Global and Local Collapse Interaction', () => {
-    it('should hide all Feature children when "全折畳" button is clicked', async () => {
+  describe('Global Collapse Interaction', () => {
+    it('should hide all UserStory children when "全折畳" button is clicked', async () => {
       const user = userEvent.setup();
 
       render(
@@ -140,26 +140,35 @@ describe('Collapse Integration Tests', () => {
       expect(screen.queryByText('Test 1')).toBeNull();
     });
 
-    it('should hide only one Feature children when local toggle is clicked', async () => {
+    it('should show all UserStory children when "全展開" button is clicked', async () => {
       const user = userEvent.setup();
+
+      // 初期状態を折り畳み済みに設定
+      useStore.setState({
+        userStoryCollapseStates: {
+          us1: true,
+          us2: true
+        }
+      });
 
       render(
         <>
+          <UserStoryChildrenToggle />
           <FeatureCard featureId="f1" />
           <FeatureCard featureId="f2" />
         </>
       );
 
-      // 初期状態: 全て表示
-      expect(screen.getByText('Task 1')).toBeTruthy();
-      expect(screen.getByText('Test 1')).toBeTruthy();
-
-      // Feature 1のローカルトグルをクリック
-      const f1Toggle = screen.getAllByTitle('UserStory配下を折り畳み')[0];
-      await user.click(f1Toggle);
-
-      // Feature 1のみ非表示、Feature 2は表示
+      // 初期状態: 全て非表示
       expect(screen.queryByText('Task 1')).toBeNull();
+      expect(screen.queryByText('Test 1')).toBeNull();
+
+      // 全展開ボタンをクリック
+      const expandButton = screen.getByText('全展開');
+      await user.click(expandButton);
+
+      // 全て表示
+      expect(screen.getByText('Task 1')).toBeTruthy();
       expect(screen.getByText('Test 1')).toBeTruthy();
     });
   });
