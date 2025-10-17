@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
+import { formatDateRange } from '../../utils/dateFormat';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { TaskTestBugGrid } from '../TaskTestBug/TaskTestBugGrid';
-import { formatDateRange } from '../../utils/dateFormat';
 
 interface UserStoryProps {
   storyId: string;
@@ -58,18 +58,18 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
   return (
     <div ref={ref} className={className} data-story={story.id}>
       <div className="user-story-header" onClick={handleHeaderClick}>
-        <button
-          className="user-story-collapse-toggle"
-          onClick={handleToggleCollapse}
-          title={isOwnCollapsed ? 'Task/Test/Bug配下を展開' : 'Task/Test/Bug配下を折り畳み'}
-        >
-          {isOwnCollapsed ? '▶' : '▼'}
-        </button>
         <div className="main-info-wrapper">
           <StatusIndicator status={story.status} />
           <span className="title-wrapper">
             {story.title}
           </span>
+          <button
+            className="user-story-collapse-toggle"
+            onClick={handleToggleCollapse}
+            title={isOwnCollapsed ? 'Task/Test/Bug配下を展開' : 'Task/Test/Bug配下を折り畳み'}
+          >
+            {isOwnCollapsed ? '▶' : '▼'}
+          </button>
         </div>
         <div className="essential-info-wrapper">
           {isAssignedToVisible && assignedUser && (
