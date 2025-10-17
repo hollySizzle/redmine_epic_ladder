@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import type { RansackFilterParams } from '../types/normalized-api';
+import { naturalSortKey, compareNaturalSort } from '../utils/naturalSort';
 
 /**
  * FilterPanel Component
@@ -28,10 +29,10 @@ export const FilterPanel: React.FC = () => {
   const [effectiveDateFrom, setEffectiveDateFrom] = useState<string>(filters.fixed_version_effective_date_gteq || '');
   const [effectiveDateTo, setEffectiveDateTo] = useState<string>(filters.fixed_version_effective_date_lteq || '');
 
-  // バージョンリストを取得（ID順）
+  // バージョンリストを取得（自然順ソート）
   const versions = useMemo(() => {
     return Object.values(entities.versions).sort((a, b) =>
-      parseInt(a.id) - parseInt(b.id)
+      compareNaturalSort(naturalSortKey(a.name), naturalSortKey(b.name))
     );
   }, [entities.versions]);
 
@@ -50,17 +51,17 @@ export const FilterPanel: React.FC = () => {
     return metadata?.available_trackers || [];
   }, [metadata?.available_trackers]);
 
-  // Epicリストを取得（フィルタ用）
+  // Epicリストを取得（フィルタ用・自然順ソート）
   const epics = useMemo(() => {
     return Object.values(entities.epics).sort((a, b) =>
-      parseInt(a.id) - parseInt(b.id)
+      compareNaturalSort(naturalSortKey(a.subject), naturalSortKey(b.subject))
     );
   }, [entities.epics]);
 
-  // Featureリストを取得（フィルタ用）
+  // Featureリストを取得（フィルタ用・自然順ソート）
   const features = useMemo(() => {
     return Object.values(entities.features).sort((a, b) =>
-      parseInt(a.id) - parseInt(b.id)
+      compareNaturalSort(naturalSortKey(a.title), naturalSortKey(b.title))
     );
   }, [entities.features]);
 
