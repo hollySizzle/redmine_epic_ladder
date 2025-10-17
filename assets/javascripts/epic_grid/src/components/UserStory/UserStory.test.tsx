@@ -56,6 +56,7 @@ describe('UserStory - Collapse Functionality', () => {
       error: null,
       projectId: 'project1',
       isUserStoryChildrenCollapsed: false,
+      userStoryCollapseStates: {},
       isAssignedToVisible: false,
       isDueDateVisible: false
     });
@@ -212,7 +213,7 @@ describe('UserStory - Collapse Functionality', () => {
   });
 
   describe('State Persistence', () => {
-    it('should not persist own collapse state (resets on remount)', async () => {
+    it('should persist own collapse state in store (maintained on remount)', async () => {
       const user = userEvent.setup();
 
       const { unmount } = render(<UserStory storyId="us1" />);
@@ -230,9 +231,9 @@ describe('UserStory - Collapse Functionality', () => {
       // 再マウント
       render(<UserStory storyId="us1" />);
 
-      // 展開状態にリセットされている
-      expect(screen.getByTitle('Task/Test/Bug配下を折り畳み')).toBeTruthy();
-      expect(screen.getByText('Task 1')).toBeTruthy();
+      // 折り畳み状態が維持されている（ストアで管理）
+      expect(screen.getByTitle('Task/Test/Bug配下を展開')).toBeTruthy();
+      expect(screen.queryByText('Task 1')).toBeNull();
     });
   });
 

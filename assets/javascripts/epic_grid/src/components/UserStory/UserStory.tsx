@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
 import { formatDateRange } from '../../utils/dateFormat';
@@ -19,8 +19,9 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
 
-  // 個別折り畳み状態（保存しない）
-  const [isOwnCollapsed, setIsOwnCollapsed] = useState(false);
+  // 個別折り畳み状態（ストアで管理）
+  const isOwnCollapsed = useStore(state => state.userStoryCollapseStates[storyId] ?? false);
+  const setUserStoryCollapsed = useStore(state => state.setUserStoryCollapsed);
 
   // 担当者情報を取得
   const assignedUser = useStore(state =>
@@ -49,7 +50,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
 
   const handleToggleCollapse = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsOwnCollapsed(!isOwnCollapsed);
+    setUserStoryCollapsed(story.id, !isOwnCollapsed);
   };
 
   // 親からの折り畳み指示と自分自身の折り畳み状態を合成

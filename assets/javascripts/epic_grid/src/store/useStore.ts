@@ -116,6 +116,11 @@ interface StoreState {
   isUserStoryChildrenCollapsed: boolean;
   toggleUserStoryChildrenCollapsed: () => void;
 
+  // UserStory個別折り畳み状態
+  userStoryCollapseStates: Record<string, boolean>;
+  setUserStoryCollapsed: (storyId: string, collapsed: boolean) => void;
+  setAllUserStoriesCollapsed: (collapsed: boolean) => void;
+
   // フィルタリング
   filters: RansackFilterParams;
   setFilters: (filters: RansackFilterParams) => void;
@@ -259,7 +264,32 @@ export const useStore = create<StoreState>()(
       toggleUserStoryChildrenCollapsed: () => set((state) => {
         const newValue = !state.isUserStoryChildrenCollapsed;
         localStorage.setItem('kanban_userstory_children_collapsed', String(newValue));
-        return { isUserStoryChildrenCollapsed: newValue };
+
+        // グローバルトグルで全UserStoryの個別状態を一括更新
+        const allUserStoryIds = Object.keys(state.entities.user_stories);
+        const newCollapseStates: Record<string, boolean> = {};
+        allUserStoryIds.forEach(id => {
+          newCollapseStates[id] = newValue;
+        });
+
+        return {
+          isUserStoryChildrenCollapsed: newValue,
+          userStoryCollapseStates: newCollapseStates
+        };
+      }),
+
+      // UserStory個別折り畳み状態の初期値
+      userStoryCollapseStates: {},
+
+      setUserStoryCollapsed: (storyId: string, collapsed: boolean) => set((state) => {
+        state.userStoryCollapseStates[storyId] = collapsed;
+      }),
+
+      setAllUserStoriesCollapsed: (collapsed: boolean) => set((state) => {
+        const allUserStoryIds = Object.keys(state.entities.user_stories);
+        allUserStoryIds.forEach(id => {
+          state.userStoryCollapseStates[id] = collapsed;
+        });
       }),
 
       // フィルタリングの初期状態
