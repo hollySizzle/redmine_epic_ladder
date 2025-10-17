@@ -24,7 +24,8 @@ describe('TaskContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TaskContainer userStoryId="us1" taskIds={[]} />);
@@ -46,7 +47,8 @@ describe('TaskContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TaskContainer userStoryId="us1" taskIds={[]} />);
@@ -72,7 +74,8 @@ describe('TaskContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TaskContainer userStoryId="us1" taskIds={['t1', 't2']} />);
@@ -99,7 +102,8 @@ describe('TaskContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TaskContainer userStoryId="us1" taskIds={[]} />);

@@ -111,7 +111,8 @@ describe('Collapse Integration Tests', () => {
       isLoading: false,
       error: null,
       projectId: 'project1',
-      userStoryCollapseStates: {}
+      userStoryCollapseStates: {},
+      isIssueIdVisible: true
     });
   });
 

@@ -433,6 +433,14 @@
         width: 100%;
       }
 
+      .issue-id-wrapper {
+        font-size: 0.7rem;
+        color: #999;
+        font-weight: normal;
+        padding-inline-start: 0.25rem;
+        flex-shrink: 0;
+      }
+
       .assigned_to-name-wrapper,
       .date-range-wrapper {
         font-size: 0.75rem;
@@ -559,6 +567,14 @@
       gap: 0.5rem;
       flex-shrink: 0;
       width: 100%;
+    }
+
+    .issue-id-wrapper {
+      font-size: 0.65rem;
+      color: #999;
+      font-weight: normal;
+      padding-inline-start: 0.25rem;
+      flex-shrink: 0;
     }
 
     .assigned_to-name-wrapper,

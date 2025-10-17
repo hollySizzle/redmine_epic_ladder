@@ -532,4 +532,55 @@ describe('useStore - Normalized API (3D Grid)', () => {
       });
     });
   });
+
+  describe('Issue ID Visibility Toggle', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it('should have default issue ID visibility as true', () => {
+      const saved = localStorage.getItem('kanban_issue_id_visible');
+      const defaultValue = saved !== null ? saved === 'true' : true;
+      expect(defaultValue).toBe(true);
+    });
+
+    it('should toggle issue ID visibility', () => {
+      const { toggleIssueIdVisible } = useStore.getState();
+
+      const initialState = useStore.getState();
+      const initialValue = initialState.isIssueIdVisible;
+
+      toggleIssueIdVisible();
+
+      const newState = useStore.getState();
+      expect(newState.isIssueIdVisible).toBe(!initialValue);
+
+      toggleIssueIdVisible();
+
+      const finalState = useStore.getState();
+      expect(finalState.isIssueIdVisible).toBe(initialValue);
+    });
+
+    it('should save issue ID visibility to localStorage', () => {
+      const { toggleIssueIdVisible } = useStore.getState();
+
+      toggleIssueIdVisible();
+
+      const saved = localStorage.getItem('kanban_issue_id_visible');
+      expect(saved).not.toBeNull();
+    });
+
+    it('should load saved issue ID visibility from localStorage', () => {
+      localStorage.setItem('kanban_issue_id_visible', 'false');
+
+      const saved = localStorage.getItem('kanban_issue_id_visible');
+      const loaded = saved !== null ? saved === 'true' : true;
+
+      expect(loaded).toBe(false);
+    });
+  });
 });

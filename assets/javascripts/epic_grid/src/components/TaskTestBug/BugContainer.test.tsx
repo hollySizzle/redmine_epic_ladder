@@ -24,7 +24,8 @@ describe('BugContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<BugContainer userStoryId="us1" bugIds={[]} />);
@@ -46,7 +47,8 @@ describe('BugContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<BugContainer userStoryId="us1" bugIds={[]} />);
@@ -72,7 +74,8 @@ describe('BugContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<BugContainer userStoryId="us1" bugIds={['b1', 'b2']} />);
@@ -99,7 +102,8 @@ describe('BugContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<BugContainer userStoryId="us1" bugIds={[]} />);

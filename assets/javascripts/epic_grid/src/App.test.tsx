@@ -13,7 +13,8 @@ describe('App - Integration Tests (Normalized API)', () => {
       grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
       metadata: JSON.parse(JSON.stringify(normalizedMockData.metadata)),
       isLoading: false,
-      error: null
+      error: null,
+      isIssueIdVisible: true
     });
   });
 

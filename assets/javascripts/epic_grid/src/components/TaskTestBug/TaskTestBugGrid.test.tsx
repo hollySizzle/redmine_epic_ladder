@@ -27,7 +27,8 @@ describe('TaskTestBugGrid - Collapse Functionality', () => {
       isLoading: false,
       error: null,
       projectId: 'project1',
-      isUserStoryChildrenCollapsed: false
+      isUserStoryChildrenCollapsed: false,
+      isIssueIdVisible: true
     });
   });
 

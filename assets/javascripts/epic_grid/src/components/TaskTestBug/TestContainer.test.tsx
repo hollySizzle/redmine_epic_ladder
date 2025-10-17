@@ -24,7 +24,8 @@ describe('TestContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TestContainer userStoryId="us1" testIds={[]} />);
@@ -46,7 +47,8 @@ describe('TestContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TestContainer userStoryId="us1" testIds={[]} />);
@@ -72,7 +74,8 @@ describe('TestContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TestContainer userStoryId="us1" testIds={['test1', 'test2']} />);
@@ -99,7 +102,8 @@ describe('TestContainer', () => {
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
         error: null,
-        projectId: 'project1'
+        projectId: 'project1',
+        isIssueIdVisible: true
       });
 
       render(<TestContainer userStoryId="us1" testIds={[]} />);

@@ -57,7 +57,8 @@ describe('UserStory - Collapse Functionality', () => {
       projectId: 'project1',
       userStoryCollapseStates: {},
       isAssignedToVisible: false,
-      isDueDateVisible: false
+      isDueDateVisible: false,
+      isIssueIdVisible: true
     });
   });
 

@@ -15,6 +15,7 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
+  const isIssueIdVisible = useStore(state => state.isIssueIdVisible);
 
   // 担当者情報を取得
   const assignedUser = useStore(state =>
@@ -48,6 +49,9 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
         <span className="title-wrapper">
           {bug.title}
         </span>
+        {isIssueIdVisible && (
+          <span className="issue-id-wrapper">#{bug.id}</span>
+        )}
       </div>
       <div className="essential-info-wrapper">
         {isAssignedToVisible && assignedUser && (

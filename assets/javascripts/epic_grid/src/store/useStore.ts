@@ -112,6 +112,10 @@ interface StoreState {
   isDueDateVisible: boolean;
   toggleDueDateVisible: () => void;
 
+  // チケットID表示
+  isIssueIdVisible: boolean;
+  toggleIssueIdVisible: () => void;
+
   // UserStory個別折り畳み状態（localStorage永続化）
   userStoryCollapseStates: Record<string, boolean>;
   setUserStoryCollapsed: (storyId: string, collapsed: boolean) => void;
@@ -250,6 +254,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isDueDateVisible;
         localStorage.setItem('kanban_due_date_visible', String(newValue));
         return { isDueDateVisible: newValue };
+      }),
+
+      // チケットID表示の初期状態
+      isIssueIdVisible: (() => {
+        const saved = localStorage.getItem('kanban_issue_id_visible');
+        return saved !== null ? saved === 'true' : true; // デフォルトON
+      })(),
+      toggleIssueIdVisible: () => set((state) => {
+        const newValue = !state.isIssueIdVisible;
+        localStorage.setItem('kanban_issue_id_visible', String(newValue));
+        return { isIssueIdVisible: newValue };
       }),
 
       // UserStory個別折り畳み状態の初期値（localStorageから復元）

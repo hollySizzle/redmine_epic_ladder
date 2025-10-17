@@ -4,6 +4,7 @@ import { SortSelector } from './SortSelector';
 import { VerticalModeToggle } from './VerticalModeToggle';
 import { AssignedToToggle } from './AssignedToToggle';
 import { DueDateToggle } from './DueDateToggle';
+import { IssueIdToggle } from './IssueIdToggle';
 import { DetailPaneToggle } from './DetailPaneToggle';
 
 export const SettingsDropdown: React.FC = () => {
@@ -42,6 +43,10 @@ export const SettingsDropdown: React.FC = () => {
 
       <DropdownSection>
         <DueDateToggle />
+      </DropdownSection>
+
+      <DropdownSection>
+        <IssueIdToggle />
       </DropdownSection>
 
       <DropdownSection>

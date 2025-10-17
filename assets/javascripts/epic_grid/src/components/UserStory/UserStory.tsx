@@ -17,6 +17,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
+  const isIssueIdVisible = useStore(state => state.isIssueIdVisible);
 
   // 個別折り畳み状態（ストアで管理）
   const isOwnCollapsed = useStore(state => state.userStoryCollapseStates[storyId] ?? false);
@@ -60,6 +61,9 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
           <span className="title-wrapper">
             {story.title}
           </span>
+          {isIssueIdVisible && (
+            <span className="issue-id-wrapper">#{story.id}</span>
+          )}
           <button
             className="user-story-collapse-toggle"
             onClick={handleToggleCollapse}
