@@ -602,6 +602,8 @@ module EpicGrid
           updated_on: issue.updated_on.iso8601,
           estimated_hours: issue.estimated_hours,
           done_ratio: issue.done_ratio,
+          start_date: issue.start_date&.to_s,
+          due_date: issue.due_date&.to_s,
           lock_version: issue.lock_version,
           can_edit: User.current.allowed_to?(:edit_issues, @project)
         }

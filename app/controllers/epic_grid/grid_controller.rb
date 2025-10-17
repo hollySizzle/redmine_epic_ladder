@@ -549,6 +549,8 @@ module EpicGrid
         lock_version: issue.lock_version,
         created_on: issue.created_on.iso8601,
         updated_on: issue.updated_on.iso8601,
+        start_date: issue.start_date&.to_s,
+        due_date: issue.due_date&.to_s,
         can_edit: User.current.allowed_to?(:edit_issues, @project),
         workflow_transitions: available_status_transitions(issue)
       }
