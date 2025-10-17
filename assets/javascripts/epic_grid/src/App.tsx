@@ -6,6 +6,7 @@ import { DetailPane } from './components/IssueDetail/DetailPane';
 import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { Legend } from './components/Legend';
 import { SettingsDropdown } from './components/common/SettingsDropdown';
+import { SearchBar } from './components/common/SearchBar';
 import { useStore } from './store/useStore';
 import './styles.scss';
 
@@ -231,6 +232,7 @@ export const App: React.FC = () => {
               </>
             )}
             <FilterPanel />
+            <SearchBar />
           </div>
 
           {/* 表示設定ドロップダウン（右端） */}
