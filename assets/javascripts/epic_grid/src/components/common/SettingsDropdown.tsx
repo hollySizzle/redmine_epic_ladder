@@ -5,7 +5,6 @@ import { VerticalModeToggle } from './VerticalModeToggle';
 import { AssignedToToggle } from './AssignedToToggle';
 import { DueDateToggle } from './DueDateToggle';
 import { DetailPaneToggle } from './DetailPaneToggle';
-import { UserStoryChildrenToggle } from './UserStoryChildrenToggle';
 
 export const SettingsDropdown: React.FC = () => {
   return (
@@ -32,10 +31,6 @@ export const SettingsDropdown: React.FC = () => {
 
       {/* 表示オプション */}
       <DropdownLabel>表示オプション</DropdownLabel>
-
-      <DropdownSection>
-        <UserStoryChildrenToggle />
-      </DropdownSection>
 
       <DropdownSection>
         <VerticalModeToggle />
