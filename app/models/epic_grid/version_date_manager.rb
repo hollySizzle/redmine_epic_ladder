@@ -18,7 +18,7 @@ module EpicGrid
     #
     # ロジック:
     # - 終了日 = 新バージョンの期日
-    # - 開始日 = 新バージョンより期日が早い最も早いバージョンの期日
+    # - 開始日 = 新バージョンより期日が早い最も近い（直前の）バージョンの期日
     #           該当なしの場合は新バージョンの期日
     def self.update_dates_for_version_change(issue, new_version)
       return nil unless new_version
@@ -34,10 +34,10 @@ module EpicGrid
       # 終了日 = 新バージョンの期日
       due_date = new_version.effective_date
 
-      # 開始日 = 新バージョンより早い最も早いバージョンの期日
+      # 開始日 = 新バージョンより早い最も近い（直前の）バージョンの期日
       earlier_version = versions
                           .where('effective_date < ?', new_version.effective_date)
-                          .first
+                          .last  # .first から .last に変更（最も近いバージョン）
 
       start_date = earlier_version&.effective_date || new_version.effective_date
 

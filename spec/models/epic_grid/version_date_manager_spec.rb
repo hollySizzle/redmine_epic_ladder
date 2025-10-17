@@ -48,19 +48,19 @@ RSpec.describe EpicGrid::VersionDateManager do
       let!(:version_c) { create(:version, project: project, name: 'v1.2', effective_date: Date.new(2025, 10, 15)) }
 
       context 'バージョンBに移動する場合' do
-        it '開始日が最も早いバージョンAの期日、終了日がバージョンBの期日になる' do
+        it '開始日が直前のバージョンAの期日、終了日がバージョンBの期日になる' do
           result = described_class.update_dates_for_version_change(issue, version_b)
 
-          expect(result[:start_date]).to eq(Date.new(2025, 10, 5))  # version_a
+          expect(result[:start_date]).to eq(Date.new(2025, 10, 5))  # version_a（直前のバージョン）
           expect(result[:due_date]).to eq(Date.new(2025, 10, 10))   # version_b
         end
       end
 
       context 'バージョンCに移動する場合' do
-        it '開始日が最も早いバージョンAの期日、終了日がバージョンCの期日になる' do
+        it '開始日が直前のバージョンBの期日、終了日がバージョンCの期日になる' do
           result = described_class.update_dates_for_version_change(issue, version_c)
 
-          expect(result[:start_date]).to eq(Date.new(2025, 10, 5))  # version_a
+          expect(result[:start_date]).to eq(Date.new(2025, 10, 10))  # version_b（直前のバージョン）
           expect(result[:due_date]).to eq(Date.new(2025, 10, 15))   # version_c
         end
       end
@@ -80,10 +80,10 @@ RSpec.describe EpicGrid::VersionDateManager do
       let!(:version_b) { create(:version, project: project, name: 'v1.1', effective_date: nil) }
       let!(:version_c) { create(:version, project: project, name: 'v1.2', effective_date: Date.new(2025, 10, 15)) }
 
-      it '期日が未設定のバージョンはスキップされる' do
+      it '期日が未設定のバージョンはスキップされ、直前の期日ありバージョンが開始日になる' do
         result = described_class.update_dates_for_version_change(issue, version_c)
 
-        expect(result[:start_date]).to eq(Date.new(2025, 10, 5))  # version_a (version_bはスキップ)
+        expect(result[:start_date]).to eq(Date.new(2025, 10, 5))  # version_a（直前の期日ありバージョン、version_bはスキップ）
         expect(result[:due_date]).to eq(Date.new(2025, 10, 15))   # version_c
       end
     end
