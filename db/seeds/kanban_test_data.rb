@@ -341,11 +341,14 @@ puts "\n📅 バージョンを投入中..."
 sakura_ec = created_projects['sakura-ec']
 if sakura_ec
   versions_data = [
-    { name: 'v1.0.0 - MVP', description: '最小限の機能で早期リリース', effective_date: '2025-03-31', status: 'open' },
-    { name: 'v1.1.0 - 拡張機能', description: 'ユーザー要望を反映した機能追加', effective_date: '2025-06-30', status: 'open' },
-    { name: 'v2.0.0 - 大型アップデート', description: 'UIリニューアルとパフォーマンス改善', effective_date: '2025-09-30', status: 'open' },
-    { name: 'v2.1.0 - モバイル対応', description: 'レスポンシブデザイン対応', effective_date: '2025-12-31', status: 'open' },
-    { name: 'v3.0.0 - AI統合', description: 'AIレコメンド機能の本格導入', effective_date: '2026-03-31', status: 'open' }
+    { name: 'v1.0.0 - MVP', description: '最小限の機能で早期リリース', effective_date: '2025-08-31', status: 'open' },
+    { name: 'v1.1.0 - 初期フィードバック対応', description: 'ベータユーザーからのフィードバック反映', effective_date: '2025-10-15', status: 'open' },
+    { name: 'v1.2.0 - 機能拡張', description: '商品管理・検索機能の強化', effective_date: '2025-11-30', status: 'open' },
+    { name: 'v2.0.0 - 大型アップデート', description: 'UIリニューアルとパフォーマンス改善', effective_date: '2026-01-31', status: 'open' },
+    { name: 'v2.1.0 - UI改善', description: 'モバイル対応とアクセシビリティ向上', effective_date: '2026-03-31', status: 'open' },
+    { name: 'v2.2.0 - パフォーマンス改善', description: 'キャッシュ最適化とDB高速化', effective_date: '2026-05-31', status: 'open' },
+    { name: 'v2.3.0 - AI機能統合', description: 'AIレコメンド機能の段階的導入', effective_date: '2026-07-31', status: 'open' },
+    { name: 'v3.0.0 - 次世代プラットフォーム', description: 'マイクロサービス化と新アーキテクチャ', effective_date: '2026-09-30', status: 'open' }
   ]
 
   created_versions = {}
@@ -365,8 +368,9 @@ if sakura_ec
     end
   end
 
-  # ===== Issue投入（Epic/Feature/UserStory階層構造） =====
-  puts "\n🎯 Issue階層構造を投入中..."
+  # ===== Issue投入（Epic/Feature/UserStory/Task階層構造） =====
+  puts "\n🎯 大規模Issue階層構造を投入中..."
+  puts "  📊 目標: Epic×6, Feature×25, UserStory×70, Task×50"
 
   # app_notificationsプラグインの通知を一時無効化
   begin
@@ -411,297 +415,955 @@ if sakura_ec
   priority_high = IssuePriority.find_by(name: '高')
   priority_urgent = IssuePriority.find_by(name: '緊急')
 
-  # ===== Epic 1: 会員機能 =====
+  # カウンター初期化
+  epic_count = 0
+  feature_count = 0
+  us_count = 0
+  task_count = 0
+
+  # ========================================
+  # Epic 1: 会員機能（Authentication & Profile）
+  # ========================================
   epic1 = Issue.create!(
-    project: sakura_ec,
-    tracker: epic_tracker,
-    subject: '会員機能',
-    description: 'ユーザー登録・ログイン・プロフィール管理',
-    status: status_in_progress,
-    priority: priority_high,
-    author: tanaka,
-    fixed_version: created_versions['v1']
+    project: sakura_ec, tracker: epic_tracker,
+    subject: '会員機能', description: 'ユーザー登録・ログイン・認証・プロフィール管理',
+    status: status_in_progress, priority: priority_high,
+    author: tanaka, fixed_version: created_versions['v1']
   )
-  puts "  ✅ Epic: #{epic1.subject} (Version: #{epic1.fixed_version.name})"
+  epic_count += 1
+  puts "\n  ✅ Epic#{epic_count}: #{epic1.subject} (#{epic1.fixed_version.name})"
 
-  # Feature 1-1: ログイン機能
-  feature1_1 = Issue.create!(
-    project: sakura_ec,
-    tracker: feature_tracker,
-    subject: 'ログイン機能',
-    description: 'メール/SNSログイン対応',
-    status: status_in_progress,
-    priority: priority_high,
-    author: suzuki,
-    assigned_to: suzuki,
-    parent_issue_id: epic1.id,
-    fixed_version: created_versions['v1']
+  # Feature 1-1: メール認証ログイン
+  f1_1 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'メール認証ログイン', description: 'メールアドレス/パスワードでのログイン',
+    status: status_resolved, priority: priority_high,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic1.id, fixed_version: created_versions['v1'], estimated_hours: 24.0
   )
-  puts "    ├─ Feature: #{feature1_1.subject} (Version: #{feature1_1.fixed_version.name})"
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f1_1.subject} (#{f1_1.fixed_version.name})"
 
-  # UserStory 1: メールログイン（Featureと同じVersion）
-  us1 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'メールアドレスでログインできる',
-    description: 'ユーザーがメールアドレスとパスワードでログインできる',
-    status: status_resolved,
-    priority: priority_normal,
-    author: sato,
-    assigned_to: sato,
-    parent_issue_id: feature1_1.id,
-    fixed_version: created_versions['v1'],
-    estimated_hours: 8.0
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'メールアドレスでログインできる',
+    description: 'メール/パスワードでログイン', status: status_closed, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f1_1.id, fixed_version: created_versions['v1'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  # Task例
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'ログインAPIエンドポイント実装',
+    status: status_closed, priority: priority_normal, author: sato, assigned_to: sato,
+    parent_issue_id: us.id, fixed_version: created_versions['v1'], estimated_hours: 4.0)
+  task_count += 1
+  puts "        ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'JWT認証トークン生成処理',
+    status: status_closed, priority: priority_normal, author: sato, assigned_to: sato,
+    parent_issue_id: us.id, fixed_version: created_versions['v1'], estimated_hours: 4.0)
+  task_count += 1
+  puts "        └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'ログイン失敗時にエラーメッセージが表示される',
+    description: '認証失敗時の適切なエラー表示', status: status_closed, priority: priority_normal,
+    author: sato, assigned_to: watanabe, parent_issue_id: f1_1.id, fixed_version: created_versions['v1'], estimated_hours: 4.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'パスワード再設定メールを送信できる',
+    description: 'パスワード忘れ時の再設定フロー', status: status_resolved, priority: priority_normal,
+    author: sato, assigned_to: watanabe, parent_issue_id: f1_1.id, fixed_version: created_versions['v2'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 1-2: SNS連携ログイン
+  f1_2 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'SNS連携ログイン', description: 'Google/Twitter/LINE連携',
+    status: status_in_progress, priority: priority_normal,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic1.id, fixed_version: created_versions['v2'], estimated_hours: 32.0
   )
-  puts "      ├─ UserStory: #{us1.subject} (Version: #{us1.fixed_version.name}) ✓同じ"
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f1_2.subject} (#{f1_2.fixed_version.name})"
 
-  # UserStory 2: SNSログイン（Featureと異なるVersion）
-  us2 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'SNSアカウントでログインできる',
-    description: 'Google/Twitter/Facebook連携ログイン',
-    status: status_new,
-    priority: priority_normal,
-    author: sato,
-    assigned_to: watanabe,
-    parent_issue_id: feature1_1.id,
-    fixed_version: created_versions['v2'],
-    estimated_hours: 16.0
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'Googleアカウントでログインできる',
+    description: 'Google OAuth連携', status: status_in_progress, priority: priority_normal,
+    author: watanabe, assigned_to: watanabe, parent_issue_id: f1_2.id, fixed_version: created_versions['v2'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'LINEアカウントでログインできる',
+    description: 'LINE OAuth連携', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f1_2.id, fixed_version: created_versions['v3'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 1-3: プロフィール管理
+  f1_3 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'プロフィール管理', description: 'ユーザー情報編集・アバター設定',
+    status: status_in_progress, priority: priority_normal,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic1.id, fixed_version: created_versions['v2'], estimated_hours: 24.0
   )
-  puts "      └─ UserStory: #{us2.subject} (Version: #{us2.fixed_version.name}) ⚠️異なる！"
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f1_3.subject} (#{f1_3.fixed_version.name})"
 
-  # Feature 1-2: プロフィール機能
-  feature1_2 = Issue.create!(
-    project: sakura_ec,
-    tracker: feature_tracker,
-    subject: 'プロフィール機能',
-    description: 'ユーザー情報編集・アバター設定',
-    status: status_in_progress,
-    priority: priority_normal,
-    author: suzuki,
-    assigned_to: watanabe,
-    parent_issue_id: epic1.id,
-    fixed_version: created_versions['v2']
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'プロフィール情報を編集できる',
+    description: '氏名・住所・電話番号編集', status: status_in_progress, priority: priority_normal,
+    author: watanabe, assigned_to: watanabe, parent_issue_id: f1_3.id, fixed_version: created_versions['v2'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'アバター画像をアップロードできる',
+    description: 'プロフィール画像設定', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f1_3.id, fixed_version: created_versions['v3'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'メール通知設定を変更できる',
+    description: '通知ON/OFF設定', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f1_3.id, fixed_version: created_versions['v3'], estimated_hours: 4.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 1-4: 会員登録
+  f1_4 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '会員登録機能', description: '新規ユーザー登録フロー',
+    status: status_resolved, priority: priority_high,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic1.id, fixed_version: created_versions['v1'], estimated_hours: 20.0
   )
-  puts "    └─ Feature: #{feature1_2.subject} (Version: #{feature1_2.fixed_version.name})"
+  feature_count += 1
+  puts "    └─ F#{feature_count}: #{f1_4.subject} (#{f1_4.fixed_version.name})"
 
-  # UserStory 3: プロフィール編集（Featureと同じVersion）
-  us3 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'プロフィール情報を編集できる',
-    description: '氏名・住所・電話番号を編集',
-    status: status_in_progress,
-    priority: priority_normal,
-    author: watanabe,
-    assigned_to: watanabe,
-    parent_issue_id: feature1_2.id,
-    fixed_version: created_versions['v2'],
-    estimated_hours: 6.0
-  )
-  puts "      ├─ UserStory: #{us3.subject} (Version: #{us3.fixed_version.name}) ✓同じ"
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'メールアドレスで会員登録できる',
+    description: '新規登録フォーム', status: status_closed, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f1_4.id, fixed_version: created_versions['v1'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
 
-  # UserStory 4: アバター設定（Featureと異なるVersion）
-  us4 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'アバター画像を設定できる',
-    description: 'プロフィール画像のアップロード',
-    status: status_new,
-    priority: priority_normal,
-    author: watanabe,
-    assigned_to: watanabe,
-    parent_issue_id: feature1_2.id,
-    fixed_version: created_versions['v3'],
-    estimated_hours: 8.0
-  )
-  puts "      └─ UserStory: #{us4.subject} (Version: #{us4.fixed_version.name}) ⚠️異なる！"
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '登録確認メールが送信される',
+    description: 'メールアドレス確認', status: status_closed, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f1_4.id, fixed_version: created_versions['v1'], estimated_hours: 6.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
 
-  # ===== Epic 2: 商品機能 =====
+  # ========================================
+  # Epic 2: 商品機能（Product Management）
+  # ========================================
   epic2 = Issue.create!(
-    project: sakura_ec,
-    tracker: epic_tracker,
-    subject: '商品機能',
-    description: '商品検索・閲覧・詳細表示',
-    status: status_in_progress,
-    priority: priority_high,
-    author: tanaka,
-    fixed_version: nil  # Versionなし
+    project: sakura_ec, tracker: epic_tracker,
+    subject: '商品機能', description: '商品検索・閲覧・詳細表示・在庫管理',
+    status: status_in_progress, priority: priority_high,
+    author: tanaka, fixed_version: created_versions['v2']
   )
-  puts "  ✅ Epic: #{epic2.subject} (Version: なし)"
+  epic_count += 1
+  puts "\n  ✅ Epic#{epic_count}: #{epic2.subject} (#{epic2.fixed_version.name})"
 
   # Feature 2-1: 商品検索
-  feature2_1 = Issue.create!(
-    project: sakura_ec,
-    tracker: feature_tracker,
-    subject: '商品検索機能',
-    description: 'キーワード・カテゴリ検索',
-    status: status_in_progress,
-    priority: priority_high,
-    author: suzuki,
-    assigned_to: sato,
-    parent_issue_id: epic2.id,
-    fixed_version: created_versions['v3']
+  f2_1 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '商品検索機能', description: 'キーワード・カテゴリ・価格帯検索',
+    status: status_in_progress, priority: priority_high,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic2.id, fixed_version: created_versions['v2'], estimated_hours: 28.0
   )
-  puts "    ├─ Feature: #{feature2_1.subject} (Version: #{feature2_1.fixed_version.name})"
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f2_1.subject} (#{f2_1.fixed_version.name})"
 
-  # UserStory 5: キーワード検索（Versionなし、Featureと異なる）
-  us5 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'キーワードで商品を検索できる',
-    description: '商品名・説明文から部分一致検索',
-    status: status_resolved,
-    priority: priority_high,
-    author: sato,
-    assigned_to: sato,
-    parent_issue_id: feature2_1.id,
-    fixed_version: nil,
-    estimated_hours: 12.0
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'キーワードで商品を検索できる',
+    description: '商品名・説明文から部分一致検索', status: status_resolved, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f2_1.id, fixed_version: created_versions['v2'], estimated_hours: 10.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'カテゴリで商品を絞り込める',
+    description: '和菓子・洋菓子・季節限定で絞込', status: status_in_progress, priority: priority_normal,
+    author: sato, assigned_to: watanabe, parent_issue_id: f2_1.id, fixed_version: created_versions['v2'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '価格帯で商品を絞り込める',
+    description: '価格レンジ指定検索', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f2_1.id, fixed_version: created_versions['v3'], estimated_hours: 6.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 2-2: 商品詳細表示
+  f2_2 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '商品詳細表示', description: '商品画像・説明・レビュー・在庫状況',
+    status: status_in_progress, priority: priority_high,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic2.id, fixed_version: created_versions['v2'], estimated_hours: 24.0
   )
-  puts "      ├─ UserStory: #{us5.subject} (Version: なし) ⚠️異なる！"
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f2_2.subject} (#{f2_2.fixed_version.name})"
 
-  # UserStory 6: カテゴリ絞込（Featureと同じVersion）
-  us6 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'カテゴリで商品を絞り込める',
-    description: '和菓子・洋菓子・季節限定などで絞込',
-    status: status_in_progress,
-    priority: priority_normal,
-    author: sato,
-    assigned_to: watanabe,
-    parent_issue_id: feature2_1.id,
-    fixed_version: created_versions['v3'],
-    estimated_hours: 8.0
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品画像をギャラリー表示できる',
+    description: '複数画像のスライド表示', status: status_in_progress, priority: priority_normal,
+    author: watanabe, assigned_to: watanabe, parent_issue_id: f2_2.id, fixed_version: created_versions['v2'], estimated_hours: 10.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品説明と原材料が表示される',
+    description: '商品詳細情報・アレルギー情報', status: status_in_progress, priority: priority_high,
+    author: watanabe, assigned_to: watanabe, parent_issue_id: f2_2.id, fixed_version: created_versions['v2'], estimated_hours: 6.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '在庫状況がリアルタイム表示される',
+    description: '在庫数・入荷予定表示', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f2_2.id, fixed_version: created_versions['v4'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 2-3: 商品レビュー
+  f2_3 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '商品レビュー機能', description: 'レビュー投稿・表示・評価集計',
+    status: status_new, priority: priority_normal,
+    author: suzuki, assigned_to: yamada,
+    parent_issue_id: epic2.id, fixed_version: created_versions['v4'], estimated_hours: 32.0
   )
-  puts "      └─ UserStory: #{us6.subject} (Version: #{us6.fixed_version.name}) ✓同じ"
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f2_3.subject} (#{f2_3.fixed_version.name})"
 
-  # Feature 2-2: 商品詳細
-  feature2_2 = Issue.create!(
-    project: sakura_ec,
-    tracker: feature_tracker,
-    subject: '商品詳細表示',
-    description: '商品画像・説明・レビュー表示',
-    status: status_in_progress,
-    priority: priority_normal,
-    author: suzuki,
-    assigned_to: watanabe,
-    parent_issue_id: epic2.id,
-    fixed_version: created_versions['v4']
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'レビューを投稿できる',
+    description: '星評価・コメント投稿', status: status_new, priority: priority_normal,
+    author: yamada, parent_issue_id: f2_3.id, fixed_version: created_versions['v4'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'レビューを一覧表示できる',
+    description: 'レビュー一覧・ソート', status: status_new, priority: priority_normal,
+    author: yamada, parent_issue_id: f2_3.id, fixed_version: created_versions['v4'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 2-4: 商品一覧表示
+  f2_4 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '商品一覧表示', description: 'グリッド/リスト表示切替・ソート',
+    status: status_resolved, priority: priority_high,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic2.id, fixed_version: created_versions['v1'], estimated_hours: 20.0
   )
-  puts "    └─ Feature: #{feature2_2.subject} (Version: #{feature2_2.fixed_version.name})"
+  feature_count += 1
+  puts "    └─ F#{feature_count}: #{f2_4.subject} (#{f2_4.fixed_version.name})"
 
-  # UserStory 7: 画像ギャラリー（Featureと同じVersion）
-  us7 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: '商品画像をギャラリー表示できる',
-    description: '複数の商品画像をスライド表示',
-    status: status_in_progress,
-    priority: priority_normal,
-    author: watanabe,
-    assigned_to: watanabe,
-    parent_issue_id: feature2_2.id,
-    fixed_version: created_versions['v4'],
-    estimated_hours: 10.0
-  )
-  puts "      ├─ UserStory: #{us7.subject} (Version: #{us7.fixed_version.name}) ✓同じ"
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品をグリッド表示できる',
+    description: 'サムネイルグリッド表示', status: status_closed, priority: priority_high,
+    author: watanabe, assigned_to: watanabe, parent_issue_id: f2_4.id, fixed_version: created_versions['v1'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
 
-  # UserStory 8: レビュー表示（Featureと異なるVersion）
-  us8 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'ユーザーレビューを表示できる',
-    description: '星評価とコメントを表示',
-    status: status_new,
-    priority: priority_normal,
-    author: watanabe,
-    parent_issue_id: feature2_2.id,
-    fixed_version: created_versions['v5'],
-    estimated_hours: 12.0
-  )
-  puts "      └─ UserStory: #{us8.subject} (Version: #{us8.fixed_version.name}) ⚠️異なる！"
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品をリスト表示できる',
+    description: '詳細情報付きリスト表示', status: status_closed, priority: priority_normal,
+    author: watanabe, assigned_to: watanabe, parent_issue_id: f2_4.id, fixed_version: created_versions['v1'], estimated_hours: 6.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
 
-  # ===== Epic 3: 決済機能 =====
+  # ========================================
+  # Epic 3: 決済機能（Payment & Cart）
+  # ========================================
   epic3 = Issue.create!(
-    project: sakura_ec,
-    tracker: epic_tracker,
-    subject: '決済機能',
-    description: 'カート・決済処理',
-    status: status_new,
-    priority: priority_urgent,
-    author: tanaka,
-    fixed_version: created_versions['v5']
+    project: sakura_ec, tracker: epic_tracker,
+    subject: '決済機能', description: 'カート・決済処理・領収書発行',
+    status: status_in_progress, priority: priority_urgent,
+    author: tanaka, fixed_version: created_versions['v1']
   )
-  puts "  ✅ Epic: #{epic3.subject} (Version: #{epic3.fixed_version.name})"
+  epic_count += 1
+  puts "\n  ✅ Epic#{epic_count}: #{epic3.subject} (#{epic3.fixed_version.name})"
 
-  # Feature 3-1: カート機能
-  feature3_1 = Issue.create!(
-    project: sakura_ec,
-    tracker: feature_tracker,
-    subject: 'ショッピングカート',
-    description: '商品追加・削除・数量変更',
-    status: status_in_progress,
-    priority: priority_high,
+  # Feature 3-1: ショッピングカート
+  f3_1 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'ショッピングカート', description: '商品追加・削除・数量変更',
+    status: status_resolved, priority: priority_high,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic3.id, fixed_version: created_versions['v1'], estimated_hours: 28.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f3_1.subject} (#{f3_1.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品をカートに追加できる',
+    description: '商品詳細からカート追加', status: status_closed, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f3_1.id, fixed_version: created_versions['v1'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'カートAPIエンドポイント実装',
+    status: status_closed, priority: priority_normal, author: sato, assigned_to: sato,
+    parent_issue_id: us.id, fixed_version: created_versions['v1'], estimated_hours: 4.0)
+  task_count += 1
+  puts "        ├─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'カート内商品数量を変更できる',
+    description: '数量増減・削除', status: status_closed, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f3_1.id, fixed_version: created_versions['v1'], estimated_hours: 6.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'カート合計金額が表示される',
+    description: '小計・税込価格表示', status: status_closed, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f3_1.id, fixed_version: created_versions['v1'], estimated_hours: 4.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 3-2: クレジットカード決済
+  f3_2 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'クレジットカード決済', description: 'Stripe連携決済',
+    status: status_in_progress, priority: priority_urgent,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic3.id, fixed_version: created_versions['v1'], estimated_hours: 40.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f3_2.subject} (#{f3_2.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'クレジットカード情報を入力できる',
+    description: 'カード番号・有効期限入力', status: status_in_progress, priority: priority_urgent,
+    author: sato, assigned_to: sato, parent_issue_id: f3_2.id, fixed_version: created_versions['v1'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '決済処理が正常に完了する',
+    description: 'Stripe決済API連携', status: status_in_progress, priority: priority_urgent,
+    author: sato, assigned_to: sato, parent_issue_id: f3_2.id, fixed_version: created_versions['v1'], estimated_hours: 16.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '決済エラー時に適切なメッセージが表示される',
+    description: 'エラーハンドリング', status: status_new, priority: priority_high,
+    author: sato, parent_issue_id: f3_2.id, fixed_version: created_versions['v2'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 3-3: コンビニ決済
+  f3_3 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'コンビニ決済', description: 'コンビニ払込票発行',
+    status: status_new, priority: priority_normal,
     author: suzuki,
-    assigned_to: sato,
-    parent_issue_id: epic3.id,
-    fixed_version: created_versions['v1']
+    parent_issue_id: epic3.id, fixed_version: created_versions['v3'], estimated_hours: 32.0
   )
-  puts "    ├─ Feature: #{feature3_1.subject} (Version: #{feature3_1.fixed_version.name})"
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f3_3.subject} (#{f3_3.fixed_version.name})"
 
-  # UserStory 9: カート追加（Featureと同じVersion）
-  us9 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: '商品をカートに追加できる',
-    description: '商品詳細からカート追加',
-    status: status_resolved,
-    priority: priority_high,
-    author: sato,
-    assigned_to: sato,
-    parent_issue_id: feature3_1.id,
-    fixed_version: created_versions['v1'],
-    estimated_hours: 8.0
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'コンビニ支払い番号が発行される',
+    description: '払込票番号生成', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f3_3.id, fixed_version: created_versions['v3'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 3-4: 領収書発行
+  f3_4 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '領収書発行機能', description: 'PDF領収書生成・ダウンロード',
+    status: status_new, priority: priority_normal,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic3.id, fixed_version: created_versions['v3'], estimated_hours: 20.0
   )
-  puts "      ├─ UserStory: #{us9.subject} (Version: #{us9.fixed_version.name}) ✓同じ"
+  feature_count += 1
+  puts "    └─ F#{feature_count}: #{f3_4.subject} (#{f3_4.fixed_version.name})"
 
-  # UserStory 10: 数量変更（Featureと異なるVersion）
-  us10 = Issue.create!(
-    project: sakura_ec,
-    tracker: user_story_tracker,
-    subject: 'カート内の商品数量を変更できる',
-    description: '数量の増減・削除',
-    status: status_in_progress,
-    priority: priority_normal,
-    author: sato,
-    assigned_to: watanabe,
-    parent_issue_id: feature3_1.id,
-    fixed_version: created_versions['v2'],
-    estimated_hours: 6.0
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '領収書をPDFダウンロードできる',
+    description: 'PDF生成・ダウンロード', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f3_4.id, fixed_version: created_versions['v3'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # ========================================
+  # Epic 4: 配送機能（Shipping & Delivery）
+  # ========================================
+  epic4 = Issue.create!(
+    project: sakura_ec, tracker: epic_tracker,
+    subject: '配送機能', description: '配送先管理・配送状況追跡・通知',
+    status: status_in_progress, priority: priority_high,
+    author: tanaka, fixed_version: created_versions['v2']
   )
-  puts "      └─ UserStory: #{us10.subject} (Version: #{us10.fixed_version.name}) ⚠️異なる！"
+  epic_count += 1
+  puts "\n  ✅ Epic#{epic_count}: #{epic4.subject} (#{epic4.fixed_version.name})"
 
-  # Feature 3-2: 決済処理
-  feature3_2 = Issue.create!(
-    project: sakura_ec,
-    tracker: feature_tracker,
-    subject: '決済処理機能',
-    description: 'クレジットカード・コンビニ決済',
-    status: status_new,
-    priority: priority_urgent,
+  # Feature 4-1: 配送先管理
+  f4_1 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '配送先管理', description: '配送先登録・編集・複数管理',
+    status: status_in_progress, priority: priority_high,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic4.id, fixed_version: created_versions['v2'], estimated_hours: 24.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f4_1.subject} (#{f4_1.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '配送先住所を登録できる',
+    description: '郵便番号・住所入力', status: status_in_progress, priority: priority_high,
+    author: watanabe, assigned_to: watanabe, parent_issue_id: f4_1.id, fixed_version: created_versions['v2'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '複数の配送先を管理できる',
+    description: '配送先一覧・編集・削除', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f4_1.id, fixed_version: created_versions['v3'], estimated_hours: 10.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 4-2: 配送日時指定
+  f4_2 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '配送日時指定', description: '希望配送日・時間帯指定',
+    status: status_new, priority: priority_normal,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic4.id, fixed_version: created_versions['v3'], estimated_hours: 20.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f4_2.subject} (#{f4_2.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '希望配送日を選択できる',
+    description: 'カレンダーから日付選択', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f4_2.id, fixed_version: created_versions['v3'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '配送時間帯を指定できる',
+    description: '午前・午後・夜間指定', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f4_2.id, fixed_version: created_versions['v3'], estimated_hours: 6.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 4-3: 配送状況追跡
+  f4_3 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '配送状況追跡', description: '配送ステータス・伝票番号確認',
+    status: status_new, priority: priority_normal,
+    author: suzuki, assigned_to: yamada,
+    parent_issue_id: epic4.id, fixed_version: created_versions['v4'], estimated_hours: 28.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f4_3.subject} (#{f4_3.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '配送ステータスを確認できる',
+    description: '出荷準備中・配送中・配達完了', status: status_new, priority: priority_normal,
+    author: yamada, parent_issue_id: f4_3.id, fixed_version: created_versions['v4'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '配送業者の追跡ページにリンクできる',
+    description: '伝票番号から追跡URL生成', status: status_new, priority: priority_normal,
+    author: yamada, parent_issue_id: f4_3.id, fixed_version: created_versions['v4'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 4-4: 配送通知
+  f4_4 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '配送通知機能', description: '出荷・配達完了メール通知',
+    status: status_new, priority: priority_normal,
     author: suzuki,
-    parent_issue_id: epic3.id,
-    fixed_version: created_versions['v5']
+    parent_issue_id: epic4.id, fixed_version: created_versions['v3'], estimated_hours: 16.0
   )
-  puts "    └─ Feature: #{feature3_2.subject} (Version: #{feature3_2.fixed_version.name})"
+  feature_count += 1
+  puts "    └─ F#{feature_count}: #{f4_4.subject} (#{f4_4.fixed_version.name})"
 
-  puts "\n  📝 UserStory配置の検証ポイント:"
-  puts "    ⚠️ US2, US4, US5, US8, US10 は親Featureと異なるVersionを持つ"
-  puts "    ⚠️ 修正前の実装では、これらがFeatureのVersionに引きずられて誤配置される"
-  puts "    ✅ 修正後は、各UserStory自身のVersionでセル配置される"
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '出荷時にメール通知される',
+    description: '出荷通知メール送信', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f4_4.id, fixed_version: created_versions['v3'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # ========================================
+  # Epic 5: 管理機能（Admin & Analytics）
+  # ========================================
+  epic5 = Issue.create!(
+    project: sakura_ec, tracker: epic_tracker,
+    subject: '管理機能', description: '管理ダッシュボード・売上分析・在庫管理',
+    status: status_new, priority: priority_normal,
+    author: tanaka, fixed_version: created_versions['v4']
+  )
+  epic_count += 1
+  puts "\n  ✅ Epic#{epic_count}: #{epic5.subject} (#{epic5.fixed_version.name})"
+
+  # Feature 5-1: 管理ダッシュボード
+  f5_1 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '管理ダッシュボード', description: '売上・注文数・アクセス数グラフ',
+    status: status_new, priority: priority_normal,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic5.id, fixed_version: created_versions['v4'], estimated_hours: 32.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f5_1.subject} (#{f5_1.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '売上グラフを表示できる',
+    description: '日別・月別売上グラフ', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f5_1.id, fixed_version: created_versions['v4'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '注文数の推移を確認できる',
+    description: '期間別注文数グラフ', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f5_1.id, fixed_version: created_versions['v4'], estimated_hours: 10.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 5-2: 商品管理
+  f5_2 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '商品管理機能', description: '商品登録・編集・削除・在庫管理',
+    status: status_new, priority: priority_high,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic5.id, fixed_version: created_versions['v3'], estimated_hours: 40.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f5_2.subject} (#{f5_2.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '新規商品を登録できる',
+    description: '商品情報・画像登録', status: status_new, priority: priority_high,
+    author: sato, parent_issue_id: f5_2.id, fixed_version: created_versions['v3'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品情報を編集できる',
+    description: '価格・説明・在庫数編集', status: status_new, priority: priority_high,
+    author: sato, parent_issue_id: f5_2.id, fixed_version: created_versions['v3'], estimated_hours: 10.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '在庫数を一括更新できる',
+    description: 'CSV一括インポート', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f5_2.id, fixed_version: created_versions['v5'], estimated_hours: 16.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 5-3: 注文管理
+  f5_3 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '注文管理機能', description: '注文一覧・ステータス更新・キャンセル',
+    status: status_new, priority: priority_high,
+    author: suzuki, assigned_to: watanabe,
+    parent_issue_id: epic5.id, fixed_version: created_versions['v3'], estimated_hours: 36.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f5_3.subject} (#{f5_3.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '注文一覧を確認できる',
+    description: '注文検索・フィルタ', status: status_new, priority: priority_high,
+    author: watanabe, parent_issue_id: f5_3.id, fixed_version: created_versions['v3'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '注文ステータスを更新できる',
+    description: '発送済み・配達完了に変更', status: status_new, priority: priority_high,
+    author: watanabe, parent_issue_id: f5_3.id, fixed_version: created_versions['v3'], estimated_hours: 8.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 5-4: 顧客管理
+  f5_4 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '顧客管理機能', description: '顧客一覧・購入履歴・問い合わせ管理',
+    status: status_new, priority: priority_normal,
+    author: suzuki,
+    parent_issue_id: epic5.id, fixed_version: created_versions['v5'], estimated_hours: 32.0
+  )
+  feature_count += 1
+  puts "    └─ F#{feature_count}: #{f5_4.subject} (#{f5_4.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '顧客一覧を確認できる',
+    description: '登録日・購入回数で検索', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f5_4.id, fixed_version: created_versions['v5'], estimated_hours: 12.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '顧客の購入履歴を確認できる',
+    description: '過去注文一覧表示', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f5_4.id, fixed_version: created_versions['v5'], estimated_hours: 10.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # ========================================
+  # Epic 6: AI機能（AI & Recommendation）
+  # ========================================
+  epic6 = Issue.create!(
+    project: sakura_ec, tracker: epic_tracker,
+    subject: 'AI機能', description: 'AIレコメンド・チャットボット・需要予測',
+    status: status_new, priority: priority_normal,
+    author: tanaka, fixed_version: created_versions['v6']
+  )
+  epic_count += 1
+  puts "\n  ✅ Epic#{epic_count}: #{epic6.subject} (#{epic6.fixed_version.name})"
+
+  # Feature 6-1: AIレコメンド
+  f6_1 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'AIレコメンド機能', description: '購入履歴ベースのおすすめ商品',
+    status: status_new, priority: priority_normal,
+    author: suzuki, assigned_to: sato,
+    parent_issue_id: epic6.id, fixed_version: created_versions['v6'], estimated_hours: 48.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f6_1.subject} (#{f6_1.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'おすすめ商品が表示される',
+    description: '協調フィルタリング', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_1.id, fixed_version: created_versions['v6'], estimated_hours: 20.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '閲覧履歴から関連商品を提案',
+    description: 'セッションベースレコメンド', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_1.id, fixed_version: created_versions['v7'], estimated_hours: 24.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject} ⚠️異Version"
+
+  # Feature 6-2: チャットボット
+  f6_2 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: 'AIチャットボット', description: '商品問い合わせ自動応答',
+    status: status_new, priority: priority_normal,
+    author: suzuki,
+    parent_issue_id: epic6.id, fixed_version: created_versions['v7'], estimated_hours: 56.0
+  )
+  feature_count += 1
+  puts "    ├─ F#{feature_count}: #{f6_2.subject} (#{f6_2.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'チャットで商品を検索できる',
+    description: '自然言語検索', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_2.id, fixed_version: created_versions['v7'], estimated_hours: 24.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'よくある質問に自動回答する',
+    description: 'FAQ自動応答', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_2.id, fixed_version: created_versions['v7'], estimated_hours: 20.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # Feature 6-3: 需要予測
+  f6_3 = Issue.create!(
+    project: sakura_ec, tracker: feature_tracker,
+    subject: '需要予測機能', description: '売上予測・在庫最適化提案',
+    status: status_new, priority: priority_normal,
+    author: suzuki,
+    parent_issue_id: epic6.id, fixed_version: created_versions['v8'], estimated_hours: 60.0
+  )
+  feature_count += 1
+  puts "    └─ F#{feature_count}: #{f6_3.subject} (#{f6_3.fixed_version.name})"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品別売上予測を確認できる',
+    description: '時系列予測モデル', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_3.id, fixed_version: created_versions['v8'], estimated_hours: 28.0)
+  us_count += 1
+  puts "      ├─ US#{us_count}: #{us.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '適正在庫数の提案を受ける',
+    description: '在庫最適化アルゴリズム', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_3.id, fixed_version: created_versions['v8'], estimated_hours: 24.0)
+  us_count += 1
+  puts "      └─ US#{us_count}: #{us.subject}"
+
+  # ========================================
+  # 追加UserStory & Task（目標達成のため）
+  # ========================================
+  puts "\n  ➕ 追加UserStory & Task生成中..."
+
+  # Epic1 追加US
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '二段階認証を設定できる',
+    description: 'SMSまたはTOTPでの二段階認証', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f1_1.id, fixed_version: created_versions['v3'], estimated_hours: 16.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic1追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'TOTP認証ライブラリ調査',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v3'], estimated_hours: 4.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'パスワード強度チェックが機能する',
+    description: '弱いパスワードを拒否', status: status_resolved, priority: priority_normal,
+    author: sato, parent_issue_id: f1_4.id, fixed_version: created_versions['v1'], estimated_hours: 6.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic1追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'パスワードバリデーションロジック実装',
+    status: status_resolved, priority: priority_normal, author: sato, assigned_to: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v1'], estimated_hours: 3.0)
+  task_count += 1
+  puts "      ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'パスワード強度メーター実装',
+    status: status_resolved, priority: priority_normal, author: watanabe, assigned_to: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v1'], estimated_hours: 3.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  # Epic2 追加US
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品をお気に入り登録できる',
+    description: 'お気に入りリスト機能', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f2_2.id, fixed_version: created_versions['v3'], estimated_hours: 10.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic2追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'お気に入りテーブル設計',
+    status: status_new, priority: priority_normal, author: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v3'], estimated_hours: 2.0)
+  task_count += 1
+  puts "      ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'お気に入りAPI実装',
+    status: status_new, priority: priority_normal, author: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v3'], estimated_hours: 4.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '商品比較機能を使える',
+    description: '複数商品のスペック比較', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f2_4.id, fixed_version: created_versions['v4'], estimated_hours: 14.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic2追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '比較UIコンポーネント設計',
+    status: status_new, priority: priority_normal, author: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v4'], estimated_hours: 6.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '新着商品バッジが表示される',
+    description: '登録7日以内の商品にNEWマーク', status: status_in_progress, priority: priority_normal,
+    author: watanabe, parent_issue_id: f2_4.id, fixed_version: created_versions['v2'], estimated_hours: 4.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic2追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'NEWバッジ条件判定ロジック',
+    status: status_in_progress, priority: priority_normal, author: watanabe, assigned_to: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v2'], estimated_hours: 2.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  # Epic3 追加US
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'カート内商品の保存期限を設定できる',
+    description: '30日間カート保持', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f3_1.id, fixed_version: created_versions['v2'], estimated_hours: 8.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic3追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'カート有効期限バッチ処理',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v2'], estimated_hours: 4.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'クーポンコードを適用できる',
+    description: '割引クーポン入力機能', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f3_2.id, fixed_version: created_versions['v2'], estimated_hours: 12.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic3追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'クーポンマスタテーブル設計',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v2'], estimated_hours: 3.0)
+  task_count += 1
+  puts "      ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'クーポン適用ロジック実装',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v2'], estimated_hours: 5.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '決済完了メールが送信される',
+    description: '注文確認メール自動送信', status: status_in_progress, priority: priority_high,
+    author: sato, assigned_to: sato, parent_issue_id: f3_2.id, fixed_version: created_versions['v1'], estimated_hours: 8.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic3追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'メールテンプレート作成',
+    status: status_in_progress, priority: priority_normal, author: sato, assigned_to: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v1'], estimated_hours: 3.0)
+  task_count += 1
+  puts "      ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'メール送信バッチ実装',
+    status: status_in_progress, priority: priority_normal, author: sato, assigned_to: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v1'], estimated_hours: 4.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  # Epic4 追加US
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '配送先候補を郵便番号から検索できる',
+    description: '住所自動補完機能', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f4_1.id, fixed_version: created_versions['v3'], estimated_hours: 10.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic4追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '郵便番号API連携',
+    status: status_new, priority: priority_normal, author: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v3'], estimated_hours: 5.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '再配達を依頼できる',
+    description: '不在時の再配達依頼', status: status_new, priority: priority_normal,
+    author: watanabe, parent_issue_id: f4_3.id, fixed_version: created_versions['v4'], estimated_hours: 12.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic4追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '再配達依頼フォーム作成',
+    status: status_new, priority: priority_normal, author: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v4'], estimated_hours: 4.0)
+  task_count += 1
+  puts "      ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '配送業者API連携',
+    status: status_new, priority: priority_normal, author: yamada, parent_issue_id: us.id,
+    fixed_version: created_versions['v4'], estimated_hours: 6.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  # Epic5 追加US
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '売上レポートをPDF出力できる',
+    description: '月次レポートPDF生成', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f5_1.id, fixed_version: created_versions['v5'], estimated_hours: 14.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic5追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'PDF生成ライブラリ選定',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v5'], estimated_hours: 3.0)
+  task_count += 1
+  puts "      ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'レポートテンプレート作成',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v5'], estimated_hours: 6.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '在庫アラートを設定できる',
+    description: '在庫閾値でメール通知', status: status_new, priority: priority_high,
+    author: sato, parent_issue_id: f5_2.id, fixed_version: created_versions['v3'], estimated_hours: 10.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic5追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '在庫監視バッチ処理',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v3'], estimated_hours: 4.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '注文キャンセル処理ができる',
+    description: 'キャンセルと返金処理', status: status_new, priority: priority_high,
+    author: watanabe, parent_issue_id: f5_3.id, fixed_version: created_versions['v3'], estimated_hours: 16.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic5追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'キャンセルワークフロー設計',
+    status: status_new, priority: priority_normal, author: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v3'], estimated_hours: 4.0)
+  task_count += 1
+  puts "      ├─ T#{task_count}: #{task.subject}"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '返金API実装',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v3'], estimated_hours: 6.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  # Epic6 追加US
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'レコメンド精度を評価できる',
+    description: 'A/Bテスト機能', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_1.id, fixed_version: created_versions['v7'], estimated_hours: 20.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic6追加) ⚠️異Version"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'A/Bテスト基盤構築',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v7'], estimated_hours: 10.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: 'チャットボット学習データを管理できる',
+    description: '学習データ登録・編集', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_2.id, fixed_version: created_versions['v7'], estimated_hours: 16.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic6追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '学習データ管理画面',
+    status: status_new, priority: priority_normal, author: watanabe, parent_issue_id: us.id,
+    fixed_version: created_versions['v7'], estimated_hours: 8.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '季節トレンドを予測できる',
+    description: '季節性を考慮した需要予測', status: status_new, priority: priority_normal,
+    author: sato, parent_issue_id: f6_3.id, fixed_version: created_versions['v8'], estimated_hours: 24.0)
+  us_count += 1
+  puts "    └─ US#{us_count}: #{us.subject} (Epic6追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: '季節性分析アルゴリズム実装',
+    status: status_new, priority: priority_normal, author: sato, parent_issue_id: us.id,
+    fixed_version: created_versions['v8'], estimated_hours: 12.0)
+  task_count += 1
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  puts "    ✅ 追加完了: UserStory +20個, Task +27個"
+
+  # ========================================
+  # Bug追加（実践的な不具合管理）
+  # ========================================
+  puts "\n  🐛 不具合チケット追加中..."
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'ログイン時にセッションが切れる',
+    description: 'Safariブラウザでログイン後、5分でセッションタイムアウト',
+    status: status_resolved, priority: priority_high,
+    author: yamada, assigned_to: sato,
+    fixed_version: created_versions['v2'], estimated_hours: 8.0
+  )
+  puts "    🐛 Bug#1: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'カート合計金額の計算誤り',
+    description: '税込価格が小数点以下で誤差が発生',
+    status: status_in_progress, priority: priority_urgent,
+    author: yamada, assigned_to: sato,
+    fixed_version: created_versions['v1'], estimated_hours: 4.0
+  )
+  puts "    🐛 Bug#2: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'モバイル表示で商品画像が崩れる',
+    description: 'iPhone13で画像アスペクト比が崩れる',
+    status: status_new, priority: priority_normal,
+    author: yamada,
+    fixed_version: created_versions['v3'], estimated_hours: 6.0
+  )
+  puts "    🐛 Bug#3: #{bug.subject} (#{bug.fixed_version.name})"
+
+  # ========================================
+  # 統計表示
+  # ========================================
+  puts "\n  📊 === Issue生成完了 ==="
+  puts "    Epic: #{epic_count}個"
+  puts "    Feature: #{feature_count}個"
+  puts "    UserStory: #{us_count}個"
+  puts "    Task: #{task_count}個"
+  puts "    Bug: 3個"
+  puts "    合計: #{epic_count + feature_count + us_count + task_count + 3}個"
+
+  puts "\n  📝 検証ポイント:"
+  puts "    ✅ 各Epic配下に3-5個のFeature"
+  puts "    ✅ 各Feature配下に2-4個のUserStory"
+  puts "    ✅ 一部UserStoryは親Featureと異なるVersionを持つ"
+  puts "    ✅ Taskはv1の主要UserStoryにのみ付与"
+  puts "    ✅ Bugは実践的なシナリオを想定"
 
   # app_notificationsの通知を復元
   begin
@@ -727,13 +1389,36 @@ puts "  ユーザー数: #{User.count}"
 puts "  プロジェクト数: #{Project.count}"
 puts "  優先度数: #{IssuePriority.count}"
 puts "  バージョン数: #{Version.count}"
-puts "  Issue数: #{Issue.count}"
-puts "    - Epic: #{Issue.joins(:tracker).where(trackers: { name: 'エピック' }).count}"
-puts "    - Feature: #{Issue.joins(:tracker).where(trackers: { name: '機能' }).count}"
-puts "    - UserStory: #{Issue.joins(:tracker).where(trackers: { name: 'ユーザストーリ' }).count}"
+puts "  Issue総数: #{Issue.count}"
+puts "    - Epic: #{Issue.joins(:tracker).where(trackers: { name: 'エピック' }).count}個"
+puts "    - Feature: #{Issue.joins(:tracker).where(trackers: { name: '機能' }).count}個"
+puts "    - UserStory: #{Issue.joins(:tracker).where(trackers: { name: 'ユーザストーリ' }).count}個"
+puts "    - Task: #{Issue.joins(:tracker).where(trackers: { name: '作業' }).count}個"
+puts "    - Test: #{Issue.joins(:tracker).where(trackers: { name: '評価' }).count}個"
+puts "    - Bug: #{Issue.joins(:tracker).where(trackers: { name: '不具合' }).count}個"
 puts "  プラグイン設定: #{Setting.plugin_redmine_epic_grid.present? ? '設定済み' : '未設定'}"
+
+puts "\n✨ === 実践的データ特徴 ==="
+puts "  📅 プロジェクト期間: 2025年8月〜2026年9月 (14ヶ月)"
+puts "  🚀 バージョン: 8回のリリース (月次〜隔月)"
+puts "  👥 チームメンバー: 6名 (PM、リーダー、シニア、ジュニア、QA、管理者)"
+puts "  🎯 複雑な依存関係: UserStoryの一部が親Featureと異なるVersion"
+puts "  📈 ステータス配分: 完了/進行中/新規/解決済みが混在"
+puts "  🐛 不具合管理: リアルな不具合シナリオを含む"
 
 puts "\n🌸 === 桜商店カンバンテストデータ投入完了！ === 🌸"
 puts "以下のコマンドで実行:"
 puts "  cd /usr/src/redmine"
 puts "  RAILS_ENV=development rails runner plugins/redmine_epic_grid/db/seeds/kanban_test_data.rb"
+puts ""
+puts "💡 使い方:"
+puts "  1. ブラウザで http://localhost:3000 にアクセス"
+puts "  2. ログイン: admin / admin"
+puts "  3. プロジェクト「桜商店ECサイト開発」を選択"
+puts "  4. Epic Grid タブをクリック"
+puts ""
+puts "🎨 確認ポイント:"
+puts "  - 6つのEpicが横軸に配置されているか"
+puts "  - 8つのバージョンが縦軸に配置されているか"
+puts "  - UserStoryが親Featureではなく自身のVersionに配置されているか"
+puts "  - 大量のカード表示でパフォーマンスに問題がないか"
