@@ -266,6 +266,8 @@ module EpicGrid
         status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
+        start_date: user_story.start_date,
+        due_date: user_story.due_date,
         **task_params
       )
 
@@ -312,6 +314,8 @@ module EpicGrid
         status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
+        start_date: user_story.start_date,
+        due_date: user_story.due_date,
         **test_params
       )
 
@@ -355,6 +359,8 @@ module EpicGrid
         status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
+        start_date: user_story.start_date,
+        due_date: user_story.due_date,
         **bug_params
       )
 

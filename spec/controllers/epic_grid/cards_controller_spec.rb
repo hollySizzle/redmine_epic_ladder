@@ -164,6 +164,34 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
         )
       )
     end
+
+    context '親UserStoryに日付が設定されている場合' do
+      let!(:user_story_with_dates) do
+        create(:user_story, project: project, author: user,
+               start_date: Date.new(2025, 9, 30),
+               due_date: Date.new(2025, 12, 31))
+      end
+
+      it '親UserStoryの開始日・終了日を継承する' do
+        params = valid_params.merge(user_story_id: user_story_with_dates.id)
+
+        post :create_task, params: params
+
+        new_task = Issue.last
+        expect(new_task.start_date).to eq(Date.new(2025, 9, 30))
+        expect(new_task.due_date).to eq(Date.new(2025, 12, 31))
+      end
+    end
+
+    context '親UserStoryに日付が未設定の場合' do
+      it 'Taskの日付もnilのまま' do
+        post :create_task, params: valid_params
+
+        new_task = Issue.last
+        expect(new_task.start_date).to be_nil
+        expect(new_task.due_date).to be_nil
+      end
+    end
   end
 
   describe 'POST #create_test' do
@@ -197,6 +225,34 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
           )
         )
       )
+    end
+
+    context '親UserStoryに日付が設定されている場合' do
+      let!(:user_story_with_dates) do
+        create(:user_story, project: project, author: user,
+               start_date: Date.new(2025, 9, 30),
+               due_date: Date.new(2025, 12, 31))
+      end
+
+      it '親UserStoryの開始日・終了日を継承する' do
+        params = valid_params.merge(user_story_id: user_story_with_dates.id)
+
+        post :create_test, params: params
+
+        new_test = Issue.last
+        expect(new_test.start_date).to eq(Date.new(2025, 9, 30))
+        expect(new_test.due_date).to eq(Date.new(2025, 12, 31))
+      end
+    end
+
+    context '親UserStoryに日付が未設定の場合' do
+      it 'Testの日付もnilのまま' do
+        post :create_test, params: valid_params
+
+        new_test = Issue.last
+        expect(new_test.start_date).to be_nil
+        expect(new_test.due_date).to be_nil
+      end
     end
   end
 
@@ -232,6 +288,34 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
           )
         )
       )
+    end
+
+    context '親UserStoryに日付が設定されている場合' do
+      let!(:user_story_with_dates) do
+        create(:user_story, project: project, author: user,
+               start_date: Date.new(2025, 9, 30),
+               due_date: Date.new(2025, 12, 31))
+      end
+
+      it '親UserStoryの開始日・終了日を継承する' do
+        params = valid_params.merge(user_story_id: user_story_with_dates.id)
+
+        post :create_bug, params: params
+
+        new_bug = Issue.last
+        expect(new_bug.start_date).to eq(Date.new(2025, 9, 30))
+        expect(new_bug.due_date).to eq(Date.new(2025, 12, 31))
+      end
+    end
+
+    context '親UserStoryに日付が未設定の場合' do
+      it 'Bugの日付もnilのまま' do
+        post :create_bug, params: valid_params
+
+        new_bug = Issue.last
+        expect(new_bug.start_date).to be_nil
+        expect(new_bug.due_date).to be_nil
+      end
     end
   end
 end
