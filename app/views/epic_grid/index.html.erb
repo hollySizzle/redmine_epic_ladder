@@ -1,6 +1,8 @@
 <%# app/views/epic_grid/index.html.erb %>
 <% content_for :header_tags do %>
-  <script src="<%= "#{Redmine::Utils.relative_url_root}/plugin_assets/redmine_epic_grid/kanban_bundle.js" %>" defer></script>
+  <% js_path = File.join(Rails.public_path, 'plugin_assets', 'redmine_epic_grid', 'kanban_bundle.js') %>
+  <% js_mtime = File.exist?(js_path) ? File.mtime(js_path).to_i : Time.now.to_i %>
+  <script src="<%= "#{Redmine::Utils.relative_url_root}/plugin_assets/redmine_epic_grid/kanban_bundle.js?v=#{js_mtime}" %>" defer></script>
   <%# MSW Service Worker registration %>
   <script>
     // MSW Service Worker のパスを設定（ルートディレクトリから配信）
