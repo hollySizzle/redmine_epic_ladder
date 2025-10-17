@@ -1032,4 +1032,206 @@ RSpec.describe EpicGrid::GridController, type: :controller do
       end
     end
   end
+
+  describe 'POST #move_user_story (バージョン変更時の日付自動設定)' do
+    let!(:epic_tracker) { create(:epic_tracker) }
+    let!(:feature_tracker) { create(:feature_tracker) }
+    let!(:user_story_tracker) { create(:user_story_tracker) }
+    let!(:task_tracker) { create(:task_tracker) }
+    let!(:test_tracker) { create(:test_tracker) }
+
+    # edit_issues権限を持つroleを使用
+    let(:role_with_permissions) { create(:role, permissions: [:view_issues, :edit_issues, :add_issues]) }
+    let(:member_with_permissions) { create(:member, project: project, user: user, roles: [role_with_permissions]) }
+
+    before do
+      # デフォルトのmemberを削除し、適切な権限を持つmemberに置き換え
+      member.destroy
+      member_with_permissions
+
+      project.trackers << [epic_tracker, feature_tracker, user_story_tracker, task_tracker, test_tracker]
+    end
+
+    let!(:version_v1) { create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 3, 31)) }
+    let!(:version_v2) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 6, 30)) }
+    let!(:epic) { create(:epic, project: project, author: user) }
+    let!(:feature) { create(:feature, project: project, parent: epic, author: user) }
+    let!(:user_story) do
+      create(:user_story,
+        project: project,
+        parent: feature,
+        author: user,
+        fixed_version: version_v1
+      )
+    end
+    let!(:task) { create(:task, project: project, parent: user_story, author: user) }
+    let!(:test) { create(:test, project: project, parent: user_story, author: user) }
+
+    context 'バージョン変更時' do
+      it 'UserStoryの日付が自動設定される' do
+        post :move_user_story, params: {
+          project_id: project.id,
+          user_story_id: user_story.id,
+          target_feature_id: feature.id,
+          target_version_id: version_v2.id
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        user_story.reload
+        expect(user_story.fixed_version).to eq(version_v2)
+        expect(user_story.start_date).to eq(Date.new(2025, 3, 31))  # version_v1の期日（最も早い）
+        expect(user_story.due_date).to eq(Date.new(2025, 6, 30))    # version_v2の期日
+      end
+
+      it '子issue（task、test）の日付も自動設定される' do
+        post :move_user_story, params: {
+          project_id: project.id,
+          user_story_id: user_story.id,
+          target_feature_id: feature.id,
+          target_version_id: version_v2.id
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        task.reload
+        expect(task.start_date).to eq(Date.new(2025, 3, 31))
+        expect(task.due_date).to eq(Date.new(2025, 6, 30))
+
+        test.reload
+        expect(test.start_date).to eq(Date.new(2025, 3, 31))
+        expect(test.due_date).to eq(Date.new(2025, 6, 30))
+      end
+    end
+
+    context 'バージョン未変更時' do
+      it '日付は変更されない' do
+        # 元の日付を設定（update_columnsで直接DBを更新してlock_versionを回避）
+        user_story.update_columns(
+          start_date: Date.new(2025, 1, 1),
+          due_date: Date.new(2025, 1, 31)
+        )
+
+        # reloadして最新の状態を取得
+        user_story.reload
+        old_start_date = user_story.start_date
+        old_due_date = user_story.due_date
+
+        post :move_user_story, params: {
+          project_id: project.id,
+          user_story_id: user_story.id,
+          target_feature_id: feature.id,
+          target_version_id: version_v1.id  # 同じバージョン
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        user_story.reload
+        # バージョンが変更されていないので日付も変更されない
+        expect(user_story.start_date).to eq(old_start_date)
+        expect(user_story.due_date).to eq(old_due_date)
+      end
+    end
+  end
+
+  describe 'POST #batch_update (バージョン変更時の日付自動設定)' do
+    let!(:epic_tracker) { create(:epic_tracker) }
+    let!(:feature_tracker) { create(:feature_tracker) }
+    let!(:user_story_tracker) { create(:user_story_tracker) }
+    let!(:task_tracker) { create(:task_tracker) }
+
+    # edit_issues権限を持つroleを使用
+    let(:role_with_permissions) { create(:role, permissions: [:view_issues, :edit_issues, :add_issues]) }
+    let(:member_with_permissions) { create(:member, project: project, user: user, roles: [role_with_permissions]) }
+
+    before do
+      # デフォルトのmemberを削除し、適切な権限を持つmemberに置き換え
+      member.destroy
+      member_with_permissions
+
+      project.trackers << [epic_tracker, feature_tracker, user_story_tracker, task_tracker]
+    end
+
+    let!(:version_v1) { create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 3, 31)) }
+    let!(:version_v2) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 6, 30)) }
+    let!(:epic) { create(:epic, project: project, author: user) }
+    let!(:feature) { create(:feature, project: project, parent: epic, author: user) }
+    let!(:user_story1) do
+      create(:user_story,
+        project: project,
+        parent: feature,
+        author: user,
+        fixed_version: version_v1
+      )
+    end
+    let!(:user_story2) do
+      create(:user_story,
+        project: project,
+        parent: feature,
+        author: user,
+        fixed_version: version_v1
+      )
+    end
+    let!(:task1) { create(:task, project: project, parent: user_story1, author: user) }
+    let!(:task2) { create(:task, project: project, parent: user_story2, author: user) }
+
+    context '複数UserStoryのバージョン変更' do
+      it '全てのUserStoryの日付が自動設定される' do
+        post :batch_update, params: {
+          project_id: project.id,
+          moved_user_stories: [
+            { id: user_story1.id, target_feature_id: feature.id, target_version_id: version_v2.id },
+            { id: user_story2.id, target_feature_id: feature.id, target_version_id: version_v2.id }
+          ]
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        user_story1.reload
+        expect(user_story1.start_date).to eq(Date.new(2025, 3, 31))
+        expect(user_story1.due_date).to eq(Date.new(2025, 6, 30))
+
+        user_story2.reload
+        expect(user_story2.start_date).to eq(Date.new(2025, 3, 31))
+        expect(user_story2.due_date).to eq(Date.new(2025, 6, 30))
+      end
+
+      it '全ての子issueの日付も自動設定される' do
+        post :batch_update, params: {
+          project_id: project.id,
+          moved_user_stories: [
+            { id: user_story1.id, target_feature_id: feature.id, target_version_id: version_v2.id },
+            { id: user_story2.id, target_feature_id: feature.id, target_version_id: version_v2.id }
+          ]
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        task1.reload
+        expect(task1.start_date).to eq(Date.new(2025, 3, 31))
+        expect(task1.due_date).to eq(Date.new(2025, 6, 30))
+
+        task2.reload
+        expect(task2.start_date).to eq(Date.new(2025, 3, 31))
+        expect(task2.due_date).to eq(Date.new(2025, 6, 30))
+      end
+
+      it 'MSW準拠のレスポンスを返す' do
+        post :batch_update, params: {
+          project_id: project.id,
+          moved_user_stories: [
+            { id: user_story1.id, target_feature_id: feature.id, target_version_id: version_v2.id }
+          ]
+        }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        expect(json['success']).to be true
+        expect(json['updated_entities']).to have_key('user_stories')
+        expect(json['updated_entities']).to have_key('features')
+        expect(json['updated_grid_index']).to be_a(Hash)
+      end
+    end
+  end
 end

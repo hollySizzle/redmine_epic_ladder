@@ -138,15 +138,31 @@ module EpicGrid
       user_story.parent_issue_id = target_feature_id
       user_story.fixed_version_id = target_version_id
 
-      # バージョン変更時の日付自動設定
-      user_story.epic_grid_apply_version_dates! if user_story.fixed_version_id_changed?
+      # バージョン変更時の日付計算
+      dates = nil
+      if user_story.fixed_version_id_changed? && target_version_id
+        version = Version.find(target_version_id)
+        dates = EpicGrid::VersionDateManager.update_dates_for_version_change(user_story, version)
+      end
+
+      # 日付を設定（epic_grid_apply_version_dates!を呼ぶと同じ日付が設定される）
+      if dates
+        user_story.start_date = dates[:start_date]
+        user_story.due_date = dates[:due_date]
+      end
 
       user_story.save!
 
-      # 子要素（Task/Test/Bug）のVersion伝播
+      # 子要素（Task/Test/Bug）のVersion伝播と日付設定
       affected_issue_ids = [user_story.id]
       user_story.children.each do |child|
-        child.update!(fixed_version_id: target_version_id)
+        child.fixed_version_id = target_version_id
+        # 日付も同時に設定
+        if dates
+          child.start_date = dates[:start_date]
+          child.due_date = dates[:due_date]
+        end
+        child.save!
         affected_issue_ids << child.id
       end
 
@@ -713,14 +729,30 @@ module EpicGrid
           user_story.parent_issue_id = target_feature_id
           user_story.fixed_version_id = target_version_id
 
-          # バージョン変更時の日付自動設定
-          user_story.epic_grid_apply_version_dates! if user_story.fixed_version_id_changed?
+          # バージョン変更時の日付計算
+          dates = nil
+          if user_story.fixed_version_id_changed? && target_version_id
+            version = Version.find(target_version_id)
+            dates = EpicGrid::VersionDateManager.update_dates_for_version_change(user_story, version)
+          end
+
+          # 日付を設定
+          if dates
+            user_story.start_date = dates[:start_date]
+            user_story.due_date = dates[:due_date]
+          end
 
           user_story.save!
 
-          # 子要素（Task/Test/Bug）のVersion伝播
+          # 子要素（Task/Test/Bug）のVersion伝播と日付設定
           user_story.children.each do |child|
-            child.update!(fixed_version_id: target_version_id)
+            child.fixed_version_id = target_version_id
+            # 日付も同時に設定
+            if dates
+              child.start_date = dates[:start_date]
+              child.due_date = dates[:due_date]
+            end
+            child.save!
           end
 
           # 影響を受けたFeatureを記録

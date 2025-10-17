@@ -36,6 +36,7 @@ module EpicGrid
 
     # バージョン変更時に開始日・終了日を自動設定
     # Epic Grid上でバージョン間を移動した際に呼び出すことを想定
+    # 子issueにも同じ日付を伝播する（属性設定のみ、保存は呼び出し側が行う）
     # @return [Boolean] 日付が設定された場合true、それ以外はfalse
     def epic_grid_apply_version_dates!
       return false unless fixed_version_id && fixed_version
@@ -44,6 +45,13 @@ module EpicGrid
       if dates
         self.start_date = dates[:start_date]
         self.due_date = dates[:due_date]
+
+        # 子issueにも同じ日付を伝播（属性設定のみ、保存しない）
+        children.each do |child|
+          child.start_date = dates[:start_date]
+          child.due_date = dates[:due_date]
+        end
+
         true
       else
         false
