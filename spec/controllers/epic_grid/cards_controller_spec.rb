@@ -181,6 +181,26 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
         expect(new_task.start_date).to eq(Date.new(2025, 9, 30))
         expect(new_task.due_date).to eq(Date.new(2025, 12, 31))
       end
+
+      it 'API responseに開始日・終了日が含まれる' do
+        params = valid_params.merge(user_story_id: user_story_with_dates.id)
+
+        post :create_task, params: params
+
+        expect(response).to have_http_status(:created)
+
+        json = JSON.parse(response.body)
+        expect(json).to include(
+          'success' => true,
+          'data' => include(
+            'created_entity' => include(
+              'subject' => 'New Task',
+              'start_date' => '2025-09-30',
+              'due_date' => '2025-12-31'
+            )
+          )
+        )
+      end
     end
 
     context '親UserStoryに日付が未設定の場合' do

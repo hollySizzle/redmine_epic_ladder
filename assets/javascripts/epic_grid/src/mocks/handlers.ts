@@ -849,6 +849,8 @@ export const handlers = [
       estimated_hours,
       spent_hours: 0,
       done_ratio: 0,
+      start_date: parentStory.start_date,
+      due_date: parentStory.due_date,
       created_on: new Date().toISOString(),
       updated_on: new Date().toISOString(),
       tracker_id: 4
@@ -924,6 +926,8 @@ export const handlers = [
       fixed_version_id: parentStory.fixed_version_id,
       test_result: 'pending',
       assigned_to_id,
+      start_date: parentStory.start_date,
+      due_date: parentStory.due_date,
       created_on: new Date().toISOString(),
       updated_on: new Date().toISOString(),
       tracker_id: 5
@@ -999,6 +1003,8 @@ export const handlers = [
       fixed_version_id: parentStory.fixed_version_id,
       severity: severity || 'minor',
       assigned_to_id,
+      start_date: parentStory.start_date,
+      due_date: parentStory.due_date,
       created_on: new Date().toISOString(),
       updated_on: new Date().toISOString(),
       tracker_id: 6

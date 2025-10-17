@@ -4,6 +4,21 @@ module EpicGrid
   module IssueExtensions
     extend ActiveSupport::Concern
 
+    # Trackerキャッシュ（N+1クエリ対策）
+    class_methods do
+      def epic_grid_tracker_cache
+        @epic_grid_tracker_cache ||= {}
+      end
+
+      def epic_grid_find_tracker_by_name(name)
+        epic_grid_tracker_cache[name] ||= Tracker.find_by(name: name)
+      end
+
+      def epic_grid_clear_tracker_cache!
+        @epic_grid_tracker_cache = {}
+      end
+    end
+
     # ========================================
     # Feature移動 + Version伝播
     # ========================================
@@ -106,12 +121,17 @@ module EpicGrid
           priority_id: priority_id
         )
       when EpicGrid::TrackerHierarchy.tracker_names[:user_story]
+        # Trackerを事前にキャッシュから取得（N+1対策）
+        task_tracker = Issue.epic_grid_find_tracker_by_name(EpicGrid::TrackerHierarchy.tracker_names[:task])
+        test_tracker = Issue.epic_grid_find_tracker_by_name(EpicGrid::TrackerHierarchy.tracker_names[:test])
+        bug_tracker = Issue.epic_grid_find_tracker_by_name(EpicGrid::TrackerHierarchy.tracker_names[:bug])
+
         base.merge(
           title: subject,
           parent_feature_id: parent_id&.to_s,
-          task_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:task])).pluck(:id).map(&:to_s),
-          test_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:test])).pluck(:id).map(&:to_s),
-          bug_ids: children.where(tracker: Tracker.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:bug])).pluck(:id).map(&:to_s),
+          task_ids: children.where(tracker: task_tracker).pluck(:id).map(&:to_s),
+          test_ids: children.where(tracker: test_tracker).pluck(:id).map(&:to_s),
+          bug_ids: children.where(tracker: bug_tracker).pluck(:id).map(&:to_s),
           version_source: fixed_version_id ? 'direct' : 'none',
           expansion_state: true,
           statistics: {
