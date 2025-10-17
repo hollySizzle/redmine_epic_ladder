@@ -1243,6 +1243,33 @@
 }
 
 // ========================================
+// User Story Collapse Toggle Button
+// ========================================
+.user-story-collapse-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  color: #666;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #333;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 0.125rem;
+  }
+
+  &:active {
+    color: #000;
+  }
+}
+
+// ========================================
 // Keyframe Animations
 // ========================================
 @keyframes spin {

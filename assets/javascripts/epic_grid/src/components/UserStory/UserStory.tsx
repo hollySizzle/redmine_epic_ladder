@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
 import { StatusIndicator } from '../common/StatusIndicator';
@@ -18,6 +18,9 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
+
+  // 個別折り畳み状態（保存しない）
+  const [isOwnCollapsed, setIsOwnCollapsed] = useState(false);
 
   // 担当者情報を取得
   const assignedUser = useStore(state =>
@@ -44,9 +47,24 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
     setSelectedEntity('issue', story.id);
   };
 
+  const handleToggleCollapse = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOwnCollapsed(!isOwnCollapsed);
+  };
+
+  // 親からの折り畳み指示と自分自身の折り畳み状態を合成
+  const isFinallyCollapsed = isLocalCollapsed || isOwnCollapsed;
+
   return (
     <div ref={ref} className={className} data-story={story.id}>
       <div className="user-story-header" onClick={handleHeaderClick}>
+        <button
+          className="user-story-collapse-toggle"
+          onClick={handleToggleCollapse}
+          title={isOwnCollapsed ? 'Task/Test/Bug配下を展開' : 'Task/Test/Bug配下を折り畳み'}
+        >
+          {isOwnCollapsed ? '▶' : '▼'}
+        </button>
         <div className="main-info-wrapper">
           <StatusIndicator status={story.status} />
           <span className="title-wrapper">
@@ -71,7 +89,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
         taskIds={story.task_ids}
         testIds={story.test_ids}
         bugIds={story.bug_ids}
-        isLocalCollapsed={isLocalCollapsed}
+        isLocalCollapsed={isFinallyCollapsed}
       />
     </div>
   );
