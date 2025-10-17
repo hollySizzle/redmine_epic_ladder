@@ -19,6 +19,7 @@ export const DetailPane: React.FC<DetailPaneProps> = ({
   const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const previousEntityRef = useRef(entity);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Zustand storeからVersionデータ取得（タイトル表示用）
   const versions = useStore(state => state.entities.versions);
@@ -62,11 +63,34 @@ export const DetailPane: React.FC<DetailPaneProps> = ({
     if (entity) {
       setIsLoading(true);
       setError(null);
+
+      // 既存のタイムアウトをクリア
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+
+      // 3秒経過してもiframeのonLoadが発火しない場合、強制的にローディング解除
+      loadTimeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+        loadTimeoutRef.current = null;
+      }, 3000);
+
+      return () => {
+        if (loadTimeoutRef.current) {
+          clearTimeout(loadTimeoutRef.current);
+          loadTimeoutRef.current = null;
+        }
+      };
     }
   }, [entity]);
 
   // iframeの読み込み完了処理
   const handleIframeLoad = useCallback(() => {
+    // タイムアウトをクリア（正常に読み込まれた場合）
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
     setIsLoading(false);
 
     // iframe内のナビゲーションを監視
@@ -95,6 +119,11 @@ export const DetailPane: React.FC<DetailPaneProps> = ({
 
   // iframeのエラー処理
   const handleIframeError = useCallback(() => {
+    // タイムアウトをクリア（エラー時）
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
     setIsLoading(false);
     setError('詳細の読み込みに失敗しました');
   }, []);
