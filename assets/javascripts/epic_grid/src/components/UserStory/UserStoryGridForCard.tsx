@@ -14,13 +14,11 @@ import { useStore } from '../../store/useStore';
 interface UserStoryGridForCardProps {
   featureId: string;
   storyIds: string[];
-  isLocalCollapsed?: boolean;
 }
 
 export const UserStoryGridForCard: React.FC<UserStoryGridForCardProps> = ({
   featureId,
-  storyIds,
-  isLocalCollapsed = false
+  storyIds
 }) => {
   const createUserStory = useStore((state) => state.createUserStory);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,7 +44,7 @@ export const UserStoryGridForCard: React.FC<UserStoryGridForCardProps> = ({
     <>
       <div className="user-story-grid">
         {storyIds.map(storyId => (
-          <UserStory key={storyId} storyId={storyId} isLocalCollapsed={isLocalCollapsed} />
+          <UserStory key={storyId} storyId={storyId} />
         ))}
         <AddButton
           type="user-story"

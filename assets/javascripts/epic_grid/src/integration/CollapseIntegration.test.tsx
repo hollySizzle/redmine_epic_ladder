@@ -111,13 +111,12 @@ describe('Collapse Integration Tests', () => {
       isLoading: false,
       error: null,
       projectId: 'project1',
-      isUserStoryChildrenCollapsed: false,
       userStoryCollapseStates: {}
     });
   });
 
   describe('Global and Local Collapse Interaction', () => {
-    it('should hide all Feature children when global toggle is clicked', async () => {
+    it('should hide all Feature children when "全折畳" button is clicked', async () => {
       const user = userEvent.setup();
 
       render(
@@ -132,9 +131,9 @@ describe('Collapse Integration Tests', () => {
       expect(screen.getByText('Task 1')).toBeTruthy();
       expect(screen.getByText('Test 1')).toBeTruthy();
 
-      // グローバルトグルをクリック
-      const globalToggle = screen.getByText('Task折畳');
-      await user.click(globalToggle);
+      // 全折畳ボタンをクリック
+      const collapseButton = screen.getByText('全折畳');
+      await user.click(collapseButton);
 
       // 全て非表示
       expect(screen.queryByText('Task 1')).toBeNull();
@@ -166,15 +165,21 @@ describe('Collapse Integration Tests', () => {
   });
 
   describe('localStorage Integration', () => {
-    it('should persist global collapse state', async () => {
+    it('should persist collapse states', async () => {
       const user = userEvent.setup();
 
       render(<UserStoryChildrenToggle />);
 
-      const globalToggle = screen.getByText('Task折畳');
-      await user.click(globalToggle);
+      // 全折畳ボタンをクリック
+      const collapseButton = screen.getByText('全折畳');
+      await user.click(collapseButton);
 
-      expect(localStorage.getItem('kanban_userstory_children_collapsed')).toBe('true');
+      // localStorageに個別状態が保存される
+      const saved = localStorage.getItem('kanban_userstory_collapse_states');
+      expect(saved).toBeTruthy();
+      const states = JSON.parse(saved!);
+      expect(states['us1']).toBe(true);
+      expect(states['us2']).toBe(true);
     });
   });
 });

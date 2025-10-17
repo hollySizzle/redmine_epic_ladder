@@ -55,7 +55,6 @@ describe('UserStory - Collapse Functionality', () => {
       isLoading: false,
       error: null,
       projectId: 'project1',
-      isUserStoryChildrenCollapsed: false,
       userStoryCollapseStates: {},
       isAssignedToVisible: false,
       isDueDateVisible: false
@@ -173,44 +172,6 @@ describe('UserStory - Collapse Functionality', () => {
     });
   });
 
-  describe('Parent Collapse State (isLocalCollapsed prop)', () => {
-    it('should respect parent collapse state even when own state is expanded', () => {
-      render(<UserStory storyId="us1" isLocalCollapsed={true} />);
-
-      // 親から折り畳まれているので、子要素は見えない
-      expect(screen.queryByText('Task 1')).toBeNull();
-      expect(screen.queryByText('Test 1')).toBeNull();
-      expect(screen.queryByText('Bug 1')).toBeNull();
-    });
-
-    it('should hide children when either parent or own collapse is true', async () => {
-      const user = userEvent.setup();
-
-      const { rerender } = render(<UserStory storyId="us1" isLocalCollapsed={false} />);
-
-      // 初期状態: 子要素が見える
-      expect(screen.getByText('Task 1')).toBeTruthy();
-
-      // 自分自身を折り畳む
-      const toggleButton = screen.getByTitle('Task/Test/Bug配下を折り畳み');
-      await user.click(toggleButton);
-
-      // 子要素が見えなくなる
-      expect(screen.queryByText('Task 1')).toBeNull();
-
-      // 自分自身を展開
-      await user.click(screen.getByTitle('Task/Test/Bug配下を展開'));
-
-      // 子要素が見える
-      expect(screen.getByText('Task 1')).toBeTruthy();
-
-      // 親から折り畳み指示を受ける
-      rerender(<UserStory storyId="us1" isLocalCollapsed={true} />);
-
-      // 自分が展開状態でも、親の指示で子要素が見えなくなる
-      expect(screen.queryByText('Task 1')).toBeNull();
-    });
-  });
 
   describe('State Persistence', () => {
     it('should persist own collapse state in store (maintained on remount)', async () => {

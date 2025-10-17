@@ -59,7 +59,6 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({ featureId }) => {
       <UserStoryGridForCard
         featureId={feature.id}
         storyIds={feature.user_story_ids}
-        isLocalCollapsed={isLocalCollapsed}
       />
     </div>
   );

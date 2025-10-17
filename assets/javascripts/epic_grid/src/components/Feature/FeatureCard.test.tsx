@@ -60,13 +60,14 @@ describe('FeatureCard - Collapse Functionality', () => {
           t1: { id: 't1', title: 'Task 1', status: 'open', parent_user_story_id: 'us1', fixed_version_id: null }
         },
         tests: {},
-        bugs: {}
+        bugs: {},
+        users: {}
       },
       grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
       isLoading: false,
       error: null,
       projectId: 'project1',
-      isUserStoryChildrenCollapsed: false
+      userStoryCollapseStates: {}
     });
   });
 
@@ -151,29 +152,6 @@ describe('FeatureCard - Collapse Functionality', () => {
 
       // selectedIssueIdが設定される
       expect(useStore.getState().selectedIssueId).toBe('f1');
-    });
-  });
-
-  describe('UserStoryGrid Integration', () => {
-    it('should pass isLocalCollapsed=false to UserStoryGrid initially', () => {
-      const { container } = render(<FeatureCard featureId="f1" />);
-
-      // UserStoryGridが表示されている（Task 1が見える）
-      expect(screen.getByText('Task 1')).toBeTruthy();
-    });
-
-    it('should pass isLocalCollapsed=true to UserStoryGrid when collapsed', async () => {
-      const user = userEvent.setup();
-
-      render(<FeatureCard featureId="f1" />);
-
-      const toggleButton = screen.getByTitle('UserStory配下を折り畳み');
-
-      // クリックして折り畳み
-      await user.click(toggleButton);
-
-      // TaskTestBugGridがnullを返すので、Task 1が見えなくなる
-      expect(screen.queryByText('Task 1')).toBeNull();
     });
   });
 

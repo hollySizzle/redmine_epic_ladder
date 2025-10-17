@@ -112,11 +112,7 @@ interface StoreState {
   isDueDateVisible: boolean;
   toggleDueDateVisible: () => void;
 
-  // UserStory配下の折り畳み（Task/Test/Bug）
-  isUserStoryChildrenCollapsed: boolean;
-  toggleUserStoryChildrenCollapsed: () => void;
-
-  // UserStory個別折り畳み状態
+  // UserStory個別折り畳み状態（localStorage永続化）
   userStoryCollapseStates: Record<string, boolean>;
   setUserStoryCollapsed: (storyId: string, collapsed: boolean) => void;
   setAllUserStoriesCollapsed: (collapsed: boolean) => void;
@@ -256,33 +252,26 @@ export const useStore = create<StoreState>()(
         return { isDueDateVisible: newValue };
       }),
 
-      // UserStory配下の折り畳み（Task/Test/Bug）の初期状態
-      isUserStoryChildrenCollapsed: (() => {
-        const saved = localStorage.getItem('kanban_userstory_children_collapsed');
-        return saved !== null ? saved === 'true' : false; // デフォルトOFF（展開）
+      // UserStory個別折り畳み状態の初期値（localStorageから復元）
+      userStoryCollapseStates: (() => {
+        try {
+          const saved = localStorage.getItem('kanban_userstory_collapse_states');
+          return saved ? JSON.parse(saved) : {};
+        } catch (error) {
+          console.warn('Failed to parse saved collapse states:', error);
+          return {};
+        }
       })(),
-      toggleUserStoryChildrenCollapsed: () => set((state) => {
-        const newValue = !state.isUserStoryChildrenCollapsed;
-        localStorage.setItem('kanban_userstory_children_collapsed', String(newValue));
-
-        // グローバルトグルで全UserStoryの個別状態を一括更新
-        const allUserStoryIds = Object.keys(state.entities.user_stories);
-        const newCollapseStates: Record<string, boolean> = {};
-        allUserStoryIds.forEach(id => {
-          newCollapseStates[id] = newValue;
-        });
-
-        return {
-          isUserStoryChildrenCollapsed: newValue,
-          userStoryCollapseStates: newCollapseStates
-        };
-      }),
-
-      // UserStory個別折り畳み状態の初期値
-      userStoryCollapseStates: {},
 
       setUserStoryCollapsed: (storyId: string, collapsed: boolean) => set((state) => {
         state.userStoryCollapseStates[storyId] = collapsed;
+
+        // localStorageに保存
+        try {
+          localStorage.setItem('kanban_userstory_collapse_states', JSON.stringify(state.userStoryCollapseStates));
+        } catch (error) {
+          console.warn('Failed to save collapse states to localStorage:', error);
+        }
       }),
 
       setAllUserStoriesCollapsed: (collapsed: boolean) => set((state) => {
@@ -290,6 +279,13 @@ export const useStore = create<StoreState>()(
         allUserStoryIds.forEach(id => {
           state.userStoryCollapseStates[id] = collapsed;
         });
+
+        // localStorageに保存
+        try {
+          localStorage.setItem('kanban_userstory_collapse_states', JSON.stringify(state.userStoryCollapseStates));
+        } catch (error) {
+          console.warn('Failed to save collapse states to localStorage:', error);
+        }
       }),
 
       // フィルタリングの初期状態

@@ -7,10 +7,9 @@ import { TaskTestBugGrid } from '../TaskTestBug/TaskTestBugGrid';
 
 interface UserStoryProps {
   storyId: string;
-  isLocalCollapsed?: boolean;
 }
 
-export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed = false }) => {
+export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
   // ストアから直接UserStoryを取得
   const story = useStore(state => state.entities.user_stories[storyId]);
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
@@ -53,9 +52,6 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
     setUserStoryCollapsed(story.id, !isOwnCollapsed);
   };
 
-  // 親からの折り畳み指示と自分自身の折り畳み状態を合成
-  const isFinallyCollapsed = isLocalCollapsed || isOwnCollapsed;
-
   return (
     <div ref={ref} className={className} data-story={story.id}>
       <div className="user-story-header" onClick={handleHeaderClick}>
@@ -90,7 +86,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId, isLocalCollapsed 
         taskIds={story.task_ids}
         testIds={story.test_ids}
         bugIds={story.bug_ids}
-        isLocalCollapsed={isFinallyCollapsed}
+        isLocalCollapsed={isOwnCollapsed}
       />
     </div>
   );
