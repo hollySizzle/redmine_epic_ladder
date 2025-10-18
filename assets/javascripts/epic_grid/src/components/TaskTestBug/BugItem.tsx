@@ -24,7 +24,14 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
 
   if (!bug) return null;
 
-  const className = bug.status === 'closed' ? 'bug-item closed' : 'bug-item';
+  // 担当者不在チェック
+  const isUnassigned = !bug.assigned_to_id;
+
+  const className = [
+    'bug-item',
+    bug.status === 'closed' && 'closed',
+    isUnassigned && 'unassigned'
+  ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({
     type: 'bug',

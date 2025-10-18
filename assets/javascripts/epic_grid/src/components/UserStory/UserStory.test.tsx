@@ -526,4 +526,312 @@ describe('UserStory - Collapse Functionality', () => {
       expect(userStoryDiv).toBeNull();
     });
   });
+
+  describe('Unassigned Highlighting', () => {
+    it('should add unassigned class when user story itself is unassigned', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              assigned_to_id: undefined
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // unassignedクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.unassigned');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should add unassigned class when a child task is unassigned', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              assigned_to_id: 1
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: undefined
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 子タスクが担当者不在なのでunassignedクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.unassigned');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should add unassigned class when a child test is unassigned', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              assigned_to_id: 1
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: undefined
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 子テストが担当者不在なのでunassignedクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.unassigned');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should add unassigned class when a child bug is unassigned', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              assigned_to_id: 1
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: undefined
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 子バグが担当者不在なのでunassignedクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.unassigned');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should not add unassigned class when all items are assigned', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              assigned_to_id: 1
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 2
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 3
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 4
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // すべて担当者が設定されているのでunassignedクラスは付与されない
+      const userStoryDiv = container.querySelector('.user-story.unassigned');
+      expect(userStoryDiv).toBeNull();
+    });
+
+    it('should add both overdue and unassigned classes when both conditions are met', () => {
+      vi.setSystemTime(new Date('2025-10-18T12:00:00Z'));
+
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              due_date: '2025-10-17', // 期日超過
+              assigned_to_id: undefined // 担当者不在
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1,
+              due_date: null
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1,
+              due_date: null
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1,
+              due_date: null
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 両方のクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.overdue.unassigned');
+      expect(userStoryDiv).toBeTruthy();
+    });
+  });
 });

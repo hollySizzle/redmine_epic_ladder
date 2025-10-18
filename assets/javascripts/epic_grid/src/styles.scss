@@ -403,6 +403,27 @@
       }
     }
 
+    &.unassigned {
+      background: #fff3e0;
+      border: 2px solid #ff9800;
+      border-left: 4px solid #f57c00;
+
+      &:hover {
+        background: #ffe0b2;
+      }
+    }
+
+    // 期日超過と担当者不在の両方の場合は期日超過を優先
+    &.overdue.unassigned {
+      background: #ffebee;
+      border: 2px solid #f44336;
+      border-left: 4px solid #d32f2f;
+
+      &:hover {
+        background: #ffcdd2;
+      }
+    }
+
     .user-story-header {
       display: flex;
       align-items: center;
@@ -606,6 +627,16 @@
       border-color: #1565c0;
       background: #90caf9;
     }
+
+    &.unassigned {
+      background: #fff3e0;
+      border: 2px solid #ff9800;
+      border-left: 4px solid #f57c00;
+
+      &:hover {
+        background: #ffe0b2;
+      }
+    }
   }
 
   .test-item {
@@ -619,6 +650,16 @@
       border-color: #2e7d32;
       background: #a5d6a7;
     }
+
+    &.unassigned {
+      background: #fff3e0;
+      border: 2px solid #ff9800;
+      border-left: 4px solid #f57c00;
+
+      &:hover {
+        background: #ffe0b2;
+      }
+    }
   }
 
   .bug-item {
@@ -631,6 +672,16 @@
     &.over {
       border-color: #c62828;
       background: #ef9a9a;
+    }
+
+    &.unassigned {
+      background: #fff3e0;
+      border: 2px solid #ff9800;
+      border-left: 4px solid #f57c00;
+
+      &:hover {
+        background: #ffe0b2;
+      }
     }
   }
 

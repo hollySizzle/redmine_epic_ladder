@@ -43,10 +43,21 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
 
   const shouldHighlight = isSelfOverdue || hasOverdueChildren;
 
+  // 自身または子チケットに担当者不在があるかチェック
+  const isSelfUnassigned = !story.assigned_to_id;
+
+  const hasUnassignedChildren =
+    story.task_ids.some(id => entities.tasks[id] && !entities.tasks[id].assigned_to_id) ||
+    story.test_ids.some(id => entities.tests[id] && !entities.tests[id].assigned_to_id) ||
+    story.bug_ids.some(id => entities.bugs[id] && !entities.bugs[id].assigned_to_id);
+
+  const shouldHighlightUnassigned = isSelfUnassigned || hasUnassignedChildren;
+
   const className = [
     'user-story',
     story.status === 'closed' && 'closed',
-    shouldHighlight && 'overdue'
+    shouldHighlight && 'overdue',
+    shouldHighlightUnassigned && 'unassigned'
   ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({

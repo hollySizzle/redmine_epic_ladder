@@ -24,7 +24,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({ taskId }) => {
 
   if (!task) return null;
 
-  const className = task.status === 'closed' ? 'task-item closed' : 'task-item';
+  // 担当者不在チェック
+  const isUnassigned = !task.assigned_to_id;
+
+  const className = [
+    'task-item',
+    task.status === 'closed' && 'closed',
+    isUnassigned && 'unassigned'
+  ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({
     type: 'task',

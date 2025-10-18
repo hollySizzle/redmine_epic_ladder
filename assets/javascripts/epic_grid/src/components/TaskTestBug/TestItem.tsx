@@ -24,7 +24,14 @@ export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
 
   if (!test) return null;
 
-  const className = test.status === 'closed' ? 'test-item closed' : 'test-item';
+  // 担当者不在チェック
+  const isUnassigned = !test.assigned_to_id;
+
+  const className = [
+    'test-item',
+    test.status === 'closed' && 'closed',
+    isUnassigned && 'unassigned'
+  ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({
     type: 'test',
