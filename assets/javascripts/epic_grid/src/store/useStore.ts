@@ -116,6 +116,10 @@ interface StoreState {
   isIssueIdVisible: boolean;
   toggleIssueIdVisible: () => void;
 
+  // 担当者不在ハイライト表示
+  isUnassignedHighlightVisible: boolean;
+  toggleUnassignedHighlightVisible: () => void;
+
   // UserStory個別折り畳み状態（localStorage永続化）
   userStoryCollapseStates: Record<string, boolean>;
   setUserStoryCollapsed: (storyId: string, collapsed: boolean) => void;
@@ -265,6 +269,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isIssueIdVisible;
         localStorage.setItem('kanban_issue_id_visible', String(newValue));
         return { isIssueIdVisible: newValue };
+      }),
+
+      // 担当者不在ハイライト表示の初期状態
+      isUnassignedHighlightVisible: (() => {
+        const saved = localStorage.getItem('kanban_unassigned_highlight_visible');
+        return saved !== null ? saved === 'true' : true; // デフォルトON
+      })(),
+      toggleUnassignedHighlightVisible: () => set((state) => {
+        const newValue = !state.isUnassignedHighlightVisible;
+        localStorage.setItem('kanban_unassigned_highlight_visible', String(newValue));
+        return { isUnassignedHighlightVisible: newValue };
       }),
 
       // UserStory個別折り畳み状態の初期値（localStorageから復元）

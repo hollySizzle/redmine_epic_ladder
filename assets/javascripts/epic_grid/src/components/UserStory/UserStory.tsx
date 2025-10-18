@@ -18,6 +18,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
   const isIssueIdVisible = useStore(state => state.isIssueIdVisible);
+  const isUnassignedHighlightVisible = useStore(state => state.isUnassignedHighlightVisible);
 
   // 個別折り畳み状態（ストアで管理）
   const isOwnCollapsed = useStore(state => state.userStoryCollapseStates[storyId] ?? false);
@@ -57,7 +58,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
     'user-story',
     story.status === 'closed' && 'closed',
     shouldHighlight && 'overdue',
-    shouldHighlightUnassigned && 'unassigned'
+    shouldHighlightUnassigned && isUnassignedHighlightVisible && 'unassigned'
   ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({

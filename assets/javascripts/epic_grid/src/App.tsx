@@ -7,6 +7,7 @@ import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { Legend } from './components/Legend';
 import { SearchBar } from './components/common/SearchBar';
 import { SettingsDropdown } from './components/common/SettingsDropdown';
+import { UnassignedHighlightToggle } from './components/common/UnassignedHighlightToggle';
 import { UserStoryChildrenToggle } from './components/common/UserStoryChildrenToggle';
 import { useStore } from './store/useStore';
 import './styles.scss';
@@ -235,6 +236,7 @@ export const App: React.FC = () => {
             <FilterPanel />
             <SearchBar />
             <UserStoryChildrenToggle />
+            <UnassignedHighlightToggle />
           </div>
 
           {/* 表示設定ドロップダウン（右端） */}

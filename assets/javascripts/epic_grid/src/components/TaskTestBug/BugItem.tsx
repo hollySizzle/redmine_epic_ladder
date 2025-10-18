@@ -16,6 +16,7 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   const isAssignedToVisible = useStore(state => state.isAssignedToVisible);
   const isDueDateVisible = useStore(state => state.isDueDateVisible);
   const isIssueIdVisible = useStore(state => state.isIssueIdVisible);
+  const isUnassignedHighlightVisible = useStore(state => state.isUnassignedHighlightVisible);
 
   // 担当者情報を取得
   const assignedUser = useStore(state =>
@@ -30,7 +31,7 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   const className = [
     'bug-item',
     bug.status === 'closed' && 'closed',
-    isUnassigned && 'unassigned'
+    isUnassigned && isUnassignedHighlightVisible && 'unassigned'
   ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({

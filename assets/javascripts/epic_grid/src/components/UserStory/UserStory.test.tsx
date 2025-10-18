@@ -58,7 +58,8 @@ describe('UserStory - Collapse Functionality', () => {
       userStoryCollapseStates: {},
       isAssignedToVisible: false,
       isDueDateVisible: false,
-      isIssueIdVisible: true
+      isIssueIdVisible: true,
+      isUnassignedHighlightVisible: true
     });
   });
 
@@ -832,6 +833,57 @@ describe('UserStory - Collapse Functionality', () => {
       // 両方のクラスが付与される
       const userStoryDiv = container.querySelector('.user-story.overdue.unassigned');
       expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should NOT add unassigned class when toggle is OFF even if unassigned', () => {
+      useStore.setState({
+        isUnassignedHighlightVisible: false, // トグルOFF
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              assigned_to_id: undefined // 担当者不在
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: undefined // 子タスクも担当者不在
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              assigned_to_id: 1
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // トグルがOFFなのでunassignedクラスは付与されない
+      const userStoryDiv = container.querySelector('.user-story.unassigned');
+      expect(userStoryDiv).toBeNull();
     });
   });
 });

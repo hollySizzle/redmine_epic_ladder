@@ -159,6 +159,49 @@ users_data.each do |data|
   end
 end
 
+# ===== ワークフロー設定（全ステータス遷移を許可） =====
+puts "\n🔄 ワークフロー設定を投入中..."
+
+trackers = Tracker.all
+roles = Role.where(builtin: 0)  # 通常のロール（開発者など）のみ
+statuses = IssueStatus.all
+
+workflow_count = 0
+trackers.each do |tracker|
+  roles.each do |role|
+    statuses.each do |old_status|
+      statuses.each do |new_status|
+        # 同じステータスへの遷移は不要
+        next if old_status.id == new_status.id
+
+        workflow = WorkflowTransition.find_or_initialize_by(
+          tracker_id: tracker.id,
+          role_id: role.id,
+          old_status_id: old_status.id,
+          new_status_id: new_status.id
+        )
+
+        # 起票者・担当者ともに変更可能に設定
+        workflow.author = true
+        workflow.assignee = true
+
+        if workflow.new_record?
+          workflow.save
+          workflow_count += 1
+        else
+          # 既存レコードも更新
+          workflow.save if workflow.changed?
+        end
+      end
+    end
+  end
+end
+
+puts "  ✅ #{workflow_count}件のワークフロー遷移を作成しました"
+puts "    トラッカー: #{trackers.count}種類"
+puts "    ロール: #{roles.count}種類"
+puts "    ステータス: #{statuses.count}種類"
+
 # ===== 桜商店プロジェクト投入 =====
 puts "\n🏪 桜商店プロジェクトを投入中..."
 
