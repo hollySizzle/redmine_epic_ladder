@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useStore } from '../../store/useStore';
-import { formatDateRange } from '../../utils/dateFormat';
+import { formatDateRange, isOverdue } from '../../utils/dateFormat';
 import { StatusIndicator } from '../common/StatusIndicator';
 import { TaskTestBugGrid } from '../TaskTestBug/TaskTestBugGrid';
 
@@ -28,9 +28,26 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
     story?.assigned_to_id ? state.entities.users[story.assigned_to_id] : undefined
   );
 
+  // 全エンティティを取得（期日超過チェック用）
+  const entities = useStore(state => state.entities);
+
   if (!story) return null;
 
-  const className = story.status === 'closed' ? 'user-story closed' : 'user-story';
+  // 自身または子チケットに期日超過があるかチェック
+  const isSelfOverdue = isOverdue(story.due_date);
+
+  const hasOverdueChildren =
+    story.task_ids.some(id => entities.tasks[id] && isOverdue(entities.tasks[id].due_date)) ||
+    story.test_ids.some(id => entities.tests[id] && isOverdue(entities.tests[id].due_date)) ||
+    story.bug_ids.some(id => entities.bugs[id] && isOverdue(entities.bugs[id].due_date));
+
+  const shouldHighlight = isSelfOverdue || hasOverdueChildren;
+
+  const className = [
+    'user-story',
+    story.status === 'closed' && 'closed',
+    shouldHighlight && 'overdue'
+  ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({
     type: 'user-story',

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatDateRange, formatDate } from './dateFormat';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { formatDateRange, formatDate, isOverdue } from './dateFormat';
 
 describe('formatDateRange', () => {
   describe('Both dates present', () => {
@@ -128,6 +128,49 @@ describe('formatDate', () => {
 
     it('should return null when date is empty string', () => {
       expect(formatDate('')).toBeNull();
+    });
+  });
+});
+
+describe('isOverdue', () => {
+  beforeEach(() => {
+    // テスト用の現在日付を固定（2025-10-18）
+    vi.setSystemTime(new Date('2025-10-18T12:00:00Z'));
+  });
+
+  describe('Overdue cases', () => {
+    it('should return true when due_date is in the past', () => {
+      expect(isOverdue('2025-10-17')).toBe(true);
+      expect(isOverdue('2025-10-01')).toBe(true);
+      expect(isOverdue('2025-01-01')).toBe(true);
+      expect(isOverdue('2024-12-31')).toBe(true);
+    });
+  });
+
+  describe('Not overdue cases', () => {
+    it('should return false when due_date is today', () => {
+      expect(isOverdue('2025-10-18')).toBe(false);
+    });
+
+    it('should return false when due_date is in the future', () => {
+      expect(isOverdue('2025-10-19')).toBe(false);
+      expect(isOverdue('2025-10-31')).toBe(false);
+      expect(isOverdue('2025-12-31')).toBe(false);
+      expect(isOverdue('2099-12-31')).toBe(false);
+    });
+  });
+
+  describe('Null/undefined/empty handling', () => {
+    it('should return false when due_date is null', () => {
+      expect(isOverdue(null)).toBe(false);
+    });
+
+    it('should return false when due_date is undefined', () => {
+      expect(isOverdue(undefined)).toBe(false);
+    });
+
+    it('should return false when due_date is empty string', () => {
+      expect(isOverdue('')).toBe(false);
     });
   });
 });

@@ -416,11 +416,26 @@ export const useStore = create<StoreState>()(
             }
           });
 
-          set({
-            entities: data.entities,
-            grid: data.grid,
-            metadata: data.metadata,
-            isLoading: false
+          set((state) => {
+            state.entities = data.entities;
+            state.grid = data.grid;
+            state.metadata = data.metadata;
+            state.isLoading = false;
+
+            // クローズ済みUserStoryを自動的に折り畳み状態にする
+            // ただし、既にlocalStorageに保存されているユーザーの選択は尊重する
+            Object.values(data.entities.user_stories).forEach(story => {
+              if (story.status === 'closed' && !(story.id in state.userStoryCollapseStates)) {
+                state.userStoryCollapseStates[story.id] = true;
+              }
+            });
+
+            // localStorageに保存
+            try {
+              localStorage.setItem('kanban_userstory_collapse_states', JSON.stringify(state.userStoryCollapseStates));
+            } catch (error) {
+              console.warn('Failed to save collapse states to localStorage:', error);
+            }
           });
         } catch (error) {
           set({

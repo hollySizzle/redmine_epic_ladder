@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -259,6 +259,271 @@ describe('UserStory - Collapse Functionality', () => {
       // closedクラスが付与される
       const userStoryDiv = container.querySelector('.user-story.closed');
       expect(userStoryDiv).toBeTruthy();
+    });
+  });
+
+  describe('Overdue Highlighting', () => {
+    beforeEach(() => {
+      // テスト用の現在日付を固定（2025-10-18）
+      vi.setSystemTime(new Date('2025-10-18T12:00:00Z'));
+    });
+
+    it('should add overdue class when user story itself is overdue', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              due_date: '2025-10-17' // 昨日
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // overdueクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.overdue');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should add overdue class when a child task is overdue', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              due_date: '2025-12-31' // 未来
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: '2025-10-17' // 昨日（期日超過）
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 子タスクが期日超過なのでoverdueクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.overdue');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should add overdue class when a child test is overdue', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              due_date: null
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: '2025-10-01' // 期日超過
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 子テストが期日超過なのでoverdueクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.overdue');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should add overdue class when a child bug is overdue', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              due_date: null
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: null
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: '2024-12-31' // 期日超過
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 子バグが期日超過なのでoverdueクラスが付与される
+      const userStoryDiv = container.querySelector('.user-story.overdue');
+      expect(userStoryDiv).toBeTruthy();
+    });
+
+    it('should not add overdue class when all dates are in the future', () => {
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            us1: {
+              ...useStore.getState().entities.user_stories.us1,
+              due_date: '2025-12-31'
+            }
+          },
+          tasks: {
+            t1: {
+              id: 't1',
+              title: 'Task 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: '2025-11-30'
+            }
+          },
+          tests: {
+            test1: {
+              id: 'test1',
+              title: 'Test 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: '2025-11-15'
+            }
+          },
+          bugs: {
+            b1: {
+              id: 'b1',
+              title: 'Bug 1',
+              status: 'open',
+              parent_user_story_id: 'us1',
+              fixed_version_id: null,
+              due_date: '2025-10-31'
+            }
+          }
+        }
+      });
+
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // すべて未来の日付なのでoverdueクラスは付与されない
+      const userStoryDiv = container.querySelector('.user-story.overdue');
+      expect(userStoryDiv).toBeNull();
+    });
+
+    it('should not add overdue class when all dates are null', () => {
+      const { container } = render(<UserStory storyId="us1" />);
+
+      // 期日が設定されていないのでoverdueクラスは付与されない
+      const userStoryDiv = container.querySelector('.user-story.overdue');
+      expect(userStoryDiv).toBeNull();
     });
   });
 });

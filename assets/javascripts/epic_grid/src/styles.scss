@@ -393,6 +393,16 @@
       }
     }
 
+    &.overdue {
+      background: #ffebee;
+      border: 2px solid #f44336;
+      border-left: 4px solid #d32f2f;
+
+      &:hover {
+        background: #ffcdd2;
+      }
+    }
+
     .user-story-header {
       display: flex;
       align-items: center;

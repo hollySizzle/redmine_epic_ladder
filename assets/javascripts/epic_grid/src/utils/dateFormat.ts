@@ -102,3 +102,29 @@ export function formatDateRange(
     return `${startStr}~`;
   }
 }
+
+/**
+ * 期日が超過しているかチェック
+ *
+ * @param dueDate - ISO8601形式の期日文字列 or null
+ * @returns 期日が今日より前ならtrue、期日未設定またはまだ期日内ならfalse
+ *
+ * @example
+ * isOverdue("2025-01-01")  // true (過去の日付)
+ * isOverdue("2099-12-31")  // false (未来の日付)
+ * isOverdue(null)          // false (期日未設定)
+ * isOverdue("")            // false (期日未設定)
+ */
+export function isOverdue(dueDate: string | null | undefined): boolean {
+  if (!dueDate || dueDate === '') {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // 時刻をリセットして日付のみで比較
+
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  return due < today;
+}
