@@ -200,38 +200,21 @@ export const App: React.FC = () => {
   const kanbanContent = (
     <>
       <div className="kanban-header">
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div className="kanban-header__container">
+          <div className="kanban-header__controls">
             {isDirty && (
               <>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="save-btn"
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isSaving ? 'wait' : 'pointer',
-                    fontWeight: 'bold'
-                  }}
+                  className="eg-button eg-button--success eg-button--lg"
                 >
                   {isSaving ? '保存中...' : `💾 保存 (${changesCount}件)`}
                 </button>
                 <button
                   onClick={handleDiscard}
                   disabled={isSaving}
-                  className="discard-btn"
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isSaving ? 'not-allowed' : 'pointer'
-                  }}
+                  className="eg-button eg-button--danger eg-button--lg"
                 >
                   ✖ 破棄
                 </button>

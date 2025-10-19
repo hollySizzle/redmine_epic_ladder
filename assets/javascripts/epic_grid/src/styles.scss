@@ -107,6 +107,20 @@
   --button-toggle-active-bg: #fff3e0;
   --button-toggle-active-color: #f57c00;
   --button-toggle-active-border: #ff9800;
+
+  // Button Colors - Success (Save action)
+  --button-success-bg: #28a745;
+  --button-success-color: #fff;
+  --button-success-border: #28a745;
+  --button-success-hover-bg: #218838;
+  --button-success-hover-border: #1e7e34;
+
+  // Button Colors - Danger (Discard action)
+  --button-danger-bg: #dc3545;
+  --button-danger-color: #fff;
+  --button-danger-border: #dc3545;
+  --button-danger-hover-bg: #c82333;
+  --button-danger-hover-border: #bd2130;
 }
 
 // Text overflow behavior: 省略記号モード
@@ -165,11 +179,28 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap; // 提案A: 幅が狭い時は折り返す
     // padding: var(--space-lg);
     padding-bottom: 0;
     gap: var(--space-lg);
     height: fit-content;
     padding: 0.5rem;
+
+    // ヘッダー内のコンテナ
+    &__container {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    // 左側のボタングループ
+    &__controls {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: center;
+    }
   }
 
   // 全画面表示モード
@@ -1124,6 +1155,13 @@
       flex-shrink: 0;
     }
 
+    // 提案B: 狭い画面ではテキストを非表示にしてアイコンのみ表示
+    span {
+      @media (max-width: 1200px) {
+        display: none;
+      }
+    }
+
     // Primary variant
     &--primary {
       background: var(--button-primary-bg);
@@ -1153,6 +1191,39 @@
       }
     }
 
+    // Success variant (Save action)
+    &--success {
+      background: var(--button-success-bg);
+      color: var(--button-success-color);
+      border-color: var(--button-success-border);
+      font-weight: bold;
+
+      &:hover:not(:disabled) {
+        background: var(--button-success-hover-bg);
+        border-color: var(--button-success-hover-border);
+      }
+
+      &:disabled {
+        cursor: wait;
+      }
+    }
+
+    // Danger variant (Discard action)
+    &--danger {
+      background: var(--button-danger-bg);
+      color: var(--button-danger-color);
+      border-color: var(--button-danger-border);
+
+      &:hover:not(:disabled) {
+        background: var(--button-danger-hover-bg);
+        border-color: var(--button-danger-hover-border);
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+      }
+    }
+
     // Toggle variant
     &--toggle {
       &.eg-button--active {
@@ -1178,13 +1249,6 @@
         background: #fafafa;
         border-color: #999;
         color: #555;
-      }
-
-      span {
-        // モバイルでは非表示
-        @media (max-width: 768px) {
-          display: none;
-        }
       }
     }
 
