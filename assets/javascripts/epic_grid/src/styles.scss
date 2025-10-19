@@ -121,6 +121,13 @@
   --button-danger-border: #dc3545;
   --button-danger-hover-bg: #c82333;
   --button-danger-hover-border: #bd2130;
+
+  // Epic Version Wrapper Height (sticky positioning用)
+  --epic-version-wrapper-height: calc(100vh - 3rem); // デフォルト: 画面高さ - ヘッダー高さ
+
+  @media (max-width: 900px) {
+    --epic-version-wrapper-height: calc(100vh - 6rem); // 折り返し時: 画面高さ - 2倍ヘッダー高さ
+  }
 }
 
 // Text overflow behavior: 省略記号モード
@@ -261,7 +268,7 @@
     grid-template-columns: 1fr auto;
     gap: 0px;
     overflow-x: auto;
-    height: auto;
+    height: var(--epic-version-wrapper-height);
 
     .epic-version-grid {
       grid-row: 1;
