@@ -41,22 +41,11 @@ export const SidePanel: React.FC = () => {
 
   return (
     <div className="side-panel">
-      <div className="side-panel__header">
-        <h2 className="side-panel__title">メニュー</h2>
-        <button
-          className="eg-button eg-button--ghost side-panel__close-button"
-          onClick={toggleSideMenu}
-          title="サイドメニューを閉じる"
-          aria-label="サイドメニューを閉じる"
-        >
-          ✕
-        </button>
-      </div>
-
       <TabBar
         tabs={TABS}
         activeTab={activeSideTab}
         onTabChange={handleTabChange}
+        onClose={toggleSideMenu}
       />
 
       <div className="side-panel__content">
