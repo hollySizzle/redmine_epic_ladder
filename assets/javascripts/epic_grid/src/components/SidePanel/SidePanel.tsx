@@ -4,7 +4,6 @@ import { TabBar, Tab, TabId } from './TabBar';
 import { SearchTab } from './SearchTab';
 import { ListTab } from './ListTab';
 import { AboutTab } from './AboutTab';
-import './SidePanel.scss';
 
 const TABS: Tab[] = [
   { id: 'search', label: '検索', icon: '🔍' },

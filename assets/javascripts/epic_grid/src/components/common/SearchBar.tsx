@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { searchIssues } from '../../utils/searchUtils';
 import { scrollToIssue, highlightIssue } from '../../utils/domUtils';
-import './SearchBar.scss';
 
 /**
  * SearchBar コンポーネント

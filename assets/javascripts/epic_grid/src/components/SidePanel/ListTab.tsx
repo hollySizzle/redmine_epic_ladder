@@ -1,5 +1,4 @@
 import React from 'react';
-import './ListTab.scss';
 
 /**
  * ListTab コンポーネント

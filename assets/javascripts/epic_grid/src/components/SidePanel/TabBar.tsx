@@ -1,5 +1,4 @@
 import React from 'react';
-import './TabBar.scss';
 
 export type TabId = 'search' | 'list' | 'about';
 
