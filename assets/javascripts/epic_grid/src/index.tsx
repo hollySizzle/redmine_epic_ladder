@@ -27,18 +27,24 @@ const mountApp = () => {
 
 if (process.env.NODE_ENV === 'development') {
   // 開発環境: MSWを起動してからアプリをマウント
-  import('./mocks/browser').then(({ startMocking }) => {
-    startMocking()
-      .then(() => {
-        console.log('✅ MSW initialization completed');
-        mountApp();
-      })
-      .catch((error) => {
-        console.error('❌ Failed to start MSW:', error);
-        console.warn('⚠️ Mounting React app without MSW...');
-        mountApp();
-      });
-  });
+  import('./mocks/browser')
+    .then(({ startMocking }) => {
+      startMocking()
+        .then(() => {
+          console.log('✅ MSW initialization completed');
+          mountApp();
+        })
+        .catch((error) => {
+          console.error('❌ Failed to start MSW:', error);
+          console.warn('⚠️ Mounting React app without MSW...');
+          mountApp();
+        });
+    })
+    .catch((error) => {
+      console.error('❌ Failed to load MSW module:', error);
+      console.warn('⚠️ Mounting React app without MSW...');
+      mountApp();
+    });
 } else {
   // 本番環境: 直接アプリをマウント
   mountApp();

@@ -139,6 +139,71 @@ describe('App - Integration Tests (Normalized API)', () => {
   });
 });
 
+describe('App - Error and Loading States', () => {
+  beforeEach(() => {
+    const rootElement = document.createElement('div');
+    rootElement.id = 'kanban-root';
+    rootElement.setAttribute('data-project-id', '1');
+    document.body.appendChild(rootElement);
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('エラー状態が表示される', async () => {
+    // 先にレンダリングしてからエラーを設定
+    render(<App />);
+
+    useStore.setState({
+      isLoading: false,
+      error: 'Failed to load data'
+    });
+
+    // エラーメッセージを待つ
+    await waitFor(() => {
+      expect(screen.getByText(/Error: Failed to load data/)).toBeInTheDocument();
+    });
+  });
+
+  it('ローディング状態が表示される', () => {
+    useStore.setState({
+      isLoading: true,
+      error: null,
+      entities: { epics: {}, versions: {}, features: {}, user_stories: {}, tasks: {}, tests: {}, bugs: {}, users: {} },
+      grid: { index: {}, epic_order: [], version_order: [] },
+      metadata: { available_statuses: [], available_trackers: [] }
+    });
+
+    render(<App />);
+    expect(screen.getByText(/Loading grid data/)).toBeInTheDocument();
+  });
+
+  it('ローディング完了後にグリッドが表示される', async () => {
+    useStore.setState({
+      isLoading: true,
+      error: null
+    });
+
+    render(<App />);
+    expect(screen.getByText(/Loading grid data/)).toBeInTheDocument();
+
+    // データをロード
+    useStore.setState({
+      isLoading: false,
+      error: null,
+      entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
+      grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
+      metadata: JSON.parse(JSON.stringify(normalizedMockData.metadata)),
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading grid data/)).not.toBeInTheDocument();
+      expect(screen.getByText('Epic')).toBeInTheDocument();
+    });
+  });
+});
+
 describe('App - Dirty State Management', () => {
   beforeEach(() => {
     // kanban-root要素を追加

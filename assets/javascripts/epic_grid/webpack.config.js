@@ -102,13 +102,11 @@ module.exports = {
       fileName: 'asset-manifest.json',
       publicPath: '/plugin_assets/redmine_epic_grid/',
     }),
-    // 本番環境ではmocksをno-op実装に置き換え
-    ...(isProduction ? [
-      new webpack.NormalModuleReplacementPlugin(
-        /\/mocks\/browser$/,
-        './mocks/browser.noop.ts'
-      ),
-    ] : []),
+    // mocksをno-op実装に置き換え（開発・本番共通）
+    new webpack.NormalModuleReplacementPlugin(
+      /\/mocks\/browser$/,
+      './mocks/browser.noop.ts'
+    ),
   ],
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],

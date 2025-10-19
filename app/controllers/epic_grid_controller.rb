@@ -3,6 +3,8 @@
 # Epic Grid メインコントローラー
 # ReactアプリとRedmine統合のエントリーポイント
 class EpicGridController < ApplicationController
+  helper EpicGridHelper
+
   before_action :require_login
   before_action :find_project
   before_action :authorize_kanban
