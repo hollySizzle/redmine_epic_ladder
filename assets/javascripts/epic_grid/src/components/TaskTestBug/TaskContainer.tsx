@@ -11,6 +11,8 @@ interface TaskContainerProps {
 
 export const TaskContainer: React.FC<TaskContainerProps> = ({ userStoryId, taskIds }) => {
   const createTask = useStore((state) => state.createTask);
+  const users = useStore((state) => Object.values(state.entities.users || {}));
+  const userStory = useStore((state) => state.entities.user_stories[userStoryId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddTask = () => {
@@ -22,7 +24,8 @@ export const TaskContainer: React.FC<TaskContainerProps> = ({ userStoryId, taskI
       await createTask(userStoryId, {
         subject: data.subject,
         description: data.description,
-        parent_user_story_id: userStoryId
+        parent_user_story_id: userStoryId,
+        assigned_to_id: data.assigned_to_id
       });
     } catch (error) {
       alert(`Task作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -55,6 +58,9 @@ export const TaskContainer: React.FC<TaskContainerProps> = ({ userStoryId, taskI
         title="新しいTaskを追加"
         subjectLabel="Task名"
         subjectPlaceholder="例: データベース設計"
+        showAssignee={true}
+        users={users}
+        defaultAssigneeId={userStory?.assigned_to_id}
       />
     </>
   );

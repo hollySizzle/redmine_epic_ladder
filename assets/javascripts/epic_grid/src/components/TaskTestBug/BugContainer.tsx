@@ -11,6 +11,8 @@ interface BugContainerProps {
 
 export const BugContainer: React.FC<BugContainerProps> = ({ userStoryId, bugIds }) => {
   const createBug = useStore((state) => state.createBug);
+  const users = useStore((state) => Object.values(state.entities.users || {}));
+  const userStory = useStore((state) => state.entities.user_stories[userStoryId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddBug = () => {
@@ -22,7 +24,8 @@ export const BugContainer: React.FC<BugContainerProps> = ({ userStoryId, bugIds 
       await createBug(userStoryId, {
         subject: data.subject,
         description: data.description,
-        parent_user_story_id: userStoryId
+        parent_user_story_id: userStoryId,
+        assigned_to_id: data.assigned_to_id
       });
     } catch (error) {
       alert(`Bug作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -55,6 +58,9 @@ export const BugContainer: React.FC<BugContainerProps> = ({ userStoryId, bugIds 
         title="新しいBugを追加"
         subjectLabel="Bug名"
         subjectPlaceholder="例: ログインできない不具合"
+        showAssignee={true}
+        users={users}
+        defaultAssigneeId={userStory?.assigned_to_id}
       />
     </>
   );

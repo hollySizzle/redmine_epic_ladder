@@ -845,7 +845,7 @@ export const handlers = [
       status: 'open',
       parent_user_story_id: userStoryId as string,
       fixed_version_id: parentStory.fixed_version_id,
-      assigned_to_id,
+      assigned_to_id: assigned_to_id ?? parentStory.assigned_to_id, // UserStoryの担当者を引き継ぐ
       estimated_hours,
       spent_hours: 0,
       done_ratio: 0,
@@ -925,7 +925,7 @@ export const handlers = [
       parent_user_story_id: userStoryId as string,
       fixed_version_id: parentStory.fixed_version_id,
       test_result: 'pending',
-      assigned_to_id,
+      assigned_to_id: assigned_to_id ?? parentStory.assigned_to_id, // UserStoryの担当者を引き継ぐ
       start_date: parentStory.start_date,
       due_date: parentStory.due_date,
       created_on: new Date().toISOString(),
@@ -1002,7 +1002,7 @@ export const handlers = [
       parent_user_story_id: userStoryId as string,
       fixed_version_id: parentStory.fixed_version_id,
       severity: severity || 'minor',
-      assigned_to_id,
+      assigned_to_id: assigned_to_id ?? parentStory.assigned_to_id, // UserStoryの担当者を引き継ぐ
       start_date: parentStory.start_date,
       due_date: parentStory.due_date,
       created_on: new Date().toISOString(),

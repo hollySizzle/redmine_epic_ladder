@@ -21,6 +21,7 @@ export const UserStoryGridForCard: React.FC<UserStoryGridForCardProps> = ({
   storyIds
 }) => {
   const createUserStory = useStore((state) => state.createUserStory);
+  const users = useStore((state) => Object.values(state.entities.users || {}));
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddUserStory = () => {
@@ -32,7 +33,8 @@ export const UserStoryGridForCard: React.FC<UserStoryGridForCardProps> = ({
       await createUserStory(featureId, {
         subject: data.subject,
         description: data.description,
-        parent_feature_id: featureId
+        parent_feature_id: featureId,
+        assigned_to_id: data.assigned_to_id
       });
     } catch (error) {
       alert(`User Story作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -62,6 +64,8 @@ export const UserStoryGridForCard: React.FC<UserStoryGridForCardProps> = ({
         title="新しいUser Storyを追加"
         subjectLabel="User Story名"
         subjectPlaceholder="例: ユーザーがログインできる"
+        showAssignee={true}
+        users={users}
       />
     </>
   );

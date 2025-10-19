@@ -1,7 +1,11 @@
 import React from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AddButton } from './AddButton';
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+
+// モック
+vi.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter');
 
 describe('AddButton', () => {
   beforeEach(() => {
@@ -124,6 +128,99 @@ describe('AddButton', () => {
       const mockOnDrop = vi.fn();
       render(<AddButton type="feature" label="Add" onDrop={mockOnDrop} />);
       expect(screen.getByRole('button')).toBeInTheDocument();
+    });
+  });
+
+  describe('Drop Target機能', () => {
+    let mockCleanup: ReturnType<typeof vi.fn>;
+    let mockDropTargetConfig: any;
+
+    beforeEach(() => {
+      mockCleanup = vi.fn();
+      mockDropTargetConfig = null;
+
+      vi.mocked(dropTargetForElements).mockImplementation((config) => {
+        mockDropTargetConfig = config;
+        return mockCleanup;
+      });
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('dropTargetForElementsが呼ばれる', () => {
+      render(<AddButton type="feature" label="Add" />);
+      expect(dropTargetForElements).toHaveBeenCalledTimes(1);
+    });
+
+    it('getDataが正しいデータを返す', () => {
+      render(
+        <AddButton
+          type="feature"
+          label="Add Feature"
+          epicId="e1"
+          versionId="v1"
+          featureId="f1"
+        />
+      );
+
+      const data = mockDropTargetConfig.getData();
+      expect(data.type).toBe('feature');
+      expect(data.epicId).toBe('e1');
+      expect(data.versionId).toBe('v1');
+      expect(data.featureId).toBe('f1');
+      expect(data.isAddButton).toBe(true);
+      expect(data.id).toBe('add-button-feature-e1-v1-f1');
+    });
+
+    it('ID未指定時のgetData', () => {
+      render(<AddButton type="epic" label="Add Epic" />);
+
+      const data = mockDropTargetConfig.getData();
+      expect(data.type).toBe('epic');
+      expect(data.id).toBe('add-button-epic-none-none-none');
+    });
+
+    it('canDropで同じtypeのみtrueを返す', () => {
+      render(<AddButton type="feature" label="Add" />);
+
+      const resultSameType = mockDropTargetConfig.canDrop({
+        source: { data: { type: 'feature', id: 'f1' } }
+      });
+      expect(resultSameType).toBe(true);
+
+      const resultDifferentType = mockDropTargetConfig.canDrop({
+        source: { data: { type: 'epic', id: 'e1' } }
+      });
+      expect(resultDifferentType).toBe(false);
+    });
+
+    it('onDropコールバックが呼ばれる', () => {
+      const mockOnDrop = vi.fn();
+      render(<AddButton type="feature" label="Add" onDrop={mockOnDrop} />);
+
+      const sourceData = { type: 'feature', id: 'f1', title: 'Feature 1' };
+      mockDropTargetConfig.onDrop({ source: { data: sourceData } });
+
+      expect(mockOnDrop).toHaveBeenCalledWith(sourceData);
+      expect(mockOnDrop).toHaveBeenCalledTimes(1);
+    });
+
+    it('onDropが未指定でもエラーにならない', () => {
+      render(<AddButton type="feature" label="Add" />);
+
+      expect(() => {
+        mockDropTargetConfig.onDrop({ source: { data: { type: 'feature', id: 'f1' } } });
+      }).not.toThrow();
+    });
+
+    it('アンマウント時にcleanupが呼ばれる', () => {
+      const { unmount } = render(<AddButton type="feature" label="Add" />);
+
+      expect(mockCleanup).not.toHaveBeenCalled();
+      unmount();
+      expect(mockCleanup).toHaveBeenCalledTimes(1);
     });
   });
 });

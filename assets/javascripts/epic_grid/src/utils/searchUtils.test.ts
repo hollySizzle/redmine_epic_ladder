@@ -233,4 +233,127 @@ describe('searchUtils', () => {
       expect(results).toEqual([]);
     });
   });
+
+  describe('searchIssues - 全エンティティタイプのカバレッジ', () => {
+    it('UserStoryにマッチする場合、最初の1件を返す', () => {
+      const result = searchIssues(mockEntities, 'パスワード');
+      expect(result).toEqual({
+        id: 'story-2',
+        type: 'user-story',
+        subject: 'パスワードリセット機能',
+      });
+    });
+
+    it('Taskにマッチする場合、最初の1件を返す', () => {
+      const result = searchIssues(mockEntities, 'API');
+      expect(result).toEqual({
+        id: 'task-1',
+        type: 'task',
+        subject: 'ログインAPIの実装',
+      });
+    });
+
+    it('Testにマッチする場合、最初の1件を返す', () => {
+      const result = searchIssues(mockEntities, 'ログインテスト');
+      expect(result).toEqual({
+        id: 'test-1',
+        type: 'test',
+        subject: 'ログインテスト',
+      });
+    });
+
+    it('Bugにマッチする場合、最初の1件を返す', () => {
+      const result = searchIssues(mockEntities, 'バグ');
+      expect(result).toEqual({
+        id: 'bug-1',
+        type: 'bug',
+        subject: 'ログイン失敗時のバグ',
+      });
+    });
+  });
+
+  describe('searchAllIssues - 各エンティティタイプの完全カバレッジ', () => {
+    it('Epicのみにマッチする検索', () => {
+      const results = searchAllIssues(mockEntities, '決済');
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('epic');
+    });
+
+    it('Featureのみにマッチする検索', () => {
+      const results = searchAllIssues(mockEntities, '会員登録');
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('feature');
+    });
+
+    it('UserStoryのみにマッチする検索', () => {
+      const results = searchAllIssues(mockEntities, 'パスワードリセット');
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('user-story');
+    });
+
+    it('Taskのみにマッチする検索', () => {
+      const results = searchAllIssues(mockEntities, 'フロントエンド');
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('task');
+    });
+
+    it('Testのみにマッチする検索', () => {
+      const results = searchAllIssues(mockEntities, 'ログインテスト');
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('test');
+    });
+
+    it('Bugのみにマッチする検索', () => {
+      const results = searchAllIssues(mockEntities, '失敗時');
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('bug');
+    });
+  });
+
+  describe('findByExactId - 全エンティティタイプのカバレッジ', () => {
+    const entitiesWithNumericIds = {
+      epics: { '301': { id: '301', subject: 'Epic 301' } as Epic },
+      features: { '302': { id: '302', title: 'Feature 302' } as Feature },
+      user_stories: { '303': { id: '303', title: 'UserStory 303' } as UserStory },
+      tasks: { '304': { id: '304', title: 'Task 304' } as Task },
+      tests: { '305': { id: '305', title: 'Test 305' } as Test },
+      bugs: { '306': { id: '306', title: 'Bug 306' } as Bug },
+    };
+
+    it('Epic IDで検索できる', () => {
+      const result = findByExactId(entitiesWithNumericIds, 301);
+      expect(result?.type).toBe('epic');
+      expect(result?.id).toBe('301');
+    });
+
+    it('Feature IDで検索できる', () => {
+      const result = findByExactId(entitiesWithNumericIds, 302);
+      expect(result?.type).toBe('feature');
+      expect(result?.id).toBe('302');
+    });
+
+    it('UserStory IDで検索できる', () => {
+      const result = findByExactId(entitiesWithNumericIds, 303);
+      expect(result?.type).toBe('user-story');
+      expect(result?.id).toBe('303');
+    });
+
+    it('Task IDで検索できる', () => {
+      const result = findByExactId(entitiesWithNumericIds, 304);
+      expect(result?.type).toBe('task');
+      expect(result?.id).toBe('304');
+    });
+
+    it('Test IDで検索できる', () => {
+      const result = findByExactId(entitiesWithNumericIds, 305);
+      expect(result?.type).toBe('test');
+      expect(result?.id).toBe('305');
+    });
+
+    it('Bug IDで検索できる', () => {
+      const result = findByExactId(entitiesWithNumericIds, 306);
+      expect(result?.type).toBe('bug');
+      expect(result?.id).toBe('306');
+    });
+  });
 });

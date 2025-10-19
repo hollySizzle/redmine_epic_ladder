@@ -1,9 +1,11 @@
 import React, { useState, FormEvent } from 'react';
 import { Dialog } from '@headlessui/react';
+import { User } from '../../types/normalized-api';
 
 export interface IssueFormData {
   subject: string;
   description: string;
+  assigned_to_id?: number;
 }
 
 export interface IssueFormModalProps {
@@ -13,6 +15,10 @@ export interface IssueFormModalProps {
   title: string;
   subjectLabel?: string;
   subjectPlaceholder?: string;
+  // 担当者フィールド関連
+  showAssignee?: boolean;
+  users?: User[];
+  defaultAssigneeId?: number;
 }
 
 export const IssueFormModal: React.FC<IssueFormModalProps> = ({
@@ -21,10 +27,14 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
   onSubmit,
   title,
   subjectLabel = '件名',
-  subjectPlaceholder = ''
+  subjectPlaceholder = '',
+  showAssignee = false,
+  users = [],
+  defaultAssigneeId
 }) => {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
+  const [assignedToId, setAssignedToId] = useState<number | undefined>(defaultAssigneeId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -33,10 +43,15 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ subject: subject.trim(), description: description.trim() });
+      await onSubmit({
+        subject: subject.trim(),
+        description: description.trim(),
+        assigned_to_id: assignedToId
+      });
       // 成功したらフォームをリセット
       setSubject('');
       setDescription('');
+      setAssignedToId(defaultAssigneeId);
       onClose();
     } catch (error) {
       // エラーは親コンポーネントで処理される想定
@@ -50,6 +65,7 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
     if (!isSubmitting) {
       setSubject('');
       setDescription('');
+      setAssignedToId(defaultAssigneeId);
       onClose();
     }
   };
@@ -102,6 +118,28 @@ export const IssueFormModal: React.FC<IssueFormModalProps> = ({
                 data-protonpass-ignore="true"
               />
             </div>
+
+            {showAssignee && (
+              <div className="form-group">
+                <label htmlFor="issue-assignee" className="form-label">
+                  担当者
+                </label>
+                <select
+                  id="issue-assignee"
+                  value={assignedToId ?? ''}
+                  onChange={(e) => setAssignedToId(e.target.value ? Number(e.target.value) : undefined)}
+                  className="form-select"
+                  disabled={isSubmitting}
+                >
+                  <option value="">未割り当て</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.lastname} {user.firstname}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="modal-actions">
               <button

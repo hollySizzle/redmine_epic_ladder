@@ -24,6 +24,7 @@ export const UserStoryGridForCell: React.FC<UserStoryGridForCellProps> = ({
   storyIds
 }) => {
   const createUserStory = useStore((state) => state.createUserStory);
+  const users = useStore((state) => Object.values(state.entities.users || {}));
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddUserStory = () => {
@@ -36,7 +37,8 @@ export const UserStoryGridForCell: React.FC<UserStoryGridForCellProps> = ({
         subject: data.subject,
         description: data.description,
         parent_feature_id: featureId,
-        fixed_version_id: versionId !== 'none' ? versionId : undefined // セル指定バージョンを送信
+        fixed_version_id: versionId !== 'none' ? versionId : undefined, // セル指定バージョンを送信
+        assigned_to_id: data.assigned_to_id
       });
     } catch (error) {
       alert(`User Story作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -68,6 +70,8 @@ export const UserStoryGridForCell: React.FC<UserStoryGridForCellProps> = ({
         title="新しいUser Storyを追加"
         subjectLabel="User Story名"
         subjectPlaceholder="例: ユーザーがログインできる"
+        showAssignee={true}
+        users={users}
       />
     </>
   );

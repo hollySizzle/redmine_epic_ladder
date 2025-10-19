@@ -11,6 +11,8 @@ interface TestContainerProps {
 
 export const TestContainer: React.FC<TestContainerProps> = ({ userStoryId, testIds }) => {
   const createTest = useStore((state) => state.createTest);
+  const users = useStore((state) => Object.values(state.entities.users || {}));
+  const userStory = useStore((state) => state.entities.user_stories[userStoryId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddTest = () => {
@@ -22,7 +24,8 @@ export const TestContainer: React.FC<TestContainerProps> = ({ userStoryId, testI
       await createTest(userStoryId, {
         subject: data.subject,
         description: data.description,
-        parent_user_story_id: userStoryId
+        parent_user_story_id: userStoryId,
+        assigned_to_id: data.assigned_to_id
       });
     } catch (error) {
       alert(`Test作成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -55,6 +58,9 @@ export const TestContainer: React.FC<TestContainerProps> = ({ userStoryId, testI
         title="新しいTestを追加"
         subjectLabel="Test名"
         subjectPlaceholder="例: ログイン機能のテスト"
+        showAssignee={true}
+        users={users}
+        defaultAssigneeId={userStory?.assigned_to_id}
       />
     </>
   );

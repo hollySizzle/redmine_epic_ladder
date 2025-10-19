@@ -80,6 +80,7 @@ export const EpicVersionGrid: React.FC = () => {
   const createEpic = useStore(state => state.createEpic);
   const createVersion = useStore(state => state.createVersion);
   const createFeature = useStore(state => state.createFeature);
+  const users = useStore(state => Object.values(state.entities.users || {}));
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
   const toggleDetailPane = useStore(state => state.toggleDetailPane);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
@@ -324,6 +325,7 @@ export const EpicVersionGrid: React.FC = () => {
         description: data.description,
         parent_epic_id: selectedEpicId,
         fixed_version_id: null,
+        assigned_to_id: data.assigned_to_id
       });
       console.log('[DEBUG] Feature created successfully');
     } catch (error) {
@@ -492,6 +494,8 @@ export const EpicVersionGrid: React.FC = () => {
         title="新しいFeatureを追加"
         subjectLabel="Feature名"
         subjectPlaceholder="例: ログイン機能"
+        showAssignee={true}
+        users={users}
       />
     </div>
   );
