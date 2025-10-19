@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
-import { highlightIssue, scrollToIssue } from '../../utils/domUtils';
+import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode } from '../../utils/domUtils';
 import { searchAllIssues } from '../../utils/searchUtils';
 import type { SearchResult } from '../../types/normalized-api';
 
@@ -53,10 +53,16 @@ export const SearchTab: React.FC = () => {
   };
 
   const handleResultClick = (result: SearchResult) => {
+    // 親階層を自動展開（Task/Test/Bugの場合のみ）
+    expandParentUserStory(result.id, result.type);
+
     // DOM要素までスクロール
     const scrolled = scrollToIssue(result.id, result.type);
 
     if (scrolled) {
+      // フォーカスモード有効化（他のカードを薄くする）
+      enableFocusMode(result.id, result.type);
+
       // ハイライト表示
       highlightIssue(result.id, result.type);
 

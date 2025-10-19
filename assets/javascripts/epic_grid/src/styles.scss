@@ -2171,9 +2171,46 @@
   }
 
   .search-highlight {
-    animation: highlight-flash 3s ease-in-out;
+    animation: highlight-pulse 3s ease-in-out;
     position: relative;
-    z-index: 50;
+    z-index: 120; // sticky要素(epic-cell/feature-cell: 110)より上
+  }
+
+  // フォーカスモード: 検索ヒット時に他のカードを薄くする
+  &.focus-mode {
+    // デフォルトで全要素を薄くする
+    .epic,
+    .feature-card,
+    .user-story,
+    .task,
+    .test,
+    .bug {
+      opacity: 0.3;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    // sticky要素（epic-cell/feature-cell）も薄くしてz-indexを下げる
+    .epic-cell,
+    .feature-cell {
+      opacity: 0.5;
+      z-index: 100; // search-highlight(120)より下に
+      transition: opacity 0.3s ease-in-out, z-index 0s;
+    }
+
+    // フォーカス対象は通常表示
+    .focus-target {
+      opacity: 1;
+    }
+
+    // 親要素（epic-version-wrapper）は少し見える
+    .focus-parent {
+      opacity: 0.6;
+
+      // 親内部のフォーカス対象は通常表示
+      .focus-target {
+        opacity: 1;
+      }
+    }
   }
 
   // ========================================
@@ -2577,5 +2614,35 @@
   85% {
     background-color: #fff3cd;
     box-shadow: 0 0 var(--size-12) var(--size-4) rgba(255, 193, 7, 0.6);
+  }
+}
+
+// 強力なパルスアニメーション（検索ヒット用）
+@keyframes highlight-pulse {
+  0% {
+    background-color: transparent;
+    box-shadow: none;
+    border: 2px solid transparent;
+  }
+  10% {
+    background-color: #fff3cd;
+    box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8);
+    border: 2px solid #ffc107;
+  }
+  20% {
+    background-color: #fffbf0;
+    box-shadow: 0 0 10px 4px rgba(255, 193, 7, 0.4);
+    border: 2px solid #ffeb3b;
+  }
+  30% {
+    background-color: #fff3cd;
+    box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8);
+    border: 2px solid #ffc107;
+  }
+  40%,
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+    border: 2px solid transparent;
   }
 }

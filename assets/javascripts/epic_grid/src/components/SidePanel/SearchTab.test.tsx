@@ -39,6 +39,7 @@ describe('SearchTab', () => {
         setSelectedEntity: mockSetSelectedEntity,
         toggleDetailPane: mockToggleDetailPane,
         isDetailPaneVisible: false,
+        activeSideTab: 'search',
       };
       return selector(state);
     });
@@ -46,6 +47,8 @@ describe('SearchTab', () => {
     // domUtils のモック
     vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
     vi.mocked(domUtils.highlightIssue).mockImplementation(() => {});
+    vi.mocked(domUtils.enableFocusMode).mockImplementation(() => {});
+    vi.mocked(domUtils.expandParentUserStory).mockImplementation(() => {});
   });
 
   it('初期表示時はプレースホルダーが表示される', () => {
@@ -252,6 +255,41 @@ describe('SearchTab', () => {
       expect(mockSetSelectedEntity).toHaveBeenCalledWith('issue', '101');
     });
 
+    it('ID完全一致時でDetailPaneが既に表示されている場合はtoggleDetailPaneは呼ばれない', () => {
+      const mockResult = [
+        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', isExactIdMatch: true },
+      ];
+      vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
+      vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
+
+      // DetailPaneが既に表示されている状態をモック
+      vi.mocked(useStore).mockImplementation((selector: any) => {
+        const state = {
+          entities: mockEntities,
+          setSelectedEntity: mockSetSelectedEntity,
+          toggleDetailPane: mockToggleDetailPane,
+          isDetailPaneVisible: true, // 既に表示
+          activeSideTab: 'search',
+        };
+        return selector(state);
+      });
+
+      render(<SearchTab />);
+      const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../);
+      fireEvent.change(input, { target: { value: '101' } });
+
+      const searchButton = screen.getByRole('button', { name: /検索/ });
+      fireEvent.click(searchButton);
+
+      const resultItem = screen.getByText('ID検索テスト用Epic');
+      fireEvent.click(resultItem);
+
+      // toggleDetailPaneは呼ばれない（既に表示されているため）
+      expect(mockToggleDetailPane).not.toHaveBeenCalled();
+      // setSelectedEntityは呼ばれる
+      expect(mockSetSelectedEntity).toHaveBeenCalledWith('issue', '101');
+    });
+
     it('通常のsubject検索時はDetailPane自動表示されない', () => {
       const mockResult = [
         { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', isExactIdMatch: false },
@@ -273,6 +311,103 @@ describe('SearchTab', () => {
       // DetailPane自動表示は呼ばれない
       expect(mockToggleDetailPane).not.toHaveBeenCalled();
       expect(mockSetSelectedEntity).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('フォーム操作', () => {
+    it('空文字列でフォーム送信すると検索がリセットされる', () => {
+      vi.mocked(searchUtils.searchAllIssues).mockReturnValue([
+        { id: 'feature-1', type: 'feature' as const, subject: 'テスト' },
+      ]);
+
+      render(<SearchTab />);
+      const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../);
+
+      // 最初に検索を実行
+      fireEvent.change(input, { target: { value: 'テスト' } });
+      const searchButton = screen.getByRole('button', { name: /検索/ });
+      fireEvent.click(searchButton);
+      expect(screen.getByText(/1件見つかりました/)).toBeInTheDocument();
+
+      // 空文字列で再検索
+      fireEvent.change(input, { target: { value: '   ' } }); // 空白のみ
+      fireEvent.submit(input.closest('form')!);
+
+      // 検索結果がクリアされてプレースホルダーが表示される
+      expect(screen.queryByText(/1件見つかりました/)).not.toBeInTheDocument();
+      expect(screen.getByText(/タイトル（subject）で検索できます/)).toBeInTheDocument();
+    });
+  });
+
+  describe('activeSideTab変更時のフォーカス', () => {
+    it('SearchTabがアクティブになると入力欄にフォーカスが当たる', async () => {
+      vi.useFakeTimers();
+
+      // 最初は別のタブがアクティブ
+      vi.mocked(useStore).mockImplementation((selector: any) => {
+        const state = {
+          entities: mockEntities,
+          setSelectedEntity: mockSetSelectedEntity,
+          toggleDetailPane: mockToggleDetailPane,
+          isDetailPaneVisible: false,
+          activeSideTab: 'about',
+        };
+        return selector(state);
+      });
+
+      const { rerender } = render(<SearchTab />);
+      const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../) as HTMLInputElement;
+      expect(document.activeElement).not.toBe(input);
+
+      // SearchTabをアクティブに
+      vi.mocked(useStore).mockImplementation((selector: any) => {
+        const state = {
+          entities: mockEntities,
+          setSelectedEntity: mockSetSelectedEntity,
+          toggleDetailPane: mockToggleDetailPane,
+          isDetailPaneVisible: false,
+          activeSideTab: 'search',
+        };
+        return selector(state);
+      });
+
+      rerender(<SearchTab />);
+
+      // 100msのタイマーを進める
+      vi.advanceTimersByTime(100);
+
+      // フォーカスが当たる
+      expect(document.activeElement).toBe(input);
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('スクロール失敗時の警告', () => {
+    it('scrollToIssueがfalseを返した場合は警告がコンソールに出力される', () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const mockResult = [
+        { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
+      ];
+      vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
+      vi.mocked(domUtils.scrollToIssue).mockReturnValue(false); // スクロール失敗
+
+      render(<SearchTab />);
+      const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../);
+      fireEvent.change(input, { target: { value: 'ログイン' } });
+
+      const searchButton = screen.getByRole('button', { name: /検索/ });
+      fireEvent.click(searchButton);
+
+      const resultItem = screen.getByText('ログイン画面');
+      fireEvent.click(resultItem);
+
+      // 警告が出力される
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('DOM element not found for issue: feature-1 (feature)')
+      );
+
+      consoleWarnSpy.mockRestore();
     });
   });
 });
