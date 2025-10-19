@@ -53,21 +53,34 @@ export const SearchTab: React.FC = () => {
   };
 
   const handleResultClick = (result: SearchResult) => {
+    console.log('🔍 [SearchTab] handleResultClick called:', {
+      id: result.id,
+      type: result.type,
+      subject: result.subject,
+      isExactIdMatch: result.isExactIdMatch
+    });
+
     // 親階層を自動展開（Task/Test/Bugの場合のみ）
+    console.log('🔍 [SearchTab] Expanding parent user story...');
     expandParentUserStory(result.id, result.type);
 
     // DOM要素までスクロール
+    console.log('🔍 [SearchTab] Scrolling to issue...');
     const scrolled = scrollToIssue(result.id, result.type);
+    console.log('🔍 [SearchTab] Scroll result:', scrolled);
 
     if (scrolled) {
       // フォーカスモード有効化（他のカードを薄くする）
+      console.log('🔍 [SearchTab] Enabling focus mode...');
       enableFocusMode(result.id, result.type);
 
       // ハイライト表示
+      console.log('🔍 [SearchTab] Highlighting issue...');
       highlightIssue(result.id, result.type);
 
       // Phase 1: ID完全一致の場合のみDetailPaneも自動表示
       if (result.isExactIdMatch) {
+        console.log('🔍 [SearchTab] Exact ID match, showing detail pane...');
         if (!isDetailPaneVisible) {
           toggleDetailPane();
         }

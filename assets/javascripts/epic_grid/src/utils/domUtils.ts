@@ -5,36 +5,205 @@
  */
 
 /**
- * Issueまでスムーススクロール
+ * Issueまでスムーススクロール（2段階: 上端 → scrollend → 中央）
  *
  * UserStory/Task/Test/Bugの場合は親のepic-version-wrapperを中央に配置
+ * 視線誘導のため、まず上端に移動し、アニメーション完了後に中央に移動する
  *
  * @param issueId - IssueのID
  * @param issueType - Issueのタイプ
  * @returns スクロール成功したらtrue
  */
 export function scrollToIssue(issueId: string, issueType: string): boolean {
+  console.log('📜 [scrollToIssue] Called with:', { issueId, issueType });
+
   // data属性からDOM要素を検索
   const selectors = getIssueSelectors(issueId, issueType);
+  console.log('📜 [scrollToIssue] Selectors:', selectors);
 
   for (const selector of selectors) {
     const element = document.querySelector(selector);
+    console.log('📜 [scrollToIssue] Trying selector:', selector, 'Found:', !!element);
+
     if (element) {
-      // UserStory/Task/Test/Bugの場合は親のepic-version-wrapperを中央に配置
+      // targetElementは常に検索でヒットした要素自身
+      const targetElement: Element = element;
+      console.log('📜 [scrollToIssue] Target element:', targetElement.className);
+
+      // スクロールコンテナを特定
+      // UserStory/Task/Test/Bugの場合、epic-version-wrapper内でスクロールする
+      // Epic/Featureの場合、.triple-split-layout__center内でスクロールする
+      let scrollContainer: Element | HTMLElement;
+
       if (['user-story', 'task', 'test', 'bug'].includes(issueType)) {
-        const epicVersionWrapper = element.closest('.epic-version-wrapper');
+        // epic-version-wrapperを探す（こちらが実際のスクロールコンテナ）
+        const epicVersionWrapper = targetElement.closest('.epic-version-wrapper');
         if (epicVersionWrapper) {
-          epicVersionWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          return true;
+          scrollContainer = epicVersionWrapper;
+          console.log('📜 [scrollToIssue] Using epic-version-wrapper as scroll container');
+        } else {
+          // フォールバック
+          scrollContainer = targetElement.closest('.triple-split-layout__center')
+            || targetElement.closest('.kanban-fullscreen')
+            || document.documentElement;
+          console.log('📜 [scrollToIssue] epic-version-wrapper not found, using fallback');
         }
+      } else {
+        // Epic/Featureの場合
+        scrollContainer = targetElement.closest('.triple-split-layout__center')
+          || targetElement.closest('.kanban-fullscreen')
+          || document.documentElement;
+        console.log('📜 [scrollToIssue] Using standard scroll container for Epic/Feature');
       }
 
-      // それ以外（Epic/Feature）は通常通り
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      console.log('📜 [scrollToIssue] Scroll container:',
+        scrollContainer === document.documentElement ? 'document.documentElement' : scrollContainer.className);
+
+      // 2段階スクロール: 1. 上端に移動 → 2. scrollend後に中央に移動
+      // Step 1: 上端に移動（視線誘導の開始点）
+      console.log('📜 [scrollToIssue] Step 1: Scrolling to start...');
+
+      // 手動でスクロール位置を計算（scrollIntoViewは既に見える要素には動かないため）
+      const targetRect = targetElement.getBoundingClientRect();
+      const containerRect = scrollContainer === document.documentElement
+        ? { top: 0, left: 0, height: window.innerHeight, width: window.innerWidth }
+        : scrollContainer.getBoundingClientRect();
+
+      // コンテナ内での要素の相対位置を計算（Y方向）
+      const elementTop = scrollContainer === document.documentElement
+        ? targetRect.top + window.scrollY
+        : targetRect.top - containerRect.top + scrollContainer.scrollTop;
+
+      // コンテナ内での要素の相対位置を計算（X方向）
+      const elementLeft = scrollContainer === document.documentElement
+        ? targetRect.left + window.scrollX
+        : targetRect.left - containerRect.left + scrollContainer.scrollLeft;
+
+      console.log('📜 [scrollToIssue] Element position:', {
+        elementTop,
+        elementLeft,
+        containerScrollTop: scrollContainer.scrollTop,
+        containerScrollLeft: scrollContainer.scrollLeft,
+        targetRectTop: targetRect.top,
+        targetRectLeft: targetRect.left,
+        containerRectTop: containerRect.top,
+        containerRectLeft: containerRect.left
+      });
+
+      // Step 1: 上端左端にスクロール（まず要素を見える範囲に移動）
+      const scrollDistanceY = Math.abs(elementTop - scrollContainer.scrollTop);
+      const scrollDistanceX = Math.abs(elementLeft - scrollContainer.scrollLeft);
+      const scrollDistance1 = Math.max(scrollDistanceY, scrollDistanceX);
+      console.log('📜 [scrollToIssue] Step 1 scroll distance:', { x: scrollDistanceX, y: scrollDistanceY, max: scrollDistance1 });
+
+      // デバッグ: scrollContainer の情報を詳細に出力
+      const canScroll = scrollContainer.scrollHeight > scrollContainer.clientHeight;
+      console.log('📜 [scrollToIssue] Scroll container details:', {
+        tagName: scrollContainer.tagName,
+        className: scrollContainer.className,
+        scrollTop: scrollContainer.scrollTop,
+        scrollHeight: scrollContainer.scrollHeight,
+        clientHeight: scrollContainer.clientHeight,
+        canScroll
+      });
+
+      if (!canScroll) {
+        console.log('📜 [scrollToIssue] Container cannot scroll (all content visible). Relying on visual effects only.');
+        return true; // 視覚効果（フォーカスモード、ハイライト）のみで対応
+      }
+
+      console.log('📜 [scrollToIssue] Calling scrollTo with:', { top: elementTop, left: elementLeft });
+      scrollContainer.scrollTo({
+        top: elementTop,
+        left: elementLeft,
+        behavior: 'smooth'
+      });
+
+      // Step 2: 中央スクロールを実行（一定時間後）
+      console.log('📜 [scrollToIssue] Step 2: Scheduling center scroll...');
+
+      // 中央スクロール実行関数
+      const scrollToCenter = () => {
+        console.log('📜 [scrollToIssue] Executing center scroll...');
+
+        // 中央配置するための位置を計算
+        const updatedTargetRect = targetElement.getBoundingClientRect();
+        const updatedContainerRect = scrollContainer === document.documentElement
+          ? { top: 0, left: 0, height: window.innerHeight, width: window.innerWidth }
+          : scrollContainer.getBoundingClientRect();
+
+        // Y方向の中央位置計算
+        const updatedElementTop = scrollContainer === document.documentElement
+          ? updatedTargetRect.top + window.scrollY
+          : updatedTargetRect.top - updatedContainerRect.top + scrollContainer.scrollTop;
+
+        const containerHeight = scrollContainer === document.documentElement
+          ? window.innerHeight
+          : scrollContainer.clientHeight;
+
+        const elementHeight = targetElement.clientHeight;
+        const centerOffsetY = (containerHeight - elementHeight) / 2;
+        const centerPositionY = updatedElementTop - centerOffsetY;
+
+        // X方向の中央位置計算
+        const updatedElementLeft = scrollContainer === document.documentElement
+          ? updatedTargetRect.left + window.scrollX
+          : updatedTargetRect.left - updatedContainerRect.left + scrollContainer.scrollLeft;
+
+        const containerWidth = scrollContainer === document.documentElement
+          ? window.innerWidth
+          : scrollContainer.clientWidth;
+
+        const elementWidth = targetElement.clientWidth;
+        const centerOffsetX = (containerWidth - elementWidth) / 2;
+        // 左方向に20%ずらす（左側の余白を60%に）
+        const leftShift = containerWidth * 0.2;
+        const centerPositionX = updatedElementLeft - centerOffsetX - leftShift;
+
+        const scrollDistanceY = Math.abs(centerPositionY - scrollContainer.scrollTop);
+        const scrollDistanceX = Math.abs(centerPositionX - scrollContainer.scrollLeft);
+
+        console.log('📜 [scrollToIssue] Center scroll calculation:', {
+          y: {
+            updatedElementTop,
+            containerHeight,
+            elementHeight,
+            centerOffset: centerOffsetY,
+            centerPosition: centerPositionY,
+            currentScrollTop: scrollContainer.scrollTop,
+            scrollDistance: scrollDistanceY
+          },
+          x: {
+            updatedElementLeft,
+            containerWidth,
+            elementWidth,
+            centerOffset: centerOffsetX,
+            centerPosition: centerPositionX,
+            currentScrollLeft: scrollContainer.scrollLeft,
+            scrollDistance: scrollDistanceX
+          }
+        });
+
+        scrollContainer.scrollTo({
+          top: centerPositionY,
+          left: centerPositionX,
+          behavior: 'smooth'
+        });
+      };
+
+      // スクロール距離に応じてタイミングを調整
+      const delay = scrollDistance1 > 100 ? 600 : 200;
+      console.log('📜 [scrollToIssue] Scheduling center scroll with delay:', delay, 'ms');
+
+      setTimeout(() => {
+        scrollToCenter();
+      }, delay);
+
       return true;
     }
   }
 
+  console.warn('📜 [scrollToIssue] Element not found!');
   return false;
 }
 
@@ -47,23 +216,36 @@ export function scrollToIssue(issueId: string, issueType: string): boolean {
  * @param issueType - Issueのタイプ
  */
 export function expandParentUserStory(issueId: string, issueType: string): void {
+  console.log('📂 [expandParentUserStory] Called with:', { issueId, issueType });
+
   if (!['task', 'test', 'bug'].includes(issueType)) {
+    console.log('📂 [expandParentUserStory] Not task/test/bug, skipping');
     return; // Task/Test/Bug以外は処理不要
   }
 
   const selectors = getIssueSelectors(issueId, issueType);
+  console.log('📂 [expandParentUserStory] Selectors:', selectors);
 
   for (const selector of selectors) {
     const element = document.querySelector(selector);
+    console.log('📂 [expandParentUserStory] Trying selector:', selector, 'Found:', !!element);
+
     if (element) {
       // 親のUserStoryを探す
       const userStoryCard = element.closest('.user-story');
+      console.log('📂 [expandParentUserStory] Found parent UserStory:', !!userStoryCard);
+
       if (userStoryCard) {
         const collapseButton = userStoryCard.querySelector('.user-story-collapse-button');
+        console.log('📂 [expandParentUserStory] Found collapse button:', !!collapseButton);
+
         if (collapseButton) {
           const isCollapsed = collapseButton.getAttribute('aria-expanded') === 'false';
+          console.log('📂 [expandParentUserStory] Is collapsed:', isCollapsed);
+
           if (isCollapsed) {
             // 折りたたまれていたらクリックして展開
+            console.log('📂 [expandParentUserStory] Clicking to expand...');
             (collapseButton as HTMLElement).click();
           }
         }
@@ -71,6 +253,7 @@ export function expandParentUserStory(issueId: string, issueType: string): void 
       break;
     }
   }
+  console.log('📂 [expandParentUserStory] Done');
 }
 
 /**
@@ -80,28 +263,42 @@ export function expandParentUserStory(issueId: string, issueType: string): void 
  * @param issueType - フォーカスするIssueのタイプ
  */
 export function enableFocusMode(issueId: string, issueType: string): void {
+  console.log('🎯 [enableFocusMode] Called with:', { issueId, issueType });
+
   const selectors = getIssueSelectors(issueId, issueType);
+  console.log('🎯 [enableFocusMode] Selectors:', selectors);
 
   for (const selector of selectors) {
     const targetElement = document.querySelector(selector);
+    console.log('🎯 [enableFocusMode] Trying selector:', selector, 'Found:', !!targetElement);
+
     if (targetElement) {
       // グリッド全体にフォーカスモードクラスを追加
       const gridContainer = document.querySelector('.epic-grid');
+      console.log('🎯 [enableFocusMode] Grid container found:', !!gridContainer);
+
       if (gridContainer) {
         gridContainer.classList.add('focus-mode');
+        console.log('🎯 [enableFocusMode] Added focus-mode class to grid');
       }
 
       // ターゲット要素にフォーカスクラスを追加
       targetElement.classList.add('focus-target');
+      console.log('🎯 [enableFocusMode] Added focus-target class to element');
 
       // 親のepic-version-wrapperにもフォーカスクラスを追加（少し見える）
       const epicVersionWrapper = targetElement.closest('.epic-version-wrapper');
+      console.log('🎯 [enableFocusMode] Epic version wrapper found:', !!epicVersionWrapper);
+
       if (epicVersionWrapper) {
         epicVersionWrapper.classList.add('focus-parent');
+        console.log('🎯 [enableFocusMode] Added focus-parent class to wrapper');
       }
 
       // 3秒後にフォーカスモードを解除
+      console.log('🎯 [enableFocusMode] Setting timeout for 3s cleanup...');
       setTimeout(() => {
+        console.log('🎯 [enableFocusMode] Timeout fired, removing classes...');
         if (gridContainer) {
           gridContainer.classList.remove('focus-mode');
         }
@@ -109,11 +306,13 @@ export function enableFocusMode(issueId: string, issueType: string): void {
         if (epicVersionWrapper) {
           epicVersionWrapper.classList.remove('focus-parent');
         }
+        console.log('🎯 [enableFocusMode] Cleanup done');
       }, 3000);
 
       break;
     }
   }
+  console.log('🎯 [enableFocusMode] Done');
 }
 
 /**
@@ -123,22 +322,31 @@ export function enableFocusMode(issueId: string, issueType: string): void {
  * @param issueType - Issueのタイプ
  */
 export function highlightIssue(issueId: string, issueType: string): void {
+  console.log('✨ [highlightIssue] Called with:', { issueId, issueType });
+
   const selectors = getIssueSelectors(issueId, issueType);
+  console.log('✨ [highlightIssue] Selectors:', selectors);
 
   for (const selector of selectors) {
     const element = document.querySelector(selector);
+    console.log('✨ [highlightIssue] Trying selector:', selector, 'Found:', !!element);
+
     if (element) {
       // ハイライトクラスを追加
       element.classList.add('search-highlight');
+      console.log('✨ [highlightIssue] Added search-highlight class');
 
       // 3秒後に削除
+      console.log('✨ [highlightIssue] Setting timeout for 3s cleanup...');
       setTimeout(() => {
+        console.log('✨ [highlightIssue] Timeout fired, removing search-highlight class');
         element.classList.remove('search-highlight');
       }, 3000);
 
       break;
     }
   }
+  console.log('✨ [highlightIssue] Done');
 }
 
 /**

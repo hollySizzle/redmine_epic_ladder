@@ -117,7 +117,7 @@ function getRequestHeaders(includeContentType: boolean = false): HeadersInit {
 // エラーハンドリング
 // ========================================
 
-class KanbanAPIError extends Error {
+export class KanbanAPIError extends Error {
   constructor(
     message: string,
     public code: string,

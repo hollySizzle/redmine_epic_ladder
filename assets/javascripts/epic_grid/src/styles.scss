@@ -146,12 +146,12 @@
 
   // Epic Version Wrapper Height (sticky positioning用)
   --epic-version-wrapper-height: calc(
-    100vh - 3rem
+    100% - 3rem
   ); // デフォルト: 画面高さ - ヘッダー高さ
 
   @media (max-width: 900px) {
     --epic-version-wrapper-height: calc(
-      100vh - 6rem
+      100% - 6rem
     ); // 折り返し時: 画面高さ - 2倍ヘッダー高さ
   }
 }
@@ -1042,7 +1042,9 @@
     }
 
     &__placeholder-icon {
-      margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
+      margin-bottom: var(
+        --size-16
+      ); // 要素間の間隔、padding変換不可のためmargin使用
     }
 
     &__placeholder-text {
@@ -1132,7 +1134,9 @@
       color: #d32f2f;
 
       p {
-        margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
+        margin-bottom: var(
+          --size-16
+        ); // 要素間の間隔、padding変換不可のためmargin使用
       }
 
       button {
@@ -1415,7 +1419,9 @@
     background: #fff;
     border: var(--border-width-thin) solid #ddd;
     border-radius: var(--border-radius-lg);
-    margin-bottom: var(--space-md); // 要素間の間隔、padding変換不可のためmargin使用
+    margin-bottom: var(
+      --space-md
+    ); // 要素間の間隔、padding変換不可のためmargin使用
     flex-wrap: wrap;
     align-items: center;
   }
@@ -2174,6 +2180,9 @@
     animation: highlight-pulse 3s ease-in-out;
     position: relative;
     z-index: 120; // sticky要素(epic-cell/feature-cell: 110)より上
+    // ハイライト時に少し拡大して注目度を上げる
+    transform: scale(1.02);
+    transition: transform 0.3s ease-in-out;
   }
 
   // フォーカスモード: 検索ヒット時に他のカードを薄くする
@@ -2185,30 +2194,36 @@
     .task,
     .test,
     .bug {
-      opacity: 0.3;
+      opacity: 0.15; // 0.3 → 0.15 (より強く薄くする)
       transition: opacity 0.3s ease-in-out;
+      filter: blur(1px); // 軽いぼかし効果を追加
     }
 
     // sticky要素（epic-cell/feature-cell）も薄くしてz-indexを下げる
     .epic-cell,
     .feature-cell {
-      opacity: 0.5;
+      opacity: 0.3; // 0.5 → 0.3 (より強く薄くする)
       z-index: 100; // search-highlight(120)より下に
       transition: opacity 0.3s ease-in-out, z-index 0s;
+      filter: blur(1px); // 軽いぼかし効果を追加
     }
 
-    // フォーカス対象は通常表示
+    // フォーカス対象は通常表示＋強調
     .focus-target {
       opacity: 1;
+      filter: none; // ぼかしを解除
+      transform: scale(1); // スケールをリセット
     }
 
     // 親要素（epic-version-wrapper）は少し見える
     .focus-parent {
-      opacity: 0.6;
+      opacity: 0.4; // 0.6 → 0.4 (より強く薄くする)
+      filter: blur(0.5px); // 軽いぼかし
 
       // 親内部のフォーカス対象は通常表示
       .focus-target {
         opacity: 1;
+        filter: none;
       }
     }
   }
@@ -2379,7 +2394,9 @@
       width: 100%;
       flex-direction: column;
       gap: var(--size-8);
-      margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
+      margin-bottom: var(
+        --size-16
+      ); // 要素間の間隔、padding変換不可のためmargin使用
     }
 
     &__input {
@@ -2428,7 +2445,9 @@
 
       p {
         font-size: var(--size-16);
-        margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
+        margin-bottom: var(
+          --size-16
+        ); // 要素間の間隔、padding変換不可のためmargin使用
       }
     }
 
@@ -2485,7 +2504,9 @@
 
       p {
         font-size: var(--size-16);
-        margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
+        margin-bottom: var(
+          --size-16
+        ); // 要素間の間隔、padding変換不可のためmargin使用
       }
     }
 
@@ -2523,7 +2544,9 @@
     }
 
     &__section {
-      margin-bottom: var(--size-24); // 要素間の間隔、padding変換不可のためmargin使用
+      margin-bottom: var(
+        --size-24
+      ); // 要素間の間隔、padding変換不可のためmargin使用
       padding-bottom: var(--size-16);
       border-bottom: var(--border-width-thin) solid #e0e0e0;
 
@@ -2533,7 +2556,9 @@
 
       &--footer {
         text-align: center;
-        margin-top: var(--size-32); // 要素間の間隔、padding変換不可のためmargin使用
+        margin-top: var(
+          --size-32
+        ); // 要素間の間隔、padding変換不可のためmargin使用
       }
     }
 
@@ -2588,7 +2613,9 @@
           content: "✓ ";
           color: var(--primary-color, #3498db);
           font-weight: bold;
-          margin-right: var(--size-8); // inline要素の間隔、gap使用不可のためmargin許容
+          margin-right: var(
+            --size-8
+          ); // inline要素の間隔、gap使用不可のためmargin許容
         }
       }
     }
@@ -2622,27 +2649,44 @@
   0% {
     background-color: transparent;
     box-shadow: none;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
+    transform: scale(1);
   }
-  10% {
+  5% {
     background-color: #fff3cd;
-    box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8);
-    border: 2px solid #ffc107;
+    box-shadow: 0 0 30px 12px rgba(255, 193, 7, 1);
+    border: 3px solid #ffc107;
+    transform: scale(1.02);
   }
-  20% {
+  15% {
     background-color: #fffbf0;
-    box-shadow: 0 0 10px 4px rgba(255, 193, 7, 0.4);
-    border: 2px solid #ffeb3b;
+    box-shadow: 0 0 15px 6px rgba(255, 193, 7, 0.5);
+    border: 3px solid #ffeb3b;
+    transform: scale(1.01);
   }
-  30% {
+  25% {
     background-color: #fff3cd;
-    box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8);
-    border: 2px solid #ffc107;
+    box-shadow: 0 0 30px 12px rgba(255, 193, 7, 1);
+    border: 3px solid #ffc107;
+    transform: scale(1.02);
   }
-  40%,
+  35% {
+    background-color: #fffbf0;
+    box-shadow: 0 0 15px 6px rgba(255, 193, 7, 0.5);
+    border: 3px solid #ffeb3b;
+    transform: scale(1.01);
+  }
+  45% {
+    background-color: #fff3cd;
+    box-shadow: 0 0 30px 12px rgba(255, 193, 7, 1);
+    border: 3px solid #ffc107;
+    transform: scale(1.02);
+  }
+  60%,
   100% {
     background-color: transparent;
     box-shadow: none;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
+    transform: scale(1);
   }
 }
