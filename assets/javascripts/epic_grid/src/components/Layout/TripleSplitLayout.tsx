@@ -22,13 +22,13 @@ const getCSSVariable = (name: string): number => {
   return parseFloat(value) * 16; // rem -> px変換
 };
 
-const MIN_LEFT_WIDTH = 250;
+const MIN_LEFT_WIDTH = 150;
 const MAX_LEFT_WIDTH = 400;
 const MIN_CENTER_WIDTH = 600;
 const MIN_RIGHT_WIDTH = 400;
 const MAX_RIGHT_WIDTH = 600;
 
-const DEFAULT_LEFT_WIDTH = 300;
+const DEFAULT_LEFT_WIDTH = 230;
 const DEFAULT_RIGHT_WIDTH = 450;
 
 const STORAGE_KEY = 'epic_grid_triple_split_widths';
