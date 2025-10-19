@@ -1,14 +1,20 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+const webpack = require('webpack');
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 module.exports = {
-  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-  devtool: process.env.NODE_ENV === 'production' ? 'source-map' : 'eval-source-map',
-  entry: './src/index.tsx',
+  mode: isProduction ? 'production' : 'development',
+  devtool: isProduction ? 'source-map' : 'eval-source-map',
+  entry: isProduction ? './src/index.production.tsx' : './src/index.tsx',
   output: {
     path: path.resolve(__dirname, '../../build'),
-    filename: 'kanban_bundle.js',
+    filename: isProduction
+      ? 'kanban_bundle.[contenthash:8].js'
+      : 'kanban_bundle.js',
     clean: true,
   },
   optimization: {
@@ -51,10 +57,17 @@ module.exports = {
           /\.spec\.(ts|tsx)$/,
           /mockData\.ts$/,
           /setupTests\.ts$/,
-          /mocks\/server\.ts$/,
+          /mocks/,
         ],
         use: {
           loader: 'ts-loader',
+          options: {
+            // 本番環境では型チェックを完全にスキップ
+            transpileOnly: true,
+            compilerOptions: {
+              sourceMap: !isProduction,
+            },
+          },
         },
       },
       {
@@ -73,6 +86,9 @@ module.exports = {
     ],
   },
   plugins: [
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+    }),
     new HtmlWebpackPlugin({
       template: './nested_grid_test_template.html',
       filename: 'index.html',
@@ -82,6 +98,17 @@ module.exports = {
         { from: 'public', to: '.' }
       ]
     }),
+    new WebpackManifestPlugin({
+      fileName: 'asset-manifest.json',
+      publicPath: '/plugin_assets/redmine_epic_grid/',
+    }),
+    // 本番環境ではmocksをno-op実装に置き換え
+    ...(isProduction ? [
+      new webpack.NormalModuleReplacementPlugin(
+        /\/mocks\/browser$/,
+        './mocks/browser.noop.ts'
+      ),
+    ] : []),
   ],
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],

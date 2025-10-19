@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { searchIssues, searchAllIssues, findByExactId } from './searchUtils';
+import { searchIssues, searchAllIssues, findByExactId, searchWithFilters } from './searchUtils';
 import type { Epic, Feature, UserStory, Task, Test, Bug } from '../types/normalized-api';
 
 describe('searchUtils', () => {
@@ -184,6 +184,53 @@ describe('searchUtils', () => {
       const results = searchAllIssues(mockEntities, 'ID: 101');
       // 通常のsubject検索なのでisExactIdMatchはfalse
       expect(results.every(r => !r.isExactIdMatch)).toBe(true);
+    });
+  });
+
+  describe('searchWithFilters (Phase 2スケルトン関数)', () => {
+    it('queryのみ指定した場合、searchAllIssuesと同じ結果を返す', () => {
+      const results = searchWithFilters(mockEntities, { query: 'ログイン' });
+      expect(results).toHaveLength(5);
+      expect(results.map(r => r.id)).toContain('feature-1');
+    });
+
+    it('searchTarget="subject"の場合も動作する', () => {
+      const results = searchWithFilters(mockEntities, {
+        query: 'ユーザー',
+        searchTarget: 'subject'
+      });
+      expect(results.length).toBeGreaterThan(0);
+    });
+
+    it('searchTarget="description"の場合も動作する（Phase 2未実装でもエラーにならない）', () => {
+      const results = searchWithFilters(mockEntities, {
+        query: 'テスト',
+        searchTarget: 'description'
+      });
+      // Phase 2未実装なので、subjectのみの検索結果が返る
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('searchTarget="all"の場合も動作する', () => {
+      const results = searchWithFilters(mockEntities, {
+        query: 'ログイン',
+        searchTarget: 'all'
+      });
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('statusIdsフィルターを指定しても動作する（Phase 3未実装）', () => {
+      const results = searchWithFilters(mockEntities, {
+        query: 'ログイン',
+        statusIds: [1, 2]
+      });
+      // Phase 3未実装なので、statusフィルターは適用されない
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('空のqueryの場合は空配列を返す', () => {
+      const results = searchWithFilters(mockEntities, { query: '' });
+      expect(results).toEqual([]);
     });
   });
 });

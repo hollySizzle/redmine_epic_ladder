@@ -25,6 +25,6 @@
     "**/__tests__/**",
     "src/mockData.ts",
     "src/setupTests.ts",
-    "src/mocks/server.ts"
+    "src/mocks/**"
   ]
 }

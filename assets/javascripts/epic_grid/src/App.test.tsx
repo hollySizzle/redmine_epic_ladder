@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { App } from './App';
 import { useStore } from './store/useStore';
@@ -136,5 +136,108 @@ describe('App - Integration Tests (Normalized API)', () => {
     // Task should have data-task attribute
     const tasks = document.querySelectorAll('[data-task]');
     expect(tasks.length).toBeGreaterThan(0);
+  });
+});
+
+describe('App - Dirty State Management', () => {
+  beforeEach(() => {
+    // kanban-root要素を追加
+    const rootElement = document.createElement('div');
+    rootElement.id = 'kanban-root';
+    rootElement.setAttribute('data-project-id', '1');
+    document.body.appendChild(rootElement);
+
+    window.alert = vi.fn();
+    window.confirm = vi.fn();
+
+    // グリッドデータを初期化（ローディング状態を回避）
+    useStore.setState({
+      entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
+      grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
+      metadata: JSON.parse(JSON.stringify(normalizedMockData.metadata)),
+      isLoading: false,
+      error: null,
+      isIssueIdVisible: true
+    });
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('保存ボタンをクリックすると成功メッセージが表示される', async () => {
+    // Dirty状態にする（正しい構造）
+    useStore.setState({
+      isDirty: true,
+      pendingChanges: {
+        movedUserStories: [{ id: 'test', from: {}, to: {} }],
+        reorderedEpics: null,
+        reorderedVersions: null,
+      },
+      savePendingChanges: vi.fn().mockResolvedValue(undefined),
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      const saveButton = screen.getByText(/保存 \(1件\)/);
+      fireEvent.click(saveButton);
+    });
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalledWith('✅ 変更を保存しました');
+    });
+  });
+
+  it('破棄ボタンをクリックしてconfirm OKで変更が破棄される', async () => {
+    const mockDiscardPendingChanges = vi.fn();
+
+    useStore.setState({
+      isDirty: true,
+      pendingChanges: {
+        movedUserStories: [{ id: 'test', from: {}, to: {} }],
+        reorderedEpics: null,
+        reorderedVersions: null,
+      },
+      discardPendingChanges: mockDiscardPendingChanges,
+    });
+
+    vi.mocked(window.confirm).mockReturnValue(true);
+
+    render(<App />);
+
+    await waitFor(() => {
+      const discardButton = screen.getByText(/破棄/);
+      fireEvent.click(discardButton);
+    });
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(mockDiscardPendingChanges).toHaveBeenCalled();
+  });
+
+  it('破棄ボタンをクリックしてconfirm Cancelで変更は破棄されない', async () => {
+    const mockDiscardPendingChanges = vi.fn();
+
+    useStore.setState({
+      isDirty: true,
+      pendingChanges: {
+        movedUserStories: [{ id: 'test', from: {}, to: {} }],
+        reorderedEpics: null,
+        reorderedVersions: null,
+      },
+      discardPendingChanges: mockDiscardPendingChanges,
+    });
+
+    vi.mocked(window.confirm).mockReturnValue(false);
+
+    render(<App />);
+
+    await waitFor(() => {
+      const discardButton = screen.getByText(/破棄/);
+      fireEvent.click(discardButton);
+    });
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(mockDiscardPendingChanges).not.toHaveBeenCalled();
   });
 });
