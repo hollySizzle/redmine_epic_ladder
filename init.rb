@@ -6,6 +6,9 @@ require_relative 'app/models/concerns/epic_grid/project_extensions'
 require_relative 'app/models/concerns/epic_grid/ransackable_config'
 require_relative 'app/models/concerns/epic_grid/version_extensions'
 
+# View Hooks
+require_relative 'lib/epic_grid/hooks/issue_detail_hooks'
+
 # Redmine コアモデルに即座にinclude
 ActiveSupport.on_load(:active_record) do
   Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)

@@ -1,0 +1,67 @@
+<div class="epic-grid-quick-actions contextual" style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; background-color: #f8f8f8;">
+  <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
+    <%= l(:label_epic_grid_quick_actions) %>
+  </h3>
+  <p style="margin: 0 0 10px 0; font-size: 12px; color: #666;">
+    <%= l(:text_epic_grid_create_under_user_story, user_story: link_to("##{user_story.id} #{user_story.subject}", issue_path(user_story))).html_safe %>
+  </p>
+  <div class="epic-grid-action-buttons">
+    <%
+      tracker_names = EpicGrid::TrackerHierarchy.tracker_names
+
+      # トラッカーIDを取得
+      task_tracker = Tracker.find_by(name: tracker_names[:task])
+      test_tracker = Tracker.find_by(name: tracker_names[:test])
+      bug_tracker = Tracker.find_by(name: tracker_names[:bug])
+
+      # 共通パラメータ
+      common_params = {
+        controller: 'issues',
+        action: 'new',
+        project_id: project.identifier,
+        back_url: issue_path(issue)
+      }
+    %>
+
+    <% if task_tracker %>
+      <%= link_to(
+        l(:label_epic_grid_create_task),
+        common_params.merge(issue: {
+          parent_issue_id: user_story.id,
+          tracker_id: task_tracker.id,
+          fixed_version_id: user_story.fixed_version_id,
+          subject: "#{user_story.subject} - Task"
+        }),
+        class: 'icon icon-add',
+        style: 'margin-right: 10px;'
+      ) %>
+    <% end %>
+
+    <% if test_tracker %>
+      <%= link_to(
+        l(:label_epic_grid_create_test),
+        common_params.merge(issue: {
+          parent_issue_id: user_story.id,
+          tracker_id: test_tracker.id,
+          fixed_version_id: user_story.fixed_version_id,
+          subject: "#{user_story.subject} - Test"
+        }),
+        class: 'icon icon-add',
+        style: 'margin-right: 10px;'
+      ) %>
+    <% end %>
+
+    <% if bug_tracker %>
+      <%= link_to(
+        l(:label_epic_grid_create_bug),
+        common_params.merge(issue: {
+          parent_issue_id: user_story.id,
+          tracker_id: bug_tracker.id,
+          fixed_version_id: user_story.fixed_version_id,
+          subject: "#{user_story.subject} - Bug"
+        }),
+        class: 'icon icon-add'
+      ) %>
+    <% end %>
+  </div>
+</div>

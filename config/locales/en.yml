@@ -1,3 +1,7 @@
 # English strings go here for Rails i18n
 en:
-  # my_label: "My label"
+  label_epic_grid_quick_actions: "Quick Actions"
+  label_epic_grid_create_task: "Create Task"
+  label_epic_grid_create_test: "Create Test"
+  label_epic_grid_create_bug: "Create Bug"
+  text_epic_grid_create_under_user_story: "Create under User Story: %{user_story}"

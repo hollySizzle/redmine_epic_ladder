@@ -454,9 +454,10 @@ if sakura_ec
   yamada = User.find_by(login: 'yamada')
 
   # 優先度取得
-  priority_normal = IssuePriority.find_by(name: '通常')
-  priority_high = IssuePriority.find_by(name: '高')
-  priority_urgent = IssuePriority.find_by(name: '緊急')
+  priority_low = IssuePriority.find_by(name: 'Low')
+  priority_normal = IssuePriority.find_by(name: 'Normal')
+  priority_high = IssuePriority.find_by(name: 'High')
+  priority_urgent = IssuePriority.find_by(name: 'Urgent')
 
   # カウンター初期化
   epic_count = 0
@@ -1389,6 +1390,180 @@ if sakura_ec
     fixed_version: created_versions['v3'], estimated_hours: 6.0
   )
   puts "    🐛 Bug#3: #{bug.subject} (#{bug.fixed_version.name})"
+
+  # === フロントエンド系バグ ===
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: '商品検索結果が無限スクロールで重複表示される',
+    description: 'スクロールで次ページ読み込み時、前ページの最後の商品が重複表示される',
+    status: status_new, priority: priority_high,
+    author: yamada, assigned_to: watanabe,
+    fixed_version: created_versions['v2'], estimated_hours: 4.0
+  )
+  puts "    🐛 Bug#4: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'ブラウザバックでカート内容が消える',
+    description: 'カートに商品追加後、ブラウザバックボタンでカートが空になる',
+    status: status_in_progress, priority: priority_urgent,
+    author: tanaka, assigned_to: sato,
+    fixed_version: created_versions['v1'], estimated_hours: 6.0
+  )
+  puts "    🐛 Bug#5: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'ダークモードで文字が読めない',
+    description: 'iOS/Androidのダークモード有効時、白背景に白文字になる箇所がある',
+    status: status_resolved, priority: priority_normal,
+    author: suzuki, assigned_to: watanabe,
+    fixed_version: created_versions['v2'], estimated_hours: 3.0
+  )
+  puts "    🐛 Bug#6: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'お気に入りボタンの連打で複数登録される',
+    description: 'ハートアイコン連打で同一商品が複数お気に入り登録される',
+    status: status_new, priority: priority_low,
+    author: yamada,
+    fixed_version: created_versions['v3'], estimated_hours: 2.0
+  )
+  puts "    🐛 Bug#7: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'レスポンシブメニューがタップできない',
+    description: 'タブレット横向き表示時、ハンバーガーメニューがタップ反応しない',
+    status: status_in_progress, priority: priority_high,
+    author: suzuki, assigned_to: watanabe,
+    fixed_version: created_versions['v2'], estimated_hours: 5.0
+  )
+  puts "    🐛 Bug#8: #{bug.subject} (#{bug.fixed_version.name})"
+
+  # === バックエンド系バグ ===
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: '商品一覧APIのレスポンスが遅い（5秒以上）',
+    description: '1000件以上の商品がある場合、一覧取得に5秒以上かかる。N+1問題の可能性',
+    status: status_new, priority: priority_urgent,
+    author: tanaka, assigned_to: sato,
+    fixed_version: created_versions['v2'], estimated_hours: 8.0
+  )
+  puts "    🐛 Bug#9: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: '在庫数が負の値になる',
+    description: '同時購入発生時、在庫管理のロック処理が不十分で在庫数がマイナスになる',
+    status: status_in_progress, priority: priority_urgent,
+    author: tanaka, assigned_to: sato,
+    fixed_version: created_versions['v1'], estimated_hours: 10.0
+  )
+  puts "    🐛 Bug#10: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'ユーザー削除時に関連データが残る',
+    description: 'ユーザー削除時、カート・お気に入り・注文履歴が削除されずに残る',
+    status: status_resolved, priority: priority_high,
+    author: suzuki, assigned_to: sato,
+    fixed_version: created_versions['v2'], estimated_hours: 6.0
+  )
+  puts "    🐛 Bug#11: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'CSVエクスポートで文字化けが発生',
+    description: '注文一覧CSVダウンロード時、商品名が文字化けする（UTF-8/Shift_JIS問題）',
+    status: status_new, priority: priority_normal,
+    author: yamada,
+    fixed_version: created_versions['v3'], estimated_hours: 3.0
+  )
+  puts "    🐛 Bug#12: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'ログファイルが肥大化してディスク容量を圧迫',
+    description: 'application.logが50GB超え。ログローテーション設定が未実施',
+    status: status_in_progress, priority: priority_high,
+    author: tanaka, assigned_to: sato,
+    fixed_version: created_versions['v2'], estimated_hours: 4.0
+  )
+  puts "    🐛 Bug#13: #{bug.subject} (#{bug.fixed_version.name})"
+
+  # === 統合系バグ ===
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'クレジットカード決済で稀にタイムアウト',
+    description: '決済API呼び出し時、ネットワーク遅延で5%程度の確率でタイムアウト発生',
+    status: status_new, priority: priority_urgent,
+    author: tanaka, assigned_to: sato,
+    fixed_version: created_versions['v2'], estimated_hours: 8.0
+  )
+  puts "    🐛 Bug#14: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: '注文確認メールが送信されない',
+    description: 'SMTP設定エラーで注文完了メールが送信失敗するが、エラーログが出ない',
+    status: status_resolved, priority: priority_urgent,
+    author: yamada, assigned_to: suzuki,
+    fixed_version: created_versions['v1'], estimated_hours: 5.0
+  )
+  puts "    🐛 Bug#15: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: '配送業者APIから404エラーが返る',
+    description: '配送状況取得API呼び出しで404エラー。APIバージョンアップに未対応',
+    status: status_in_progress, priority: priority_high,
+    author: suzuki, assigned_to: sato,
+    fixed_version: created_versions['v3'], estimated_hours: 6.0
+  )
+  puts "    🐛 Bug#16: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'Google Analytics トラッキングコードが重複',
+    description: 'GAタグが複数箇所に記述され、PV数が2倍でカウントされている',
+    status: status_new, priority: priority_normal,
+    author: suzuki,
+    fixed_version: created_versions['v3'], estimated_hours: 2.0
+  )
+  puts "    🐛 Bug#17: #{bug.subject} (#{bug.fixed_version.name})"
+
+  # === セキュリティ/データ系バグ ===
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'SQLインジェクション脆弱性（商品検索）',
+    description: '商品検索クエリパラメータでSQLインジェクション可能。早急な対応必要',
+    status: status_in_progress, priority: priority_urgent,
+    author: tanaka, assigned_to: sato,
+    fixed_version: created_versions['v1'], estimated_hours: 12.0
+  )
+  puts "    🐛 Bug#18: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: '他人の注文履歴が閲覧できる',
+    description: 'URL直接入力で他ユーザーの注文詳細ページにアクセス可能。権限チェック漏れ',
+    status: status_resolved, priority: priority_urgent,
+    author: yamada, assigned_to: sato,
+    fixed_version: created_versions['v1'], estimated_hours: 8.0
+  )
+  puts "    🐛 Bug#19: #{bug.subject} (#{bug.fixed_version.name})"
+
+  bug = Issue.create!(
+    project: sakura_ec, tracker: bug_tracker,
+    subject: 'パスワードがログに平文出力される',
+    description: 'ログイン失敗時のログにパスワードが平文で記録されている',
+    status: status_resolved, priority: priority_urgent,
+    author: tanaka, assigned_to: suzuki,
+    fixed_version: created_versions['v1'], estimated_hours: 3.0
+  )
+  puts "    🐛 Bug#20: #{bug.subject} (#{bug.fixed_version.name})"
 
   # ========================================
   # 統計表示

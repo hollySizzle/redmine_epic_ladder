@@ -3,6 +3,7 @@
     "type": "command",
     "command": "node /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/others/statusline.js"
   },
+  "env": { "DISABLE_AUTOUPDATER": "1" },
   "hooks": {
     "PreToolUse": [
       {

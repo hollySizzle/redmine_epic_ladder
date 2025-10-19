@@ -1,0 +1,7 @@
+# Japanese strings for Rails i18n
+ja:
+  label_epic_grid_quick_actions: "クイックアクション"
+  label_epic_grid_create_task: "タスクを作成"
+  label_epic_grid_create_test: "テストを作成"
+  label_epic_grid_create_bug: "バグを作成"
+  text_epic_grid_create_under_user_story: "UserStory %{user_story} の直下に作成"
