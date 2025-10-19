@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
+import { highlightIssue, scrollToIssue } from '../../utils/domUtils';
 import { searchAllIssues } from '../../utils/searchUtils';
-import { scrollToIssue, highlightIssue } from '../../utils/domUtils';
 
 interface SearchResult {
   id: string;
@@ -91,7 +91,7 @@ export const SearchTab: React.FC = () => {
   return (
     <div className="search-tab">
       <div className="search-tab__input-area">
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', width: '100%' }}>
+        <form onSubmit={handleSearch} className='input_form'>
           <input
             type="text"
             className="search-tab__input"

@@ -2329,15 +2329,26 @@
     flex-direction: column;
     height: 100%;
     padding: var(--size-16);
+    width: 100%;
+
+    .input_form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
     &__input-area {
       display: flex;
+      width: 100%;
+      flex-direction: column;
       gap: var(--size-8);
       margin-bottom: var(--size-16);
     }
 
     &__input {
       flex: 1;
+      width: 100%;
       padding: var(--size-8) var(--size-12);
       border: var(--border-width-thin) solid #ddd;
       border-radius: var(--button-border-radius);
@@ -2350,6 +2361,7 @@
     }
 
     &__button {
+      width: 100%;
       padding: var(--size-8) var(--size-16);
       background-color: var(--primary-color, #3498db);
       color: white;
