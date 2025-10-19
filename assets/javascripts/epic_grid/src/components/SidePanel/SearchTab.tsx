@@ -1,34 +1,163 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useStore } from '../../store/useStore';
+import { searchAllIssues } from '../../utils/searchUtils';
+import { scrollToIssue, highlightIssue } from '../../utils/domUtils';
+
+interface SearchResult {
+  id: string;
+  type: 'epic' | 'feature' | 'user-story' | 'task' | 'test' | 'bug';
+  subject: string;
+}
 
 /**
  * SearchTab コンポーネント
  *
  * 検索機能とその結果を表示するタブコンテンツ
+ * 複数ヒット時は一覧表示し、クリックでカードへスクロール&ハイライト
  */
 export const SearchTab: React.FC = () => {
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const entities = useStore(state => state.entities);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!query.trim()) {
+      setSearchResults([]);
+      setHasSearched(false);
+      return;
+    }
+
+    // 全マッチするissueを検索
+    const results = searchAllIssues(entities, query);
+    setSearchResults(results);
+    setHasSearched(true);
+  };
+
+  const handleResultClick = (result: SearchResult) => {
+    // DOM要素までスクロール
+    const scrolled = scrollToIssue(result.id, result.type);
+
+    if (scrolled) {
+      // ハイライト表示
+      highlightIssue(result.id, result.type);
+
+      // DetailPaneに表示
+      if (!isDetailPaneVisible) {
+        toggleDetailPane();
+      }
+      setSelectedEntity('issue', result.id);
+    } else {
+      console.warn(`⚠️ DOM element not found for issue: ${result.id} (${result.type})`);
+    }
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setSearchResults([]);
+    setHasSearched(false);
+  };
+
+  const getIssueTypeLabel = (type: string): string => {
+    switch (type) {
+      case 'epic': return 'Epic';
+      case 'feature': return 'Feature';
+      case 'user-story': return 'UserStory';
+      case 'task': return 'Task';
+      case 'test': return 'Test';
+      case 'bug': return 'Bug';
+      default: return type;
+    }
+  };
+
+  const getIssueTypeIcon = (type: string): string => {
+    switch (type) {
+      case 'epic': return '📦';
+      case 'feature': return '✨';
+      case 'user-story': return '📝';
+      case 'task': return '✅';
+      case 'test': return '🧪';
+      case 'bug': return '🐛';
+      default: return '📄';
+    }
+  };
+
   return (
     <div className="search-tab">
       <div className="search-tab__input-area">
-        <input
-          type="text"
-          className="search-tab__input"
-          placeholder="Epic/Feature/ストーリーを検索..."
-        />
-        <button className="search-tab__button">
-          🔍 検索
-        </button>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', width: '100%' }}>
+          <input
+            type="text"
+            className="search-tab__input"
+            placeholder="Epic/Feature/ストーリーを検索..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button type="submit" className="search-tab__button" disabled={!query.trim()}>
+            🔍 検索
+          </button>
+          {query && (
+            <button type="button" onClick={handleClear} className="search-tab__button search-tab__button--clear">
+              ✕
+            </button>
+          )}
+        </form>
       </div>
 
       <div className="search-tab__results">
-        <div className="search-tab__placeholder">
-          <p>🚧 検索機能は実装予定です</p>
-          <ul className="search-tab__features">
-            <li>全文検索</li>
-            <li>タグ検索</li>
-            <li>担当者検索</li>
-            <li>ステータス絞り込み</li>
-          </ul>
-        </div>
+        {!hasSearched && (
+          <div className="search-tab__placeholder">
+            <p>💡 タイトル（subject）で検索できます</p>
+            <ul className="search-tab__features">
+              <li>Epic/Feature/UserStory/Task/Test/Bug を横断検索</li>
+              <li>部分一致検索（大文字小文字区別なし）</li>
+              <li>複数ヒット時は一覧表示</li>
+              <li>クリックでカードへジャンプ&ハイライト</li>
+            </ul>
+          </div>
+        )}
+
+        {hasSearched && searchResults.length === 0 && (
+          <div className="search-tab__no-results">
+            <p>❌ 「{query}」に該当するissueが見つかりませんでした</p>
+          </div>
+        )}
+
+        {hasSearched && searchResults.length > 0 && (
+          <div className="search-tab__results-list">
+            <div className="search-tab__results-header">
+              <p>✅ {searchResults.length}件見つかりました</p>
+            </div>
+            <ul className="search-tab__list">
+              {searchResults.map((result) => (
+                <li
+                  key={`${result.type}-${result.id}`}
+                  className="search-tab__list-item"
+                  onClick={() => handleResultClick(result)}
+                >
+                  <div className="search-tab__item-icon">
+                    {getIssueTypeIcon(result.type)}
+                  </div>
+                  <div className="search-tab__item-content">
+                    <div className="search-tab__item-type">
+                      {getIssueTypeLabel(result.type)}
+                    </div>
+                    <div className="search-tab__item-subject">
+                      {result.subject}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
