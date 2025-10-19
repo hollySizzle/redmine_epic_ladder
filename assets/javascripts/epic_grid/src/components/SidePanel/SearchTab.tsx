@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { highlightIssue, scrollToIssue } from '../../utils/domUtils';
 import { searchAllIssues } from '../../utils/searchUtils';
@@ -18,11 +18,24 @@ export const SearchTab: React.FC = () => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const entities = useStore(state => state.entities);
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
   const toggleDetailPane = useStore(state => state.toggleDetailPane);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
+  const activeSideTab = useStore(state => state.activeSideTab);
+
+  // SearchTabがアクティブになったら入力欄にフォーカス
+  useEffect(() => {
+    if (activeSideTab === 'search' && inputRef.current) {
+      // 少し遅延させてフォーカス（アニメーション完了後）
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSideTab]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +107,7 @@ export const SearchTab: React.FC = () => {
       <div className="search-tab__input-area">
         <form onSubmit={handleSearch} className='input_form'>
           <input
+            ref={inputRef}
             type="text"
             className="search-tab__input"
             placeholder="Epic/Feature/ストーリーを検索..."

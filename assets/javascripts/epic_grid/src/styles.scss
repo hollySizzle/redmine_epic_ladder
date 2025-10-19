@@ -261,8 +261,7 @@
     background: #fff3cd;
     border: var(--border-width-thin) solid #ffc107;
     padding: var(--space-xl);
-    padding-bottom: 0;
-    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg); // 次要素との間隔をpaddingで確保
     border-radius: var(--border-radius-lg);
   }
 
@@ -274,7 +273,7 @@
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    margin-right: 0.25rem;
+    margin-right: 0.25rem; // inline要素間の間隔、gap使用不可のためmargin許容
 
     &.status-open {
       background: #4caf50;
@@ -376,7 +375,7 @@
     }
 
     .add-feature-btn {
-      margin-top: auto;
+      margin-top: auto; // flexbox下端配置のためmargin-top:auto必須
       width: 100%;
     }
   }
@@ -459,7 +458,7 @@
     height: fit-content;
 
     .version-name {
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.25rem; // 要素間の間隔、padding変換不可のためmargin使用
     }
 
     .version-date {
@@ -1043,7 +1042,7 @@
     }
 
     &__placeholder-icon {
-      margin-bottom: var(--size-16);
+      margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
     }
 
     &__placeholder-text {
@@ -1122,7 +1121,7 @@
     &__spinner {
       width: var(--size-40);
       height: var(--size-40);
-      margin: 0 auto var(--size-16);
+      margin: 0 auto var(--size-16); // 中央寄せのためmargin:auto必須
       border: var(--border-width-medium) solid #f3f3f3;
       border-top: var(--border-width-medium) solid #3498db;
       border-radius: 50%;
@@ -1133,7 +1132,7 @@
       color: #d32f2f;
 
       p {
-        margin-bottom: var(--size-16);
+        margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
       }
 
       button {
@@ -1416,7 +1415,7 @@
     background: #fff;
     border: var(--border-width-thin) solid #ddd;
     border-radius: var(--border-radius-lg);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-md); // 要素間の間隔、padding変換不可のためmargin使用
     flex-wrap: wrap;
     align-items: center;
   }
@@ -1703,7 +1702,7 @@
     position: absolute;
     top: 100%;
     left: 0;
-    margin-top: 0.5rem;
+    margin-top: 0.5rem; // 要素間の間隔、padding変換不可のためmargin使用
     background-color: white;
     border: var(--border-width-thin) solid #ddd;
     border-radius: var(--border-radius-md);
@@ -2343,7 +2342,7 @@
       width: 100%;
       flex-direction: column;
       gap: var(--size-8);
-      margin-bottom: var(--size-16);
+      margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
     }
 
     &__input {
@@ -2392,7 +2391,7 @@
 
       p {
         font-size: var(--size-16);
-        margin-bottom: var(--size-16);
+        margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
       }
     }
 
@@ -2449,7 +2448,7 @@
 
       p {
         font-size: var(--size-16);
-        margin-bottom: var(--size-16);
+        margin-bottom: var(--size-16); // 要素間の間隔、padding変換不可のためmargin使用
       }
     }
 
@@ -2487,7 +2486,7 @@
     }
 
     &__section {
-      margin-bottom: var(--size-24);
+      margin-bottom: var(--size-24); // 要素間の間隔、padding変換不可のためmargin使用
       padding-bottom: var(--size-16);
       border-bottom: var(--border-width-thin) solid #e0e0e0;
 
@@ -2497,7 +2496,7 @@
 
       &--footer {
         text-align: center;
-        margin-top: var(--size-32);
+        margin-top: var(--size-32); // 要素間の間隔、padding変換不可のためmargin使用
       }
     }
 
@@ -2552,7 +2551,7 @@
           content: "✓ ";
           color: var(--primary-color, #3498db);
           font-weight: bold;
-          margin-right: var(--size-8);
+          margin-right: var(--size-8); // inline要素の間隔、gap使用不可のためmargin許容
         }
       }
     }

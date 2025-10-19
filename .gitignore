@@ -10,6 +10,7 @@ assets/javascripts/epic_grid/dist/
 # Note: tmp/ is already ignored by Redmine core .gitignore
 # Including these for clarity:
 tmp/test_artifacts/
+assets/javascripts/epic_grid/coverage
 
 # OS files
 .DS_Store
