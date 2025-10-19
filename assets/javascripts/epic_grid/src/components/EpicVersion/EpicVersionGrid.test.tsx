@@ -1484,4 +1484,173 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
       });
     });
   });
+
+  describe('Hide Empty Epics/Versions Filtering', () => {
+    it('should show all epics and versions when hideEmptyEpicsVersions is false', () => {
+      const mockData: NormalizedAPIResponse = {
+        entities: {
+          epics: {
+            'e1': { id: 'e1', subject: 'Epic 1', description: '', status: 'open' },
+            'e2': { id: 'e2', subject: 'Epic 2', description: '', status: 'open' }
+          },
+          versions: {
+            'v1': { id: 'v1', name: 'Version 1', status: 'open' },
+            'v2': { id: 'v2', name: 'Version 2', status: 'open' }
+          },
+          features: {
+            'f1': {
+              id: 'f1',
+              title: 'Feature 1',
+              subject: 'Feature 1',
+              parent_epic_id: 'e1',
+              fixed_version_id: null,
+              user_story_ids: [],
+              status: 'open'
+            }
+          },
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: ['e1', 'e2'],
+          version_order: ['v1', 'v2'],
+          feature_order_by_epic: {
+            'e1': ['f1'],
+            'e2': []
+          },
+          index: {
+            'e1:f1:v1': [],
+            'e1:f1:v2': []
+          }
+        }
+      };
+
+      useStore.setState({
+        ...mockData,
+        isLoading: false,
+        error: null,
+        hideEmptyEpicsVersions: false,
+        filters: {}
+      });
+
+      const { container } = render(<EpicVersionGrid />);
+
+      // 全Epicが表示される
+      const epicCells = container.querySelectorAll('.epic-cell');
+      expect(epicCells.length).toBe(2);
+
+      // 全Versionが表示される
+      const versionHeaders = container.querySelectorAll('.version-header');
+      expect(versionHeaders.length).toBe(2);
+    });
+
+    it('should hide epics without features when hideEmptyEpicsVersions is true and filters are active', () => {
+      const mockData: NormalizedAPIResponse = {
+        entities: {
+          epics: {
+            'e1': { id: 'e1', subject: 'Epic 1', description: '', status: 'open' },
+            'e2': { id: 'e2', subject: 'Epic 2', description: '', status: 'open' }
+          },
+          versions: {
+            'v1': { id: 'v1', name: 'Version 1', status: 'open' }
+          },
+          features: {
+            'f1': {
+              id: 'f1',
+              title: 'Feature 1',
+              subject: 'Feature 1',
+              parent_epic_id: 'e1',
+              fixed_version_id: null,
+              user_story_ids: [],
+              status: 'open'
+            }
+          },
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: ['e1', 'e2'],
+          version_order: ['v1'],
+          feature_order_by_epic: {
+            'e1': ['f1'],
+            'e2': [] // Epic2は空
+          },
+          index: {
+            'e1:f1:v1': []
+          }
+        }
+      };
+
+      useStore.setState({
+        ...mockData,
+        isLoading: false,
+        error: null,
+        hideEmptyEpicsVersions: true,
+        filters: { fixed_version_id_in: ['v1'] } // フィルタが有効
+      });
+
+      const { container } = render(<EpicVersionGrid />);
+
+      // Epic1のみ表示（Epic2は非表示）
+      const epicCells = container.querySelectorAll('.epic-cell');
+      expect(epicCells.length).toBe(1);
+      expect(epicCells[0].textContent).toContain('Epic 1');
+    });
+
+    it('should show all epics when hideEmptyEpicsVersions is true but filters are not active', () => {
+      const mockData: NormalizedAPIResponse = {
+        entities: {
+          epics: {
+            'e1': { id: 'e1', subject: 'Epic 1', description: '', status: 'open' },
+            'e2': { id: 'e2', subject: 'Epic 2', description: '', status: 'open' }
+          },
+          versions: {
+            'v1': { id: 'v1', name: 'Version 1', status: 'open' }
+          },
+          features: {
+            'f1': {
+              id: 'f1',
+              title: 'Feature 1',
+              subject: 'Feature 1',
+              parent_epic_id: 'e1',
+              fixed_version_id: null,
+              user_story_ids: [],
+              status: 'open'
+            }
+          },
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {}
+        },
+        grid: {
+          epic_order: ['e1', 'e2'],
+          version_order: ['v1'],
+          feature_order_by_epic: {
+            'e1': ['f1'],
+            'e2': []
+          },
+          index: {}
+        }
+      };
+
+      useStore.setState({
+        ...mockData,
+        isLoading: false,
+        error: null,
+        hideEmptyEpicsVersions: true,
+        filters: {} // フィルタが無効
+      });
+
+      const { container } = render(<EpicVersionGrid />);
+
+      // フィルタが無効なので全Epic表示
+      const epicCells = container.querySelectorAll('.epic-cell');
+      expect(epicCells.length).toBe(2);
+    });
+  });
 });

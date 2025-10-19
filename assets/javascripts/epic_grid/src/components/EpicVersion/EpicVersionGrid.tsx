@@ -85,6 +85,8 @@ export const EpicVersionGrid: React.FC = () => {
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
   const epicSortOptions = useStore(state => state.epicSortOptions);
   const versionSortOptions = useStore(state => state.versionSortOptions);
+  const filters = useStore(state => state.filters);
+  const hideEmptyEpicsVersions = useStore(state => state.hideEmptyEpicsVersions);
 
   // Epic順序をソート設定に基づいて動的にソート
   const sortedEpicOrder = useMemo(() => {
@@ -190,14 +192,79 @@ export const EpicVersionGrid: React.FC = () => {
     return sorted;
   }, [grid.version_order, versions, versionSortOptions]);
 
+  // フィルタが設定されているかチェック
+  const hasActiveFilters = useMemo(() => {
+    return !!(
+      filters.fixed_version_id_in?.length ||
+      filters.assigned_to_id_in?.length ||
+      filters.tracker_id_in?.length ||
+      filters.status_id_in?.length ||
+      filters.parent_id_in?.length ||
+      filters.fixed_version_effective_date_gteq ||
+      filters.fixed_version_effective_date_lteq
+    );
+  }, [filters]);
+
+  // Epicにヒットするデータがあるかチェック
+  const hasEpicData = useMemo(() => {
+    if (!hideEmptyEpicsVersions || !hasActiveFilters) {
+      return new Set(sortedEpicOrder); // 全Epic表示
+    }
+
+    const epicIdsWithData = new Set<string>();
+
+    sortedEpicOrder.forEach(epicId => {
+      const epicFeatures = getSortedFeatureIds(epicId);
+      // Featureが1つでも存在すればそのEpicは表示
+      if (epicFeatures.some(fId => features[fId])) {
+        epicIdsWithData.add(epicId);
+      }
+    });
+
+    return epicIdsWithData;
+  }, [hideEmptyEpicsVersions, hasActiveFilters, sortedEpicOrder, getSortedFeatureIds, features]);
+
+  // Versionにヒットするデータがあるかチェック
+  const hasVersionData = useMemo(() => {
+    if (!hideEmptyEpicsVersions || !hasActiveFilters) {
+      return new Set(sortedVersionOrder); // 全Version表示
+    }
+
+    const versionIdsWithData = new Set<string>();
+
+    sortedVersionOrder.forEach(versionId => {
+      // grid.indexから該当Versionを含むセルを検索
+      const hasData = Object.keys(grid.index).some(cellKey => {
+        const [, , vId] = cellKey.split(':');
+        const storyIds = grid.index[cellKey] || [];
+        return vId === versionId && storyIds.length > 0;
+      });
+
+      if (hasData) {
+        versionIdsWithData.add(versionId);
+      }
+    });
+
+    return versionIdsWithData;
+  }, [hideEmptyEpicsVersions, hasActiveFilters, sortedVersionOrder, grid.index]);
+
+  // フィルタ適用後のEpic/Version順序
+  const filteredEpicOrder = useMemo(() => {
+    return sortedEpicOrder.filter(epicId => hasEpicData.has(epicId));
+  }, [sortedEpicOrder, hasEpicData]);
+
+  const filteredVersionOrder = useMemo(() => {
+    return sortedVersionOrder.filter(versionId => hasVersionData.has(versionId));
+  }, [sortedVersionOrder, hasVersionData]);
+
   // モーダル開閉状態
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
   const [isEpicModalOpen, setIsEpicModalOpen] = useState(false);
   const [isFeatureModalOpen, setIsFeatureModalOpen] = useState(false);
   const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null);
 
-  // versionの数を動的に取得
-  const versionCount = grid.version_order.length;
+  // versionの数を動的に取得（フィルタ適用後）
+  const versionCount = filteredVersionOrder.length;
 
   // grid-template-columnsを動的に生成 (Epic列 + Feature列 + Version列×N)
   const gridTemplateColumns = `var(--epic-width) var(--feature-width) repeat(${versionCount}, var(--version-width))`;
@@ -272,7 +339,7 @@ export const EpicVersionGrid: React.FC = () => {
         {/* ヘッダー行 */}
         <div className="header-label">Epic</div>
         <div className="header-label">Feature</div>
-        {sortedVersionOrder.map(versionId => {
+        {filteredVersionOrder.map(versionId => {
           const version = versions[versionId];
           // 'none' の場合はバージョン未設定として表示
           const versionName = version ? version.name : '(未設定)';
@@ -305,7 +372,7 @@ export const EpicVersionGrid: React.FC = () => {
         })}
 
         {/* Epic × Feature × Version の3次元グリッド */}
-        {sortedEpicOrder.map(epicId => {
+        {filteredEpicOrder.map(epicId => {
           const epic = epics[epicId];
           const epicFeatures = getSortedFeatureIds(epicId);
 
@@ -328,7 +395,7 @@ export const EpicVersionGrid: React.FC = () => {
                   />
                 </div>
                 <div className="feature-cell empty-cell"></div>
-                {sortedVersionOrder.map(versionId => (
+                {filteredVersionOrder.map(versionId => (
                   <div key={`${epicId}-empty-${versionId}`} className="us-cell empty-cell"></div>
                 ))}
               </React.Fragment>
@@ -359,7 +426,7 @@ export const EpicVersionGrid: React.FC = () => {
                 <DraggableFeatureCell feature={feature} />
 
                 {/* Version列 (UserStory一覧) */}
-                {sortedVersionOrder.map(versionId => {
+                {filteredVersionOrder.map(versionId => {
                   const cellKey = `${epicId}:${featureId}:${versionId}`;
                   const userStoryIds = grid.index[cellKey] || [];
 

@@ -134,6 +134,10 @@ interface StoreState {
   excludeClosedVersions: boolean;
   toggleExcludeClosedVersions: () => void;
 
+  // フィルタでヒットしなかったEpic/Version非表示（デフォルト: false）
+  hideEmptyEpicsVersions: boolean;
+  toggleHideEmptyEpicsVersions: () => void;
+
   // ソート設定
   epicSortOptions: EpicSortOptions;
   versionSortOptions: VersionSortOptions;
@@ -372,6 +376,17 @@ export const useStore = create<StoreState>()(
         if (projectId) {
           get().fetchGridData(projectId);
         }
+      },
+
+      // フィルタでヒットしなかったEpic/Version非表示の初期状態
+      hideEmptyEpicsVersions: (() => {
+        const saved = localStorage.getItem('kanban_hide_empty_epics_versions');
+        return saved !== null ? saved === 'true' : false; // デフォルトOFF（表示）
+      })(),
+      toggleHideEmptyEpicsVersions: () => {
+        const newValue = !get().hideEmptyEpicsVersions;
+        localStorage.setItem('kanban_hide_empty_epics_versions', String(newValue));
+        set({ hideEmptyEpicsVersions: newValue });
       },
 
       // ソート設定の初期状態

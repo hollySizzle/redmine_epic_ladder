@@ -19,6 +19,8 @@ export const FilterPanel: React.FC = () => {
   const clearFilters = useStore(state => state.clearFilters);
   const excludeClosedVersions = useStore(state => state.excludeClosedVersions);
   const toggleExcludeClosedVersions = useStore(state => state.toggleExcludeClosedVersions);
+  const hideEmptyEpicsVersions = useStore(state => state.hideEmptyEpicsVersions);
+  const toggleHideEmptyEpicsVersions = useStore(state => state.toggleHideEmptyEpicsVersions);
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -219,6 +221,18 @@ export const FilterPanel: React.FC = () => {
                 onChange={() => toggleExcludeClosedVersions()}
               />
               <span>クローズ済みバージョンを非表示</span>
+            </label>
+          </div>
+
+          {/* フィルタでヒットしなかったEpic/Version非表示トグル */}
+          <div className="filter-section">
+            <label className="filter-checkbox">
+              <input
+                type="checkbox"
+                checked={hideEmptyEpicsVersions}
+                onChange={() => toggleHideEmptyEpicsVersions()}
+              />
+              <span>ヒットしなかったEpic/Versionを非表示</span>
             </label>
           </div>
 

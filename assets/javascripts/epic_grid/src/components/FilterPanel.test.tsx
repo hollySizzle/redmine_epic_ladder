@@ -252,6 +252,52 @@ describe('FilterPanel', () => {
     });
   });
 
+  describe('Toggle Buttons', () => {
+    it('should render "クローズ済みバージョンを非表示" checkbox', async () => {
+      const user = userEvent.setup();
+      render(<FilterPanel />);
+      await user.click(screen.getByText(/フィルタ/));
+
+      expect(screen.getByText('クローズ済みバージョンを非表示')).toBeTruthy();
+    });
+
+    it('should render "ヒットしなかったEpic/Versionを非表示" checkbox', async () => {
+      const user = userEvent.setup();
+      render(<FilterPanel />);
+      await user.click(screen.getByText(/フィルタ/));
+
+      expect(screen.getByText('ヒットしなかったEpic/Versionを非表示')).toBeTruthy();
+    });
+
+    it('should toggle hideEmptyEpicsVersions when checkbox is clicked', async () => {
+      const user = userEvent.setup();
+      render(<FilterPanel />);
+      await user.click(screen.getByText(/フィルタ/));
+
+      const initialState = useStore.getState().hideEmptyEpicsVersions;
+
+      const checkbox = screen.getByLabelText('ヒットしなかったEpic/Versionを非表示');
+      await user.click(checkbox);
+
+      const newState = useStore.getState().hideEmptyEpicsVersions;
+      expect(newState).toBe(!initialState);
+    });
+
+    it('should toggle excludeClosedVersions when checkbox is clicked', async () => {
+      const user = userEvent.setup();
+      render(<FilterPanel />);
+      await user.click(screen.getByText(/フィルタ/));
+
+      const initialState = useStore.getState().excludeClosedVersions;
+
+      const checkbox = screen.getByLabelText('クローズ済みバージョンを非表示');
+      await user.click(checkbox);
+
+      const newState = useStore.getState().excludeClosedVersions;
+      expect(newState).toBe(!initialState);
+    });
+  });
+
   describe('Filter Application', () => {
     it('should apply version filter when checkbox is selected and Apply is clicked', async () => {
       const user = userEvent.setup();

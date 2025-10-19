@@ -583,4 +583,61 @@ describe('useStore - Normalized API (3D Grid)', () => {
       expect(loaded).toBe(false);
     });
   });
+
+  describe('Hide Empty Epics/Versions Toggle', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+    });
+
+    it('should have default hideEmptyEpicsVersions as false', () => {
+      const saved = localStorage.getItem('kanban_hide_empty_epics_versions');
+      const defaultValue = saved !== null ? saved === 'true' : false;
+      expect(defaultValue).toBe(false);
+    });
+
+    it('should toggle hideEmptyEpicsVersions', () => {
+      const { toggleHideEmptyEpicsVersions } = useStore.getState();
+
+      const initialState = useStore.getState();
+      const initialValue = initialState.hideEmptyEpicsVersions;
+
+      toggleHideEmptyEpicsVersions();
+
+      const newState = useStore.getState();
+      expect(newState.hideEmptyEpicsVersions).toBe(!initialValue);
+
+      toggleHideEmptyEpicsVersions();
+
+      const finalState = useStore.getState();
+      expect(finalState.hideEmptyEpicsVersions).toBe(initialValue);
+    });
+
+    it('should save hideEmptyEpicsVersions to localStorage', () => {
+      const { toggleHideEmptyEpicsVersions } = useStore.getState();
+
+      toggleHideEmptyEpicsVersions();
+
+      const saved = localStorage.getItem('kanban_hide_empty_epics_versions');
+      expect(saved).not.toBeNull();
+      expect(saved).toBe('true');
+    });
+
+    it('should load saved hideEmptyEpicsVersions from localStorage', () => {
+      localStorage.setItem('kanban_hide_empty_epics_versions', 'true');
+
+      const saved = localStorage.getItem('kanban_hide_empty_epics_versions');
+      const loaded = saved !== null ? saved === 'true' : false;
+
+      expect(loaded).toBe(true);
+    });
+
+    it('should have toggleHideEmptyEpicsVersions action', () => {
+      const { toggleHideEmptyEpicsVersions } = useStore.getState();
+      expect(typeof toggleHideEmptyEpicsVersions).toBe('function');
+    });
+  });
 });
