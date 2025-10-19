@@ -193,6 +193,7 @@
       align-items: center;
       width: 100%;
       justify-content: space-between;
+      min-width: 0; // flexアイテムの暗黙的最小幅を無効化
     }
 
     // 左側のボタングループ
@@ -200,6 +201,9 @@
       display: flex;
       gap: var(--space-sm);
       align-items: center;
+      flex: 1; // 利用可能なスペースを使う
+      min-width: 0; // flexアイテムの暗黙的最小幅を無効化
+      flex-wrap: wrap; // 溢れたら折り返す
     }
   }
 
