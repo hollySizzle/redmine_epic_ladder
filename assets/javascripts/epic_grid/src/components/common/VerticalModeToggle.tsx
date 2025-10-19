@@ -10,7 +10,7 @@ export const VerticalModeToggle: React.FC = () => {
 
   return (
     <button
-      className={`detail-pane-toggle ${isVerticalMode ? 'active' : ''}`}
+      className={`eg-button eg-button--toggle ${isVerticalMode ? 'eg-button--active' : ''}`}
       onClick={toggleVerticalMode}
       title={isVerticalMode ? '横書きに切り替え' : '縦書きに切り替え'}
     >
@@ -61,7 +61,7 @@ export const VerticalModeToggle: React.FC = () => {
           </>
         )}
       </svg>
-      <span className="detail-pane-toggle__label">
+      <span>
         {isVerticalMode ? '横書き' : '縦書き'}
       </span>
     </button>

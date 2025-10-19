@@ -16,7 +16,7 @@ export const SidePanel: React.FC = () => {
       <div className="side-panel__header">
         <h2 className="side-panel__title">メニュー</h2>
         <button
-          className="side-panel__close-button"
+          className="eg-button eg-button--ghost side-panel__close-button"
           onClick={toggleSideMenu}
           title="サイドメニューを閉じる"
           aria-label="サイドメニューを閉じる"
@@ -38,7 +38,7 @@ export const SidePanel: React.FC = () => {
 
       <div className="side-panel__footer">
         <button
-          className="side-panel__toggle-button"
+          className="eg-button eg-button--secondary side-panel__toggle-button"
           onClick={toggleSideMenu}
         >
           ← 閉じる

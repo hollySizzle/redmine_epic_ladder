@@ -384,10 +384,10 @@ export const FilterPanel: React.FC = () => {
           </div>
 
           <div className="filter-actions">
-            <button className="filter-apply-btn" onClick={handleApply}>
+            <button className="eg-button eg-button--primary" onClick={handleApply}>
               適用
             </button>
-            <button className="filter-clear-btn" onClick={handleClear}>
+            <button className="eg-button eg-button--ghost" onClick={handleClear}>
               クリア
             </button>
           </div>

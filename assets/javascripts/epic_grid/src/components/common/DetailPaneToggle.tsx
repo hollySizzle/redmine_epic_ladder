@@ -10,7 +10,7 @@ export const DetailPaneToggle: React.FC = () => {
 
   return (
     <button
-      className={`detail-pane-toggle ${isDetailPaneVisible ? 'active' : ''}`}
+      className={`eg-button eg-button--toggle ${isDetailPaneVisible ? 'eg-button--active' : ''}`}
       onClick={toggleDetailPane}
       title={isDetailPaneVisible ? 'Issue詳細を非表示' : 'Issue詳細を表示'}
     >
@@ -40,7 +40,7 @@ export const DetailPaneToggle: React.FC = () => {
           </>
         )}
       </svg>
-      <span className="detail-pane-toggle__label">
+      <span>
         {isDetailPaneVisible ? 'Issue詳細を非表示' : 'Issue詳細を表示'}
       </span>
     </button>

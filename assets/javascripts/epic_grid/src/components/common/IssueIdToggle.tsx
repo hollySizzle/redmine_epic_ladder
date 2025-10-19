@@ -10,7 +10,7 @@ export const IssueIdToggle: React.FC = () => {
 
   return (
     <button
-      className={`detail-pane-toggle ${isIssueIdVisible ? 'active' : ''}`}
+      className={`eg-button eg-button--toggle ${isIssueIdVisible ? 'eg-button--active' : ''}`}
       onClick={toggleIssueIdVisible}
       title={isIssueIdVisible ? 'チケットIDを非表示' : 'チケットIDを表示'}
     >
@@ -52,7 +52,7 @@ export const IssueIdToggle: React.FC = () => {
           </>
         )}
       </svg>
-      <span className="detail-pane-toggle__label">
+      <span>
         {isIssueIdVisible ? 'チケットID' : 'チケットID'}
       </span>
     </button>

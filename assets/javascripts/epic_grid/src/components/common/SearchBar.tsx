@@ -77,11 +77,11 @@ export const SearchBar: React.FC = () => {
           placeholder="🔍 タイトルで検索..."
           className="search-input"
         />
-        <button type="submit" className="search-button" disabled={!query.trim()}>
+        <button type="submit" className="eg-button eg-button--primary" disabled={!query.trim()}>
           検索
         </button>
         {query && (
-          <button type="button" onClick={handleClear} className="search-clear-button">
+          <button type="button" onClick={handleClear} className="eg-button eg-button--ghost">
             ✕
           </button>
         )}

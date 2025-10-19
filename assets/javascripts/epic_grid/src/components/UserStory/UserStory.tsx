@@ -94,7 +94,7 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
             <span className="issue-id-wrapper">#{story.id}</span>
           )}
           <button
-            className="user-story-collapse-toggle"
+            className="eg-button eg-button--ghost user-story-collapse-toggle"
             onClick={handleToggleCollapse}
             title={isOwnCollapsed ? 'Task/Test/Bug配下を展開' : 'Task/Test/Bug配下を折り畳み'}
           >

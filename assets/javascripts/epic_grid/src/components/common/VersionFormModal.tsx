@@ -97,14 +97,14 @@ export const VersionFormModal: React.FC<VersionFormModalProps> = ({ isOpen, onCl
               <button
                 type="button"
                 onClick={handleClose}
-                className="btn-cancel"
+                className="eg-button eg-button--secondary"
                 disabled={isSubmitting}
               >
                 キャンセル
               </button>
               <button
                 type="submit"
-                className="btn-submit"
+                className="eg-button eg-button--primary"
                 disabled={isSubmitting || !name.trim()}
               >
                 {isSubmitting ? '作成中...' : '作成'}

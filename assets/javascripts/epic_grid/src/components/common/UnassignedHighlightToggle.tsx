@@ -10,14 +10,9 @@ export const UnassignedHighlightToggle: React.FC = () => {
 
   return (
     <button
-      className={`userstory-toggle-button ${isUnassignedHighlightVisible ? 'active' : ''}`}
+      className={`eg-button eg-button--toggle ${isUnassignedHighlightVisible ? 'eg-button--active' : ''}`}
       onClick={toggleUnassignedHighlightVisible}
       title={isUnassignedHighlightVisible ? '担当者不在ハイライトを非表示' : '担当者不在ハイライトを表示'}
-      style={{
-        backgroundColor: isUnassignedHighlightVisible ? '#fff3e0' : '#fff',
-        borderColor: isUnassignedHighlightVisible ? '#ff9800' : '#ddd',
-        color: isUnassignedHighlightVisible ? '#f57c00' : '#666'
-      }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2" fill="none" />

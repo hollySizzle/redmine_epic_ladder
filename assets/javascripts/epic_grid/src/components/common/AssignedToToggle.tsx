@@ -10,7 +10,7 @@ export const AssignedToToggle: React.FC = () => {
 
   return (
     <button
-      className={`detail-pane-toggle ${isAssignedToVisible ? 'active' : ''}`}
+      className={`eg-button eg-button--toggle ${isAssignedToVisible ? 'eg-button--active' : ''}`}
       onClick={toggleAssignedToVisible}
       title={isAssignedToVisible ? '担当者名を非表示' : '担当者名を表示'}
     >
@@ -63,7 +63,7 @@ export const AssignedToToggle: React.FC = () => {
           </>
         )}
       </svg>
-      <span className="detail-pane-toggle__label">
+      <span>
         {isAssignedToVisible ? '担当者名' : '担当者名'}
       </span>
     </button>

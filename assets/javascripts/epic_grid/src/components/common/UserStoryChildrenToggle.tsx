@@ -10,7 +10,7 @@ export const UserStoryChildrenToggle: React.FC = () => {
   return (
     <div className="userstory-toggle-group">
       <button
-        className="userstory-toggle-button expand"
+        className="eg-button eg-button--icon expand"
         onClick={() => setAllUserStoriesCollapsed(false)}
         title="全UserStoryのTask/Test/Bugを展開"
       >
@@ -21,7 +21,7 @@ export const UserStoryChildrenToggle: React.FC = () => {
       </button>
 
       <button
-        className="userstory-toggle-button collapse"
+        className="eg-button eg-button--icon collapse"
         onClick={() => setAllUserStoriesCollapsed(true)}
         title="全UserStoryのTask/Test/Bugを折り畳み"
       >

@@ -167,7 +167,7 @@ export const DetailPane: React.FC<DetailPaneProps> = ({
         </h3>
         <div className="issue-detail-pane__actions">
           <button
-            className="issue-detail-pane__reload"
+            className="eg-button eg-button--secondary issue-detail-pane__reload"
             onClick={handleReload}
             title="再読み込み"
           >
@@ -190,7 +190,7 @@ export const DetailPane: React.FC<DetailPaneProps> = ({
         {error && (
           <div className="issue-detail-pane__error">
             <p>{error}</p>
-            <button onClick={handleReload}>再試行</button>
+            <button className="eg-button eg-button--primary" onClick={handleReload}>再試行</button>
           </div>
         )}
 

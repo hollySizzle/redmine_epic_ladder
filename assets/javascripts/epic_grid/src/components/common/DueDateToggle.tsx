@@ -10,7 +10,7 @@ export const DueDateToggle: React.FC = () => {
 
   return (
     <button
-      className={`detail-pane-toggle ${isDueDateVisible ? 'active' : ''}`}
+      className={`eg-button eg-button--toggle ${isDueDateVisible ? 'eg-button--active' : ''}`}
       onClick={toggleDueDateVisible}
       title={isDueDateVisible ? '期日を非表示' : '期日を表示'}
     >
@@ -89,7 +89,7 @@ export const DueDateToggle: React.FC = () => {
           </>
         )}
       </svg>
-      <span className="detail-pane-toggle__label">
+      <span>
         {isDueDateVisible ? '期日' : '期日'}
       </span>
     </button>

@@ -12,7 +12,7 @@ export const SettingsDropdown: React.FC = () => {
     <Dropdown
       align="end"
       trigger={
-        <button className="settings-dropdown-trigger" title="表示設定">
+        <button className="eg-button eg-button--secondary" title="表示設定">
           ⚙️ 表示設定
         </button>
       }

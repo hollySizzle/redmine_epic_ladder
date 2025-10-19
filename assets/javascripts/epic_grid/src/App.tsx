@@ -239,16 +239,8 @@ export const App: React.FC = () => {
             )}
             <button
               onClick={toggleSideMenu}
-              className="side-menu-toggle-btn"
+              className={`eg-button eg-button--lg ${isSideMenuVisible ? 'eg-button--primary' : 'eg-button--secondary'}`}
               title="サイドメニューを開く"
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: isSideMenuVisible ? '#2196f3' : '#f5f5f5',
-                color: isSideMenuVisible ? 'white' : '#333',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
             >
               ☰ メニュー
             </button>
