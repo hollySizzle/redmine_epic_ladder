@@ -292,7 +292,7 @@
     grid-template-rows: auto auto;
     grid-template-columns: 1fr auto;
     gap: 0;
-    overflow-x: auto;
+    overflow-x: scroll;
     height: var(--epic-version-wrapper-height);
 
     .epic-version-grid {
@@ -312,8 +312,6 @@
     }
 
     .new-epic-wrapper {
-      position: sticky;
-      bottom: 0;
       display: flex;
       align-items: center;
       justify-items: center;
@@ -331,6 +329,23 @@
     gap: var(--space-md);
     background: #e0e0e0;
     padding: var(--space-md);
+  }
+
+  .scroll_information {
+    box-sizing: border-box;
+    grid-row: 2;
+    grid-column: 2;
+    position: sticky;
+    right: 0;
+    bottom: 0;
+    z-index: 300;
+    width: auto;
+    height: fit-content;
+
+    p {
+      width: auto;
+      height: auto;
+    }
   }
 
   // ヘッダーラベル

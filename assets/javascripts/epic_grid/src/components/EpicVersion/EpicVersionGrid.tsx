@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { UserStoryGridForCell } from '../UserStory/UserStoryGridForCell';
-import { AddButton } from '../common/AddButton';
-import { VersionFormModal, VersionFormData } from '../common/VersionFormModal';
-import { IssueFormModal, IssueFormData } from '../common/IssueFormModal';
-import { useStore } from '../../store/useStore';
+import React, { useMemo, useState } from 'react';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useDropTarget } from '../../hooks/useDropTarget';
+import { useStore } from '../../store/useStore';
+import type { Feature } from '../../types/normalized-api';
 import { formatDateWithDayOfWeek } from '../../utils/dateFormat';
-import type { Feature, Epic, Version } from '../../types/normalized-api';
+import { UserStoryGridForCell } from '../UserStory/UserStoryGridForCell';
+import { AddButton } from '../common/AddButton';
+import { IssueFormData, IssueFormModal } from '../common/IssueFormModal';
+import { VersionFormData, VersionFormModal } from '../common/VersionFormModal';
 
 // Feature列のD&D対応コンポーネント
 const DraggableFeatureCell: React.FC<{ feature: Feature }> = ({ feature }) => {
@@ -465,6 +465,10 @@ export const EpicVersionGrid: React.FC = () => {
           onClick={handleAddEpic}
         />
       </div>
+
+      {/* <div className='scroll_information'>
+        <p>Shift + Scroll で横移動</p>
+      </div> */}
 
       <VersionFormModal
         isOpen={isVersionModalOpen}

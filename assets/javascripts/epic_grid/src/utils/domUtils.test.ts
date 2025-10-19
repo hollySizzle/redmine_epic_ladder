@@ -19,10 +19,16 @@ describe('domUtils', () => {
       vi.useRealTimers();
     });
 
-    it.skip('Epic要素を2段階スクロールする（上端 → scrollend → 中央）', async () => {
+    it('Epic要素を2段階スクロールする（上端 → timeout → 中央）', async () => {
       // Setup - スクロールコンテナも作成
       const scrollContainer = document.createElement('div');
       scrollContainer.className = 'triple-split-layout__center';
+
+      // スクロール可能にする（scrollHeight > clientHeight）
+      Object.defineProperty(scrollContainer, 'scrollHeight', { value: 1000, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientHeight', { value: 500, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollTop', { value: 0, writable: true, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollLeft', { value: 0, writable: true, configurable: true });
 
       const epicDiv = document.createElement('div');
       epicDiv.setAttribute('data-epic', '123');
@@ -31,45 +37,50 @@ describe('domUtils', () => {
       scrollContainer.appendChild(epicDiv);
       document.body.appendChild(scrollContainer);
 
-      const scrollIntoViewMock = vi.fn();
-      epicDiv.scrollIntoView = scrollIntoViewMock;
+      // getBoundingClientRect をモック
+      vi.spyOn(epicDiv, 'getBoundingClientRect').mockReturnValue({
+        top: 100, left: 50, width: 200, height: 100, right: 250, bottom: 200, x: 50, y: 100, toJSON: () => ({})
+      } as DOMRect);
 
-      // scrollendイベントをシミュレート（スクロールコンテナに対して）
-      let scrollendCallback: (() => void) | null = null;
-      const addEventListenerSpy = vi.spyOn(scrollContainer, 'addEventListener').mockImplementation((event, callback) => {
-        if (event === 'scrollend') {
-          scrollendCallback = callback as () => void;
-        }
-      });
+      vi.spyOn(scrollContainer, 'getBoundingClientRect').mockReturnValue({
+        top: 0, left: 0, width: 800, height: 500, right: 800, bottom: 500, x: 0, y: 0, toJSON: () => ({})
+      } as DOMRect);
+
+      const scrollToMock = vi.fn();
+      scrollContainer.scrollTo = scrollToMock;
 
       // Execute
       const result = scrollToIssue('123', 'epic');
 
-      // Assert - 1st call (上端)
+      // Assert - 1st call (上端左端)
       expect(result).toBe(true);
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'start'
+      expect(scrollToMock).toHaveBeenCalledTimes(1);
+      expect(scrollToMock).toHaveBeenCalledWith({
+        top: expect.any(Number),
+        left: expect.any(Number),
+        behavior: 'smooth'
       });
-      expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
 
-      // Assert - scrollend イベント発火後に2nd call (中央)
-      expect(scrollendCallback).not.toBeNull();
-      scrollendCallback!();
-
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'center'
+      // Assert - 500ms後に2nd call (フォールバック)
+      vi.advanceTimersByTime(500);
+      expect(scrollToMock).toHaveBeenCalledTimes(2);
+      expect(scrollToMock).toHaveBeenNthCalledWith(2, {
+        top: expect.any(Number),
+        left: expect.any(Number),
+        behavior: 'smooth'
       });
-      expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
-
-      addEventListenerSpy.mockRestore();
     });
 
-    it.skip('scrollendが発火しない場合、フォールバックタイマー(500ms)で2段階目スクロールを実行', () => {
+    it('scrollendが発火しない場合、フォールバックタイマー(500ms)で2段階目スクロールを実行', () => {
       // Setup
       const scrollContainer = document.createElement('div');
       scrollContainer.className = 'triple-split-layout__center';
+
+      // スクロール可能にする
+      Object.defineProperty(scrollContainer, 'scrollHeight', { value: 1000, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientHeight', { value: 500, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollTop', { value: 0, writable: true, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollLeft', { value: 0, writable: true, configurable: true });
 
       const epicDiv = document.createElement('div');
       epicDiv.setAttribute('data-epic', '456');
@@ -78,29 +89,40 @@ describe('domUtils', () => {
       scrollContainer.appendChild(epicDiv);
       document.body.appendChild(scrollContainer);
 
-      const scrollIntoViewMock = vi.fn();
-      epicDiv.scrollIntoView = scrollIntoViewMock;
+      // getBoundingClientRect をモック
+      vi.spyOn(epicDiv, 'getBoundingClientRect').mockReturnValue({
+        top: 100, left: 50, width: 200, height: 100, right: 250, bottom: 200, x: 50, y: 100, toJSON: () => ({})
+      } as DOMRect);
+
+      vi.spyOn(scrollContainer, 'getBoundingClientRect').mockReturnValue({
+        top: 0, left: 0, width: 800, height: 500, right: 800, bottom: 500, x: 0, y: 0, toJSON: () => ({})
+      } as DOMRect);
+
+      const scrollToMock = vi.fn();
+      scrollContainer.scrollTo = scrollToMock;
 
       // Execute
       const result = scrollToIssue('456', 'epic');
 
       // Assert - 1st call (上端)
       expect(result).toBe(true);
-      expect(scrollIntoViewMock).toHaveBeenCalledTimes(1);
+      expect(scrollToMock).toHaveBeenCalledTimes(1);
 
       // Assert - 500ms経過後に2nd call (フォールバック)
       vi.advanceTimersByTime(500);
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'center'
-      });
-      expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
+      expect(scrollToMock).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('Feature要素を2段階スクロールする（上端 → scrollend → 中央）', () => {
+    it('Feature要素を2段階スクロールする（上端 → timeout → 中央）', () => {
       // Setup - スクロールコンテナも作成
       const scrollContainer = document.createElement('div');
       scrollContainer.className = 'triple-split-layout__center';
+
+      // スクロール可能にする
+      Object.defineProperty(scrollContainer, 'scrollHeight', { value: 1000, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientHeight', { value: 500, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollTop', { value: 0, writable: true, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollLeft', { value: 0, writable: true, configurable: true });
 
       const featureDiv = document.createElement('div');
       featureDiv.setAttribute('data-feature', '789');
@@ -109,45 +131,43 @@ describe('domUtils', () => {
       scrollContainer.appendChild(featureDiv);
       document.body.appendChild(scrollContainer);
 
-      const scrollIntoViewMock = vi.fn();
-      featureDiv.scrollIntoView = scrollIntoViewMock;
+      // getBoundingClientRect をモック
+      vi.spyOn(featureDiv, 'getBoundingClientRect').mockReturnValue({
+        top: 100, left: 50, width: 200, height: 100, right: 250, bottom: 200, x: 50, y: 100, toJSON: () => ({})
+      } as DOMRect);
 
-      // scrollendイベントをシミュレート
-      let scrollendCallback: (() => void) | null = null;
-      const addEventListenerSpy = vi.spyOn(scrollContainer, 'addEventListener').mockImplementation((event, callback) => {
-        if (event === 'scrollend') {
-          scrollendCallback = callback as () => void;
-        }
-      });
+      vi.spyOn(scrollContainer, 'getBoundingClientRect').mockReturnValue({
+        top: 0, left: 0, width: 800, height: 500, right: 800, bottom: 500, x: 0, y: 0, toJSON: () => ({})
+      } as DOMRect);
+
+      const scrollToMock = vi.fn();
+      scrollContainer.scrollTo = scrollToMock;
 
       // Execute
       const result = scrollToIssue('789', 'feature');
 
       // Assert - 1st call (上端)
       expect(result).toBe(true);
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'start'
-      });
+      expect(scrollToMock).toHaveBeenCalledTimes(1);
 
-      // Assert - scrollend後に2nd call
-      scrollendCallback!();
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'center'
-      });
-      expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
-
-      addEventListenerSpy.mockRestore();
+      // Assert - 500ms後に2nd call
+      vi.advanceTimersByTime(500);
+      expect(scrollToMock).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('UserStoryの場合は親のepic-version-wrapperを2段階スクロールする', () => {
+    it('UserStoryの場合は親のepic-version-wrapperを2段階スクロールする', () => {
       // Setup - スクロールコンテナも作成
       const scrollContainer = document.createElement('div');
       scrollContainer.className = 'triple-split-layout__center';
 
       const epicVersionWrapper = document.createElement('div');
       epicVersionWrapper.className = 'epic-version-wrapper';
+
+      // epic-version-wrapperをスクロール可能にする
+      Object.defineProperty(epicVersionWrapper, 'scrollHeight', { value: 1000, configurable: true });
+      Object.defineProperty(epicVersionWrapper, 'clientHeight', { value: 500, configurable: true });
+      Object.defineProperty(epicVersionWrapper, 'scrollTop', { value: 0, writable: true, configurable: true });
+      Object.defineProperty(epicVersionWrapper, 'scrollLeft', { value: 0, writable: true, configurable: true });
 
       const storyDiv = document.createElement('div');
       storyDiv.setAttribute('data-story', '1001');
@@ -157,48 +177,43 @@ describe('domUtils', () => {
       scrollContainer.appendChild(epicVersionWrapper);
       document.body.appendChild(scrollContainer);
 
-      const wrapperScrollMock = vi.fn();
-      const storyScrollMock = vi.fn();
-      epicVersionWrapper.scrollIntoView = wrapperScrollMock;
-      storyDiv.scrollIntoView = storyScrollMock;
+      // getBoundingClientRect をモック
+      vi.spyOn(storyDiv, 'getBoundingClientRect').mockReturnValue({
+        top: 100, left: 50, width: 200, height: 100, right: 250, bottom: 200, x: 50, y: 100, toJSON: () => ({})
+      } as DOMRect);
 
-      // scrollendイベントをシミュレート
-      let scrollendCallback: (() => void) | null = null;
-      const addEventListenerSpy = vi.spyOn(scrollContainer, 'addEventListener').mockImplementation((event, callback) => {
-        if (event === 'scrollend') {
-          scrollendCallback = callback as () => void;
-        }
-      });
+      vi.spyOn(epicVersionWrapper, 'getBoundingClientRect').mockReturnValue({
+        top: 0, left: 0, width: 800, height: 500, right: 800, bottom: 500, x: 0, y: 0, toJSON: () => ({})
+      } as DOMRect);
+
+      const wrapperScrollToMock = vi.fn();
+      epicVersionWrapper.scrollTo = wrapperScrollToMock;
 
       // Execute
       const result = scrollToIssue('1001', 'user-story');
 
       // Assert - 1st call (上端)
       expect(result).toBe(true);
-      expect(wrapperScrollMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'start'
-      });
+      expect(wrapperScrollToMock).toHaveBeenCalledTimes(1);
 
-      // Assert - scrollend後に2nd call (中央)
-      scrollendCallback!();
-      expect(wrapperScrollMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'center'
-      });
-      expect(wrapperScrollMock).toHaveBeenCalledTimes(2);
-      expect(storyScrollMock).not.toHaveBeenCalled(); // wrapperをスクロール、story自体はスクロールしない
-
-      addEventListenerSpy.mockRestore();
+      // Assert - 500ms後に2nd call (中央)
+      vi.advanceTimersByTime(500);
+      expect(wrapperScrollToMock).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('Taskの場合は親のepic-version-wrapperを2段階スクロールする', () => {
+    it('Taskの場合は親のepic-version-wrapperを2段階スクロールする', () => {
       // Setup - スクロールコンテナも作成
       const scrollContainer = document.createElement('div');
       scrollContainer.className = 'triple-split-layout__center';
 
       const epicVersionWrapper = document.createElement('div');
       epicVersionWrapper.className = 'epic-version-wrapper';
+
+      // epic-version-wrapperをスクロール可能にする
+      Object.defineProperty(epicVersionWrapper, 'scrollHeight', { value: 1000, configurable: true });
+      Object.defineProperty(epicVersionWrapper, 'clientHeight', { value: 500, configurable: true });
+      Object.defineProperty(epicVersionWrapper, 'scrollTop', { value: 0, writable: true, configurable: true });
+      Object.defineProperty(epicVersionWrapper, 'scrollLeft', { value: 0, writable: true, configurable: true });
 
       const taskDiv = document.createElement('div');
       taskDiv.setAttribute('data-task', '2001');
@@ -208,42 +223,40 @@ describe('domUtils', () => {
       scrollContainer.appendChild(epicVersionWrapper);
       document.body.appendChild(scrollContainer);
 
-      const wrapperScrollMock = vi.fn();
-      epicVersionWrapper.scrollIntoView = wrapperScrollMock;
+      // getBoundingClientRect をモック
+      vi.spyOn(taskDiv, 'getBoundingClientRect').mockReturnValue({
+        top: 100, left: 50, width: 200, height: 100, right: 250, bottom: 200, x: 50, y: 100, toJSON: () => ({})
+      } as DOMRect);
 
-      // scrollendイベントをシミュレート
-      let scrollendCallback: (() => void) | null = null;
-      const addEventListenerSpy = vi.spyOn(scrollContainer, 'addEventListener').mockImplementation((event, callback) => {
-        if (event === 'scrollend') {
-          scrollendCallback = callback as () => void;
-        }
-      });
+      vi.spyOn(epicVersionWrapper, 'getBoundingClientRect').mockReturnValue({
+        top: 0, left: 0, width: 800, height: 500, right: 800, bottom: 500, x: 0, y: 0, toJSON: () => ({})
+      } as DOMRect);
+
+      const wrapperScrollToMock = vi.fn();
+      epicVersionWrapper.scrollTo = wrapperScrollToMock;
 
       // Execute
       const result = scrollToIssue('2001', 'task');
 
       // Assert - 1st call (上端)
       expect(result).toBe(true);
-      expect(wrapperScrollMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'start'
-      });
+      expect(wrapperScrollToMock).toHaveBeenCalledTimes(1);
 
-      // Assert - scrollend後に2nd call
-      scrollendCallback!();
-      expect(wrapperScrollMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'center'
-      });
-      expect(wrapperScrollMock).toHaveBeenCalledTimes(2);
-
-      addEventListenerSpy.mockRestore();
+      // Assert - 500ms後に2nd call
+      vi.advanceTimersByTime(500);
+      expect(wrapperScrollToMock).toHaveBeenCalledTimes(2);
     });
 
-    it.skip('UserStoryがepic-version-wrapper外にある場合は2段階スクロール', () => {
+    it('UserStoryがepic-version-wrapper外にある場合は2段階スクロール', () => {
       // Setup - スクロールコンテナも作成
       const scrollContainer = document.createElement('div');
       scrollContainer.className = 'triple-split-layout__center';
+
+      // スクロール可能にする
+      Object.defineProperty(scrollContainer, 'scrollHeight', { value: 1000, configurable: true });
+      Object.defineProperty(scrollContainer, 'clientHeight', { value: 500, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollTop', { value: 0, writable: true, configurable: true });
+      Object.defineProperty(scrollContainer, 'scrollLeft', { value: 0, writable: true, configurable: true });
 
       const storyDiv = document.createElement('div');
       storyDiv.setAttribute('data-story', '3001');
@@ -252,36 +265,28 @@ describe('domUtils', () => {
       scrollContainer.appendChild(storyDiv);
       document.body.appendChild(scrollContainer);
 
-      const scrollIntoViewMock = vi.fn();
-      storyDiv.scrollIntoView = scrollIntoViewMock;
+      // getBoundingClientRect をモック
+      vi.spyOn(storyDiv, 'getBoundingClientRect').mockReturnValue({
+        top: 100, left: 50, width: 200, height: 100, right: 250, bottom: 200, x: 50, y: 100, toJSON: () => ({})
+      } as DOMRect);
 
-      // scrollendイベントをシミュレート
-      let scrollendCallback: (() => void) | null = null;
-      const addEventListenerSpy = vi.spyOn(scrollContainer, 'addEventListener').mockImplementation((event, callback) => {
-        if (event === 'scrollend') {
-          scrollendCallback = callback as () => void;
-        }
-      });
+      vi.spyOn(scrollContainer, 'getBoundingClientRect').mockReturnValue({
+        top: 0, left: 0, width: 800, height: 500, right: 800, bottom: 500, x: 0, y: 0, toJSON: () => ({})
+      } as DOMRect);
+
+      const scrollToMock = vi.fn();
+      scrollContainer.scrollTo = scrollToMock;
 
       // Execute
       const result = scrollToIssue('3001', 'user-story');
 
       // Assert - 1st call (上端)
       expect(result).toBe(true);
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'start'
-      });
+      expect(scrollToMock).toHaveBeenCalledTimes(1);
 
-      // Assert - scrollend後に2nd call
-      scrollendCallback!();
-      expect(scrollIntoViewMock).toHaveBeenCalledWith({
-        behavior: 'smooth',
-        block: 'center'
-      });
-      expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
-
-      addEventListenerSpy.mockRestore();
+      // Assert - 500ms後に2nd call
+      vi.advanceTimersByTime(500);
+      expect(scrollToMock).toHaveBeenCalledTimes(2);
     });
 
     it('存在しない要素の場合はfalseを返す', () => {
