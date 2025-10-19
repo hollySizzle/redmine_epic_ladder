@@ -29,7 +29,7 @@ class EpicGridController < ApplicationController
     @initial_kanban_data = build_initial_data if params[:preload] == 'true'
 
     # ページタイトルとメタ情報
-    @page_title = "Release Kanban - #{@project.name}"
+    @page_title = "Epic Grid - #{@project.name}"
 
     # React アプリケーション用の設定
     @react_config = {

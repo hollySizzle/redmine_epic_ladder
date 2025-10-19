@@ -1,15 +1,44 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
+import { TabBar, Tab, TabId } from './TabBar';
+import { SearchTab } from './SearchTab';
+import { ListTab } from './ListTab';
+import { AboutTab } from './AboutTab';
 import './SidePanel.scss';
+
+const TABS: Tab[] = [
+  { id: 'search', label: '検索', icon: '🔍' },
+  { id: 'list', label: '一覧', icon: '📊' },
+  { id: 'about', label: 'About', icon: 'ℹ️' }
+];
 
 /**
  * SidePanel コンポーネント
  *
  * 左側に表示されるサイドメニュー
- * 検索結果一覧、Epic一覧、Feature一覧などを表示する拡張可能な基盤コンポーネント
+ * タブ切り替えで検索、Epic/Feature一覧、Aboutを表示
  */
 export const SidePanel: React.FC = () => {
   const toggleSideMenu = useStore(state => state.toggleSideMenu);
+  const activeSideTab = useStore(state => state.activeSideTab);
+  const setActiveSideTab = useStore(state => state.setActiveSideTab);
+
+  const handleTabChange = (tabId: TabId) => {
+    setActiveSideTab(tabId);
+  };
+
+  const renderTabContent = () => {
+    switch (activeSideTab) {
+      case 'search':
+        return <SearchTab />;
+      case 'list':
+        return <ListTab />;
+      case 'about':
+        return <AboutTab />;
+      default:
+        return <ListTab />;
+    }
+  };
 
   return (
     <div className="side-panel">
@@ -25,24 +54,14 @@ export const SidePanel: React.FC = () => {
         </button>
       </div>
 
-      <div className="side-panel__content">
-        <div className="side-panel__placeholder">
-          <p>🚧 実装予定</p>
-          <ul>
-            <li>🔍 検索結果一覧</li>
-            <li>📊 Epic一覧</li>
-            <li>🎯 Feature一覧</li>
-          </ul>
-        </div>
-      </div>
+      <TabBar
+        tabs={TABS}
+        activeTab={activeSideTab}
+        onTabChange={handleTabChange}
+      />
 
-      <div className="side-panel__footer">
-        <button
-          className="eg-button eg-button--secondary side-panel__toggle-button"
-          onClick={toggleSideMenu}
-        >
-          ← 閉じる
-        </button>
+      <div className="side-panel__content">
+        {renderTabContent()}
       </div>
     </div>
   );

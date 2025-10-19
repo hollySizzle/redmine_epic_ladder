@@ -50,35 +50,35 @@
   --title-word-break: break-word;
 
   // Triple Split Layout
-  --triple-split-min-left-width: 9.375rem;     // 150px
-  --triple-split-max-left-width: 25rem;        // 400px
-  --triple-split-min-center-width: 37.5rem;    // 600px
-  --triple-split-min-right-width: 25rem;       // 400px
-  --triple-split-max-right-width: 37.5rem;     // 600px
+  --triple-split-min-left-width: 9.375rem; // 150px
+  --triple-split-max-left-width: 25rem; // 400px
+  --triple-split-min-center-width: 37.5rem; // 600px
+  --triple-split-min-right-width: 25rem; // 400px
+  --triple-split-max-right-width: 37.5rem; // 600px
   --triple-split-default-left-width: 14.375rem; // 230px
   --triple-split-default-right-width: 28.125rem; // 450px
-  --triple-split-splitter-width: 0.25rem;      // 4px
-  --triple-split-splitter-handle-width: 2rem;  // 32px
+  --triple-split-splitter-width: 0.25rem; // 4px
+  --triple-split-splitter-handle-width: 2rem; // 32px
   --triple-split-splitter-handle-height: 4rem; // 64px
 
   // Side Panel
-  --side-panel-header-padding: 0.75rem 1rem;   // 12px 16px
-  --side-panel-content-padding: 1rem;          // 16px
-  --side-panel-footer-padding: 0.75rem 1rem;   // 12px 16px
-  --side-panel-title-font-size: 1rem;          // 16px
+  --side-panel-header-padding: 0.75rem 1rem; // 12px 16px
+  --side-panel-content-padding: 1rem; // 16px
+  --side-panel-footer-padding: 0.75rem 1rem; // 12px 16px
+  --side-panel-title-font-size: 1rem; // 16px
   --side-panel-close-button-font-size: 1.25rem; // 20px
   --side-panel-close-button-padding: 0.25rem 0.5rem; // 4px 8px
-  --side-panel-placeholder-font-size: 1.5rem;  // 24px
-  --side-panel-placeholder-padding: 1.5rem 0;  // 24px 0
-  --side-panel-list-item-padding: 0.5rem 0;    // 8px 0
-  --side-panel-list-item-font-size: 0.875rem;  // 14px
+  --side-panel-placeholder-font-size: 1.5rem; // 24px
+  --side-panel-placeholder-padding: 1.5rem 0; // 24px 0
+  --side-panel-list-item-padding: 0.5rem 0; // 8px 0
+  --side-panel-list-item-font-size: 0.875rem; // 14px
   --side-panel-toggle-button-padding: 0.5rem 1rem; // 8px 16px
   --side-panel-toggle-button-font-size: 0.875rem; // 14px
 
   // Button System (eg-button)
-  --button-padding: 0.375rem 0.75rem;          // 6px 12px
-  --button-padding-lg: 0.5rem 1rem;            // 8px 16px
-  --button-font-size: 0.75rem;                 // 12px
+  --button-padding: 0.375rem 0.75rem; // 6px 12px
+  --button-padding-lg: 0.5rem 1rem; // 8px 16px
+  --button-font-size: 0.75rem; // 12px
   --button-border-radius: 4px;
   --button-transition: all 0.2s ease;
 
@@ -185,6 +185,10 @@
     gap: var(--space-lg);
     height: fit-content;
     padding: 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 300;
+    background: white;
 
     // ヘッダー内のコンテナ
     &__container {

@@ -101,6 +101,10 @@ interface StoreState {
   isSideMenuVisible: boolean;
   toggleSideMenu: () => void;
 
+  // サイドメニューのアクティブタブ
+  activeSideTab: 'search' | 'list' | 'about';
+  setActiveSideTab: (tabId: 'search' | 'list' | 'about') => void;
+
   // 後方互換性のためのプロパティ
   selectedIssueId: string | null;
 
@@ -244,6 +248,16 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isSideMenuVisible;
         localStorage.setItem('kanban_side_menu_visible', String(newValue));
         return { isSideMenuVisible: newValue };
+      }),
+
+      // サイドメニューのアクティブタブ初期状態
+      activeSideTab: (() => {
+        const saved = localStorage.getItem('kanban_active_side_tab');
+        return (saved as 'search' | 'list' | 'about') || 'list'; // デフォルト: Epic/Feature一覧
+      })(),
+      setActiveSideTab: (tabId: 'search' | 'list' | 'about') => set(() => {
+        localStorage.setItem('kanban_active_side_tab', tabId);
+        return { activeSideTab: tabId };
       }),
 
       // 縦書きモードの初期状態
