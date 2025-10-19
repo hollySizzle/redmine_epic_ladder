@@ -30,6 +30,29 @@ export interface SelectedEntity {
 }
 
 // ========================================
+// 検索関連型定義
+// ========================================
+
+export type SearchTarget = 'subject' | 'description' | 'all';
+
+export interface SearchFilters {
+  query: string;
+  searchTarget: SearchTarget;
+  // Phase 3: ステータスフィルター（将来実装）
+  statusIds?: number[];
+  // 将来拡張用: 優先度、担当者など
+  priorityIds?: number[];
+  assigneeIds?: number[];
+}
+
+export interface SearchResult {
+  id: string;
+  type: 'epic' | 'feature' | 'user-story' | 'task' | 'test' | 'bug';
+  subject: string;
+  isExactIdMatch?: boolean; // ID完全一致の場合true
+}
+
+// ========================================
 // エンティティ型定義
 // ========================================
 

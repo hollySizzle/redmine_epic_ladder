@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { searchIssues, searchAllIssues } from './searchUtils';
+import { searchIssues, searchAllIssues, findByExactId } from './searchUtils';
 import type { Epic, Feature, UserStory, Task, Test, Bug } from '../types/normalized-api';
 
 describe('searchUtils', () => {
@@ -7,10 +7,12 @@ describe('searchUtils', () => {
     epics: {
       'epic-1': { id: 'epic-1', subject: 'ユーザー認証機能' } as Epic,
       'epic-2': { id: 'epic-2', subject: '決済システム' } as Epic,
+      '101': { id: '101', subject: 'ID検索テスト用Epic' } as Epic,
     },
     features: {
       'feature-1': { id: 'feature-1', title: 'ログイン画面' } as Feature,
       'feature-2': { id: 'feature-2', title: '会員登録フォーム' } as Feature,
+      '201': { id: '201', title: 'ID検索テスト用Feature' } as Feature,
     },
     user_stories: {
       'story-1': { id: 'story-1', title: 'ユーザーがログインできる' } as UserStory,
@@ -127,6 +129,61 @@ describe('searchUtils', () => {
       expect(types).toContain('task');
       expect(types).toContain('test');
       expect(types).toContain('bug');
+    });
+  });
+
+  describe('findByExactId (Phase 1新機能: ID完全一致検索)', () => {
+    it('Epicの数値IDで完全一致検索できる', () => {
+      const result = findByExactId(mockEntities, 101);
+      expect(result).toEqual({
+        id: '101',
+        type: 'epic',
+        subject: 'ID検索テスト用Epic',
+      });
+    });
+
+    it('Featureの数値IDで完全一致検索できる', () => {
+      const result = findByExactId(mockEntities, 201);
+      expect(result).toEqual({
+        id: '201',
+        type: 'feature',
+        subject: 'ID検索テスト用Feature',
+      });
+    });
+
+    it('存在しないIDの場合はnullを返す', () => {
+      const result = findByExactId(mockEntities, 999);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('searchAllIssues with ID検索 (Phase 1新機能)', () => {
+    it('数値のみ入力時はID完全一致検索を優先する', () => {
+      const results = searchAllIssues(mockEntities, '101');
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        id: '101',
+        type: 'epic',
+        subject: 'ID検索テスト用Epic',
+        isExactIdMatch: true, // フラグが立つ
+      });
+    });
+
+    it('ID完全一致した場合、isExactIdMatchフラグがtrueになる', () => {
+      const results = searchAllIssues(mockEntities, '201');
+      expect(results).toHaveLength(1);
+      expect(results[0].isExactIdMatch).toBe(true);
+    });
+
+    it('数値でもIDが存在しない場合は通常のsubject検索を実行', () => {
+      const results = searchAllIssues(mockEntities, '999');
+      expect(results).toHaveLength(0);
+    });
+
+    it('文字列混在の場合は通常のsubject検索を実行', () => {
+      const results = searchAllIssues(mockEntities, 'ID: 101');
+      // 通常のsubject検索なのでisExactIdMatchはfalse
+      expect(results.every(r => !r.isExactIdMatch)).toBe(true);
     });
   });
 });

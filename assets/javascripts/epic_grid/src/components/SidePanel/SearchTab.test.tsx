@@ -137,11 +137,12 @@ describe('SearchTab', () => {
     expect(domUtils.highlightIssue).toHaveBeenCalledWith('feature-1', 'feature');
   });
 
-  it('検索結果クリック時に DetailPane が開かれる', () => {
+  it('検索結果クリック時にスクロール&ハイライトが実行される', () => {
     const mockResults = [
       { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
     ];
     vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResults);
+    vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
 
     render(<SearchTab />);
     const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../);
@@ -153,8 +154,11 @@ describe('SearchTab', () => {
     const resultItem = screen.getByText('ログイン画面');
     fireEvent.click(resultItem);
 
-    expect(mockToggleDetailPane).toHaveBeenCalled();
-    expect(mockSetSelectedEntity).toHaveBeenCalledWith('issue', 'feature-1');
+    // Phase 1変更: 通常のsubject検索ではDetailPaneは自動表示されない
+    expect(domUtils.scrollToIssue).toHaveBeenCalledWith('feature-1', 'feature');
+    expect(domUtils.highlightIssue).toHaveBeenCalledWith('feature-1', 'feature');
+    expect(mockToggleDetailPane).not.toHaveBeenCalled();
+    expect(mockSetSelectedEntity).not.toHaveBeenCalled();
   });
 
   it('クリアボタンをクリックすると検索状態がリセットされる', () => {
@@ -204,5 +208,71 @@ describe('SearchTab', () => {
     expect(screen.getByText('✅')).toBeInTheDocument(); // Task
     expect(screen.getByText('🧪')).toBeInTheDocument(); // Test
     expect(screen.getByText('🐛')).toBeInTheDocument(); // Bug
+  });
+
+  describe('Phase 1: ID検索機能', () => {
+    it('数値のみ入力時はID完全一致検索が実行される', () => {
+      const mockResult = [
+        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', isExactIdMatch: true },
+      ];
+      vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
+
+      render(<SearchTab />);
+      const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../);
+      fireEvent.change(input, { target: { value: '101' } });
+
+      const searchButton = screen.getByRole('button', { name: /検索/ });
+      fireEvent.click(searchButton);
+
+      expect(searchUtils.searchAllIssues).toHaveBeenCalledWith(mockEntities, '101');
+      expect(screen.getByText(/1件見つかりました/)).toBeInTheDocument();
+      expect(screen.getByText('ID検索テスト用Epic')).toBeInTheDocument();
+    });
+
+    it('ID完全一致時はDetailPane自動表示フラグがtrue', () => {
+      const mockResult = [
+        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', isExactIdMatch: true },
+      ];
+      vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
+      vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
+
+      render(<SearchTab />);
+      const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../);
+      fireEvent.change(input, { target: { value: '101' } });
+
+      const searchButton = screen.getByRole('button', { name: /検索/ });
+      fireEvent.click(searchButton);
+
+      // 結果をクリック
+      const resultItem = screen.getByText('ID検索テスト用Epic');
+      fireEvent.click(resultItem);
+
+      // DetailPane自動表示が呼ばれることを確認
+      expect(mockToggleDetailPane).toHaveBeenCalled();
+      expect(mockSetSelectedEntity).toHaveBeenCalledWith('issue', '101');
+    });
+
+    it('通常のsubject検索時はDetailPane自動表示されない', () => {
+      const mockResult = [
+        { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', isExactIdMatch: false },
+      ];
+      vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
+      vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
+
+      render(<SearchTab />);
+      const input = screen.getByPlaceholderText(/Epic\/Feature\/ストーリーを検索.../);
+      fireEvent.change(input, { target: { value: 'ログイン' } });
+
+      const searchButton = screen.getByRole('button', { name: /検索/ });
+      fireEvent.click(searchButton);
+
+      // 結果をクリック
+      const resultItem = screen.getByText('ログイン画面');
+      fireEvent.click(resultItem);
+
+      // DetailPane自動表示は呼ばれない
+      expect(mockToggleDetailPane).not.toHaveBeenCalled();
+      expect(mockSetSelectedEntity).not.toHaveBeenCalled();
+    });
   });
 });

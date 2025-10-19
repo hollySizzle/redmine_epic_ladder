@@ -2,18 +2,17 @@ import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { highlightIssue, scrollToIssue } from '../../utils/domUtils';
 import { searchAllIssues } from '../../utils/searchUtils';
-
-interface SearchResult {
-  id: string;
-  type: 'epic' | 'feature' | 'user-story' | 'task' | 'test' | 'bug';
-  subject: string;
-}
+import type { SearchResult } from '../../types/normalized-api';
 
 /**
  * SearchTab コンポーネント
  *
  * 検索機能とその結果を表示するタブコンテンツ
  * 複数ヒット時は一覧表示し、クリックでカードへスクロール&ハイライト
+ *
+ * Phase 1対応:
+ * - ID検索（数値のみ入力時、完全一致）
+ * - ID完全一致時は自動的にDetailPaneも表示
  */
 export const SearchTab: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -48,11 +47,13 @@ export const SearchTab: React.FC = () => {
       // ハイライト表示
       highlightIssue(result.id, result.type);
 
-      // DetailPaneに表示
-      if (!isDetailPaneVisible) {
-        toggleDetailPane();
+      // Phase 1: ID完全一致の場合のみDetailPaneも自動表示
+      if (result.isExactIdMatch) {
+        if (!isDetailPaneVisible) {
+          toggleDetailPane();
+        }
+        setSelectedEntity('issue', result.id);
       }
-      setSelectedEntity('issue', result.id);
     } else {
       console.warn(`⚠️ DOM element not found for issue: ${result.id} (${result.type})`);
     }
@@ -114,12 +115,13 @@ export const SearchTab: React.FC = () => {
       <div className="search-tab__results">
         {!hasSearched && (
           <div className="search-tab__placeholder">
-            <p>💡 タイトル（subject）で検索できます</p>
+            <p>💡 ID または タイトル（subject）で検索できます</p>
             <ul className="search-tab__features">
+              <li><strong>ID検索</strong>: 数値のみ入力で完全一致検索（例: 123）</li>
+              <li><strong>タイトル検索</strong>: 部分一致検索（大文字小文字区別なし）</li>
               <li>Epic/Feature/UserStory/Task/Test/Bug を横断検索</li>
-              <li>部分一致検索（大文字小文字区別なし）</li>
-              <li>複数ヒット時は一覧表示</li>
               <li>クリックでカードへジャンプ&ハイライト</li>
+              <li>ID完全一致時は詳細パネルも自動表示</li>
             </ul>
           </div>
         )}
