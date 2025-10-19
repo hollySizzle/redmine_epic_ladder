@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
 import { FilterPanel } from './components/FilterPanel';
 import { DetailPane } from './components/IssueDetail/DetailPane';
-import { SplitLayout } from './components/IssueDetail/SplitLayout';
 import { TripleSplitLayout } from './components/Layout/TripleSplitLayout';
 import { SidePanel } from './components/SidePanel/SidePanel';
 import { Legend } from './components/Legend';
