@@ -4,6 +4,8 @@ import { EpicVersionGrid } from './components/EpicVersion/EpicVersionGrid';
 import { FilterPanel } from './components/FilterPanel';
 import { DetailPane } from './components/IssueDetail/DetailPane';
 import { SplitLayout } from './components/IssueDetail/SplitLayout';
+import { TripleSplitLayout } from './components/Layout/TripleSplitLayout';
+import { SidePanel } from './components/SidePanel/SidePanel';
 import { Legend } from './components/Legend';
 import { SearchBar } from './components/common/SearchBar';
 import { SettingsDropdown } from './components/common/SettingsDropdown';
@@ -20,6 +22,8 @@ export const App: React.FC = () => {
   const projectId = useStore(state => state.projectId);
   const selectedEntity = useStore(state => state.selectedEntity);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
+  const isSideMenuVisible = useStore(state => state.isSideMenuVisible);
+  const toggleSideMenu = useStore(state => state.toggleSideMenu);
   const isVerticalMode = useStore(state => state.isVerticalMode);
   const reorderFeatures = useStore(state => state.reorderFeatures);
   const reorderUserStories = useStore(state => state.reorderUserStories);
@@ -233,6 +237,21 @@ export const App: React.FC = () => {
                 </button>
               </>
             )}
+            <button
+              onClick={toggleSideMenu}
+              className="side-menu-toggle-btn"
+              title="サイドメニューを開く"
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: isSideMenuVisible ? '#2196f3' : '#f5f5f5',
+                color: isSideMenuVisible ? 'white' : '#333',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              ☰ メニュー
+            </button>
             <FilterPanel />
             <SearchBar />
             <UserStoryChildrenToggle />
@@ -250,17 +269,23 @@ export const App: React.FC = () => {
     </>
   );
 
+  // 3ペインレイアウトの判定
+  const needsTripleSplit = isSideMenuVisible || isDetailPaneVisible;
+
   return (
     <div className="app-container">
-      {isDetailPaneVisible ? (
-        <SplitLayout
-          leftPane={kanbanContent}
+      {needsTripleSplit ? (
+        <TripleSplitLayout
+          leftPane={<SidePanel />}
+          centerPane={kanbanContent}
           rightPane={
             <DetailPane
               entity={selectedEntity}
               projectId={projectId}
             />
           }
+          isLeftPaneVisible={isSideMenuVisible}
+          isRightPaneVisible={isDetailPaneVisible}
         />
       ) : (
         <div className="kanban-fullscreen">

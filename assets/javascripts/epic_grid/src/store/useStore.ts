@@ -97,6 +97,10 @@ interface StoreState {
   isDetailPaneVisible: boolean;
   toggleDetailPane: () => void;
 
+  // サイドメニュー表示（検索結果一覧/Epic一覧/Feature一覧）
+  isSideMenuVisible: boolean;
+  toggleSideMenu: () => void;
+
   // 後方互換性のためのプロパティ
   selectedIssueId: string | null;
 
@@ -229,6 +233,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isDetailPaneVisible;
         localStorage.setItem('kanban_detail_pane_visible', String(newValue));
         return { isDetailPaneVisible: newValue };
+      }),
+
+      // サイドメニュー表示の初期状態
+      isSideMenuVisible: (() => {
+        const saved = localStorage.getItem('kanban_side_menu_visible');
+        return saved !== null ? saved === 'true' : false; // デフォルトOFF
+      })(),
+      toggleSideMenu: () => set((state) => {
+        const newValue = !state.isSideMenuVisible;
+        localStorage.setItem('kanban_side_menu_visible', String(newValue));
+        return { isSideMenuVisible: newValue };
       }),
 
       // 縦書きモードの初期状態
