@@ -15,7 +15,18 @@
       "Bash(PYTHONPATH=/myapp/Source/rails/vibes/scripts python3 src/infrastructure/notifiers/discord_notifier.py \"テストメッセージ\")",
       "Bash(THREAD_NAME=\"env-var-override\" python3 src/infrastructure/notifiers/discord_notifier.py \"環境変数が最優先\")",
       "Bash(chmod:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_epic_grid/vibes/docs/apis/claudeCode/**)",
+      "Read(//workspace/containers/202501_redmine/app/plugins/redmine_epic_grid/.claude/**)",
+      "Bash(claude --version)",
+      "Read(//home/redmine/.claude/**)",
+      "Read(//home/redmine/**)",
+      "Bash(awk '{print $9}')",
+      "Bash(cat /workspace/containers/202501_redmine/app/plugins/redmine_epic_grid/.claude/settings.json)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Read(//usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/src/domain/hooks/**)",
+      "Bash(npm view @anthropic-ai/claude-code versions --json)"
     ],
     "deny": [],
     "additionalDirectories": [

@@ -101,27 +101,29 @@ class BaseHook(ABC):
     def output_response(self, decision: str, reason: str = "") -> bool:
         """
         JSON形式でレスポンスを出力（Claude Code v2対応）
-        
+
         Args:
             decision: 'approve', 'block' のいずれか
             reason: 理由メッセージ
-            
+
         Returns:
             出力成功の場合True
         """
         try:
-            # Claude Code v2の新しいスキーマに対応
+            # Claude Code v2の正しいスキーマに対応（hookSpecificOutput使用）
+            permission_decision = 'allow' if decision == 'approve' else 'deny'
+
             response = {
-                'decision': decision,
-                'reason': reason,
-                'hookEventName': 'PreToolUse',
-                'permissionDecision': 'allow' if decision == 'approve' else 'deny',
-                'permissionDecisionReason': reason
+                'hookSpecificOutput': {
+                    'hookEventName': 'PreToolUse',
+                    'permissionDecision': permission_decision,
+                    'permissionDecisionReason': reason
+                }
             }
-            
+
             json_output = json.dumps(response, ensure_ascii=False)
             print(json_output)
-            
+
             self.log_debug(f"Output response: {json_output}")
             return True
         except Exception as e:
@@ -480,9 +482,11 @@ class BaseHook(ABC):
         try:
             # 入力を読み取る
             input_data = self.read_input()
-            
+
             if not input_data:
                 self.log_debug("No input data, exiting")
+                # Claude Code v2では明示的にallowを返す必要がある
+                self.output_response('approve', '')
                 return 0
             
             # セッションIDを取得
@@ -493,11 +497,15 @@ class BaseHook(ABC):
                 # 既に処理済みかをコンテキストベースで確認
                 if self.is_session_processed_context_aware(session_id, input_data):
                     self.log_debug("Session already processed and within context threshold, skipping")
+                    # Claude Code v2では明示的にallowを返す必要がある
+                    self.output_response('approve', '')
                     return 0
             
             # 処理対象かチェック
             if not self.should_process(input_data):
                 self.log_debug("Not a target for processing, skipping")
+                # Claude Code v2では明示的にallowを返す必要がある
+                self.output_response('approve', '')
                 return 0
             
             # フック処理を実行（終了コード方式）

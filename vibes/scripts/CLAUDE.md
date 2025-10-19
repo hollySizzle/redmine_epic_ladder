@@ -1,7 +1,5 @@
 # Vibes Scripts
 
-Railsプロジェクト用のユーティリティスクリプト集
-
 ## セットアップ
 
 ```bash
@@ -11,6 +9,15 @@ pip install -r requirements.txt
 # 設定ファイルの準備
 cp config.sample.json5 config.json5
 cp secrets.sample.json5 secrets.json5  # 機密情報（APIキーなど）
+```
+
+## デバッグ方法
+
+```bash
+# デバッグモードで実行
+claude --debug
+# ログファイル
+ls -rt ~/.claude/debug/  | tail -n 1
 ```
 
 ## 主な機能

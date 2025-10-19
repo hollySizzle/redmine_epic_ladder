@@ -269,7 +269,11 @@
       "Bash(git check-ignore:*)",
       "Bash(git submodule:*)",
       "mcp__serena__insert_before_symbol",
-      "Bash(RAILS_ENV=test bundle exec rspec:*)"
+      "Bash(RAILS_ENV=test bundle exec rspec:*)",
+      "Bash(PGPASSWORD=example psql -h db -U postgres -c \"CREATE DATABASE redmine_test;\")",
+      "Bash(RAILS_ENV=test bundle exec rake db:migrate)",
+      "Bash(RAILS_ENV=development rails runner \"puts ''=== 優先度一覧 ===''; IssuePriority.all.each { |p| puts \"\"ID: #{p.id}, 名前: #{p.name}\"\" }; puts \"\"Total: #{IssuePriority.count}件\"\"\")",
+      "Bash(RAILS_ENV=development rails runner \"\npriority_low = IssuePriority.find_by(name: ''Low'')\npriority_normal = IssuePriority.find_by(name: ''Normal'')\npriority_high = IssuePriority.find_by(name: ''High'')\npriority_urgent = IssuePriority.find_by(name: ''Urgent'')\n\nputs ''=== 優先度取得確認 ===''\nputs \"\"Low: #{priority_low&.id || ''nil''}\"\"\nputs \"\"Normal: #{priority_normal&.id || ''nil''}\"\"\nputs \"\"High: #{priority_high&.id || ''nil''}\"\"\nputs \"\"Urgent: #{priority_urgent&.id || ''nil''}\"\"\n\")"
     ],
     "deny": [],
     "ask": [],
