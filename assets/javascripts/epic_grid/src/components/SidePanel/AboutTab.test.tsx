@@ -1,6 +1,5 @@
-import React from 'react';
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import { AboutTab } from './AboutTab';
 
 describe('AboutTab', () => {
@@ -21,7 +20,7 @@ describe('AboutTab', () => {
     it('should render the version information', () => {
       render(<AboutTab />);
 
-      expect(screen.getByText('Version 1.0.0')).toBeInTheDocument();
+      expect(screen.getByText('Version 0.8.1')).toBeInTheDocument();
     });
   });
 

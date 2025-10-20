@@ -3,6 +3,27 @@ node_modules/**
 node_modules
 assets/javascripts/epic_grid/node_modules/
 
+# Build outputs
+# Note: Redmine Plugin の配布特性により、以下の運用方針を採用:
+#
+# [Git管理する (意図的に追跡)]
+#   - assets/build/kanban_bundle.js          (開発ビルド・固定名)
+#   - assets/build/asset-manifest.json       (マニフェスト)
+#   - assets/build/mockServiceWorker.js      (MSW Worker)
+#   → プラグインをGitから直接インストールする環境向け (npm非依存)
+#
+# [Git管理しない (このルールで無視)]
+#   - assets/build/kanban_bundle.[hash].js   (本番ビルド・ハッシュ付き)
+#   - assets/build/*.map                     (ソースマップ)
+#   - assets/build/*.LICENSE.txt             (ライセンスファイル)
+#   → 本番デプロイ時の一時ファイル、配布に不要
+#
+# Webpack出力先の無視ルール:
+assets/javascripts/epic_grid/dist/   # 旧出力先 (2025-10-20 削除済み)
+assets/build/*.map                   # ソースマップ
+assets/build/*.LICENSE.txt           # ライセンスファイル
+assets/build/kanban_bundle.*.js      # ハッシュ付き本番ビルド
+
 # Test artifacts (all in Redmine's tmp/)
 # Note: tmp/ is already ignored by Redmine core .gitignore
 # Including these for clarity:

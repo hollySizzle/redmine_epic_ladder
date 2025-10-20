@@ -10,7 +10,7 @@ export const AboutTab: React.FC = () => {
     <div className="about-tab">
       <div className="about-tab__section">
         <h3 className="about-tab__title">Epic Grid Plugin</h3>
-        <p className="about-tab__version">Version 1.0.0</p>
+        <p className="about-tab__version">Version 0.8.1</p>
       </div>
 
       <div className="about-tab__section">

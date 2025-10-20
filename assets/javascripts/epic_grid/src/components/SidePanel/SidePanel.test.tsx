@@ -1,8 +1,7 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { SidePanel } from './SidePanel';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useStore } from '../../store/useStore';
+import { SidePanel } from './SidePanel';
 
 vi.mock('../../store/useStore');
 
@@ -100,7 +99,7 @@ describe('SidePanel', () => {
     render(<SidePanel />);
 
     expect(screen.getByText('Epic Grid Plugin')).toBeInTheDocument();
-    expect(screen.getByText('Version 1.0.0')).toBeInTheDocument();
+    expect(screen.getByText('Version 0.8.1')).toBeInTheDocument();
   });
 
   it('タブクリックでsetActiveSideTabが呼ばれる', () => {
