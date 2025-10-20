@@ -176,7 +176,7 @@ describe('TripleSplitLayout', () => {
     it('最小値以下の値はクランプされる', () => {
       localStorage.setItem('epic_grid_triple_split_widths', JSON.stringify({
         left: 50,  // MIN_LEFT_WIDTH (150) 以下
-        right: 200 // MIN_RIGHT_WIDTH (400) 以下
+        right: 100 // MIN_RIGHT_WIDTH (200) 以下
       }));
 
       const { container } = render(
@@ -193,13 +193,13 @@ describe('TripleSplitLayout', () => {
       const rightPane = container.querySelector('.triple-split-layout__right') as HTMLElement;
 
       expect(leftPane.style.width).toBe('150px'); // クランプされる
-      expect(rightPane.style.width).toBe('400px'); // クランプされる
+      expect(rightPane.style.width).toBe('200px'); // MIN_RIGHT_WIDTH = 200 にクランプされる
     });
 
     it('最大値以上の値はクランプされる', () => {
       localStorage.setItem('epic_grid_triple_split_widths', JSON.stringify({
         left: 500,  // MAX_LEFT_WIDTH (400) 以上
-        right: 700  // MAX_RIGHT_WIDTH (600) 以上
+        right: 900  // MAX_RIGHT_WIDTH (800) 以上
       }));
 
       const { container } = render(
@@ -216,7 +216,7 @@ describe('TripleSplitLayout', () => {
       const rightPane = container.querySelector('.triple-split-layout__right') as HTMLElement;
 
       expect(leftPane.style.width).toBe('400px'); // クランプされる
-      expect(rightPane.style.width).toBe('600px'); // クランプされる
+      expect(rightPane.style.width).toBe('800px'); // MAX_RIGHT_WIDTH = 800 にクランプされる
     });
   });
 

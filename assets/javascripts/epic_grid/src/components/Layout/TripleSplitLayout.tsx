@@ -15,20 +15,23 @@ interface PaneWidths {
   right: number;
 }
 
-// CSS変数から値を取得（px値）
-const getCSSVariable = (name: string): number => {
+// CSS変数から値を取得（px値）、取得失敗時はフォールバック値を使用
+const getCSSVariable = (name: string, fallback: number): number => {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return parseFloat(value) * 16; // rem -> px変換
+  const parsed = parseFloat(value) * 16; // rem -> px変換
+  return isNaN(parsed) ? fallback : parsed;
 };
 
-const MIN_LEFT_WIDTH = 150;
-const MAX_LEFT_WIDTH = 400;
-const MIN_CENTER_WIDTH = 600;
-const MIN_RIGHT_WIDTH = 400;
-const MAX_RIGHT_WIDTH = 600;
+// SSoT: CSS変数が唯一の真実。styles.scssの:root定義を参照
+// フォールバック値はテスト環境・SSR対応のため、CSSと同じ値をハードコーディング
+const MIN_LEFT_WIDTH = getCSSVariable('--triple-split-min-left-width', 150);
+const MAX_LEFT_WIDTH = getCSSVariable('--triple-split-max-left-width', 400);
+const MIN_CENTER_WIDTH = getCSSVariable('--triple-split-min-center-width', 600);
+const MIN_RIGHT_WIDTH = getCSSVariable('--triple-split-min-right-width', 200);
+const MAX_RIGHT_WIDTH = getCSSVariable('--triple-split-max-right-width', 800);
 
-const DEFAULT_LEFT_WIDTH = 230;
-const DEFAULT_RIGHT_WIDTH = 450;
+const DEFAULT_LEFT_WIDTH = getCSSVariable('--triple-split-default-left-width', 230);
+const DEFAULT_RIGHT_WIDTH = getCSSVariable('--triple-split-default-right-width', 450);
 
 const STORAGE_KEY = 'epic_grid_triple_split_widths';
 
