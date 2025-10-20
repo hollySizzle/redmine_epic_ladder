@@ -2424,6 +2424,9 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+      flex-direction: column;
+      width: 100%;
+      height: auto;
       gap: var(--size-4);
     }
 
@@ -2435,6 +2438,7 @@
       gap: var(--size-4);
       position: relative;
       min-width: 0;
+      width: 100%;
     }
 
     // 検索入力欄
@@ -2477,6 +2481,7 @@
 
     // 検索実行ボタン
     &__button {
+      width: 100%;
       padding: var(--size-6) var(--size-12);
       background-color: var(--primary-color, #3498db);
       color: white;
