@@ -288,4 +288,69 @@ describe('ListTab', () => {
       expect(marker.textContent).toBe('📦');
     });
   });
+
+  describe('検索機能', () => {
+    it('検索入力欄が表示される', () => {
+      render(<ListTab />);
+      const searchInput = screen.getByPlaceholderText('Epic / Feature を検索...');
+      expect(searchInput).toBeInTheDocument();
+    });
+
+    it('検索クエリでEpicをフィルタリングできる', () => {
+      render(<ListTab />);
+      const searchInput = screen.getByPlaceholderText('Epic / Feature を検索...');
+
+      // 「認証」で検索
+      fireEvent.change(searchInput, { target: { value: '認証' } });
+
+      // Epic1のみ表示される
+      expect(screen.getByText('ユーザー認証機能')).toBeInTheDocument();
+      expect(screen.queryByText('管理画面')).not.toBeInTheDocument();
+    });
+
+    it('検索クエリでFeatureをフィルタリングできる', () => {
+      render(<ListTab />);
+      const searchInput = screen.getByPlaceholderText('Epic / Feature を検索...');
+
+      // 「ログイン」で検索
+      fireEvent.change(searchInput, { target: { value: 'ログイン' } });
+
+      // Epic1は表示される（配下にマッチするFeatureがある）
+      expect(screen.getByText('ユーザー認証機能')).toBeInTheDocument();
+      // Epic2は表示されない
+      expect(screen.queryByText('管理画面')).not.toBeInTheDocument();
+      // マッチするFeatureのみ表示
+      expect(screen.getByText('ログイン画面')).toBeInTheDocument();
+      expect(screen.getByText('ログインAPI')).toBeInTheDocument();
+    });
+
+    it('クリアボタンをクリックすると検索がリセットされる', () => {
+      render(<ListTab />);
+      const searchInput = screen.getByPlaceholderText('Epic / Feature を検索...');
+
+      // 検索実行
+      fireEvent.change(searchInput, { target: { value: '認証' } });
+      expect(searchInput).toHaveValue('認証');
+
+      // クリアボタンをクリック
+      const clearButton = screen.getByTitle('検索をクリア');
+      fireEvent.click(clearButton);
+
+      // 検索がクリアされる
+      expect(searchInput).toHaveValue('');
+      // すべてのEpicが再表示される
+      expect(screen.getByText('ユーザー認証機能')).toBeInTheDocument();
+      expect(screen.getByText('管理画面')).toBeInTheDocument();
+    });
+
+    it('検索結果が0件の場合は空メッセージが表示される', () => {
+      render(<ListTab />);
+      const searchInput = screen.getByPlaceholderText('Epic / Feature を検索...');
+
+      // マッチしない検索
+      fireEvent.change(searchInput, { target: { value: 'xxxxx' } });
+
+      expect(screen.getByText('📭 Epicがありません')).toBeInTheDocument();
+    });
+  });
 });

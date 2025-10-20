@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode } from '../../utils/domUtils';
 import { StatsToggle } from '../common/StatsToggle';
@@ -17,6 +17,7 @@ export const ListTab: React.FC = () => {
   const entities = useStore(state => state.entities);
   const epicOrder = useStore(state => state.grid.epic_order);
   const isStatsVisible = useStore(state => state.isStatsVisible);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Epic配下のFeatureをグループ化
   const buildHierarchy = () => {
@@ -32,7 +33,35 @@ export const ListTab: React.FC = () => {
     }).filter(Boolean);
   };
 
-  const hierarchy = buildHierarchy();
+  // 検索フィルタリング
+  const filterHierarchy = (hierarchy: ReturnType<typeof buildHierarchy>) => {
+    if (!searchQuery.trim()) return hierarchy;
+
+    const query = searchQuery.toLowerCase();
+
+    return hierarchy
+      .map(item => {
+        if (!item) return null;
+
+        const epicMatches = item.epic.subject.toLowerCase().includes(query);
+        const filteredFeatures = item.features.filter(feature =>
+          feature.subject.toLowerCase().includes(query)
+        );
+
+        // Epic名がマッチするか、配下にマッチするFeatureがある場合のみ表示
+        if (epicMatches || filteredFeatures.length > 0) {
+          return {
+            epic: item.epic,
+            features: epicMatches ? item.features : filteredFeatures
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  const hierarchy = filterHierarchy(buildHierarchy());
 
   const handleEpicClick = (epicId: string, e: React.MouseEvent) => {
     // <summary>のデフォルト動作（折りたたみ）を防ぐ
@@ -88,6 +117,24 @@ export const ListTab: React.FC = () => {
       </div>
 
       <div className="list-tab__control">
+        <div className="list-tab__search">
+          <input
+            type="text"
+            className="list-tab__search-input"
+            placeholder="Epic / Feature を検索..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              className="list-tab__search-clear"
+              onClick={() => setSearchQuery('')}
+              title="検索をクリア"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         <StatsToggle />
       </div>
 
