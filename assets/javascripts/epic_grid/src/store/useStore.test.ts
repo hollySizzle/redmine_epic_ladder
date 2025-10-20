@@ -2279,4 +2279,305 @@ describe('useStore - Normalized API (3D Grid)', () => {
     });
   });
 
+  describe('[Medium] Reorder Features/Tasks/Tests/Bugs', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      useStore.setState({
+        projectId: '1',
+        entities: {
+          epics: {
+            'e1': { id: 'e1', subject: 'Epic 1', feature_ids: ['f1', 'f2'] } as any
+          },
+          features: {
+            'f1': { id: 'f1', subject: 'Feature 1', parent_epic_id: 'e1', fixed_version_id: 'v1', user_story_ids: ['us1', 'us2'] } as any,
+            'f2': { id: 'f2', subject: 'Feature 2', parent_epic_id: 'e1', fixed_version_id: 'v1', user_story_ids: [] } as any,
+            'f3': { id: 'f3', subject: 'Feature 3', parent_epic_id: 'e1', fixed_version_id: 'v2', user_story_ids: [] } as any
+          },
+          user_stories: {
+            'us1': { id: 'us1', subject: 'Story 1', parent_feature_id: 'f1', task_ids: ['t1', 't2'], test_ids: ['test1', 'test2'], bug_ids: ['b1', 'b2'] } as any,
+            'us2': { id: 'us2', subject: 'Story 2', parent_feature_id: 'f1', task_ids: ['t3'], test_ids: ['test3'], bug_ids: ['b3'] } as any
+          },
+          tasks: {
+            't1': { id: 't1', subject: 'Task 1', parent_user_story_id: 'us1' } as any,
+            't2': { id: 't2', subject: 'Task 2', parent_user_story_id: 'us1' } as any,
+            't3': { id: 't3', subject: 'Task 3', parent_user_story_id: 'us2' } as any
+          },
+          tests: {
+            'test1': { id: 'test1', subject: 'Test 1', parent_user_story_id: 'us1' } as any,
+            'test2': { id: 'test2', subject: 'Test 2', parent_user_story_id: 'us1' } as any,
+            'test3': { id: 'test3', subject: 'Test 3', parent_user_story_id: 'us2' } as any
+          },
+          bugs: {
+            'b1': { id: 'b1', subject: 'Bug 1', parent_user_story_id: 'us1' } as any,
+            'b2': { id: 'b2', subject: 'Bug 2', parent_user_story_id: 'us1' } as any,
+            'b3': { id: 'b3', subject: 'Bug 3', parent_user_story_id: 'us2' } as any
+          },
+          versions: {},
+          users: {}
+        },
+        grid: {
+          index: {
+            'e1:v1': ['f1', 'f2'],
+            'e1:v2': ['f3']
+          },
+          epic_order: ['e1'],
+          feature_order_by_epic: {},
+          version_order: []
+        }
+      });
+    });
+
+    describe('reorderFeatures', () => {
+      it('should reorder features within same cell', () => {
+        const { reorderFeatures } = useStore.getState();
+
+        // f1をf2の後に移動
+        reorderFeatures('f1', 'f2');
+
+        const state = useStore.getState();
+        expect(state.grid.index['e1:v1']).toEqual(['f2', 'f1']);
+      });
+
+      it('should move feature to different cell', () => {
+        const { reorderFeatures } = useStore.getState();
+
+        // f3をf1の後に移動（異なるセル間）
+        reorderFeatures('f3', 'f1');
+
+        const state = useStore.getState();
+        expect(state.grid.index['e1:v2']).toEqual([]);
+        expect(state.grid.index['e1:v1']).toContain('f3');
+        expect(state.entities.features['f3'].fixed_version_id).toBe('v1');
+      });
+
+      it('should move feature to add button target', () => {
+        const { reorderFeatures } = useStore.getState();
+
+        const targetData = {
+          isAddButton: true,
+          epicId: 'e1',
+          versionId: 'v2'
+        };
+
+        reorderFeatures('f1', '', targetData);
+
+        const state = useStore.getState();
+        expect(state.grid.index['e1:v2']).toContain('f1');
+        expect(state.entities.features['f1'].fixed_version_id).toBe('v2');
+      });
+
+      it('should do nothing when source feature not found', () => {
+        const { reorderFeatures } = useStore.getState();
+
+        const initialGrid = { ...useStore.getState().grid.index };
+        reorderFeatures('f999', 'f1');
+
+        const state = useStore.getState();
+        expect(state.grid.index).toEqual(initialGrid);
+      });
+
+      it('should do nothing when target feature not found', () => {
+        const { reorderFeatures } = useStore.getState();
+
+        const initialGrid = { ...useStore.getState().grid.index };
+        reorderFeatures('f1', 'f999');
+
+        const state = useStore.getState();
+        expect(state.grid.index).toEqual(initialGrid);
+      });
+    });
+
+    describe('reorderTasks', () => {
+      it('should reorder tasks within same user story', () => {
+        const { reorderTasks } = useStore.getState();
+
+        // t1をt2の後に移動
+        reorderTasks('t1', 't2');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].task_ids).toEqual(['t2', 't1']);
+      });
+
+      it('should move task to different user story', () => {
+        const { reorderTasks } = useStore.getState();
+
+        // t1をt3の後に移動（異なるStory間）
+        reorderTasks('t1', 't3');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].task_ids).not.toContain('t1');
+        expect(state.entities.user_stories['us2'].task_ids).toContain('t1');
+        expect(state.entities.tasks['t1'].parent_user_story_id).toBe('us2');
+      });
+
+      it('should do nothing when source task not found', () => {
+        const { reorderTasks } = useStore.getState();
+
+        const initialTaskIds = [...useStore.getState().entities.user_stories['us1'].task_ids];
+        reorderTasks('t999', 't1');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].task_ids).toEqual(initialTaskIds);
+      });
+
+      it('should do nothing when target task not found', () => {
+        const { reorderTasks } = useStore.getState();
+
+        const initialTaskIds = [...useStore.getState().entities.user_stories['us1'].task_ids];
+        reorderTasks('t1', 't999');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].task_ids).toEqual(initialTaskIds);
+      });
+
+      it('should do nothing when source story not found', () => {
+        useStore.setState({
+          entities: {
+            ...useStore.getState().entities,
+            tasks: {
+              ...useStore.getState().entities.tasks,
+              't999': { id: 't999', parent_user_story_id: 'us999' } as any
+            }
+          }
+        });
+
+        const { reorderTasks } = useStore.getState();
+
+        const initialTaskIds = [...useStore.getState().entities.user_stories['us1'].task_ids];
+        reorderTasks('t999', 't1');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].task_ids).toEqual(initialTaskIds);
+      });
+    });
+
+    describe('reorderTests', () => {
+      it('should reorder tests within same user story', () => {
+        const { reorderTests } = useStore.getState();
+
+        // test1をtest2の後に移動
+        reorderTests('test1', 'test2');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].test_ids).toEqual(['test2', 'test1']);
+      });
+
+      it('should move test to different user story', () => {
+        const { reorderTests } = useStore.getState();
+
+        // test1をtest3の後に移動（異なるStory間）
+        reorderTests('test1', 'test3');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].test_ids).not.toContain('test1');
+        expect(state.entities.user_stories['us2'].test_ids).toContain('test1');
+        expect(state.entities.tests['test1'].parent_user_story_id).toBe('us2');
+      });
+
+      it('should do nothing when source test not found', () => {
+        const { reorderTests } = useStore.getState();
+
+        const initialTestIds = [...useStore.getState().entities.user_stories['us1'].test_ids];
+        reorderTests('test999', 'test1');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].test_ids).toEqual(initialTestIds);
+      });
+
+      it('should do nothing when target test not found', () => {
+        const { reorderTests } = useStore.getState();
+
+        const initialTestIds = [...useStore.getState().entities.user_stories['us1'].test_ids];
+        reorderTests('test1', 'test999');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].test_ids).toEqual(initialTestIds);
+      });
+
+      it('should do nothing when source story not found', () => {
+        useStore.setState({
+          entities: {
+            ...useStore.getState().entities,
+            tests: {
+              ...useStore.getState().entities.tests,
+              'test999': { id: 'test999', parent_user_story_id: 'us999' } as any
+            }
+          }
+        });
+
+        const { reorderTests } = useStore.getState();
+
+        const initialTestIds = [...useStore.getState().entities.user_stories['us1'].test_ids];
+        reorderTests('test999', 'test1');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].test_ids).toEqual(initialTestIds);
+      });
+    });
+
+    describe('reorderBugs', () => {
+      it('should reorder bugs within same user story', () => {
+        const { reorderBugs } = useStore.getState();
+
+        // b1をb2の後に移動
+        reorderBugs('b1', 'b2');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].bug_ids).toEqual(['b2', 'b1']);
+      });
+
+      it('should move bug to different user story', () => {
+        const { reorderBugs } = useStore.getState();
+
+        // b1をb3の後に移動（異なるStory間）
+        reorderBugs('b1', 'b3');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].bug_ids).not.toContain('b1');
+        expect(state.entities.user_stories['us2'].bug_ids).toContain('b1');
+        expect(state.entities.bugs['b1'].parent_user_story_id).toBe('us2');
+      });
+
+      it('should do nothing when source bug not found', () => {
+        const { reorderBugs } = useStore.getState();
+
+        const initialBugIds = [...useStore.getState().entities.user_stories['us1'].bug_ids];
+        reorderBugs('b999', 'b1');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].bug_ids).toEqual(initialBugIds);
+      });
+
+      it('should do nothing when target bug not found', () => {
+        const { reorderBugs } = useStore.getState();
+
+        const initialBugIds = [...useStore.getState().entities.user_stories['us1'].bug_ids];
+        reorderBugs('b1', 'b999');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].bug_ids).toEqual(initialBugIds);
+      });
+
+      it('should do nothing when source story not found', () => {
+        useStore.setState({
+          entities: {
+            ...useStore.getState().entities,
+            bugs: {
+              ...useStore.getState().entities.bugs,
+              'b999': { id: 'b999', parent_user_story_id: 'us999' } as any
+            }
+          }
+        });
+
+        const { reorderBugs } = useStore.getState();
+
+        const initialBugIds = [...useStore.getState().entities.user_stories['us1'].bug_ids];
+        reorderBugs('b999', 'b1');
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['us1'].bug_ids).toEqual(initialBugIds);
+      });
+    });
+  });
+
 });

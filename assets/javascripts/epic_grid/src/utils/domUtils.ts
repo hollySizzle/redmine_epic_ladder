@@ -347,6 +347,12 @@ export function enableFocusMode(issueId: string, issueType: string): void {
       targetElement.classList.add('focus-target');
       console.log('🎯 [enableFocusMode] Added focus-target class to element');
 
+      // Epic/Featureの場合、z-indexを最前面に設定
+      if (['epic', 'feature'].includes(issueType)) {
+        (targetElement as HTMLElement).style.zIndex = '900';
+        console.log('🎯 [enableFocusMode] Set z-index: 900 for Epic/Feature');
+      }
+
       // 親のepic-version-wrapperにもフォーカスクラスを追加（少し見える）
       const epicVersionWrapper = targetElement.closest('.epic-version-wrapper');
       console.log('🎯 [enableFocusMode] Epic version wrapper found:', !!epicVersionWrapper);
@@ -364,6 +370,13 @@ export function enableFocusMode(issueId: string, issueType: string): void {
           gridContainer.classList.remove('focus-mode');
         }
         targetElement.classList.remove('focus-target');
+
+        // Epic/Featureの場合、z-indexをリセット
+        if (['epic', 'feature'].includes(issueType)) {
+          (targetElement as HTMLElement).style.zIndex = '';
+          console.log('🎯 [enableFocusMode] Reset z-index for Epic/Feature');
+        }
+
         if (epicVersionWrapper) {
           epicVersionWrapper.classList.remove('focus-parent');
         }

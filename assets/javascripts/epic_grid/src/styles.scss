@@ -2227,7 +2227,6 @@
     .focus-target {
       opacity: 1;
       filter: none; // ぼかしを解除
-      transform: scale(1); // スケールをリセット
     }
 
     // 親要素（epic-version-wrapper）は少し見える
@@ -2509,7 +2508,9 @@
     &__subtitle {
       font-size: var(--size-12);
       color: #666;
-      margin-top: var(--size-4); // 要素間の間隔、padding変換不可のためmargin使用
+      margin-top: var(
+        --size-4
+      ); // 要素間の間隔、padding変換不可のためmargin使用
     }
 
     &__content {
@@ -2592,7 +2593,9 @@
       font-size: var(--size-14);
       font-weight: 600;
       color: #333;
-      margin-bottom: var(--size-4); // 要素間の間隔、padding変換不可のためmargin使用
+      margin-bottom: var(
+        --size-4
+      ); // 要素間の間隔、padding変換不可のためmargin使用
       transition: color 0.2s ease;
     }
 
@@ -2642,7 +2645,9 @@
       font-size: var(--size-13);
       font-weight: 500;
       color: #333;
-      margin-bottom: var(--size-2); // 要素間の間隔、padding変換不可のためmargin使用
+      margin-bottom: var(
+        --size-2
+      ); // 要素間の間隔、padding変換不可のためmargin使用
     }
 
     &__feature-stats {
@@ -2772,54 +2777,54 @@
     background-color: transparent;
     box-shadow: none;
     border: 3px solid transparent;
-    transform: scale(1);
+    // transform: scale(1);
   }
   5% {
     background-color: #fff3cd;
     box-shadow: 0 0 30px 12px rgba(255, 193, 7, 1);
     border: 3px solid #ffc107;
-    transform: scale(1.02);
+    // transform: scale(1.02);
   }
   15% {
     background-color: #fffbf0;
     box-shadow: 0 0 15px 6px rgba(255, 193, 7, 0.5);
     border: 3px solid #ffeb3b;
-    transform: scale(1.01);
+    // transform: scale(1.01);
   }
   25% {
     background-color: #fff3cd;
     box-shadow: 0 0 30px 12px rgba(255, 193, 7, 1);
     border: 3px solid #ffc107;
-    transform: scale(1.02);
+    // transform: scale(1.02);
   }
   35% {
     background-color: #fffbf0;
     box-shadow: 0 0 15px 6px rgba(255, 193, 7, 0.5);
     border: 3px solid #ffeb3b;
-    transform: scale(1.01);
+    // transform: scale(1.01);
   }
   45% {
     background-color: #fff3cd;
     box-shadow: 0 0 30px 12px rgba(255, 193, 7, 1);
     border: 3px solid #ffc107;
-    transform: scale(1.02);
+    // transform: scale(1.02);
   }
   60% {
     background-color: #fffbf0;
     box-shadow: 0 0 10px 4px rgba(255, 193, 7, 0.3);
     border: 3px solid #fff9c4;
-    transform: scale(1);
+    // transform: scale(1);
   }
   80% {
     background-color: rgba(255, 251, 240, 0.5);
     box-shadow: 0 0 5px 2px rgba(255, 193, 7, 0.15);
     border: 3px solid rgba(255, 249, 196, 0.5);
-    transform: scale(1);
+    // transform: scale(1);
   }
   100% {
     background-color: transparent;
     box-shadow: none;
     border: 3px solid transparent;
-    transform: scale(1);
+    // transform: scale(1);
   }
 }
