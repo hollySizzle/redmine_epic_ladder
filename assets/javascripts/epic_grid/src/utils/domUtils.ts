@@ -347,10 +347,21 @@ export function enableFocusMode(issueId: string, issueType: string): void {
       targetElement.classList.add('focus-target');
       console.log('🎯 [enableFocusMode] Added focus-target class to element');
 
-      // Epic/Featureの場合、z-indexを最前面に設定
-      if (['epic', 'feature'].includes(issueType)) {
-        (targetElement as HTMLElement).style.zIndex = '900';
-        console.log('🎯 [enableFocusMode] Set z-index: 900 for Epic/Feature');
+      // Epic/Featureの場合、sticky cellのz-indexを最前面に設定
+      if (issueType === 'epic') {
+        const epicCell = targetElement.closest('.epic-cell');
+        if (epicCell) {
+          (epicCell as HTMLElement).style.position = 'sticky';
+          (epicCell as HTMLElement).style.zIndex = '900';
+          console.log('🎯 [enableFocusMode] Set z-index: 900 for epic-cell');
+        }
+      } else if (issueType === 'feature') {
+        const featureCell = targetElement.closest('.feature-cell');
+        if (featureCell) {
+          (featureCell as HTMLElement).style.position = 'sticky';
+          (featureCell as HTMLElement).style.zIndex = '900';
+          console.log('🎯 [enableFocusMode] Set z-index: 900 for feature-cell');
+        }
       }
 
       // 親のepic-version-wrapperにもフォーカスクラスを追加（少し見える）
@@ -371,10 +382,21 @@ export function enableFocusMode(issueId: string, issueType: string): void {
         }
         targetElement.classList.remove('focus-target');
 
-        // Epic/Featureの場合、z-indexをリセット
-        if (['epic', 'feature'].includes(issueType)) {
-          (targetElement as HTMLElement).style.zIndex = '';
-          console.log('🎯 [enableFocusMode] Reset z-index for Epic/Feature');
+        // Epic/Featureの場合、sticky cellのz-indexとpositionをリセット
+        if (issueType === 'epic') {
+          const epicCell = targetElement.closest('.epic-cell');
+          if (epicCell) {
+            (epicCell as HTMLElement).style.position = '';
+            (epicCell as HTMLElement).style.zIndex = '';
+            console.log('🎯 [enableFocusMode] Reset epic-cell styles');
+          }
+        } else if (issueType === 'feature') {
+          const featureCell = targetElement.closest('.feature-cell');
+          if (featureCell) {
+            (featureCell as HTMLElement).style.position = '';
+            (featureCell as HTMLElement).style.zIndex = '';
+            console.log('🎯 [enableFocusMode] Reset feature-cell styles');
+          }
         }
 
         if (epicVersionWrapper) {
