@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useDraggableAndDropTarget } from '../../hooks/useDraggableAndDropTarget';
 import { useDropTarget } from '../../hooks/useDropTarget';
+import { useSortedEpicsAndFeatures } from '../../hooks/useSortedEpicsAndFeatures';
 import { useStore } from '../../store/useStore';
 import type { Feature } from '../../types/normalized-api';
 import { formatDateWithDayOfWeek } from '../../utils/dateFormat';
@@ -85,75 +86,12 @@ export const EpicVersionGrid: React.FC = () => {
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
   const toggleDetailPane = useStore(state => state.toggleDetailPane);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
-  const epicSortOptions = useStore(state => state.epicSortOptions);
   const versionSortOptions = useStore(state => state.versionSortOptions);
   const filters = useStore(state => state.filters);
   const hideEmptyEpicsVersions = useStore(state => state.hideEmptyEpicsVersions);
 
-  // Epic順序をソート設定に基づいて動的にソート
-  const sortedEpicOrder = useMemo(() => {
-    const epicIds = [...grid.epic_order];
-    const { sort_by, sort_direction } = epicSortOptions;
-
-    // subject ソートの場合はサーバー側の順序をそのまま使用（自然順ソート済み）
-    if (sort_by === 'subject') {
-      return sort_direction === 'asc' ? epicIds : [...epicIds].reverse();
-    }
-
-    // id, date の場合はフロントエンドでソート
-    return epicIds.sort((aId, bId) => {
-      const epicA = epics[aId];
-      const epicB = epics[bId];
-      if (!epicA || !epicB) return 0;
-
-      let comparison = 0;
-
-      if (sort_by === 'date') {
-        // start_date がnullの場合は先頭に配置
-        const dateA = epicA.statistics?.completion_percentage || 0; // TODO: Epic型にstart_dateを追加
-        const dateB = epicB.statistics?.completion_percentage || 0;
-        comparison = dateA - dateB;
-      } else if (sort_by === 'id') {
-        comparison = parseInt(aId) - parseInt(bId);
-      }
-
-      return sort_direction === 'asc' ? comparison : -comparison;
-    });
-  }, [grid.epic_order, epics, epicSortOptions]);
-
-  // Feature順序をソート設定に基づいて動的にソート（Epic&Feature並び替え）
-  const getSortedFeatureIds = useMemo(() => {
-    return (epicId: string): string[] => {
-      const featureIds = grid.feature_order_by_epic[epicId] || [];
-      const { sort_by, sort_direction } = epicSortOptions;
-
-      // subject ソートの場合はサーバー側の順序をそのまま使用（自然順ソート済み）
-      if (sort_by === 'subject') {
-        return sort_direction === 'asc' ? featureIds : [...featureIds].reverse();
-      }
-
-      // id, date の場合はフロントエンドでソート
-      const sorted = [...featureIds].sort((aId, bId) => {
-        const featureA = features[aId];
-        const featureB = features[bId];
-        if (!featureA || !featureB) return 0;
-
-        let comparison = 0;
-
-        if (sort_by === 'date') {
-          // start_date がnullの場合は先頭に配置
-          const dateA = featureA.statistics?.completion_percentage || 0; // TODO: Feature型にstart_dateを追加
-          const dateB = featureB.statistics?.completion_percentage || 0;
-          comparison = dateA - dateB;
-        } else if (sort_by === 'id') {
-          comparison = parseInt(aId) - parseInt(bId);
-        }
-
-        return sort_direction === 'asc' ? comparison : -comparison;
-      });
-      return sorted;
-    };
-  }, [grid.feature_order_by_epic, features, epicSortOptions]);
+  // 共通のソートロジックを使用
+  const { sortedEpicOrder, getSortedFeatureIds } = useSortedEpicsAndFeatures();
 
   // Version順序をソート設定に基づいて動的にソート
   const sortedVersionOrder = useMemo(() => {

@@ -71,6 +71,10 @@ describe('SidePanel', () => {
           epic_order: [],
           feature_order_by_epic: {},
           version_order: []
+        },
+        epicSortOptions: {
+          sort_by: 'subject',
+          sort_direction: 'asc'
         }
       };
       return selector(state);
@@ -144,6 +148,10 @@ describe('SidePanel', () => {
           epic_order: [],
           feature_order_by_epic: {},
           version_order: []
+        },
+        epicSortOptions: {
+          sort_by: 'subject',
+          sort_direction: 'asc'
         }
       };
       return selector(state);

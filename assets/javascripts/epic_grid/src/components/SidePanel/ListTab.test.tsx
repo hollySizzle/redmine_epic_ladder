@@ -80,7 +80,10 @@ describe('ListTab', () => {
   const mockGrid = {
     epic_order: ['epic-1', 'epic-2'],
     version_order: [],
-    feature_order_by_epic: {},
+    feature_order_by_epic: {
+      'epic-1': ['feature-1', 'feature-2'],
+      'epic-2': ['feature-3']
+    },
     index: {}
   };
 
@@ -92,7 +95,11 @@ describe('ListTab', () => {
       const state = {
         entities: mockEntities,
         grid: mockGrid,
-        isStatsVisible: true
+        isStatsVisible: true,
+        epicSortOptions: {
+          sort_by: 'subject',
+          sort_direction: 'asc'
+        }
       };
       return selector(state);
     });
@@ -194,8 +201,15 @@ describe('ListTab', () => {
           bugs: {},
           users: {},
         },
-        grid: { epic_order: [] },
-        isStatsVisible: true
+        grid: {
+          epic_order: [],
+          feature_order_by_epic: {}
+        },
+        isStatsVisible: true,
+        epicSortOptions: {
+          sort_by: 'subject',
+          sort_direction: 'asc'
+        }
       };
       return selector(state);
     });
@@ -231,18 +245,24 @@ describe('ListTab', () => {
           users: {}
         },
         grid: {
-          epic_order: [],
+          epic_order: ['epic-no-features'],
           version_order: [],
-          feature_order_by_epic: {},
+          feature_order_by_epic: {
+            'epic-no-features': []
+          },
           index: {}
         },
-        isStatsVisible: true
+        isStatsVisible: true,
+        epicSortOptions: {
+          sort_by: 'subject',
+          sort_direction: 'asc'
+        }
       };
       return selector(state);
     });
 
     render(<ListTab />);
-    expect(screen.getByText('📭 Epicがありません')).toBeInTheDocument();
+    expect(screen.getByText('Featureなし Epic')).toBeInTheDocument();
   });
 
   it('正しいクラス名とHTML構造が適用されている', () => {

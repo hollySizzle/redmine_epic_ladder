@@ -2416,23 +2416,28 @@
     height: 100%;
     width: 100%;
 
-    .input_form {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: var(--size-4);
-    }
-
-    &__input-area {
-      display: flex;
-      width: 100%;
-      flex-direction: column;
-      gap: var(--size-4);
+    // コントロール領域（ListTab風）
+    &__control {
       padding: var(--size-4) var(--size-8);
       border-bottom: var(--border-width-thin) solid #e0e0e0;
       background-color: #fff;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--size-4);
     }
 
+    // 検索フォーム領域
+    &__search {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: var(--size-4);
+      position: relative;
+      min-width: 0;
+    }
+
+    // 検索入力欄
     &__input {
       flex: 1;
       width: 100%;
@@ -2454,8 +2459,24 @@
       }
     }
 
+    // 検索クリアボタン（ListTab風）
+    &__search-clear {
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: var(--size-16);
+      padding: var(--size-4);
+      line-height: 1;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #333;
+      }
+    }
+
+    // 検索実行ボタン
     &__button {
-      width: 100%;
       padding: var(--size-6) var(--size-12);
       background-color: var(--primary-color, #3498db);
       color: white;
@@ -2465,6 +2486,7 @@
       font-weight: 500;
       cursor: pointer;
       transition: background-color 0.2s;
+      white-space: nowrap;
 
       &:hover:not(:disabled) {
         background-color: #2980b9;
@@ -2477,24 +2499,6 @@
       &:disabled {
         opacity: 0.6;
         cursor: not-allowed;
-      }
-
-      &--clear {
-        background-color: #fff;
-        color: #666;
-        border: var(--border-width-thin) solid #ddd;
-        padding: var(--size-6);
-        font-size: var(--size-14);
-
-        &:hover {
-          background-color: #f5f5f5;
-          border-color: #bbb;
-          color: #333;
-        }
-
-        &:active {
-          background-color: #e0e0e0;
-        }
       }
     }
 

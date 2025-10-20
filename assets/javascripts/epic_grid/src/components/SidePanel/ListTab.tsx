@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSortedEpicsAndFeatures } from '../../hooks/useSortedEpicsAndFeatures';
 import { useStore } from '../../store/useStore';
 import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode } from '../../utils/domUtils';
 import { StatsToggle } from '../common/StatsToggle';
@@ -15,17 +16,20 @@ import { StatsToggle } from '../common/StatsToggle';
  */
 export const ListTab: React.FC = () => {
   const entities = useStore(state => state.entities);
-  const epicOrder = useStore(state => state.grid.epic_order);
   const isStatsVisible = useStore(state => state.isStatsVisible);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // グリッドと同じソート順序を使用
+  const { sortedEpicOrder, getSortedFeatureIds } = useSortedEpicsAndFeatures();
+
   // Epic配下のFeatureをグループ化
   const buildHierarchy = () => {
-    return epicOrder.map(epicId => {
+    return sortedEpicOrder.map(epicId => {
       const epic = entities.epics[epicId];
       if (!epic) return null;
 
-      const features = epic.feature_ids
+      const featureIds = getSortedFeatureIds(epicId);
+      const features = featureIds
         .map(featureId => entities.features[featureId])
         .filter(Boolean);
 

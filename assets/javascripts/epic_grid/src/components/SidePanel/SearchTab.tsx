@@ -128,8 +128,8 @@ export const SearchTab: React.FC = () => {
 
   return (
     <div className="search-tab">
-      <div className="search-tab__input-area">
-        <form onSubmit={handleSearch} className='input_form'>
+      <div className="search-tab__control">
+        <form onSubmit={handleSearch} className="search-tab__search">
           <input
             ref={inputRef}
             type="text"
@@ -137,17 +137,26 @@ export const SearchTab: React.FC = () => {
             placeholder="Epic/Feature/ストーリーを検索..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ flex: 1 }}
           />
-          <button type="submit" className="search-tab__button" disabled={!query.trim()}>
-            🔍 検索
-          </button>
           {query && (
-            <button type="button" onClick={handleClear} className="search-tab__button search-tab__button--clear">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="search-tab__search-clear"
+              title="検索をクリア"
+            >
               ✕
             </button>
           )}
         </form>
+        <button
+          type="submit"
+          className="search-tab__button"
+          disabled={!query.trim()}
+          onClick={handleSearch}
+        >
+          🔍 検索
+        </button>
       </div>
 
       <div className="search-tab__results">
