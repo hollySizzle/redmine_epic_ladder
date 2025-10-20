@@ -4,6 +4,8 @@
  * Issue要素へのスクロールとハイライト表示
  */
 
+import type { NormalizedEntities } from '../types/normalized-api';
+
 /**
  * Epic/Featureから最もY方向に近い"Add User Story"ボタンを探す
  *
@@ -272,49 +274,78 @@ export function scrollToIssue(issueId: string, issueType: string): boolean {
  * 親階層のUserStoryを自動展開
  *
  * Task/Test/Bugの場合、親のUserStoryが折りたたまれていたら展開する
+ * entitiesから親UserStoryのIDを取得し、DOM要素が存在しない場合でも展開可能
  *
  * @param issueId - IssueのID
  * @param issueType - Issueのタイプ
+ * @param entities - 正規化されたエンティティデータ
+ * @returns 展開処理を実行したかどうか
  */
-export function expandParentUserStory(issueId: string, issueType: string): void {
+export function expandParentUserStory(
+  issueId: string,
+  issueType: string,
+  entities: NormalizedEntities
+): boolean {
   console.log('📂 [expandParentUserStory] Called with:', { issueId, issueType });
 
   if (!['task', 'test', 'bug'].includes(issueType)) {
     console.log('📂 [expandParentUserStory] Not task/test/bug, skipping');
-    return; // Task/Test/Bug以外は処理不要
+    return false; // Task/Test/Bug以外は処理不要
   }
 
-  const selectors = getIssueSelectors(issueId, issueType);
-  console.log('📂 [expandParentUserStory] Selectors:', selectors);
+  // entitiesから親UserStoryのIDを取得
+  let parentUserStoryId: string | undefined;
 
-  for (const selector of selectors) {
-    const element = document.querySelector(selector);
-    console.log('📂 [expandParentUserStory] Trying selector:', selector, 'Found:', !!element);
-
-    if (element) {
-      // 親のUserStoryを探す
-      const userStoryCard = element.closest('.user-story');
-      console.log('📂 [expandParentUserStory] Found parent UserStory:', !!userStoryCard);
-
-      if (userStoryCard) {
-        const collapseButton = userStoryCard.querySelector('.user-story-collapse-button');
-        console.log('📂 [expandParentUserStory] Found collapse button:', !!collapseButton);
-
-        if (collapseButton) {
-          const isCollapsed = collapseButton.getAttribute('aria-expanded') === 'false';
-          console.log('📂 [expandParentUserStory] Is collapsed:', isCollapsed);
-
-          if (isCollapsed) {
-            // 折りたたまれていたらクリックして展開
-            console.log('📂 [expandParentUserStory] Clicking to expand...');
-            (collapseButton as HTMLElement).click();
-          }
-        }
-      }
-      break;
-    }
+  if (issueType === 'task') {
+    const task = entities.tasks[issueId];
+    parentUserStoryId = task?.parent_user_story_id;
+  } else if (issueType === 'test') {
+    const test = entities.tests[issueId];
+    parentUserStoryId = test?.parent_user_story_id;
+  } else if (issueType === 'bug') {
+    const bug = entities.bugs[issueId];
+    parentUserStoryId = bug?.parent_user_story_id;
   }
-  console.log('📂 [expandParentUserStory] Done');
+
+  if (!parentUserStoryId) {
+    console.log('📂 [expandParentUserStory] Parent UserStory ID not found in entities');
+    return false;
+  }
+
+  console.log('📂 [expandParentUserStory] Parent UserStory ID:', parentUserStoryId);
+
+  // 親UserStoryのDOM要素を探す
+  const userStoryElement = document.querySelector(`[data-story="${parentUserStoryId}"]`);
+
+  if (!userStoryElement) {
+    console.log('📂 [expandParentUserStory] Parent UserStory element not found in DOM');
+    return false;
+  }
+
+  console.log('📂 [expandParentUserStory] Found parent UserStory element');
+
+  // 折り畳みボタンを探す
+  const collapseButton = userStoryElement.querySelector('.user-story-collapse-toggle') as HTMLButtonElement;
+
+  if (!collapseButton) {
+    console.log('📂 [expandParentUserStory] Collapse button not found');
+    return false;
+  }
+
+  // ボタンのテキストで折り畳み状態を判定（▶ = 折り畳み中、▼ = 展開中）
+  const isCollapsed = collapseButton.textContent?.trim() === '▶';
+  console.log('📂 [expandParentUserStory] Is collapsed:', isCollapsed);
+
+  if (isCollapsed) {
+    // 折りたたまれていたらクリックして展開
+    console.log('📂 [expandParentUserStory] Clicking to expand...');
+    collapseButton.click();
+    console.log('📂 [expandParentUserStory] ✅ Expanded UserStory:', parentUserStoryId);
+    return true;
+  }
+
+  console.log('📂 [expandParentUserStory] Already expanded, no action needed');
+  return false;
 }
 
 /**

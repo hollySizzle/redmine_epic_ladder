@@ -304,22 +304,31 @@ describe('domUtils', () => {
       const userStoryDiv = document.createElement('div');
       userStoryDiv.className = 'user-story';
 
+      userStoryDiv.setAttribute('data-story', 'us-1');
+
       const collapseButton = document.createElement('button');
-      collapseButton.className = 'user-story-collapse-button';
-      collapseButton.setAttribute('aria-expanded', 'false');
+      collapseButton.className = 'user-story-collapse-toggle';
+      collapseButton.textContent = '▶'; // 折りたたまれている
       const clickMock = vi.fn();
       collapseButton.addEventListener('click', clickMock);
 
-      const taskDiv = document.createElement('div');
-      taskDiv.setAttribute('data-task', '111');
-      taskDiv.className = 'task';
-
       userStoryDiv.appendChild(collapseButton);
-      userStoryDiv.appendChild(taskDiv);
       document.body.appendChild(userStoryDiv);
 
+      // Entities mock
+      const entities = {
+        tasks: {
+          '111': {
+            id: '111',
+            title: 'Test Task',
+            parent_user_story_id: 'us-1',
+            status: 'open' as const
+          }
+        }
+      } as any;
+
       // Execute
-      expandParentUserStory('111', 'task');
+      expandParentUserStory('111', 'task', entities);
 
       // Assert
       expect(clickMock).toHaveBeenCalledOnce();
@@ -329,23 +338,31 @@ describe('domUtils', () => {
       // Setup
       const userStoryDiv = document.createElement('div');
       userStoryDiv.className = 'user-story';
+      userStoryDiv.setAttribute('data-story', 'us-2');
 
       const collapseButton = document.createElement('button');
-      collapseButton.className = 'user-story-collapse-button';
-      collapseButton.setAttribute('aria-expanded', 'true'); // 展開済み
+      collapseButton.className = 'user-story-collapse-toggle';
+      collapseButton.textContent = '▼'; // 展開済み
       const clickMock = vi.fn();
       collapseButton.addEventListener('click', clickMock);
 
-      const taskDiv = document.createElement('div');
-      taskDiv.setAttribute('data-task', '222');
-      taskDiv.className = 'task';
-
       userStoryDiv.appendChild(collapseButton);
-      userStoryDiv.appendChild(taskDiv);
       document.body.appendChild(userStoryDiv);
 
+      // Entities mock
+      const entities = {
+        tasks: {
+          '222': {
+            id: '222',
+            title: 'Test Task 2',
+            parent_user_story_id: 'us-2',
+            status: 'open' as const
+          }
+        }
+      } as any;
+
       // Execute
-      expandParentUserStory('222', 'task');
+      expandParentUserStory('222', 'task', entities);
 
       // Assert
       expect(clickMock).not.toHaveBeenCalled();
