@@ -5,9 +5,53 @@
  */
 
 /**
+ * Epic/Featureから最もY方向に近い"Add User Story"ボタンを探す
+ *
+ * @param element - Epic/Feature要素
+ * @returns 最も近いAddボタン、見つからない場合はnull
+ */
+function findNearestAddUserStoryButton(element: Element): Element | null {
+  console.log('🔍 [findNearestAddUserStoryButton] Searching for Add User Story button...');
+
+  // Epic/Feature配下の全AddUserStoryボタンを探す
+  const addButtons = Array.from(
+    document.querySelectorAll('[data-add-button="user-story"]')
+  );
+
+  console.log('🔍 [findNearestAddUserStoryButton] Found buttons:', addButtons.length);
+
+  if (addButtons.length === 0) return null;
+
+  const elementRect = element.getBoundingClientRect();
+  const elementCenterY = elementRect.top + elementRect.height / 2;
+
+  // Y座標が最も近いボタンを見つける
+  let nearestButton: Element | null = null;
+  let minDistance = Infinity;
+
+  addButtons.forEach((button) => {
+    const buttonRect = button.getBoundingClientRect();
+    const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+    const distance = Math.abs(buttonCenterY - elementCenterY);
+
+    console.log('🔍 [findNearestAddUserStoryButton] Button Y:', buttonCenterY, 'Distance:', distance);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestButton = button;
+    }
+  });
+
+  console.log('🔍 [findNearestAddUserStoryButton] Nearest button found:', !!nearestButton, 'Distance:', minDistance);
+
+  return nearestButton;
+}
+
+/**
  * Issueまでスムーススクロール（2段階: 上端 → scrollend → 中央）
  *
- * UserStory/Task/Test/Bugの場合は親のepic-version-wrapperを中央に配置
+ * Epic/Featureの場合: 最もY方向に近い"Add User Story"ボタンにスクロール
+ * UserStory/Task/Test/Bugの場合: 親のepic-version-wrapperを中央に配置
  * 視線誘導のため、まず上端に移動し、アニメーション完了後に中央に移動する
  *
  * @param issueId - IssueのID
@@ -26,17 +70,27 @@ export function scrollToIssue(issueId: string, issueType: string): boolean {
     console.log('📜 [scrollToIssue] Trying selector:', selector, 'Found:', !!element);
 
     if (element) {
-      // targetElementは常に検索でヒットした要素自身
-      const targetElement: Element = element;
+      // Epic/Featureの場合は、最も近いAddUserStoryボタンをスクロール先にする
+      let targetElement: Element = element;
+
+      if (['epic', 'feature'].includes(issueType)) {
+        const nearestButton = findNearestAddUserStoryButton(element);
+        if (nearestButton) {
+          console.log('📜 [scrollToIssue] Using nearest Add User Story button as target');
+          targetElement = nearestButton;
+        } else {
+          console.log('📜 [scrollToIssue] No Add User Story button found, using original element');
+        }
+      }
+
       console.log('📜 [scrollToIssue] Target element:', targetElement.className);
 
       // スクロールコンテナを特定
-      // UserStory/Task/Test/Bugの場合、epic-version-wrapper内でスクロールする
-      // Epic/Featureの場合、.triple-split-layout__center内でスクロールする
+      // すべてのissueタイプで epic-version-wrapper を優先的に使用
       let scrollContainer: Element | HTMLElement;
 
       if (['user-story', 'task', 'test', 'bug'].includes(issueType)) {
-        // epic-version-wrapperを探す（こちらが実際のスクロールコンテナ）
+        // UserStory/Task/Test/Bug: 親階層のepic-version-wrapperを探す
         const epicVersionWrapper = targetElement.closest('.epic-version-wrapper');
         if (epicVersionWrapper) {
           scrollContainer = epicVersionWrapper;
@@ -49,11 +103,18 @@ export function scrollToIssue(issueId: string, issueType: string): boolean {
           console.log('📜 [scrollToIssue] epic-version-wrapper not found, using fallback');
         }
       } else {
-        // Epic/Featureの場合
-        scrollContainer = targetElement.closest('.triple-split-layout__center')
-          || targetElement.closest('.kanban-fullscreen')
-          || document.documentElement;
-        console.log('📜 [scrollToIssue] Using standard scroll container for Epic/Feature');
+        // Epic/Feature: 最初に見つかったepic-version-wrapperを使用
+        const firstEpicVersionWrapper = document.querySelector('.epic-version-wrapper');
+        if (firstEpicVersionWrapper) {
+          scrollContainer = firstEpicVersionWrapper;
+          console.log('📜 [scrollToIssue] Using first epic-version-wrapper as scroll container');
+        } else {
+          // フォールバック
+          scrollContainer = targetElement.closest('.triple-split-layout__center')
+            || targetElement.closest('.kanban-fullscreen')
+            || document.documentElement;
+          console.log('📜 [scrollToIssue] epic-version-wrapper not found, using fallback');
+        }
       }
 
       console.log('📜 [scrollToIssue] Scroll container:',

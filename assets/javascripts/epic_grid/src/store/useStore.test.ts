@@ -1540,4 +1540,743 @@ describe('useStore - Normalized API (3D Grid)', () => {
     });
   });
 
+  describe('[High] Create UserStory/Task/Test/Bug', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      useStore.setState({
+        projectId: '1',
+        isDetailPaneVisible: false,
+        entities: {
+          epics: { 'e1': { id: 'e1', subject: 'Epic 1', feature_ids: ['f1'] } as any },
+          features: {
+            'f1': {
+              id: 'f1',
+              subject: 'Feature 1',
+              parent_epic_id: 'e1',
+              user_story_ids: []
+            } as any
+          },
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {},
+          versions: {},
+          users: {}
+        },
+        grid: {
+          index: {},
+          epic_order: ['e1'],
+          feature_order_by_epic: { 'e1': ['f1'] },
+          version_order: []
+        }
+      });
+    });
+
+    describe('createUserStory', () => {
+      it('should create user story and update entities', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-us-1',
+              subject: 'New User Story',
+              parent_feature_id: 'f1',
+              fixed_version_id: null,
+              task_ids: [],
+              test_ids: [],
+              bug_ids: []
+            },
+            updated_entities: {
+              features: {
+                'f1': {
+                  id: 'f1',
+                  subject: 'Feature 1',
+                  parent_epic_id: 'e1',
+                  user_story_ids: ['new-us-1']
+                }
+              },
+              user_stories: {
+                'new-us-1': {
+                  id: 'new-us-1',
+                  subject: 'New User Story',
+                  parent_feature_id: 'f1',
+                  fixed_version_id: null,
+                  task_ids: [],
+                  test_ids: [],
+                  bug_ids: []
+                }
+              }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createUserStory').mockResolvedValue(mockResponse);
+
+        const { createUserStory } = useStore.getState();
+        await createUserStory('f1', { subject: 'New User Story', description: '' });
+
+        const state = useStore.getState();
+        expect(state.entities.user_stories['new-us-1']).toBeDefined();
+        expect(state.entities.user_stories['new-us-1'].subject).toBe('New User Story');
+        expect(state.entities.features['f1'].user_story_ids).toContain('new-us-1');
+      });
+
+      it('should show created user story in detail pane', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-us-1',
+              subject: 'New User Story',
+              parent_feature_id: 'f1',
+              fixed_version_id: null,
+              task_ids: [],
+              test_ids: [],
+              bug_ids: []
+            },
+            updated_entities: {
+              features: { 'f1': { id: 'f1', user_story_ids: ['new-us-1'] } },
+              user_stories: { 'new-us-1': { id: 'new-us-1', subject: 'New User Story' } }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createUserStory').mockResolvedValue(mockResponse);
+
+        const { createUserStory } = useStore.getState();
+        await createUserStory('f1', { subject: 'New User Story', description: '' });
+
+        const state = useStore.getState();
+        expect(state.selectedEntity).toEqual({ type: 'issue', id: 'new-us-1' });
+        expect(state.isDetailPaneVisible).toBe(true);
+      });
+
+      it('should update grid.index with new user story', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-us-1',
+              subject: 'New User Story',
+              parent_feature_id: 'f1',
+              fixed_version_id: 'v1',
+              task_ids: [],
+              test_ids: [],
+              bug_ids: []
+            },
+            updated_entities: {
+              features: { 'f1': { id: 'f1', parent_epic_id: 'e1', user_story_ids: ['new-us-1'] } },
+              user_stories: { 'new-us-1': { id: 'new-us-1', subject: 'New User Story', fixed_version_id: 'v1' } }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createUserStory').mockResolvedValue(mockResponse);
+
+        const { createUserStory } = useStore.getState();
+        await createUserStory('f1', { subject: 'New User Story', description: '', fixed_version_id: 'v1' });
+
+        const state = useStore.getState();
+        const cellKey = 'e1:f1:v1';
+        expect(state.grid.index[cellKey]).toContain('new-us-1');
+      });
+
+      it('should throw error when projectId is not set', async () => {
+        useStore.setState({ projectId: null });
+
+        const { createUserStory } = useStore.getState();
+
+        await expect(createUserStory('f1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Project ID not set');
+      });
+
+      it('should set error state when API call fails', async () => {
+        vi.spyOn(API, 'createUserStory').mockRejectedValue(new Error('Network error'));
+
+        const { createUserStory } = useStore.getState();
+
+        await expect(createUserStory('f1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Network error');
+
+        const state = useStore.getState();
+        expect(state.error).toBe('Network error');
+      });
+    });
+
+    describe('createTask', () => {
+      beforeEach(() => {
+        useStore.setState({
+          entities: {
+            ...useStore.getState().entities,
+            user_stories: {
+              'us-1': {
+                id: 'us-1',
+                subject: 'User Story 1',
+                parent_feature_id: 'f1',
+                task_ids: []
+              } as any
+            }
+          }
+        });
+      });
+
+      it('should create task and update entities', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-task-1',
+              subject: 'New Task',
+              parent_user_story_id: 'us-1'
+            },
+            updated_entities: {
+              user_stories: {
+                'us-1': {
+                  id: 'us-1',
+                  subject: 'User Story 1',
+                  task_ids: ['new-task-1']
+                }
+              },
+              tasks: {
+                'new-task-1': {
+                  id: 'new-task-1',
+                  subject: 'New Task',
+                  parent_user_story_id: 'us-1'
+                }
+              }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createTask').mockResolvedValue(mockResponse);
+
+        const { createTask } = useStore.getState();
+        await createTask('us-1', { subject: 'New Task', description: '' });
+
+        const state = useStore.getState();
+        expect(state.entities.tasks['new-task-1']).toBeDefined();
+        expect(state.entities.tasks['new-task-1'].subject).toBe('New Task');
+        expect(state.entities.user_stories['us-1'].task_ids).toContain('new-task-1');
+      });
+
+      it('should show created task in detail pane', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-task-1',
+              subject: 'New Task',
+              parent_user_story_id: 'us-1'
+            },
+            updated_entities: {
+              user_stories: { 'us-1': { id: 'us-1', task_ids: ['new-task-1'] } },
+              tasks: { 'new-task-1': { id: 'new-task-1', subject: 'New Task' } }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createTask').mockResolvedValue(mockResponse);
+
+        const { createTask } = useStore.getState();
+        await createTask('us-1', { subject: 'New Task', description: '' });
+
+        const state = useStore.getState();
+        expect(state.selectedEntity).toEqual({ type: 'issue', id: 'new-task-1' });
+        expect(state.isDetailPaneVisible).toBe(true);
+      });
+
+      it('should throw error when projectId is not set', async () => {
+        useStore.setState({ projectId: null });
+
+        const { createTask } = useStore.getState();
+
+        await expect(createTask('us-1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Project ID not set');
+      });
+
+      it('should set error state when API call fails', async () => {
+        vi.spyOn(API, 'createTask').mockRejectedValue(new Error('Network error'));
+
+        const { createTask } = useStore.getState();
+
+        await expect(createTask('us-1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Network error');
+
+        const state = useStore.getState();
+        expect(state.error).toBe('Network error');
+      });
+    });
+
+    describe('createTest', () => {
+      beforeEach(() => {
+        useStore.setState({
+          entities: {
+            ...useStore.getState().entities,
+            user_stories: {
+              'us-1': {
+                id: 'us-1',
+                subject: 'User Story 1',
+                parent_feature_id: 'f1',
+                test_ids: []
+              } as any
+            }
+          }
+        });
+      });
+
+      it('should create test and update entities', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-test-1',
+              subject: 'New Test',
+              parent_user_story_id: 'us-1'
+            },
+            updated_entities: {
+              user_stories: {
+                'us-1': {
+                  id: 'us-1',
+                  subject: 'User Story 1',
+                  test_ids: ['new-test-1']
+                }
+              },
+              tests: {
+                'new-test-1': {
+                  id: 'new-test-1',
+                  subject: 'New Test',
+                  parent_user_story_id: 'us-1'
+                }
+              }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createTest').mockResolvedValue(mockResponse);
+
+        const { createTest } = useStore.getState();
+        await createTest('us-1', { subject: 'New Test', description: '' });
+
+        const state = useStore.getState();
+        expect(state.entities.tests['new-test-1']).toBeDefined();
+        expect(state.entities.tests['new-test-1'].subject).toBe('New Test');
+        expect(state.entities.user_stories['us-1'].test_ids).toContain('new-test-1');
+      });
+
+      it('should show created test in detail pane', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-test-1',
+              subject: 'New Test',
+              parent_user_story_id: 'us-1'
+            },
+            updated_entities: {
+              user_stories: { 'us-1': { id: 'us-1', test_ids: ['new-test-1'] } },
+              tests: { 'new-test-1': { id: 'new-test-1', subject: 'New Test' } }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createTest').mockResolvedValue(mockResponse);
+
+        const { createTest } = useStore.getState();
+        await createTest('us-1', { subject: 'New Test', description: '' });
+
+        const state = useStore.getState();
+        expect(state.selectedEntity).toEqual({ type: 'issue', id: 'new-test-1' });
+        expect(state.isDetailPaneVisible).toBe(true);
+      });
+
+      it('should throw error when projectId is not set', async () => {
+        useStore.setState({ projectId: null });
+
+        const { createTest } = useStore.getState();
+
+        await expect(createTest('us-1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Project ID not set');
+      });
+
+      it('should set error state when API call fails', async () => {
+        vi.spyOn(API, 'createTest').mockRejectedValue(new Error('Network error'));
+
+        const { createTest } = useStore.getState();
+
+        await expect(createTest('us-1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Network error');
+
+        const state = useStore.getState();
+        expect(state.error).toBe('Network error');
+      });
+    });
+
+    describe('createBug', () => {
+      beforeEach(() => {
+        useStore.setState({
+          entities: {
+            ...useStore.getState().entities,
+            user_stories: {
+              'us-1': {
+                id: 'us-1',
+                subject: 'User Story 1',
+                parent_feature_id: 'f1',
+                bug_ids: []
+              } as any
+            }
+          }
+        });
+      });
+
+      it('should create bug and update entities', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-bug-1',
+              subject: 'New Bug',
+              parent_user_story_id: 'us-1'
+            },
+            updated_entities: {
+              user_stories: {
+                'us-1': {
+                  id: 'us-1',
+                  subject: 'User Story 1',
+                  bug_ids: ['new-bug-1']
+                }
+              },
+              bugs: {
+                'new-bug-1': {
+                  id: 'new-bug-1',
+                  subject: 'New Bug',
+                  parent_user_story_id: 'us-1'
+                }
+              }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createBug').mockResolvedValue(mockResponse);
+
+        const { createBug } = useStore.getState();
+        await createBug('us-1', { subject: 'New Bug', description: '' });
+
+        const state = useStore.getState();
+        expect(state.entities.bugs['new-bug-1']).toBeDefined();
+        expect(state.entities.bugs['new-bug-1'].subject).toBe('New Bug');
+        expect(state.entities.user_stories['us-1'].bug_ids).toContain('new-bug-1');
+      });
+
+      it('should show created bug in detail pane', async () => {
+        const mockResponse = {
+          success: true,
+          data: {
+            created_entity: {
+              id: 'new-bug-1',
+              subject: 'New Bug',
+              parent_user_story_id: 'us-1'
+            },
+            updated_entities: {
+              user_stories: { 'us-1': { id: 'us-1', bug_ids: ['new-bug-1'] } },
+              bugs: { 'new-bug-1': { id: 'new-bug-1', subject: 'New Bug' } }
+            }
+          },
+          meta: { timestamp: '2025-01-01T00:00:00Z', request_id: 'test-123' }
+        };
+
+        vi.spyOn(API, 'createBug').mockResolvedValue(mockResponse);
+
+        const { createBug } = useStore.getState();
+        await createBug('us-1', { subject: 'New Bug', description: '' });
+
+        const state = useStore.getState();
+        expect(state.selectedEntity).toEqual({ type: 'issue', id: 'new-bug-1' });
+        expect(state.isDetailPaneVisible).toBe(true);
+      });
+
+      it('should throw error when projectId is not set', async () => {
+        useStore.setState({ projectId: null });
+
+        const { createBug } = useStore.getState();
+
+        await expect(createBug('us-1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Project ID not set');
+      });
+
+      it('should set error state when API call fails', async () => {
+        vi.spyOn(API, 'createBug').mockRejectedValue(new Error('Network error'));
+
+        const { createBug } = useStore.getState();
+
+        await expect(createBug('us-1', { subject: 'Test', description: '' }))
+          .rejects.toThrow('Network error');
+
+        const state = useStore.getState();
+        expect(state.error).toBe('Network error');
+      });
+    });
+  });
+
+  describe('[High] Reorder Epics/Versions', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      useStore.setState({
+        projectId: '1',
+        isDirty: false,
+        pendingChanges: {
+          movedUserStories: [],
+          reorderedEpics: null,
+          reorderedVersions: null
+        },
+        grid: {
+          index: {},
+          epic_order: ['e1', 'e2', 'e3'],
+          feature_order_by_epic: {},
+          version_order: ['v1', 'v2', 'v3']
+        }
+      });
+    });
+
+    describe('reorderEpics', () => {
+      it('should reorder epics in grid', () => {
+        const { reorderEpics } = useStore.getState();
+
+        // e1をe2の後に移動
+        reorderEpics('e1', 'e2');
+
+        const state = useStore.getState();
+        expect(state.grid.epic_order).toEqual(['e2', 'e1', 'e3']);
+      });
+
+      it('should update isDirty flag', () => {
+        const { reorderEpics } = useStore.getState();
+
+        reorderEpics('e1', 'e2');
+
+        const state = useStore.getState();
+        expect(state.isDirty).toBe(true);
+      });
+
+      it('should store reordered epics in pendingChanges', () => {
+        const { reorderEpics } = useStore.getState();
+
+        reorderEpics('e1', 'e2');
+
+        const state = useStore.getState();
+        expect(state.pendingChanges.reorderedEpics).toEqual(['e2', 'e1', 'e3']);
+      });
+
+      it('should do nothing when source epic not found', () => {
+        const { reorderEpics } = useStore.getState();
+
+        const initialOrder = useStore.getState().grid.epic_order;
+        reorderEpics('e999', 'e2');
+
+        const state = useStore.getState();
+        expect(state.grid.epic_order).toEqual(initialOrder);
+        expect(state.isDirty).toBe(false);
+      });
+
+      it('should do nothing when target epic not found', () => {
+        const { reorderEpics } = useStore.getState();
+
+        const initialOrder = useStore.getState().grid.epic_order;
+        reorderEpics('e1', 'e999');
+
+        const state = useStore.getState();
+        expect(state.grid.epic_order).toEqual(initialOrder);
+        expect(state.isDirty).toBe(false);
+      });
+
+      it('should handle moving epic to end of list', () => {
+        const { reorderEpics } = useStore.getState();
+
+        // e1をe3の後に移動
+        reorderEpics('e1', 'e3');
+
+        const state = useStore.getState();
+        expect(state.grid.epic_order).toEqual(['e2', 'e3', 'e1']);
+      });
+
+      it('should handle moving epic backward', () => {
+        const { reorderEpics } = useStore.getState();
+
+        // e3をe1の後に移動
+        reorderEpics('e3', 'e1');
+
+        const state = useStore.getState();
+        expect(state.grid.epic_order).toEqual(['e1', 'e3', 'e2']);
+      });
+    });
+
+    describe('reorderVersions', () => {
+      it('should reorder versions in grid', () => {
+        const { reorderVersions } = useStore.getState();
+
+        // v1をv2の後に移動
+        reorderVersions('v1', 'v2');
+
+        const state = useStore.getState();
+        expect(state.grid.version_order).toEqual(['v2', 'v1', 'v3']);
+      });
+
+      it('should update isDirty flag', () => {
+        const { reorderVersions } = useStore.getState();
+
+        reorderVersions('v1', 'v2');
+
+        const state = useStore.getState();
+        expect(state.isDirty).toBe(true);
+      });
+
+      it('should store reordered versions in pendingChanges', () => {
+        const { reorderVersions } = useStore.getState();
+
+        reorderVersions('v1', 'v2');
+
+        const state = useStore.getState();
+        expect(state.pendingChanges.reorderedVersions).toEqual(['v2', 'v1', 'v3']);
+      });
+
+      it('should do nothing when source version not found', () => {
+        const { reorderVersions } = useStore.getState();
+
+        const initialOrder = useStore.getState().grid.version_order;
+        reorderVersions('v999', 'v2');
+
+        const state = useStore.getState();
+        expect(state.grid.version_order).toEqual(initialOrder);
+        expect(state.isDirty).toBe(false);
+      });
+
+      it('should do nothing when target version not found', () => {
+        const { reorderVersions } = useStore.getState();
+
+        const initialOrder = useStore.getState().grid.version_order;
+        reorderVersions('v1', 'v999');
+
+        const state = useStore.getState();
+        expect(state.grid.version_order).toEqual(initialOrder);
+        expect(state.isDirty).toBe(false);
+      });
+
+      it('should handle moving version to end of list', () => {
+        const { reorderVersions } = useStore.getState();
+
+        // v1をv3の後に移動
+        reorderVersions('v1', 'v3');
+
+        const state = useStore.getState();
+        expect(state.grid.version_order).toEqual(['v2', 'v3', 'v1']);
+      });
+
+      it('should handle moving version backward', () => {
+        const { reorderVersions } = useStore.getState();
+
+        // v3をv1の後に移動
+        reorderVersions('v3', 'v1');
+
+        const state = useStore.getState();
+        expect(state.grid.version_order).toEqual(['v1', 'v3', 'v2']);
+      });
+    });
+  });
+
+  describe('[Medium] toggleExcludeClosedVersions', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      localStorage.clear();
+      useStore.setState({
+        projectId: '1',
+        excludeClosedVersions: false
+      });
+    });
+
+    it('should toggle excludeClosedVersions state', () => {
+      const { toggleExcludeClosedVersions } = useStore.getState();
+
+      expect(useStore.getState().excludeClosedVersions).toBe(false);
+
+      toggleExcludeClosedVersions();
+      expect(useStore.getState().excludeClosedVersions).toBe(true);
+
+      toggleExcludeClosedVersions();
+      expect(useStore.getState().excludeClosedVersions).toBe(false);
+    });
+
+    it('should save excludeClosedVersions to localStorage', () => {
+      const { toggleExcludeClosedVersions } = useStore.getState();
+
+      toggleExcludeClosedVersions();
+
+      const saved = localStorage.getItem('kanban_exclude_closed_versions');
+      expect(saved).toBe('true');
+
+      toggleExcludeClosedVersions();
+
+      const savedAgain = localStorage.getItem('kanban_exclude_closed_versions');
+      expect(savedAgain).toBe('false');
+    });
+
+    it('should trigger fetchGridData when projectId is set', async () => {
+      const fetchSpy = vi.spyOn(API, 'fetchGridData').mockResolvedValue(normalizedMockData);
+
+      const { toggleExcludeClosedVersions } = useStore.getState();
+      toggleExcludeClosedVersions();
+
+      // fetchGridDataはstore内部のメソッドで、projectIdだけを引数に取る
+      // API.fetchGridDataが呼ばれるのを待つ
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledWith('1', expect.objectContaining({
+          exclude_closed_versions: true
+        }));
+      });
+    });
+
+    it('should not trigger fetchGridData when projectId is not set', () => {
+      const fetchSpy = vi.spyOn(API, 'fetchGridData').mockResolvedValue(normalizedMockData);
+
+      useStore.setState({ projectId: null });
+
+      const { toggleExcludeClosedVersions } = useStore.getState();
+      toggleExcludeClosedVersions();
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('should refetch data with updated excludeClosedVersions parameter', async () => {
+      const fetchSpy = vi.spyOn(API, 'fetchGridData').mockResolvedValue(normalizedMockData);
+
+      const { toggleExcludeClosedVersions } = useStore.getState();
+
+      // Toggle to true
+      toggleExcludeClosedVersions();
+
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledWith('1', expect.objectContaining({
+          exclude_closed_versions: true
+        }));
+      });
+
+      fetchSpy.mockClear();
+
+      // Toggle back to false
+      toggleExcludeClosedVersions();
+
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledWith('1', expect.objectContaining({
+          exclude_closed_versions: false
+        }));
+      });
+    });
+  });
+
 });
