@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../../store/useStore';
 import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode } from '../../utils/domUtils';
+import { StatsToggle } from '../common/StatsToggle';
 
 /**
  * ListTab コンポーネント
@@ -15,6 +16,7 @@ import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode }
 export const ListTab: React.FC = () => {
   const entities = useStore(state => state.entities);
   const epicOrder = useStore(state => state.grid.epic_order);
+  const isStatsVisible = useStore(state => state.isStatsVisible);
 
   // Epic配下のFeatureをグループ化
   const buildHierarchy = () => {
@@ -85,6 +87,10 @@ export const ListTab: React.FC = () => {
         </p>
       </div>
 
+      <div className="list-tab__control">
+        <StatsToggle />
+      </div>
+
       <div className="list-tab__content">
         {hierarchy.length === 0 ? (
           <div className="list-tab__empty">
@@ -107,11 +113,13 @@ export const ListTab: React.FC = () => {
                       <div className="list-tab__epic-subject">
                         {epic.subject}
                       </div>
-                      <div className="list-tab__epic-stats">
-                        {epic.statistics.total_features}件のFeature
-                        {' '}・{' '}
-                        {Math.round(epic.statistics.completion_percentage)}%完了
-                      </div>
+                      {isStatsVisible && (
+                        <div className="list-tab__epic-stats">
+                          {epic.statistics.total_features}件のFeature
+                          {' '}・{' '}
+                          {Math.round(epic.statistics.completion_percentage)}%完了
+                        </div>
+                      )}
                     </div>
                   </summary>
 
@@ -129,11 +137,13 @@ export const ListTab: React.FC = () => {
                             <div className="list-tab__feature-subject">
                               {feature.subject}
                             </div>
-                            <div className="list-tab__feature-stats">
-                              {feature.statistics.total_user_stories}件のストーリー
-                              {' '}・{' '}
-                              {Math.round(feature.statistics.completion_percentage)}%完了
-                            </div>
+                            {isStatsVisible && (
+                              <div className="list-tab__feature-stats">
+                                {feature.statistics.total_user_stories}件のストーリー
+                                {' '}・{' '}
+                                {Math.round(feature.statistics.completion_percentage)}%完了
+                              </div>
+                            )}
                           </div>
                         </li>
                       ))}

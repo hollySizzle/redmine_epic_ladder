@@ -2513,6 +2513,15 @@
       ); // 要素間の間隔、padding変換不可のためmargin使用
     }
 
+    &__control {
+      padding: var(--size-8) var(--size-16);
+      border-bottom: var(--border-width-thin) solid #e0e0e0;
+      background-color: #fff;
+      display: flex;
+      justify-content: flex-start;
+      gap: var(--size-8);
+    }
+
     &__content {
       flex: 1;
       overflow-y: auto;

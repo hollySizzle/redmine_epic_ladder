@@ -91,7 +91,8 @@ describe('ListTab', () => {
     vi.mocked(useStore).mockImplementation((selector: any) => {
       const state = {
         entities: mockEntities,
-        grid: mockGrid
+        grid: mockGrid,
+        isStatsVisible: true
       };
       return selector(state);
     });
@@ -191,6 +192,42 @@ describe('ListTab', () => {
           tasks: {},
           tests: {},
           bugs: {},
+          users: {},
+        },
+        grid: { epic_order: [] },
+        isStatsVisible: true
+      };
+      return selector(state);
+    });
+
+    render(<ListTab />);
+    expect(screen.getByText('📭 Epicがありません')).toBeInTheDocument();
+  });
+
+  it('Featureがない場合でもEpicが表示される', () => {
+    vi.mocked(useStore).mockImplementation((selector: any) => {
+      const state = {
+        entities: {
+          epics: {
+            'epic-no-features': {
+              id: 'epic-no-features',
+              subject: 'Featureなし Epic',
+              feature_ids: [],
+              statistics: {
+                total_features: 0,
+                completed_features: 0,
+                total_user_stories: 0,
+                total_child_items: 0,
+                completion_percentage: 0
+              }
+            }
+          },
+          features: {},
+          versions: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {},
           users: {}
         },
         grid: {
@@ -198,7 +235,8 @@ describe('ListTab', () => {
           version_order: [],
           feature_order_by_epic: {},
           index: {}
-        }
+        },
+        isStatsVisible: true
       };
       return selector(state);
     });
