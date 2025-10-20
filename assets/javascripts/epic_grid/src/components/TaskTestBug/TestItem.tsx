@@ -28,10 +28,12 @@ export const TestItem: React.FC<TestItemProps> = ({ testId }) => {
   // 担当者不在チェック
   const isUnassigned = !test.assigned_to_id;
 
+  // 完了済みチケットは、担当者未設定に関わらず完了済みの色を優先
+  const isClosed = test.status === 'closed';
   const className = [
     'test-item',
-    test.status === 'closed' && 'closed',
-    isUnassigned && isUnassignedHighlightVisible && 'unassigned'
+    isClosed && 'closed',
+    !isClosed && isUnassigned && isUnassignedHighlightVisible && 'unassigned'
   ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({

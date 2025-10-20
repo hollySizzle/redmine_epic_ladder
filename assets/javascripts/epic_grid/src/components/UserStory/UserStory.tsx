@@ -54,11 +54,13 @@ export const UserStory: React.FC<UserStoryProps> = ({ storyId }) => {
 
   const shouldHighlightUnassigned = isSelfUnassigned || hasUnassignedChildren;
 
+  // 完了済みチケットは、期日超過や担当者未設定に関わらず完了済みの色を優先
+  const isClosed = story.status === 'closed';
   const className = [
     'user-story',
-    story.status === 'closed' && 'closed',
-    shouldHighlight && 'overdue',
-    shouldHighlightUnassigned && isUnassignedHighlightVisible && 'unassigned'
+    isClosed && 'closed',
+    !isClosed && shouldHighlight && 'overdue',
+    !isClosed && shouldHighlightUnassigned && isUnassignedHighlightVisible && 'unassigned'
   ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({

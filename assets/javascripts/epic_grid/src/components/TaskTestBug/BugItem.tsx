@@ -28,10 +28,12 @@ export const BugItem: React.FC<BugItemProps> = ({ bugId }) => {
   // 担当者不在チェック
   const isUnassigned = !bug.assigned_to_id;
 
+  // 完了済みチケットは、担当者未設定に関わらず完了済みの色を優先
+  const isClosed = bug.status === 'closed';
   const className = [
     'bug-item',
-    bug.status === 'closed' && 'closed',
-    isUnassigned && isUnassignedHighlightVisible && 'unassigned'
+    isClosed && 'closed',
+    !isClosed && isUnassigned && isUnassignedHighlightVisible && 'unassigned'
   ].filter(Boolean).join(' ');
 
   const ref = useDraggableAndDropTarget({
