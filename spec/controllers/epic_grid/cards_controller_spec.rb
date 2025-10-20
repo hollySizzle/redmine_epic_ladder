@@ -129,6 +129,75 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       new_story = Issue.last
       expect(new_story.fixed_version).to eq(version2) # version1ではなくversion2
     end
+
+    context 'バージョンに期日が設定されている場合' do
+      let!(:version_a) { create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 10, 5)) }
+      let!(:version_b) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 15)) }
+
+      before do
+        feature.update!(fixed_version: version_b)
+      end
+
+      it 'UserStory作成時にバージョンの期日範囲から開始日・終了日が自動設定される' do
+        post :create_user_story, params: valid_params
+
+        new_story = Issue.last
+        expect(new_story.fixed_version).to eq(version_b)
+        expect(new_story.start_date).to eq(Date.new(2025, 10, 5))  # version_aの期日（直前のバージョン）
+        expect(new_story.due_date).to eq(Date.new(2025, 10, 15))   # version_bの期日
+      end
+
+      it 'クライアント指定のバージョンから期日が自動設定される' do
+        params_with_version = valid_params.deep_merge({
+          user_story: { fixed_version_id: version_a.id }
+        })
+
+        post :create_user_story, params: params_with_version
+
+        new_story = Issue.last
+        expect(new_story.fixed_version).to eq(version_a)
+        expect(new_story.start_date).to eq(Date.new(2025, 10, 5))  # 最も早いバージョンなので開始日=終了日
+        expect(new_story.due_date).to eq(Date.new(2025, 10, 5))
+      end
+
+      it 'API responseに開始日・終了日が含まれる' do
+        post :create_user_story, params: valid_params
+
+        json = JSON.parse(response.body)
+        created_entity = json['data']['created_entity']
+
+        expect(created_entity['start_date']).to eq('2025-10-05')
+        expect(created_entity['due_date']).to eq('2025-10-15')
+      end
+    end
+
+    context 'バージョンの期日が未設定の場合' do
+      let!(:version_no_date) { create(:version, project: project, name: 'v1.0', effective_date: nil) }
+
+      before do
+        feature.update!(fixed_version: version_no_date)
+      end
+
+      it 'UserStoryの開始日・終了日はnilのまま' do
+        post :create_user_story, params: valid_params
+
+        new_story = Issue.last
+        expect(new_story.fixed_version).to eq(version_no_date)
+        expect(new_story.start_date).to be_nil
+        expect(new_story.due_date).to be_nil
+      end
+    end
+
+    context 'バージョンが未設定の場合' do
+      it 'UserStoryの開始日・終了日はnilのまま' do
+        post :create_user_story, params: valid_params
+
+        new_story = Issue.last
+        expect(new_story.fixed_version).to be_nil
+        expect(new_story.start_date).to be_nil
+        expect(new_story.due_date).to be_nil
+      end
+    end
   end
 
   describe 'POST #create_task' do
@@ -212,6 +281,34 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
         expect(new_task.due_date).to be_nil
       end
     end
+
+    context '親UserStoryに日付がなく、バージョンに期日が設定されている場合' do
+      let!(:version_a) { create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 10, 5)) }
+      let!(:version_b) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 15)) }
+
+      before do
+        user_story.update!(fixed_version: version_b)
+      end
+
+      it 'Task作成時にバージョンの期日範囲から開始日・終了日が自動設定される' do
+        post :create_task, params: valid_params
+
+        new_task = Issue.last
+        expect(new_task.fixed_version).to eq(version_b)
+        expect(new_task.start_date).to eq(Date.new(2025, 10, 5))   # version_aの期日（直前のバージョン）
+        expect(new_task.due_date).to eq(Date.new(2025, 10, 15))    # version_bの期日
+      end
+
+      it 'API responseに開始日・終了日が含まれる' do
+        post :create_task, params: valid_params
+
+        json = JSON.parse(response.body)
+        created_entity = json['data']['created_entity']
+
+        expect(created_entity['start_date']).to eq('2025-10-05')
+        expect(created_entity['due_date']).to eq('2025-10-15')
+      end
+    end
   end
 
   describe 'POST #create_test' do
@@ -272,6 +369,34 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
         new_test = Issue.last
         expect(new_test.start_date).to be_nil
         expect(new_test.due_date).to be_nil
+      end
+    end
+
+    context '親UserStoryに日付がなく、バージョンに期日が設定されている場合' do
+      let!(:version_a) { create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 10, 5)) }
+      let!(:version_b) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 15)) }
+
+      before do
+        user_story.update!(fixed_version: version_b)
+      end
+
+      it 'Test作成時にバージョンの期日範囲から開始日・終了日が自動設定される' do
+        post :create_test, params: valid_params
+
+        new_test = Issue.last
+        expect(new_test.fixed_version).to eq(version_b)
+        expect(new_test.start_date).to eq(Date.new(2025, 10, 5))   # version_aの期日（直前のバージョン）
+        expect(new_test.due_date).to eq(Date.new(2025, 10, 15))    # version_bの期日
+      end
+
+      it 'API responseに開始日・終了日が含まれる' do
+        post :create_test, params: valid_params
+
+        json = JSON.parse(response.body)
+        created_entity = json['data']['created_entity']
+
+        expect(created_entity['start_date']).to eq('2025-10-05')
+        expect(created_entity['due_date']).to eq('2025-10-15')
       end
     end
   end
@@ -335,6 +460,34 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
         new_bug = Issue.last
         expect(new_bug.start_date).to be_nil
         expect(new_bug.due_date).to be_nil
+      end
+    end
+
+    context '親UserStoryに日付がなく、バージョンに期日が設定されている場合' do
+      let!(:version_a) { create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 10, 5)) }
+      let!(:version_b) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 15)) }
+
+      before do
+        user_story.update!(fixed_version: version_b)
+      end
+
+      it 'Bug作成時にバージョンの期日範囲から開始日・終了日が自動設定される' do
+        post :create_bug, params: valid_params
+
+        new_bug = Issue.last
+        expect(new_bug.fixed_version).to eq(version_b)
+        expect(new_bug.start_date).to eq(Date.new(2025, 10, 5))   # version_aの期日（直前のバージョン）
+        expect(new_bug.due_date).to eq(Date.new(2025, 10, 15))    # version_bの期日
+      end
+
+      it 'API responseに開始日・終了日が含まれる' do
+        post :create_bug, params: valid_params
+
+        json = JSON.parse(response.body)
+        created_entity = json['data']['created_entity']
+
+        expect(created_entity['start_date']).to eq('2025-10-05')
+        expect(created_entity['due_date']).to eq('2025-10-15')
       end
     end
   end

@@ -640,4 +640,316 @@ describe('useStore - Normalized API (3D Grid)', () => {
       expect(typeof toggleHideEmptyEpicsVersions).toBe('function');
     });
   });
+
+  describe('Side Menu Toggle', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('should have default side menu visibility as false', () => {
+      const state = useStore.getState();
+      expect(state.isSideMenuVisible).toBeDefined();
+    });
+
+    it('should toggle side menu visibility', () => {
+      const { toggleSideMenu } = useStore.getState();
+      
+      const initialState = useStore.getState().isSideMenuVisible;
+      
+      toggleSideMenu();
+      expect(useStore.getState().isSideMenuVisible).toBe(!initialState);
+      
+      toggleSideMenu();
+      expect(useStore.getState().isSideMenuVisible).toBe(initialState);
+    });
+
+    it('should save side menu visibility to localStorage', () => {
+      const { toggleSideMenu } = useStore.getState();
+      
+      toggleSideMenu();
+      
+      const saved = localStorage.getItem('kanban_side_menu_visible');
+      expect(saved).not.toBeNull();
+    });
+  });
+
+  describe('Active Side Tab', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('should have default active side tab', () => {
+      const state = useStore.getState();
+      expect(state.activeSideTab).toBeDefined();
+    });
+
+    it('should set active side tab', () => {
+      const { setActiveSideTab } = useStore.getState();
+      
+      setActiveSideTab('search');
+      expect(useStore.getState().activeSideTab).toBe('search');
+      
+      setActiveSideTab('list');
+      expect(useStore.getState().activeSideTab).toBe('list');
+      
+      setActiveSideTab('about');
+      expect(useStore.getState().activeSideTab).toBe('about');
+    });
+
+    it('should save active side tab to localStorage', () => {
+      const { setActiveSideTab } = useStore.getState();
+      
+      setActiveSideTab('search');
+      
+      const saved = localStorage.getItem('kanban_active_side_tab');
+      expect(saved).toBe('search');
+    });
+  });
+
+  describe('Vertical Mode Toggle', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('should toggle vertical mode', () => {
+      const { toggleVerticalMode } = useStore.getState();
+      
+      const initialState = useStore.getState().isVerticalMode;
+      
+      toggleVerticalMode();
+      expect(useStore.getState().isVerticalMode).toBe(!initialState);
+      
+      toggleVerticalMode();
+      expect(useStore.getState().isVerticalMode).toBe(initialState);
+    });
+
+    it('should save vertical mode to localStorage', () => {
+      const { toggleVerticalMode } = useStore.getState();
+      
+      toggleVerticalMode();
+      
+      const saved = localStorage.getItem('kanban_vertical_mode');
+      expect(saved).not.toBeNull();
+    });
+  });
+
+  describe('Assigned To Visibility Toggle', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('should toggle assigned to visibility', () => {
+      const { toggleAssignedToVisible } = useStore.getState();
+      
+      const initialState = useStore.getState().isAssignedToVisible;
+      
+      toggleAssignedToVisible();
+      expect(useStore.getState().isAssignedToVisible).toBe(!initialState);
+      
+      toggleAssignedToVisible();
+      expect(useStore.getState().isAssignedToVisible).toBe(initialState);
+    });
+
+    it('should save assigned to visibility to localStorage', () => {
+      const { toggleAssignedToVisible } = useStore.getState();
+      
+      toggleAssignedToVisible();
+      
+      const saved = localStorage.getItem('kanban_assigned_to_visible');
+      expect(saved).not.toBeNull();
+    });
+  });
+
+  describe('Due Date Visibility Toggle', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('should toggle due date visibility', () => {
+      const { toggleDueDateVisible } = useStore.getState();
+      
+      const initialState = useStore.getState().isDueDateVisible;
+      
+      toggleDueDateVisible();
+      expect(useStore.getState().isDueDateVisible).toBe(!initialState);
+      
+      toggleDueDateVisible();
+      expect(useStore.getState().isDueDateVisible).toBe(initialState);
+    });
+
+    it('should save due date visibility to localStorage', () => {
+      const { toggleDueDateVisible } = useStore.getState();
+      
+      toggleDueDateVisible();
+      
+      const saved = localStorage.getItem('kanban_due_date_visible');
+      expect(saved).not.toBeNull();
+    });
+  });
+
+  describe('User Story Collapse States', () => {
+    beforeEach(() => {
+      localStorage.clear();
+      useStore.setState({
+        userStoryCollapseStates: {}
+      });
+    });
+
+    it('should set user story collapsed state', () => {
+      const { setUserStoryCollapsed } = useStore.getState();
+      
+      setUserStoryCollapsed('us-1', true);
+      expect(useStore.getState().userStoryCollapseStates['us-1']).toBe(true);
+      
+      setUserStoryCollapsed('us-1', false);
+      expect(useStore.getState().userStoryCollapseStates['us-1']).toBe(false);
+    });
+
+    it('should save collapse states to localStorage', () => {
+      const { setUserStoryCollapsed } = useStore.getState();
+      
+      setUserStoryCollapsed('us-1', true);
+      
+      const saved = localStorage.getItem('kanban_userstory_collapse_states');
+      expect(saved).not.toBeNull();
+      
+      const parsed = JSON.parse(saved!);
+      expect(parsed['us-1']).toBe(true);
+    });
+
+    it('should set all user stories collapsed', () => {
+      const { setAllUserStoriesCollapsed } = useStore.getState();
+      
+      // First set some to entities
+      useStore.setState({
+        entities: {
+          ...useStore.getState().entities,
+          user_stories: {
+            'us-1': { id: 'us-1', title: 'Story 1' } as any,
+            'us-2': { id: 'us-2', title: 'Story 2' } as any,
+          }
+        }
+      });
+      
+      setAllUserStoriesCollapsed(true);
+      
+      const states = useStore.getState().userStoryCollapseStates;
+      expect(states['us-1']).toBe(true);
+      expect(states['us-2']).toBe(true);
+    });
+  });
+
+  describe('Filters Management', () => {
+    beforeEach(() => {
+      localStorage.clear();
+      vi.clearAllMocks();
+    });
+
+    it('should set filters', () => {
+      const { setFilters } = useStore.getState();
+      
+      const filters = {
+        fixed_version_id_in: ['1', '2'],
+        assigned_to_id_in: [1, 2]
+      };
+      
+      setFilters(filters);
+      
+      expect(useStore.getState().filters).toEqual(filters);
+    });
+
+    it('should save filters to localStorage', () => {
+      const { setFilters } = useStore.getState();
+      
+      const filters = {
+        fixed_version_id_in: ['1'],
+      };
+      
+      setFilters(filters);
+      
+      const saved = localStorage.getItem('kanban_filters');
+      expect(saved).not.toBeNull();
+      
+      const parsed = JSON.parse(saved!);
+      expect(parsed.fixed_version_id_in).toEqual(['1']);
+    });
+
+    it('should clear filters', () => {
+      const { setFilters, clearFilters } = useStore.getState();
+      
+      setFilters({ fixed_version_id_in: ['1'] });
+      expect(Object.keys(useStore.getState().filters).length).toBeGreaterThan(0);
+      
+      clearFilters();
+      expect(Object.keys(useStore.getState().filters).length).toBe(0);
+    });
+
+    it('should clear filters from localStorage', () => {
+      const { setFilters, clearFilters } = useStore.getState();
+      
+      setFilters({ fixed_version_id_in: ['1'] });
+      clearFilters();
+      
+      const saved = localStorage.getItem('kanban_filters');
+      const parsed = saved ? JSON.parse(saved) : {};
+      expect(Object.keys(parsed).length).toBe(0);
+    });
+  });
+
+  describe('Unassigned Highlight Toggle', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('should toggle unassigned highlight visibility', () => {
+      const { toggleUnassignedHighlightVisible } = useStore.getState();
+      
+      const initialState = useStore.getState().isUnassignedHighlightVisible;
+      
+      toggleUnassignedHighlightVisible();
+      expect(useStore.getState().isUnassignedHighlightVisible).toBe(!initialState);
+      
+      toggleUnassignedHighlightVisible();
+      expect(useStore.getState().isUnassignedHighlightVisible).toBe(initialState);
+    });
+
+    it('should save unassigned highlight visibility to localStorage', () => {
+      const { toggleUnassignedHighlightVisible } = useStore.getState();
+      
+      toggleUnassignedHighlightVisible();
+      
+      const saved = localStorage.getItem('kanban_unassigned_highlight_visible');
+      expect(saved).not.toBeNull();
+    });
+  });
+
+  describe('Selected Entity', () => {
+    it('should set selected entity', () => {
+      const { setSelectedEntity } = useStore.getState();
+      
+      setSelectedEntity('issue', '123');
+      
+      const state = useStore.getState();
+      expect(state.selectedEntity).toEqual({ type: 'issue', id: '123' });
+    });
+
+    it('should set selected entity to version', () => {
+      const { setSelectedEntity } = useStore.getState();
+      
+      setSelectedEntity('version', '456');
+      
+      const state = useStore.getState();
+      expect(state.selectedEntity).toEqual({ type: 'version', id: '456' });
+    });
+
+    it('should clear selected entity', () => {
+      const { setSelectedEntity, clearSelectedEntity } = useStore.getState();
+
+      setSelectedEntity('issue', '123');
+      expect(useStore.getState().selectedEntity).not.toBeNull();
+
+      clearSelectedEntity();
+      expect(useStore.getState().selectedEntity).toBeNull();
+    });
+  });
 });
