@@ -20,7 +20,15 @@ export const SearchTab: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // 検索対象トグル
+  const [searchTargets, setSearchTargets] = useState({
+    subject: true,    // タイトル検索（デフォルトON）
+    status: false,    // ステータス検索
+    assignee: false   // 担当者名検索
+  });
+
   const entities = useStore(state => state.entities);
+  const users = useStore(state => state.entities.users);
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
   const toggleDetailPane = useStore(state => state.toggleDetailPane);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
@@ -46,8 +54,8 @@ export const SearchTab: React.FC = () => {
       return;
     }
 
-    // 全マッチするissueを検索
-    const results = searchAllIssues(entities, query);
+    // 全マッチするissueを検索（検索対象トグルを渡す）
+    const results = searchAllIssues(entities, query, searchTargets, users);
     setSearchResults(results);
     setHasSearched(true);
   };
@@ -126,6 +134,13 @@ export const SearchTab: React.FC = () => {
     }
   };
 
+  const handleToggleTarget = (target: keyof typeof searchTargets) => {
+    setSearchTargets(prev => ({
+      ...prev,
+      [target]: !prev[target]
+    }));
+  };
+
   return (
     <div className="search-tab">
       <div className="search-tab__control">
@@ -157,6 +172,33 @@ export const SearchTab: React.FC = () => {
         >
           🔍 検索
         </button>
+      </div>
+
+      <div className="search-tab__toggles">
+        <label className="search-tab__toggle">
+          <input
+            type="checkbox"
+            checked={searchTargets.subject}
+            onChange={() => handleToggleTarget('subject')}
+          />
+          <span>タイトルを含む</span>
+        </label>
+        <label className="search-tab__toggle">
+          <input
+            type="checkbox"
+            checked={searchTargets.status}
+            onChange={() => handleToggleTarget('status')}
+          />
+          <span>ステータスを含む</span>
+        </label>
+        <label className="search-tab__toggle">
+          <input
+            type="checkbox"
+            checked={searchTargets.assignee}
+            onChange={() => handleToggleTarget('assignee')}
+          />
+          <span>担当者名を含む</span>
+        </label>
       </div>
 
       <div className="search-tab__results">

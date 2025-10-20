@@ -77,15 +77,29 @@ export function searchIssues(entities: Entities, query: string): SearchResult | 
   return null;
 }
 
+export interface SearchTargets {
+  subject: boolean;   // タイトル検索
+  status: boolean;    // ステータス検索
+  assignee: boolean;  // 担当者名検索
+}
+
 /**
  * 全entitiesからタイトルで検索し、マッチした全てのissueを返す（部分一致、大文字小文字区別なし）
  * 【Phase 1対応】数値のみ入力時はID完全一致検索を優先
+ * 【Phase 2対応】検索対象をトグルで選択可能
  *
  * @param entities - Zustandストアのentities
  * @param query - 検索クエリ
+ * @param searchTargets - 検索対象トグル（デフォルト: タイトルのみ）
+ * @param users - ユーザー情報（担当者名検索用）
  * @returns マッチした全てのissue配列（見つからない場合は空配列）
  */
-export function searchAllIssues(entities: Entities, query: string): SearchResult[] {
+export function searchAllIssues(
+  entities: Entities,
+  query: string,
+  searchTargets: SearchTargets = { subject: true, status: false, assignee: false },
+  users?: Record<number, { id: number; firstname: string; lastname: string; login: string }>
+): SearchResult[] {
   const normalizedQuery = query.toLowerCase().trim();
 
   if (!normalizedQuery) return [];
@@ -100,44 +114,79 @@ export function searchAllIssues(entities: Entities, query: string): SearchResult
 
   const results: SearchResult[] = [];
 
+  // マッチ判定ヘルパー関数
+  const isMatch = (issue: SearchableIssue): boolean => {
+    const titleOrSubject = 'subject' in issue ? issue.subject : issue.title;
+
+    // タイトル検索
+    if (searchTargets.subject && titleOrSubject.toLowerCase().includes(normalizedQuery)) {
+      return true;
+    }
+
+    // ステータス検索
+    if (searchTargets.status && issue.status.toLowerCase().includes(normalizedQuery)) {
+      return true;
+    }
+
+    // 担当者名検索
+    if (searchTargets.assignee && 'assigned_to_id' in issue && issue.assigned_to_id && users) {
+      const user = users[issue.assigned_to_id];
+      if (user) {
+        const fullName = `${user.lastname}${user.firstname}`.toLowerCase();
+        const reverseName = `${user.firstname}${user.lastname}`.toLowerCase();
+        const login = user.login.toLowerCase();
+
+        if (
+          fullName.includes(normalizedQuery) ||
+          reverseName.includes(normalizedQuery) ||
+          login.includes(normalizedQuery)
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
   // Epic検索
   for (const epic of Object.values(entities.epics)) {
-    if (epic.subject.toLowerCase().includes(normalizedQuery)) {
+    if (isMatch(epic)) {
       results.push({ id: epic.id, type: 'epic', subject: epic.subject });
     }
   }
 
   // Feature検索
   for (const feature of Object.values(entities.features)) {
-    if (feature.title.toLowerCase().includes(normalizedQuery)) {
+    if (isMatch(feature)) {
       results.push({ id: feature.id, type: 'feature', subject: feature.title });
     }
   }
 
   // UserStory検索
   for (const story of Object.values(entities.user_stories)) {
-    if (story.title.toLowerCase().includes(normalizedQuery)) {
+    if (isMatch(story)) {
       results.push({ id: story.id, type: 'user-story', subject: story.title });
     }
   }
 
   // Task検索
   for (const task of Object.values(entities.tasks)) {
-    if (task.title.toLowerCase().includes(normalizedQuery)) {
+    if (isMatch(task)) {
       results.push({ id: task.id, type: 'task', subject: task.title });
     }
   }
 
   // Test検索
   for (const test of Object.values(entities.tests)) {
-    if (test.title.toLowerCase().includes(normalizedQuery)) {
+    if (isMatch(test)) {
       results.push({ id: test.id, type: 'test', subject: test.title });
     }
   }
 
   // Bug検索
   for (const bug of Object.values(entities.bugs)) {
-    if (bug.title.toLowerCase().includes(normalizedQuery)) {
+    if (isMatch(bug)) {
       results.push({ id: bug.id, type: 'bug', subject: bug.title });
     }
   }

@@ -27,6 +27,7 @@ describe('SearchTab', () => {
     tasks: {},
     tests: {},
     bugs: {},
+    users: {},
   };
 
   beforeEach(() => {
@@ -85,7 +86,12 @@ describe('SearchTab', () => {
     const searchButton = screen.getByRole('button', { name: /検索/ });
     fireEvent.click(searchButton);
 
-    expect(searchUtils.searchAllIssues).toHaveBeenCalledWith(mockEntities, 'ログイン');
+    expect(searchUtils.searchAllIssues).toHaveBeenCalledWith(
+      mockEntities,
+      'ログイン',
+      { subject: true, status: false, assignee: false },
+      {}
+    );
   });
 
   it('検索結果が複数ある場合、一覧表示される', () => {
@@ -231,7 +237,12 @@ describe('SearchTab', () => {
       const searchButton = screen.getByRole('button', { name: /検索/ });
       fireEvent.click(searchButton);
 
-      expect(searchUtils.searchAllIssues).toHaveBeenCalledWith(mockEntities, '101');
+      expect(searchUtils.searchAllIssues).toHaveBeenCalledWith(
+        mockEntities,
+        '101',
+        { subject: true, status: false, assignee: false },
+        {}
+      );
       expect(screen.getByText(/1件見つかりました/)).toBeInTheDocument();
       expect(screen.getByText('ID検索テスト用Epic')).toBeInTheDocument();
     });

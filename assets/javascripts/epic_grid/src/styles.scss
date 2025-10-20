@@ -2502,6 +2502,38 @@
       }
     }
 
+    // 検索対象トグル領域
+    &__toggles {
+      padding: var(--size-4) var(--size-8);
+      border-bottom: var(--border-width-thin) solid #e0e0e0;
+      background-color: #fafafa;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--size-12);
+    }
+
+    // 個別トグル
+    &__toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--size-4);
+      font-size: var(--size-13);
+      cursor: pointer;
+      user-select: none;
+
+      input[type="checkbox"] {
+        cursor: pointer;
+      }
+
+      span {
+        color: #555;
+      }
+
+      &:hover span {
+        color: #333;
+      }
+    }
+
     &__results {
       flex: 1;
       overflow-y: auto;
