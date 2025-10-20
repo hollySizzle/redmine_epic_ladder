@@ -105,7 +105,8 @@ describe('Collapse Integration Tests', () => {
         tests: {
           test1: { id: 'test1', title: 'Test 1', status: 'open', result: 'pending', parent_user_story_id: 'us2', fixed_version_id: null }
         },
-        bugs: {}
+        bugs: {},
+          users: {}
       },
       grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
       isLoading: false,

@@ -11,9 +11,11 @@ interface TestContainerProps {
 
 export const TestContainer: React.FC<TestContainerProps> = ({ userStoryId, testIds }) => {
   const createTest = useStore((state) => state.createTest);
-  const users = useStore((state) => Object.values(state.entities.users || {}));
+  const users = useStore((state) => state.entities.users || {});
   const userStory = useStore((state) => state.entities.user_stories[userStoryId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const usersList = Object.values(users);
 
   const handleAddTest = () => {
     setIsModalOpen(true);
@@ -59,7 +61,7 @@ export const TestContainer: React.FC<TestContainerProps> = ({ userStoryId, testI
         subjectLabel="Test名"
         subjectPlaceholder="例: ログイン機能のテスト"
         showAssignee={true}
-        users={users}
+        users={usersList}
         defaultAssigneeId={userStory?.assigned_to_id}
       />
     </>

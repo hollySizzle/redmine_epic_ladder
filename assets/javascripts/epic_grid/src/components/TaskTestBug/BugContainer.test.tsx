@@ -19,7 +19,8 @@ describe('BugContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -42,7 +43,8 @@ describe('BugContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -97,7 +99,8 @@ describe('BugContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -127,7 +130,8 @@ describe('BugContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -163,7 +167,8 @@ describe('BugContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -194,7 +199,8 @@ describe('BugContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,

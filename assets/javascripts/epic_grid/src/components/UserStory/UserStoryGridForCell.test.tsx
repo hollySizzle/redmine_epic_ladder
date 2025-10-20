@@ -17,6 +17,7 @@ describe('UserStoryGridForCell', () => {
           versions: {},
           features: { f1: { id: 'f1', title: 'Feature 1', status: 'open', parent_epic_id: 'e1', user_story_ids: [], fixed_version_id: null, version_source: 'none' } },
           user_stories: {},
+          users: {},
           tasks: {},
           tests: {},
           bugs: {}
@@ -43,6 +44,7 @@ describe('UserStoryGridForCell', () => {
             us1: { id: 'us1', title: 'User Story 1', status: 'open', parent_feature_id: 'f1', task_ids: [], test_ids: [], bug_ids: [], fixed_version_id: null, version_source: 'none', expansion_state: false },
             us2: { id: 'us2', title: 'User Story 2', status: 'open', parent_feature_id: 'f1', task_ids: [], test_ids: [], bug_ids: [], fixed_version_id: null, version_source: 'none', expansion_state: false }
           },
+          users: {},
           tasks: {},
           tests: {},
           bugs: {}
@@ -70,6 +72,7 @@ describe('UserStoryGridForCell', () => {
           versions: {},
           features: { f1: { id: 'f1', title: 'Feature 1', status: 'open', parent_epic_id: 'e1', user_story_ids: [], fixed_version_id: null, version_source: 'none' } },
           user_stories: {},
+          users: {},
           tasks: {},
           tests: {},
           bugs: {}
@@ -99,6 +102,7 @@ describe('UserStoryGridForCell', () => {
           versions: {},
           features: { f1: { id: 'f1', title: 'Feature 1', status: 'open', parent_epic_id: 'e1', user_story_ids: [], fixed_version_id: null, version_source: 'none' } },
           user_stories: {},
+          users: {},
           tasks: {},
           tests: {},
           bugs: {}
@@ -136,6 +140,7 @@ describe('UserStoryGridForCell', () => {
           versions: {},
           features: {},
           user_stories: {},
+          users: {},
           tasks: {},
           tests: {},
           bugs: {}
@@ -167,6 +172,7 @@ describe('UserStoryGridForCell', () => {
           versions: {},
           features: {},
           user_stories: {},
+          users: {},
           tasks: {},
           tests: {},
           bugs: {}

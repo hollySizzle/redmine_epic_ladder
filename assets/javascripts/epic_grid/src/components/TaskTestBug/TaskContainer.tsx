@@ -11,9 +11,11 @@ interface TaskContainerProps {
 
 export const TaskContainer: React.FC<TaskContainerProps> = ({ userStoryId, taskIds }) => {
   const createTask = useStore((state) => state.createTask);
-  const users = useStore((state) => Object.values(state.entities.users || {}));
+  const users = useStore((state) => state.entities.users || {});
   const userStory = useStore((state) => state.entities.user_stories[userStoryId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const usersList = Object.values(users);
 
   const handleAddTask = () => {
     setIsModalOpen(true);
@@ -59,7 +61,7 @@ export const TaskContainer: React.FC<TaskContainerProps> = ({ userStoryId, taskI
         subjectLabel="Task名"
         subjectPlaceholder="例: データベース設計"
         showAssignee={true}
-        users={users}
+        users={usersList}
         defaultAssigneeId={userStory?.assigned_to_id}
       />
     </>

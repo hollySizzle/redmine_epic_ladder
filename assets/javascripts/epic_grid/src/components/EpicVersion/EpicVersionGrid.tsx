@@ -80,7 +80,8 @@ export const EpicVersionGrid: React.FC = () => {
   const createEpic = useStore(state => state.createEpic);
   const createVersion = useStore(state => state.createVersion);
   const createFeature = useStore(state => state.createFeature);
-  const users = useStore(state => Object.values(state.entities.users || {}));
+  const users = useStore(state => state.entities.users || {});
+  const usersList = Object.values(users);
   const setSelectedEntity = useStore(state => state.setSelectedEntity);
   const toggleDetailPane = useStore(state => state.toggleDetailPane);
   const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
@@ -495,7 +496,7 @@ export const EpicVersionGrid: React.FC = () => {
         subjectLabel="Feature名"
         subjectPlaceholder="例: ログイン機能"
         showAssignee={true}
-        users={users}
+        users={usersList}
       />
     </div>
   );

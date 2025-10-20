@@ -19,7 +19,8 @@ describe('UserStoryGridForCard', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
@@ -45,7 +46,8 @@ describe('UserStoryGridForCard', () => {
           },
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
@@ -72,7 +74,8 @@ describe('UserStoryGridForCard', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,
@@ -101,7 +104,8 @@ describe('UserStoryGridForCard', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
         isLoading: false,

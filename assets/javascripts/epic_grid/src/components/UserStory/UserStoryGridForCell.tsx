@@ -24,8 +24,10 @@ export const UserStoryGridForCell: React.FC<UserStoryGridForCellProps> = ({
   storyIds
 }) => {
   const createUserStory = useStore((state) => state.createUserStory);
-  const users = useStore((state) => Object.values(state.entities.users || {}));
+  const users = useStore((state) => state.entities.users || {});
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const usersList = Object.values(users);
 
   const handleAddUserStory = () => {
     setIsModalOpen(true);
@@ -71,7 +73,7 @@ export const UserStoryGridForCell: React.FC<UserStoryGridForCellProps> = ({
         subjectLabel="User Story名"
         subjectPlaceholder="例: ユーザーがログインできる"
         showAssignee={true}
-        users={users}
+        users={usersList}
       />
     </>
   );

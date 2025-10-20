@@ -18,7 +18,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
         user_stories: {},
         tasks: {},
         tests: {},
-        bugs: {}
+        bugs: {},
+          users: {}
       },
       grid: {
         epic_order: [],
@@ -51,7 +52,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -92,7 +94,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -154,7 +157,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -228,7 +232,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1', 'e2'],
@@ -305,7 +310,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           },
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -348,7 +354,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -390,7 +397,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: [],
@@ -422,7 +430,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: [],
@@ -458,7 +467,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -524,7 +534,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           },
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -594,7 +605,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           },
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -675,7 +687,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           },
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -720,7 +733,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: [],
@@ -754,7 +768,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: [],
@@ -800,7 +815,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: [],
@@ -843,7 +859,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: [],
@@ -881,7 +898,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: [],
@@ -934,7 +952,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e2', 'e3', 'e1'], // サーバー側で自然順ソート済み: Apple → Mango → Zebra
@@ -982,7 +1001,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e2', 'e3', 'e1'], // サーバー側で自然順ソート済み（昇順: Apple → Mango → Zebra）、フロントでreverseされて降順になる
@@ -1028,7 +1048,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['10', '2', '30'],
@@ -1100,7 +1121,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -1149,7 +1171,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -1194,7 +1217,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -1237,7 +1261,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1'],
@@ -1284,7 +1309,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             user_stories: {},
             tasks: {},
             tests: {},
-            bugs: {}
+            bugs: {},
+          users: {}
           },
           grid: {
             epic_order: ['e2', 'e1', 'e3', 'e4'], // サーバー側で自然順ソート済み: 2 → 10 → 100 → 1000
@@ -1331,7 +1357,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             user_stories: {},
             tasks: {},
             tests: {},
-            bugs: {}
+            bugs: {},
+          users: {}
           },
           grid: {
             epic_order: ['e2', 'e1', 'e3', 'e4'], // サーバー側は昇順（2→10→100→1000）、フロントでreverseして降順に
@@ -1402,7 +1429,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             user_stories: {},
             tasks: {},
             tests: {},
-            bugs: {}
+            bugs: {},
+          users: {}
           },
           grid: {
             epic_order: ['e1'],
@@ -1452,7 +1480,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
             user_stories: {},
             tasks: {},
             tests: {},
-            bugs: {}
+            bugs: {},
+          users: {}
           },
           grid: {
             epic_order: ['e3', 'e1', 'e2', 'e4'], // サーバー側で自然順ソート済み: 2 → 10 → AAA → ZZZ（数値が文字列より優先）
@@ -1511,7 +1540,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1', 'e2'],
@@ -1570,7 +1600,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1', 'e2'],
@@ -1625,7 +1656,8 @@ describe('EpicVersionGrid - 3D Grid Layout Tests', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: {
           epic_order: ['e1', 'e2'],

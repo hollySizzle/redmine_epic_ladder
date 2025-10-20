@@ -19,7 +19,8 @@ describe('TestContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -42,7 +43,8 @@ describe('TestContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -69,7 +71,8 @@ describe('TestContainer', () => {
             test1: { id: 'test1', title: 'Test 1', status: 'open', parent_user_story_id: 'us1', fixed_version_id: null },
             test2: { id: 'test2', title: 'Test 2', status: 'open', parent_user_story_id: 'us1', fixed_version_id: null }
           },
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -97,7 +100,8 @@ describe('TestContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -127,7 +131,8 @@ describe('TestContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -163,7 +168,8 @@ describe('TestContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
@@ -194,7 +200,8 @@ describe('TestContainer', () => {
           user_stories: {},
           tasks: {},
           tests: {},
-          bugs: {}
+          bugs: {},
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,

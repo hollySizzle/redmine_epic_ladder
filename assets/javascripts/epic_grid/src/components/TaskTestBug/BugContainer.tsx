@@ -11,9 +11,11 @@ interface BugContainerProps {
 
 export const BugContainer: React.FC<BugContainerProps> = ({ userStoryId, bugIds }) => {
   const createBug = useStore((state) => state.createBug);
-  const users = useStore((state) => Object.values(state.entities.users || {}));
+  const users = useStore((state) => state.entities.users || {});
   const userStory = useStore((state) => state.entities.user_stories[userStoryId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const usersList = Object.values(users);
 
   const handleAddBug = () => {
     setIsModalOpen(true);
@@ -59,7 +61,7 @@ export const BugContainer: React.FC<BugContainerProps> = ({ userStoryId, bugIds 
         subjectLabel="Bug名"
         subjectPlaceholder="例: ログインできない不具合"
         showAssignee={true}
-        users={users}
+        users={usersList}
         defaultAssigneeId={userStory?.assigned_to_id}
       />
     </>
