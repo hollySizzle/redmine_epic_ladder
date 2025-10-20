@@ -17,6 +17,22 @@ describe('SidePanel', () => {
         toggleSideMenu: mockToggleSideMenu,
         activeSideTab: 'search' as const,
         setActiveSideTab: mockSetActiveSideTab,
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {},
+          users: {}
+        },
+        grid: {
+          index: {},
+          epic_order: [],
+          feature_order_by_epic: {},
+          version_order: []
+        }
       };
       return selector(state);
     });
@@ -40,6 +56,22 @@ describe('SidePanel', () => {
         toggleSideMenu: mockToggleSideMenu,
         activeSideTab: 'list' as const,
         setActiveSideTab: mockSetActiveSideTab,
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {},
+          users: {}
+        },
+        grid: {
+          index: {},
+          epic_order: [],
+          feature_order_by_epic: {},
+          version_order: []
+        }
       };
       return selector(state);
     });
@@ -47,7 +79,8 @@ describe('SidePanel', () => {
     render(<SidePanel />);
 
     expect(screen.getByText('Epic / Feature 一覧')).toBeInTheDocument();
-    expect(screen.getByText('🚧 一覧機能は実装予定です')).toBeInTheDocument();
+    // ListTabは空のEpicリストを表示
+    expect(screen.getByText('📭 Epicがありません')).toBeInTheDocument();
   });
 
   it('activeSideTabが"about"の場合、AboutTabが表示される', () => {
@@ -96,6 +129,22 @@ describe('SidePanel', () => {
         toggleSideMenu: mockToggleSideMenu,
         activeSideTab: 'invalid' as any,
         setActiveSideTab: mockSetActiveSideTab,
+        entities: {
+          epics: {},
+          versions: {},
+          features: {},
+          user_stories: {},
+          tasks: {},
+          tests: {},
+          bugs: {},
+          users: {}
+        },
+        grid: {
+          index: {},
+          epic_order: [],
+          feature_order_by_epic: {},
+          version_order: []
+        }
       };
       return selector(state);
     });
@@ -104,5 +153,6 @@ describe('SidePanel', () => {
 
     // default caseでListTabが表示される
     expect(screen.getByText('Epic / Feature 一覧')).toBeInTheDocument();
+    expect(screen.getByText('📭 Epicがありません')).toBeInTheDocument();
   });
 });

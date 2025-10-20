@@ -1139,4 +1139,405 @@ describe('useStore - Normalized API (3D Grid)', () => {
     });
   });
 
+  // ===========================
+  // Critical Tests (100% Coverage Required)
+  // ===========================
+
+  describe('[Critical] Dirty State Management', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      useStore.setState({
+        projectId: '1',
+        isDirty: false,
+        pendingChanges: {
+          movedUserStories: [],
+          reorderedEpics: null,
+          reorderedVersions: null
+        }
+      });
+    });
+
+    describe('savePendingChanges', () => {
+      it('should do nothing when no pending changes exist', async () => {
+        const apiSpy = vi.spyOn(API, 'batchUpdate');
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        expect(apiSpy).not.toHaveBeenCalled();
+      });
+
+      it('should call batchUpdate API with moved user stories', async () => {
+        const mockResponse = {
+          success: true,
+          updated_entities: {},
+          updated_grid_index: {},
+          updated_epic_order: undefined,
+          updated_version_order: undefined
+        };
+
+        const apiSpy = vi.spyOn(API, 'batchUpdate').mockResolvedValue(mockResponse);
+
+        // Dirty stateをセット
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: 'v1',
+              newVersionId: 'v2'
+            }],
+            reorderedEpics: null,
+            reorderedVersions: null
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        expect(apiSpy).toHaveBeenCalledWith('1', {
+          moved_user_stories: [{
+            id: 'us-1',
+            target_feature_id: 'f2',
+            target_version_id: 'v2'
+          }],
+          reordered_epics: undefined,
+          reordered_versions: undefined
+        });
+      });
+
+      it('should call batchUpdate API with reordered epics', async () => {
+        const mockResponse = {
+          success: true,
+          updated_entities: {},
+          updated_grid_index: {},
+          updated_epic_order: ['e2', 'e1'],
+          updated_version_order: undefined
+        };
+
+        const apiSpy = vi.spyOn(API, 'batchUpdate').mockResolvedValue(mockResponse);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [],
+            reorderedEpics: ['e2', 'e1'],
+            reorderedVersions: null
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        expect(apiSpy).toHaveBeenCalledWith('1', {
+          moved_user_stories: [],
+          reordered_epics: ['e2', 'e1'],
+          reordered_versions: undefined
+        });
+      });
+
+      it('should call batchUpdate API with reordered versions', async () => {
+        const mockResponse = {
+          success: true,
+          updated_entities: {},
+          updated_grid_index: {},
+          updated_epic_order: undefined,
+          updated_version_order: ['v2', 'v1']
+        };
+
+        const apiSpy = vi.spyOn(API, 'batchUpdate').mockResolvedValue(mockResponse);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [],
+            reorderedEpics: null,
+            reorderedVersions: ['v2', 'v1']
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        expect(apiSpy).toHaveBeenCalledWith('1', {
+          moved_user_stories: [],
+          reordered_epics: undefined,
+          reordered_versions: ['v2', 'v1']
+        });
+      });
+
+      it('should call batchUpdate API with all types of changes', async () => {
+        const mockResponse = {
+          success: true,
+          updated_entities: {
+            user_stories: { 'us-1': { id: 'us-1', parent_feature_id: 'f2' } }
+          },
+          updated_grid_index: {},
+          updated_epic_order: ['e2', 'e1'],
+          updated_version_order: ['v2', 'v1']
+        };
+
+        const apiSpy = vi.spyOn(API, 'batchUpdate').mockResolvedValue(mockResponse);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: null,
+              newVersionId: null
+            }],
+            reorderedEpics: ['e2', 'e1'],
+            reorderedVersions: ['v2', 'v1']
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        expect(apiSpy).toHaveBeenCalledWith('1', {
+          moved_user_stories: [{
+            id: 'us-1',
+            target_feature_id: 'f2',
+            target_version_id: null
+          }],
+          reordered_epics: ['e2', 'e1'],
+          reordered_versions: ['v2', 'v1']
+        });
+      });
+
+      it('should clear isDirty flag after successful save', async () => {
+        const mockResponse = {
+          success: true,
+          updated_entities: {},
+          updated_grid_index: {},
+          updated_epic_order: undefined,
+          updated_version_order: undefined
+        };
+
+        vi.spyOn(API, 'batchUpdate').mockResolvedValue(mockResponse);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: null,
+              newVersionId: null
+            }],
+            reorderedEpics: null,
+            reorderedVersions: null
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        const state = useStore.getState();
+        expect(state.isDirty).toBe(false);
+      });
+
+      it('should clear pendingChanges after successful save', async () => {
+        const mockResponse = {
+          success: true,
+          updated_entities: {},
+          updated_grid_index: {},
+          updated_epic_order: undefined,
+          updated_version_order: undefined
+        };
+
+        vi.spyOn(API, 'batchUpdate').mockResolvedValue(mockResponse);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: null,
+              newVersionId: null
+            }],
+            reorderedEpics: ['e2', 'e1'],
+            reorderedVersions: ['v2', 'v1']
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        const state = useStore.getState();
+        expect(state.pendingChanges.movedUserStories).toEqual([]);
+        expect(state.pendingChanges.reorderedEpics).toBeNull();
+        expect(state.pendingChanges.reorderedVersions).toBeNull();
+      });
+
+      it('should update entities from server response', async () => {
+        const mockResponse = {
+          success: true,
+          updated_entities: {
+            epics: { 'e1': { id: 'e1', subject: 'Updated Epic' } },
+            user_stories: { 'us-1': { id: 'us-1', subject: 'Updated Story' } }
+          },
+          updated_grid_index: {},
+          updated_epic_order: undefined,
+          updated_version_order: undefined
+        };
+
+        vi.spyOn(API, 'batchUpdate').mockResolvedValue(mockResponse);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: null,
+              newVersionId: null
+            }],
+            reorderedEpics: null,
+            reorderedVersions: null
+          },
+          entities: {
+            epics: { 'e1': { id: 'e1', subject: 'Old Epic' } },
+            user_stories: { 'us-1': { id: 'us-1', subject: 'Old Story' } },
+            versions: {},
+            features: {},
+            tasks: {},
+            tests: {},
+            bugs: {},
+            users: {}
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+        await savePendingChanges();
+
+        const state = useStore.getState();
+        expect(state.entities.epics['e1'].subject).toBe('Updated Epic');
+        expect(state.entities.user_stories['us-1'].subject).toBe('Updated Story');
+      });
+
+      it('should throw error when projectId is not set', async () => {
+        useStore.setState({ projectId: null });
+
+        const { savePendingChanges } = useStore.getState();
+
+        await expect(savePendingChanges()).rejects.toThrow('Project ID not set');
+      });
+
+      it('should set error state when API call fails', async () => {
+        vi.spyOn(API, 'batchUpdate').mockRejectedValue(new Error('Network error'));
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: null,
+              newVersionId: null
+            }],
+            reorderedEpics: null,
+            reorderedVersions: null
+          }
+        });
+
+        const { savePendingChanges } = useStore.getState();
+
+        await expect(savePendingChanges()).rejects.toThrow('Network error');
+
+        const state = useStore.getState();
+        expect(state.error).toBe('Network error');
+      });
+    });
+
+    describe('discardPendingChanges', () => {
+      it('should clear isDirty flag', () => {
+        vi.spyOn(API, 'fetchGridData').mockResolvedValue(normalizedMockData);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: null,
+              newVersionId: null
+            }],
+            reorderedEpics: null,
+            reorderedVersions: null
+          }
+        });
+
+        const { discardPendingChanges } = useStore.getState();
+        discardPendingChanges();
+
+        const state = useStore.getState();
+        expect(state.isDirty).toBe(false);
+      });
+
+      it('should clear all pending changes', () => {
+        vi.spyOn(API, 'fetchGridData').mockResolvedValue(normalizedMockData);
+
+        useStore.setState({
+          isDirty: true,
+          pendingChanges: {
+            movedUserStories: [{
+              id: 'us-1',
+              oldFeatureId: 'f1',
+              newFeatureId: 'f2',
+              oldVersionId: null,
+              newVersionId: null
+            }],
+            reorderedEpics: ['e2', 'e1'],
+            reorderedVersions: ['v2', 'v1']
+          }
+        });
+
+        const { discardPendingChanges } = useStore.getState();
+        discardPendingChanges();
+
+        const state = useStore.getState();
+        expect(state.pendingChanges.movedUserStories).toEqual([]);
+        expect(state.pendingChanges.reorderedEpics).toBeNull();
+        expect(state.pendingChanges.reorderedVersions).toBeNull();
+      });
+
+      it('should call fetchGridData to reload data', () => {
+        const fetchSpy = vi.spyOn(API, 'fetchGridData').mockResolvedValue(normalizedMockData);
+
+        useStore.setState({
+          projectId: '1',
+          isDirty: true
+        });
+
+        const { discardPendingChanges } = useStore.getState();
+        discardPendingChanges();
+
+        expect(fetchSpy).toHaveBeenCalledWith('1', expect.any(Object));
+      });
+
+      it('should do nothing when projectId is not set', () => {
+        const fetchSpy = vi.spyOn(API, 'fetchGridData').mockResolvedValue(normalizedMockData);
+
+        useStore.setState({ projectId: null });
+
+        const { discardPendingChanges } = useStore.getState();
+        discardPendingChanges();
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+    });
+  });
+
 });

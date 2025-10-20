@@ -224,4 +224,182 @@ describe('App', () => {
       expect(screen.queryByText('✖ 破棄')).not.toBeInTheDocument();
     });
   });
+
+  describe('Save/Discard Actions', () => {
+    beforeEach(() => {
+      useStore.setState({
+        isDirty: true,
+        pendingChanges: {
+          movedUserStories: [{ id: '1' }],
+          reorderedEpics: null,
+          reorderedVersions: null
+        },
+        savePendingChanges: vi.fn(),
+        discardPendingChanges: vi.fn(),
+        fetchGridData: mockFetchGridData,
+        isLoading: false,
+        error: null,
+        projectId: '123'
+      });
+    });
+
+    it('should call savePendingChanges when save button clicked', async () => {
+      const mockSave = vi.fn().mockResolvedValue(undefined);
+      const mockAlert = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      useStore.setState({ savePendingChanges: mockSave });
+
+      render(<App />);
+
+      const saveButton = screen.getByText(/💾 保存/);
+      saveButton.click();
+
+      await waitFor(() => {
+        expect(mockSave).toHaveBeenCalled();
+      });
+
+      expect(mockAlert).toHaveBeenCalledWith('✅ 変更を保存しました');
+      mockAlert.mockRestore();
+    });
+
+    it('should show error alert when save fails', async () => {
+      const mockSave = vi.fn().mockRejectedValue(new Error('Save failed'));
+      const mockAlert = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      useStore.setState({ savePendingChanges: mockSave });
+
+      render(<App />);
+
+      const saveButton = screen.getByText(/💾 保存/);
+      saveButton.click();
+
+      await waitFor(() => {
+        expect(mockAlert).toHaveBeenCalledWith('❌ 保存に失敗しました: Save failed');
+      });
+
+      mockAlert.mockRestore();
+    });
+
+    it('should call discardPendingChanges when discard button clicked and confirmed', () => {
+      const mockDiscard = vi.fn();
+      const mockConfirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      useStore.setState({ discardPendingChanges: mockDiscard });
+
+      render(<App />);
+
+      const discardButton = screen.getByText('✖ 破棄');
+      discardButton.click();
+
+      expect(mockConfirm).toHaveBeenCalledWith('未保存の変更を破棄してもよろしいですか？');
+      expect(mockDiscard).toHaveBeenCalled();
+      mockConfirm.mockRestore();
+    });
+
+    it('should not call discardPendingChanges when discard cancelled', () => {
+      const mockDiscard = vi.fn();
+      const mockConfirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      useStore.setState({ discardPendingChanges: mockDiscard });
+
+      render(<App />);
+
+      const discardButton = screen.getByText('✖ 破棄');
+      discardButton.click();
+
+      expect(mockConfirm).toHaveBeenCalled();
+      expect(mockDiscard).not.toHaveBeenCalled();
+      mockConfirm.mockRestore();
+    });
+
+    it('should disable save button while saving', async () => {
+      const mockSave = vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+      useStore.setState({ savePendingChanges: mockSave });
+      vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+      render(<App />);
+
+      const saveButton = screen.getByText(/💾 保存/) as HTMLButtonElement;
+      expect(saveButton.disabled).toBe(false);
+
+      saveButton.click();
+
+      await waitFor(() => {
+        expect(saveButton.disabled).toBe(true);
+      });
+    });
+  });
+
+  describe('BeforeUnload Event', () => {
+    it('should register beforeunload listener', () => {
+      const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+
+      useStore.setState({
+        isDirty: false,
+        fetchGridData: mockFetchGridData,
+        isLoading: false,
+        error: null,
+        projectId: '123',
+        pendingChanges: {
+          movedUserStories: [],
+          reorderedEpics: null,
+          reorderedVersions: null
+        }
+      });
+
+      const { unmount } = render(<App />);
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
+
+      unmount();
+      addEventListenerSpy.mockRestore();
+    });
+
+    it('should remove beforeunload listener on unmount', () => {
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+      useStore.setState({
+        isDirty: false,
+        fetchGridData: mockFetchGridData,
+        isLoading: false,
+        error: null,
+        projectId: '123',
+        pendingChanges: {
+          movedUserStories: [],
+          reorderedEpics: null,
+          reorderedVersions: null
+        }
+      });
+
+      const { unmount } = render(<App />);
+
+      unmount();
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function));
+      removeEventListenerSpy.mockRestore();
+    });
+  });
+
+  describe('Menu Toggle', () => {
+    it('should call toggleSideMenu when menu button clicked', () => {
+      const mockToggle = vi.fn();
+      useStore.setState({
+        toggleSideMenu: mockToggle,
+        fetchGridData: mockFetchGridData,
+        isLoading: false,
+        error: null,
+        projectId: '123',
+        isSideMenuVisible: false,
+        isDetailPaneVisible: false,
+        pendingChanges: {
+          movedUserStories: [],
+          reorderedEpics: null,
+          reorderedVersions: null
+        }
+      });
+
+      render(<App />);
+
+      const menuButton = screen.getByRole('button', { name: /メニュー|サイドメニュー/ });
+      menuButton.click();
+
+      expect(mockToggle).toHaveBeenCalled();
+    });
+  });
 });
