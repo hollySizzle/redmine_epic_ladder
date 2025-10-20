@@ -132,6 +132,10 @@ interface StoreState {
   isStatsVisible: boolean;
   toggleStatsVisible: () => void;
 
+  // バージョン統計情報表示
+  isVersionStatsVisible: boolean;
+  toggleVersionStatsVisible: () => void;
+
   // UserStory個別折り畳み状態（localStorage永続化）
   userStoryCollapseStates: Record<string, boolean>;
   setUserStoryCollapsed: (storyId: string, collapsed: boolean) => void;
@@ -328,6 +332,17 @@ export const useStore = create<StoreState>()(
         const newValue = !state.isStatsVisible;
         localStorage.setItem('kanban_stats_visible', String(newValue));
         return { isStatsVisible: newValue };
+      }),
+
+      // バージョン統計情報表示の初期状態
+      isVersionStatsVisible: (() => {
+        const saved = localStorage.getItem('kanban_version_stats_visible');
+        return saved !== null ? saved === 'true' : false; // デフォルトOFF
+      })(),
+      toggleVersionStatsVisible: () => set((state) => {
+        const newValue = !state.isVersionStatsVisible;
+        localStorage.setItem('kanban_version_stats_visible', String(newValue));
+        return { isVersionStatsVisible: newValue };
       }),
 
       // UserStory個別折り畳み状態の初期値（localStorageから復元）

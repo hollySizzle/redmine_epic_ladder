@@ -6,6 +6,7 @@ import { AssignedToToggle } from './AssignedToToggle';
 import { DueDateToggle } from './DueDateToggle';
 import { IssueIdToggle } from './IssueIdToggle';
 import { DetailPaneToggle } from './DetailPaneToggle';
+import { VersionStatsToggle } from './VersionStatsToggle';
 
 export const SettingsDropdown: React.FC = () => {
   return (
@@ -51,6 +52,10 @@ export const SettingsDropdown: React.FC = () => {
 
       <DropdownSection>
         <DetailPaneToggle />
+      </DropdownSection>
+
+      <DropdownSection>
+        <VersionStatsToggle />
       </DropdownSection>
     </Dropdown>
   );

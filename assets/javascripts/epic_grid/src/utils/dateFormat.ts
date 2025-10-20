@@ -128,3 +128,32 @@ export function isOverdue(dueDate: string | null | undefined): boolean {
 
   return due < today;
 }
+
+/**
+ * 期日までの残日数を計算
+ *
+ * @param dueDate - ISO8601形式の期日文字列 or null
+ * @returns 残日数。期日未設定ならnull、過去の日付なら負の値
+ *
+ * @example
+ * getDaysRemaining("2025-01-20")  // 15 (今日が2025-01-05の場合)
+ * getDaysRemaining("2025-01-01")  // -4 (今日が2025-01-05の場合)
+ * getDaysRemaining(null)          // null (期日未設定)
+ * getDaysRemaining("")            // null (期日未設定)
+ */
+export function getDaysRemaining(dueDate: string | null | undefined): number | null {
+  if (!dueDate || dueDate === '') {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // 時刻をリセットして日付のみで比較
+
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  const diffTime = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays;
+}

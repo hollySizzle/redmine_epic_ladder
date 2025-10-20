@@ -4,7 +4,7 @@ import { useDropTarget } from '../../hooks/useDropTarget';
 import { useSortedEpicsAndFeatures } from '../../hooks/useSortedEpicsAndFeatures';
 import { useStore } from '../../store/useStore';
 import type { Feature } from '../../types/normalized-api';
-import { formatDateWithDayOfWeek } from '../../utils/dateFormat';
+import { formatDateWithDayOfWeek, getDaysRemaining } from '../../utils/dateFormat';
 import { UserStoryGridForCell } from '../UserStory/UserStoryGridForCell';
 import { AddButton } from '../common/AddButton';
 import { IssueFormData, IssueFormModal } from '../common/IssueFormModal';
@@ -89,6 +89,7 @@ export const EpicVersionGrid: React.FC = () => {
   const versionSortOptions = useStore(state => state.versionSortOptions);
   const filters = useStore(state => state.filters);
   const hideEmptyEpicsVersions = useStore(state => state.hideEmptyEpicsVersions);
+  const isVersionStatsVisible = useStore(state => state.isVersionStatsVisible);
 
   // 共通のソートロジックを使用
   const { sortedEpicOrder, getSortedFeatureIds } = useSortedEpicsAndFeatures();
@@ -286,6 +287,12 @@ export const EpicVersionGrid: React.FC = () => {
           const versionName = version ? version.name : '(未設定)';
           const effectiveDate = version ? formatDateWithDayOfWeek(version.effective_date) : null;
 
+          // 残日数計算
+          const daysRemaining = version?.effective_date ? getDaysRemaining(version.effective_date) : null;
+
+          // 統計情報
+          const stats = version?.statistics;
+
           const handleVersionClick = () => {
             // 詳細ペインが非表示の場合は開く
             if (!isDetailPaneVisible) {
@@ -306,7 +313,19 @@ export const EpicVersionGrid: React.FC = () => {
             >
               <div className="version-name">{versionName}</div>
               {effectiveDate && (
-                <div className="version-date">{effectiveDate}</div>
+                <div className="version-date">
+                  {effectiveDate}
+                  {isVersionStatsVisible && daysRemaining !== null && (
+                    <span className="days-remaining">
+                      {daysRemaining >= 0 ? ` (あと${daysRemaining}日)` : ` (${Math.abs(daysRemaining)}日超過)`}
+                    </span>
+                  )}
+                </div>
+              )}
+              {isVersionStatsVisible && stats && (
+                <div className="version-stats">
+                  {stats.completed_issues}/{stats.total_issues}件 ({Math.round(stats.completion_rate)}%)
+                </div>
               )}
             </div>
           );
