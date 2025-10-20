@@ -25,6 +25,33 @@ bundle exec rails s
 
 **それだけです！** Redmine起動時に自動的にアセットが配信されます。
 
+### 🐳 Docker環境でのデプロイ手順（推奨）
+
+Docker環境では、確実なデプロイのため以下の手順を推奨します：
+
+```bash
+# 1. プラグインディレクトリに移動
+cd /app/IntranetApps/containers/202501_redmine/app/plugins/redmine_epic_grid
+
+# 2. 最新コードを取得
+git pull
+
+# 3. アセットを手動デプロイ（確実）
+docker exec redmine bundle exec rake redmine_epic_grid:deploy
+
+# 4. コンテナ再起動
+cd /app/IntranetApps/containers/202501_redmine
+docker compose restart redmine
+
+# 5. ブラウザでスーパーリロード
+# Windows/Linux: Ctrl + Shift + R
+# Mac: Cmd + Shift + R
+```
+
+**なぜ手動デプロイが必要？**
+- 自動デプロイはタイムスタンプ比較で動作するため、Gitの `git pull` 後にタイムスタンプが期待通り更新されない場合があります
+- `rake redmine_epic_grid:deploy` を実行することで、確実に最新のビルドファイルが配信されます
+
 ### 📦 自動アセット配信の仕組み
 
 Rails起動時に `assets/build/` から `public/plugin_assets/redmine_epic_grid/` へビルド済みファイルが自動コピーされます。
@@ -60,12 +87,13 @@ Recommendations:
   ✅ Assets are up to date
 ```
 
-### 🛠️ 手動デプロイ (必要に応じて)
-
-自動デプロイが失敗した場合のみ、以下を実行：
+### 🛠️ 手動デプロイコマンド
 
 ```bash
-# ビルド済みファイルを配信
+# Docker環境
+docker exec redmine bundle exec rake redmine_epic_grid:deploy
+
+# 通常環境
 bundle exec rake redmine_epic_grid:deploy
 ```
 
@@ -140,19 +168,31 @@ docker compose restart redmine
 bundle exec rails s
 ```
 
-### ❌ 最新の変更が反映されない (開発者向け)
+### ❌ 最新の変更が反映されない
 
-**症状**: コード変更したのにブラウザで反映されない
+**症状**: `git pull` したのにブラウザで反映されない
 
 **解決策**:
 
 ```bash
-# 1. 本番ビルドを再実行
-npm run build:prod
+# Docker環境の場合
+docker exec redmine bundle exec rake redmine_epic_grid:deploy
+docker compose restart redmine
 
-# 2. ブラウザのスーパーリロード
+# 通常環境の場合
+bundle exec rake redmine_epic_grid:deploy
+bundle exec rails s
+
+# ブラウザでスーパーリロード
 # Windows/Linux: Ctrl + Shift + R
 # Mac: Cmd + Shift + R
+```
+
+**開発者向け**: コードを変更した場合は本番ビルドを再実行してください
+```bash
+npm run build:prod
+git add assets/build/
+git commit -m "Update production build"
 ```
 
 ### ❌ ブラウザキャッシュが残る
