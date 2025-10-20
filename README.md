@@ -2,36 +2,72 @@
 
 Epic→Feature→UserStory→Task/Test階層制約とVersion管理を統合したEpic Gridシステム
 
-## デプロイ手順
+## インストール手順
 
-### 前提条件
-- Docker環境でRedmineが稼働していること
-- プラグインディレクトリが`./app/plugins`としてマウントされていること
-- ビルド済みファイル(`assets/build/kanban_bundle.js`)がGitリポジトリに含まれていること
+### 🚀 クイックスタート (npm不要)
 
-### 本番環境へのデプロイ
+このプラグインは **npm環境不要** で動作します。ビルド済みファイルがGitリポジトリに含まれているため、以下の手順だけでインストール可能です：
 
 ```bash
-# 1. プラグインディレクトリに移動
-cd /app/IntranetApps/containers/202501_redmine/app/plugins/redmine_epic_grid
+# 1. Redmineプラグインディレクトリに移動
+cd /path/to/redmine/plugins
 
-# 2. 最新コードを取得
-git pull
+# 2. プラグインをクローン
+git clone https://github.com/your-repo/redmine_epic_grid.git
 
-# 3. ビルド済みファイルをpublicディレクトリにコピー
-docker exec redmine cp \
-  /usr/src/redmine/plugins/redmine_epic_grid/assets/build/kanban_bundle.js \
-  /usr/src/redmine/public/plugin_assets/redmine_epic_grid/kanban_bundle.js
-
-# 4. Redmineコンテナを再起動
+# 3. Redmine再起動
+# Docker環境の場合
 docker compose restart redmine
+
+# 通常環境の場合
+bundle exec rails s
 ```
 
-### 重要な注意事項
+**それだけです！** Redmine起動時に自動的にアセットが配信されます。
 
-- **`rake assets:precompile`は不要**: ビルド済みファイルがGitに含まれているため、プリコンパイルは必要ありません
-- **コンテナ内でのnpmビルドは不可**: 本番コンテナにNode.js/npmがインストールされていないため、ビルドは開発環境で実行してください
-- **ブラウザキャッシュのクリア**: デプロイ後はスーパーリロード(Ctrl+Shift+R / Cmd+Shift+R)を推奨
+### 📦 自動アセット配信の仕組み
+
+Rails起動時に `assets/build/` から `public/plugin_assets/redmine_epic_grid/` へビルド済みファイルが自動コピーされます。
+
+- ✅ npm環境不要
+- ✅ Docker環境不要
+- ✅ 手動コピー不要
+- ✅ ブラウザキャッシュ対策済み (ハッシュ付きファイル名)
+
+### 🔍 デプロイ状態の確認
+
+```bash
+# アセット配信状態を確認
+bundle exec rake redmine_epic_grid:status
+```
+
+出力例：
+```
+=== Epic Grid Asset Status ===
+
+Source directory (Git-managed):
+  Path: /usr/src/redmine/plugins/redmine_epic_grid/assets/build
+  Status: ✅ Exists (5 files)
+    - kanban_bundle.8d031bec.js (455 KB, modified: 2025-10-20)
+    - asset-manifest.json (0.3 KB)
+    ...
+
+Deployment directory (Redmine public):
+  Path: /usr/src/redmine/public/plugin_assets/redmine_epic_grid
+  Status: ✅ Exists (5 files)
+
+Recommendations:
+  ✅ Assets are up to date
+```
+
+### 🛠️ 手動デプロイ (必要に応じて)
+
+自動デプロイが失敗した場合のみ、以下を実行：
+
+```bash
+# ビルド済みファイルを配信
+bundle exec rake redmine_epic_grid:deploy
+```
 
 ## 開発環境でのビルド
 

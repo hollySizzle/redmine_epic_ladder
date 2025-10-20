@@ -9,6 +9,9 @@ require_relative 'app/models/concerns/epic_grid/version_extensions'
 # View Hooks
 require_relative 'lib/epic_grid/hooks/issue_detail_hooks'
 
+# Asset Deployer (npm不要環境対応)
+require_relative 'lib/epic_grid/asset_deployer'
+
 # Redmine コアモデルに即座にinclude
 ActiveSupport.on_load(:active_record) do
   Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
@@ -25,6 +28,12 @@ Rails.application.config.to_prepare do
   Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
   Version.include(EpicGrid::VersionExtensions) unless Version.included_modules.include?(EpicGrid::VersionExtensions)
   Rails.logger.info '[EpicGrid] ✅ Model extensions reloaded in to_prepare'
+end
+
+# アセット自動デプロイ (npm不要環境対応)
+# after_initializeで実行 (to_prepareは開発環境で何度も実行されるため)
+Rails.application.config.after_initialize do
+  EpicGrid::AssetDeployer.deploy_if_needed
 end
 
 Redmine::Plugin.register :redmine_epic_grid do
