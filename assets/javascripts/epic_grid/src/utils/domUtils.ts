@@ -347,20 +347,21 @@ export function enableFocusMode(issueId: string, issueType: string): void {
       targetElement.classList.add('focus-target');
       console.log('🎯 [enableFocusMode] Added focus-target class to element');
 
-      // Epic/Featureの場合、sticky cellのz-indexを最前面に設定
+      // Epic/Featureの場合、sticky cellにフォーカスクラスを追加
+      let epicCell: Element | null = null;
+      let featureCell: Element | null = null;
+
       if (issueType === 'epic') {
-        const epicCell = targetElement.closest('.epic-cell');
+        epicCell = targetElement.closest('.epic-cell');
         if (epicCell) {
-          (epicCell as HTMLElement).style.position = 'sticky';
-          (epicCell as HTMLElement).style.zIndex = '900';
-          console.log('🎯 [enableFocusMode] Set z-index: 900 for epic-cell');
+          epicCell.classList.add('epic-cell--focused');
+          console.log('🎯 [enableFocusMode] Added epic-cell--focused class');
         }
       } else if (issueType === 'feature') {
-        const featureCell = targetElement.closest('.feature-cell');
+        featureCell = targetElement.closest('.feature-cell');
         if (featureCell) {
-          (featureCell as HTMLElement).style.position = 'sticky';
-          (featureCell as HTMLElement).style.zIndex = '900';
-          console.log('🎯 [enableFocusMode] Set z-index: 900 for feature-cell');
+          featureCell.classList.add('feature-cell--focused');
+          console.log('🎯 [enableFocusMode] Added feature-cell--focused class');
         }
       }
 
@@ -382,21 +383,14 @@ export function enableFocusMode(issueId: string, issueType: string): void {
         }
         targetElement.classList.remove('focus-target');
 
-        // Epic/Featureの場合、sticky cellのz-indexとpositionをリセット
-        if (issueType === 'epic') {
-          const epicCell = targetElement.closest('.epic-cell');
-          if (epicCell) {
-            (epicCell as HTMLElement).style.position = '';
-            (epicCell as HTMLElement).style.zIndex = '';
-            console.log('🎯 [enableFocusMode] Reset epic-cell styles');
-          }
-        } else if (issueType === 'feature') {
-          const featureCell = targetElement.closest('.feature-cell');
-          if (featureCell) {
-            (featureCell as HTMLElement).style.position = '';
-            (featureCell as HTMLElement).style.zIndex = '';
-            console.log('🎯 [enableFocusMode] Reset feature-cell styles');
-          }
+        // Epic/Featureの場合、sticky cellのフォーカスクラスを削除
+        if (epicCell) {
+          epicCell.classList.remove('epic-cell--focused');
+          console.log('🎯 [enableFocusMode] Removed epic-cell--focused class');
+        }
+        if (featureCell) {
+          featureCell.classList.remove('feature-cell--focused');
+          console.log('🎯 [enableFocusMode] Removed feature-cell--focused class');
         }
 
         if (epicVersionWrapper) {
@@ -419,6 +413,12 @@ export function enableFocusMode(issueId: string, issueType: string): void {
  */
 export function highlightIssue(issueId: string, issueType: string): void {
   console.log('✨ [highlightIssue] Called with:', { issueId, issueType });
+
+  // Epic/Featureはstickyヘッダーなのでハイライトアニメーション不要
+  if (['epic', 'feature'].includes(issueType)) {
+    console.log('✨ [highlightIssue] Skipping highlight for sticky header (epic/feature)');
+    return;
+  }
 
   const selectors = getIssueSelectors(issueId, issueType);
   console.log('✨ [highlightIssue] Selectors:', selectors);

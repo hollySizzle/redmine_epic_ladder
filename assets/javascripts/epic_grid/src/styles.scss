@@ -393,6 +393,12 @@
       margin-top: auto; // flexbox下端配置のためmargin-top:auto必須
       width: 100%;
     }
+
+    // フォーカス時のスタイル（ListTabからのクリック時）
+    &--focused {
+      position: sticky; // 念のため明示
+      z-index: 900;
+    }
   }
 
   // Feature列セル
@@ -408,6 +414,12 @@
     position: sticky;
     left: var(--epic-width);
     z-index: 99;
+
+    // フォーカス時のスタイル（ListTabからのクリック時）
+    &--focused {
+      position: sticky; // 念のため明示
+      z-index: 900;
+    }
 
     // D&D対応Feature列
     &.draggable {

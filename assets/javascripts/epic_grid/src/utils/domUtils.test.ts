@@ -468,11 +468,7 @@ describe('domUtils', () => {
       // Execute
       highlightIssue('123', 'epic');
 
-      // Assert - immediately after
-      expect(epicDiv.classList.contains('search-highlight')).toBe(true);
-
-      // Assert - after 3 seconds
-      vi.advanceTimersByTime(3000);
+      // Assert - Epic/Featureはstickyヘッダーなのでハイライトをスキップ
       expect(epicDiv.classList.contains('search-highlight')).toBe(false);
     });
 
