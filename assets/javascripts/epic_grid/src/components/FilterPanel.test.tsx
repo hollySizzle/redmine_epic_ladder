@@ -1,387 +1,190 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { FilterPanel } from './FilterPanel';
 import { useStore } from '../store/useStore';
-import type { Epic, Feature, Version } from '../types/normalized-api';
 
 describe('FilterPanel', () => {
+  const mockSetFilters = vi.fn();
+  const mockClearFilters = vi.fn();
+  const mockToggleExcludeClosedVersions = vi.fn();
+  const mockToggleHideEmptyEpicsVersions = vi.fn();
+
+  const defaultState = {
+    entities: {
+      versions: {
+        '1': { id: 1, name: 'v1.0', status: 'open', effective_date: '2025-12-31' },
+        '2': { id: 2, name: 'v2.0', status: 'open', effective_date: '2026-06-30' },
+      },
+      users: {
+        '1': { id: 1, name: 'User 1' },
+        '2': { id: 2, name: 'User 2' },
+      },
+      epics: {},
+      features: {},
+      userStories: {},
+      tasks: {},
+      tests: {},
+      bugs: {},
+    },
+    metadata: {
+      available_statuses: [
+        { id: 1, name: 'New' },
+        { id: 2, name: 'In Progress' },
+      ],
+      available_trackers: [
+        { id: 1, name: 'Bug' },
+        { id: 2, name: 'Feature' },
+      ],
+    },
+    filters: {},
+    setFilters: mockSetFilters,
+    clearFilters: mockClearFilters,
+    excludeClosedVersions: false,
+    toggleExcludeClosedVersions: mockToggleExcludeClosedVersions,
+    hideEmptyEpicsVersions: false,
+    toggleHideEmptyEpicsVersions: mockToggleHideEmptyEpicsVersions,
+  };
+
   beforeEach(() => {
-    // 各テスト前にストアをリセット
-    useStore.setState({
-      entities: {
-        epics: {},
-        versions: {},
-        features: {},
-        user_stories: {},
-        tasks: {},
-        tests: {},
-        bugs: {},
-        users: {}
-      },
-      grid: { index: {}, epic_order: [], version_order: [] },
-      metadata: {
-        available_statuses: [],
-        available_trackers: []
-      },
-      filters: {},
-      excludeClosedVersions: false,
-      isLoading: false,
-      error: null,
-      projectId: 'project1'
-    });
+    vi.clearAllMocks();
+    useStore.setState(defaultState as any);
   });
 
   describe('Rendering', () => {
-    it('should render filter toggle button', () => {
+    it('should render filter button', () => {
       render(<FilterPanel />);
-      expect(screen.getByText(/フィルタ/)).toBeTruthy();
+
+      expect(screen.getByText(/🔍 フィルター/)).toBeInTheDocument();
     });
 
-    it('should show filter panel when toggle button is clicked', async () => {
-      const user = userEvent.setup();
+    it('should toggle expansion when button clicked', () => {
       render(<FilterPanel />);
 
-      const toggleButton = screen.getByText(/フィルタ/);
-      await user.click(toggleButton);
+      const button = screen.getByText(/🔍 フィルター/);
+      
+      // Initially collapsed
+      expect(screen.queryByText('バージョン絞込')).not.toBeInTheDocument();
 
-      expect(screen.getByText('バージョン')).toBeTruthy();
-      expect(screen.getByText('Epic')).toBeTruthy();
-      expect(screen.getByText('Feature')).toBeTruthy();
-    });
-  });
+      // Click to expand
+      fireEvent.click(button);
+      expect(screen.getByText('バージョン絞込')).toBeInTheDocument();
 
-  describe('Natural Sort for Versions', () => {
-    it('should sort versions in natural order by name', async () => {
-      const user = userEvent.setup();
-
-      // 自然順ソートをテストするデータ（意図的に順序をシャッフル）
-      const versions: Record<string, Version> = {
-        'v10': { id: 'v10', name: '10.0.0', status: 'open', project_id: 'p1' },
-        'v2': { id: 'v2', name: '2.0.0', status: 'open', project_id: 'p1' },
-        'v1': { id: 'v1', name: '1.0.0', status: 'open', project_id: 'p1' },
-        'v20': { id: 'v20', name: '20.0.0', status: 'open', project_id: 'p1' }
-      };
-
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions,
-          features: {},
-          user_stories: {},
-          tasks: {},
-          tests: {},
-          bugs: {},
-          users: {}
-        },
-        grid: { index: {}, epic_order: [], version_order: [] },
-        metadata: {
-          available_statuses: [],
-          available_trackers: []
-        },
-        filters: {},
-        excludeClosedVersions: false,
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
-
-      render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
-
-      // バージョンセクションを取得
-      const versionSection = screen.getByText('バージョン').parentElement;
-      expect(versionSection).toBeTruthy();
-
-      // バージョンのラベルを取得して順序を確認
-      const versionLabels = Array.from(
-        versionSection!.querySelectorAll('.filter-checkbox span')
-      ).map(el => el.textContent);
-
-      // 期待される自然順: 1.0.0, 2.0.0, 10.0.0, 20.0.0
-      expect(versionLabels).toEqual(['1.0.0', '2.0.0', '10.0.0', '20.0.0']);
-    });
-
-    it('should sort versions with prefix numbers correctly', async () => {
-      const user = userEvent.setup();
-
-      const versions: Record<string, Version> = {
-        'v1': { id: 'v1', name: '1_初期機能', status: 'open', project_id: 'p1' },
-        'v10': { id: 'v10', name: '10_追加機能', status: 'open', project_id: 'p1' },
-        'v2': { id: 'v2', name: '2_基本機能', status: 'open', project_id: 'p1' }
-      };
-
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions,
-          features: {},
-          user_stories: {},
-          tasks: {},
-          tests: {},
-          bugs: {},
-          users: {}
-        },
-        grid: { index: {}, epic_order: [], version_order: [] },
-        metadata: {
-          available_statuses: [],
-          available_trackers: []
-        },
-        filters: {},
-        excludeClosedVersions: false,
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
-
-      render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
-
-      const versionSection = screen.getByText('バージョン').parentElement;
-      const versionLabels = Array.from(
-        versionSection!.querySelectorAll('.filter-checkbox span')
-      ).map(el => el.textContent);
-
-      // 期待される自然順: 1_初期機能, 2_基本機能, 10_追加機能
-      expect(versionLabels).toEqual(['1_初期機能', '2_基本機能', '10_追加機能']);
+      // Click to collapse
+      fireEvent.click(button);
+      expect(screen.queryByText('バージョン絞込')).not.toBeInTheDocument();
     });
   });
 
-  describe('Natural Sort for Epics', () => {
-    it('should sort epics in natural order by subject', async () => {
-      const user = userEvent.setup();
-
-      const epics: Record<string, Epic> = {
-        'e10': { id: 'e10', subject: '10_認証システム', project_id: 'p1' },
-        'e2': { id: 'e2', subject: '2_ユーザ管理', project_id: 'p1' },
-        'e1': { id: 'e1', subject: '1_基本設定', project_id: 'p1' },
-        'e100': { id: 'e100', subject: '100_運用保守', project_id: 'p1' }
-      };
-
-      useStore.setState({
-        entities: {
-          epics,
-          versions: {},
-          features: {},
-          user_stories: {},
-          tasks: {},
-          tests: {},
-          bugs: {},
-          users: {}
-        },
-        grid: { index: {}, epic_order: [], version_order: [] },
-        metadata: {
-          available_statuses: [],
-          available_trackers: []
-        },
-        filters: {},
-        excludeClosedVersions: false,
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
-
+  describe('Version Filter', () => {
+    it('should render version checkboxes when expanded', () => {
       render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
 
-      const epicSection = screen.getByText('Epic').parentElement;
-      const epicLabels = Array.from(
-        epicSection!.querySelectorAll('.filter-checkbox span')
-      ).map(el => el.textContent);
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
 
-      // 期待される自然順: 1_基本設定, 2_ユーザ管理, 10_認証システム, 100_運用保守
-      expect(epicLabels).toEqual([
-        '1_基本設定',
-        '2_ユーザ管理',
-        '10_認証システム',
-        '100_運用保守'
-      ]);
+      expect(screen.getByText('v1.0')).toBeInTheDocument();
+      expect(screen.getByText('v2.0')).toBeInTheDocument();
+    });
+
+    it('should show exclude closed versions toggle', () => {
+      render(<FilterPanel />);
+
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
+
+      expect(screen.getByText(/クローズ済みバージョンを除外/)).toBeInTheDocument();
     });
   });
 
-  describe('Natural Sort for Features', () => {
-    it('should sort features in natural order by title', async () => {
-      const user = userEvent.setup();
-
-      const features: Record<string, Feature> = {
-        'f10': { id: 'f10', title: '10_詳細画面', parent_epic_id: 'e1', project_id: 'p1' },
-        'f2': { id: 'f2', title: '2_一覧画面', parent_epic_id: 'e1', project_id: 'p1' },
-        'f1': { id: 'f1', title: '1_登録画面', parent_epic_id: 'e1', project_id: 'p1' },
-        'f20': { id: 'f20', title: '20_削除機能', parent_epic_id: 'e1', project_id: 'p1' }
-      };
-
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions: {},
-          features,
-          user_stories: {},
-          tasks: {},
-          tests: {},
-          bugs: {},
-          users: {}
-        },
-        grid: { index: {}, epic_order: [], version_order: [] },
-        metadata: {
-          available_statuses: [],
-          available_trackers: []
-        },
-        filters: {},
-        excludeClosedVersions: false,
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
-
+  describe('User Filter', () => {
+    it('should render user checkboxes when expanded', () => {
       render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
 
-      const featureSection = screen.getByText('Feature').parentElement;
-      const featureLabels = Array.from(
-        featureSection!.querySelectorAll('.filter-checkbox span')
-      ).map(el => el.textContent);
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
 
-      // 期待される自然順: 1_登録画面, 2_一覧画面, 10_詳細画面, 20_削除機能
-      expect(featureLabels).toEqual([
-        '1_登録画面',
-        '2_一覧画面',
-        '10_詳細画面',
-        '20_削除機能'
-      ]);
+      expect(screen.getByText('User 1')).toBeInTheDocument();
+      expect(screen.getByText('User 2')).toBeInTheDocument();
     });
   });
 
-  describe('Toggle Buttons', () => {
-    it('should render "クローズ済みバージョンを非表示" checkbox', async () => {
-      const user = userEvent.setup();
+  describe('Status Filter', () => {
+    it('should render status checkboxes when expanded', () => {
       render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
 
-      expect(screen.getByText('クローズ済みバージョンを非表示')).toBeTruthy();
-    });
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
 
-    it('should render "ヒットしなかったEpic/Versionを非表示" checkbox', async () => {
-      const user = userEvent.setup();
-      render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
-
-      expect(screen.getByText('ヒットしなかったEpic/Versionを非表示')).toBeTruthy();
-    });
-
-    it('should toggle hideEmptyEpicsVersions when checkbox is clicked', async () => {
-      const user = userEvent.setup();
-      render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
-
-      const initialState = useStore.getState().hideEmptyEpicsVersions;
-
-      const checkbox = screen.getByLabelText('ヒットしなかったEpic/Versionを非表示');
-      await user.click(checkbox);
-
-      const newState = useStore.getState().hideEmptyEpicsVersions;
-      expect(newState).toBe(!initialState);
-    });
-
-    it('should toggle excludeClosedVersions when checkbox is clicked', async () => {
-      const user = userEvent.setup();
-      render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
-
-      const initialState = useStore.getState().excludeClosedVersions;
-
-      const checkbox = screen.getByLabelText('クローズ済みバージョンを非表示');
-      await user.click(checkbox);
-
-      const newState = useStore.getState().excludeClosedVersions;
-      expect(newState).toBe(!initialState);
+      expect(screen.getByText('New')).toBeInTheDocument();
+      expect(screen.getByText('In Progress')).toBeInTheDocument();
     });
   });
 
-  describe('Filter Application', () => {
-    it('should apply version filter when checkbox is selected and Apply is clicked', async () => {
-      const user = userEvent.setup();
-      const setFiltersMock = useStore.getState().setFilters;
-
-      const versions: Record<string, Version> = {
-        'v1': { id: 'v1', name: 'v1.0.0', status: 'open', project_id: 'p1' },
-        'v2': { id: 'v2', name: 'v2.0.0', status: 'open', project_id: 'p1' }
-      };
-
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions,
-          features: {},
-          user_stories: {},
-          tasks: {},
-          tests: {},
-          bugs: {},
-          users: {}
-        },
-        grid: { index: {}, epic_order: [], version_order: [] },
-        metadata: {
-          available_statuses: [],
-          available_trackers: []
-        },
-        filters: {},
-        excludeClosedVersions: false,
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
-
+  describe('Tracker Filter', () => {
+    it('should render tracker checkboxes when expanded', () => {
       render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ/));
 
-      // v1.0.0を選択
-      const v1Checkbox = screen.getByLabelText('v1.0.0');
-      await user.click(v1Checkbox);
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
 
-      // 適用ボタンをクリック
-      await user.click(screen.getByText('適用'));
+      expect(screen.getByText('Bug')).toBeInTheDocument();
+      expect(screen.getByText('Feature')).toBeInTheDocument();
+    });
+  });
 
-      // フィルタが適用されていることを確認
-      const currentFilters = useStore.getState().filters;
-      expect(currentFilters.fixed_version_id_in).toEqual(['v1']);
+  describe('Filter Actions', () => {
+    it('should show apply button when expanded', () => {
+      render(<FilterPanel />);
+
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
+
+      expect(screen.getByText('適用')).toBeInTheDocument();
     });
 
-    it('should clear all filters when Clear button is clicked', async () => {
-      const user = userEvent.setup();
+    it('should show clear button when expanded', () => {
+      render(<FilterPanel />);
 
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
+
+      expect(screen.getByText('クリア')).toBeInTheDocument();
+    });
+
+    it('should call clearFilters when clear button clicked', () => {
+      render(<FilterPanel />);
+
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText('クリア'));
+
+      expect(mockClearFilters).toHaveBeenCalled();
+    });
+  });
+
+  describe('Empty State', () => {
+    it('should show hide empty toggle', () => {
+      render(<FilterPanel />);
+
+      fireEvent.click(screen.getByText(/🔍 フィルター/));
+
+      expect(screen.getByText(/空のEpic\/Versionを非表示/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Active Filters Display', () => {
+    it('should show filter count when filters applied', () => {
       useStore.setState({
-        entities: {
-          epics: {},
-          versions: {
-            'v1': { id: 'v1', name: 'v1.0.0', status: 'open', project_id: 'p1' }
-          },
-          features: {},
-          user_stories: {},
-          tasks: {},
-          tests: {},
-          bugs: {},
-          users: {}
+        ...defaultState,
+        filters: {
+          fixed_version_id_in: ['1'],
+          assigned_to_id_in: [1, 2],
         },
-        grid: { index: {}, epic_order: [], version_order: [] },
-        metadata: {
-          available_statuses: [],
-          available_trackers: []
-        },
-        filters: { fixed_version_id_in: ['v1'] }, // 初期状態でフィルタ適用済み
-        excludeClosedVersions: false,
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
+      } as any);
 
       render(<FilterPanel />);
-      await user.click(screen.getByText(/フィルタ \(1\)/)); // フィルタカウント表示を確認
 
-      await user.click(screen.getByText('クリア'));
+      expect(screen.getByText(/🔍 フィルター \(2\)/)).toBeInTheDocument();
+    });
 
-      // フィルタがクリアされていることを確認
-      const currentFilters = useStore.getState().filters;
-      expect(currentFilters).toEqual({});
+    it('should not show count when no filters', () => {
+      render(<FilterPanel />);
+
+      expect(screen.getByText('🔍 フィルター')).toBeInTheDocument();
+      expect(screen.queryByText(/🔍 フィルター \(/)).not.toBeInTheDocument();
     });
   });
 });

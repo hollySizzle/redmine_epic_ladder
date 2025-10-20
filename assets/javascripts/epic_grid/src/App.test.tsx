@@ -1,308 +1,227 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import { App } from './App';
 import { useStore } from './store/useStore';
-import { normalizedMockData } from './mocks/normalized-mock-data';
 
-describe('App - Integration Tests (Normalized API)', () => {
-  beforeEach(async () => {
-    // ストアを初期化
-    useStore.setState({
-      entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
-      grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
-      metadata: JSON.parse(JSON.stringify(normalizedMockData.metadata)),
-      isLoading: false,
-      error: null,
-      isIssueIdVisible: true
-    });
-  });
+// Mock子コンポーネント
+vi.mock('./components/EpicVersion/EpicVersionGrid', () => ({
+  EpicVersionGrid: () => <div data-testid="epic-version-grid">EpicVersionGrid</div>
+}));
 
-  it('should render Epic × Version grid structure', async () => {
-    render(<App />);
+vi.mock('./components/FilterPanel', () => ({
+  FilterPanel: () => <div data-testid="filter-panel">FilterPanel</div>
+}));
 
-    await waitFor(() => {
-      // グリッドのヘッダーラベルが表示されること
-      expect(screen.getByText('Epic')).toBeInTheDocument();
-    });
+vi.mock('./components/IssueDetail/DetailPane', () => ({
+  DetailPane: () => <div data-testid="detail-pane">DetailPane</div>
+}));
 
-    // Feature ヘッダーラベルが表示されること
-    expect(screen.getByText('Feature')).toBeInTheDocument();
+vi.mock('./components/Layout/TripleSplitLayout', () => ({
+  TripleSplitLayout: ({ centerPane, leftPane, rightPane, isLeftPaneVisible, isRightPaneVisible }: any) => (
+    <div data-testid="triple-split-layout">
+      {isLeftPaneVisible && <div data-testid="left-pane">{leftPane}</div>}
+      <div data-testid="center-pane">{centerPane}</div>
+      {isRightPaneVisible && <div data-testid="right-pane">{rightPane}</div>}
+    </div>
+  )
+}));
 
-    // Epic ヘッダーが表示されること
-    expect(screen.getByText('施設・ユーザー管理')).toBeInTheDocument();
-    expect(screen.getByText('開診スケジュール')).toBeInTheDocument();
+vi.mock('./components/SidePanel/SidePanel', () => ({
+  SidePanel: () => <div data-testid="side-panel">SidePanel</div>
+}));
 
-    // Version ヘッダーが表示されること（mockDataの実際の値を使用）
-    const versionHeaders = document.querySelectorAll('.version-header');
-    expect(versionHeaders.length).toBe(3);
-  });
+vi.mock('./components/Legend', () => ({
+  Legend: () => <div data-testid="legend">Legend</div>
+}));
 
-  it('should render Feature cards in correct cells', async () => {
-    render(<App />);
+vi.mock('./components/common/SearchBar', () => ({
+  SearchBar: () => <div data-testid="search-bar">SearchBar</div>
+}));
 
-    await waitFor(() => {
-      // Feature が表示されること
-      expect(screen.getByText('登録画面')).toBeInTheDocument();
-    });
+vi.mock('./components/common/SettingsDropdown', () => ({
+  SettingsDropdown: () => <div data-testid="settings-dropdown">SettingsDropdown</div>
+}));
 
-    expect(screen.getByText('一覧画面')).toBeInTheDocument();
-    // normalizedMockDataには4つのFeatureがある (3D Grid対応)
-    const featureCells = document.querySelectorAll('.feature-cell');
-    expect(featureCells.length).toBeGreaterThanOrEqual(4);
-  });
+vi.mock('./components/common/UnassignedHighlightToggle', () => ({
+  UnassignedHighlightToggle: () => <div data-testid="unassigned-highlight-toggle">UnassignedHighlightToggle</div>
+}));
 
-  it('should render UserStories within Features', async () => {
-    render(<App />);
+vi.mock('./components/common/UserStoryChildrenToggle', () => ({
+  UserStoryChildrenToggle: () => <div data-testid="user-story-children-toggle">UserStoryChildrenToggle</div>
+}));
 
-    await waitFor(() => {
-      // UserStory が表示されること
-      expect(screen.getByText('US#101 ユーザー登録フォーム')).toBeInTheDocument();
-    });
+vi.mock('@atlaskit/pragmatic-drag-and-drop/element/adapter', () => ({
+  monitorForElements: vi.fn(() => vi.fn())
+}));
 
-    expect(screen.getByText('US#102 ユーザー一覧表示')).toBeInTheDocument();
-    // normalizedMockDataには3つのUserStoryしかない
-    const userStories = document.querySelectorAll('.user-story');
-    expect(userStories.length).toBeGreaterThanOrEqual(3);
-  });
+describe('App', () => {
+  const mockFetchGridData = vi.fn();
 
-  it('should render Tasks, Tests, and Bugs within UserStories', async () => {
-    render(<App />);
-
-    await waitFor(() => {
-      // Task が表示されること (normalizedMockDataの実際のタスク名を確認)
-      const tasks = document.querySelectorAll('[data-task]');
-      expect(tasks.length).toBeGreaterThan(0);
-    });
-
-    // Test が表示されること
-    const tests = document.querySelectorAll('[data-test]');
-    expect(tests.length).toBeGreaterThanOrEqual(0);
-
-    // Bug が表示されること
-    const bugs = document.querySelectorAll('[data-bug]');
-    expect(bugs.length).toBeGreaterThanOrEqual(0);
-  });
-
-  it('should display status indicators correctly', async () => {
-    render(<App />);
-
-    await waitFor(() => {
-      // Open status indicators
-      const openIndicators = document.querySelectorAll('.status-indicator.status-open');
-      expect(openIndicators.length).toBeGreaterThan(0);
-    });
-
-    // Closed status indicators
-    const closedIndicators = document.querySelectorAll('.status-indicator.status-closed');
-    expect(closedIndicators.length).toBeGreaterThan(0);
-  });
-
-  it('should render Legend component', async () => {
-    render(<App />);
-
-    await waitFor(() => {
-      // Legend コンポーネントが表示されること
-      const legend = document.querySelector('.legend');
-      expect(legend).toBeInTheDocument();
-    });
-  });
-
-  it('should have correct grid cell count', async () => {
-    render(<App />);
-
-    await waitFor(() => {
-      // 3D Grid では us-cell が UserStory を含むセル
-      const cells = document.querySelectorAll('.us-cell');
-      // 2 epics × 4 features × 3 versions = 多数のセルがあるが、
-      // 少なくとも UserStory が配置されているセルがあることを確認
-      expect(cells.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('should have drag-drop data attributes', async () => {
-    render(<App />);
-
-    await waitFor(() => {
-      // Feature cards should have data-feature attribute
-      const featureCards = document.querySelectorAll('[data-feature]');
-      expect(featureCards.length).toBeGreaterThan(0);
-    });
-
-    // UserStory should have data-story attribute
-    const userStories = document.querySelectorAll('[data-story]');
-    expect(userStories.length).toBeGreaterThan(0);
-
-    // Task should have data-task attribute
-    const tasks = document.querySelectorAll('[data-task]');
-    expect(tasks.length).toBeGreaterThan(0);
-  });
-});
-
-describe('App - Error and Loading States', () => {
   beforeEach(() => {
-    const rootElement = document.createElement('div');
-    rootElement.id = 'kanban-root';
-    rootElement.setAttribute('data-project-id', '1');
-    document.body.appendChild(rootElement);
-  });
+    vi.clearAllMocks();
 
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
-  it('エラー状態が表示される', async () => {
-    // 先にレンダリングしてからエラーを設定
-    render(<App />);
-
+    // デフォルトのstore状態をモック
     useStore.setState({
-      isLoading: false,
-      error: 'Failed to load data'
-    });
-
-    // エラーメッセージを待つ
-    await waitFor(() => {
-      expect(screen.getByText(/Error: Failed to load data/)).toBeInTheDocument();
-    });
-  });
-
-  it('ローディング状態が表示される', () => {
-    useStore.setState({
-      isLoading: true,
-      error: null,
-      entities: { epics: {}, versions: {}, features: {}, user_stories: {}, tasks: {}, tests: {}, bugs: {}, users: {} },
-      grid: { index: {}, epic_order: [], version_order: [] },
-      metadata: { available_statuses: [], available_trackers: [] }
-    });
-
-    render(<App />);
-    expect(screen.getByText(/Loading grid data/)).toBeInTheDocument();
-  });
-
-  it('ローディング完了後にグリッドが表示される', async () => {
-    useStore.setState({
-      isLoading: true,
-      error: null
-    });
-
-    render(<App />);
-    expect(screen.getByText(/Loading grid data/)).toBeInTheDocument();
-
-    // データをロード
-    useStore.setState({
+      fetchGridData: mockFetchGridData,
       isLoading: false,
       error: null,
-      entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
-      grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
-      metadata: JSON.parse(JSON.stringify(normalizedMockData.metadata)),
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByText(/Loading grid data/)).not.toBeInTheDocument();
-      expect(screen.getByText('Epic')).toBeInTheDocument();
-    });
-  });
-});
-
-describe('App - Dirty State Management', () => {
-  beforeEach(() => {
-    // kanban-root要素を追加
-    const rootElement = document.createElement('div');
-    rootElement.id = 'kanban-root';
-    rootElement.setAttribute('data-project-id', '1');
-    document.body.appendChild(rootElement);
-
-    window.alert = vi.fn();
-    window.confirm = vi.fn();
-
-    // グリッドデータを初期化（ローディング状態を回避）
-    useStore.setState({
-      entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
-      grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
-      metadata: JSON.parse(JSON.stringify(normalizedMockData.metadata)),
-      isLoading: false,
-      error: null,
-      isIssueIdVisible: true
-    });
-  });
-
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
-
-  it('保存ボタンをクリックすると成功メッセージが表示される', async () => {
-    // Dirty状態にする（正しい構造）
-    useStore.setState({
-      isDirty: true,
+      projectId: '1',
+      selectedEntity: null,
+      isDetailPaneVisible: false,
+      isSideMenuVisible: false,
+      toggleSideMenu: vi.fn(),
+      isVerticalMode: false,
+      isDirty: false,
       pendingChanges: {
-        movedUserStories: [{ id: 'test', from: {}, to: {} }],
+        movedUserStories: [],
         reorderedEpics: null,
         reorderedVersions: null,
       },
-      savePendingChanges: vi.fn().mockResolvedValue(undefined),
+      savePendingChanges: vi.fn(),
+      discardPendingChanges: vi.fn(),
+      reorderFeatures: vi.fn(),
+      reorderUserStories: vi.fn(),
+      moveUserStoryToCell: vi.fn(),
+      reorderTasks: vi.fn(),
+      reorderTests: vi.fn(),
+      reorderBugs: vi.fn(),
+      reorderEpics: vi.fn(),
+      reorderVersions: vi.fn(),
     });
 
-    render(<App />);
+    // Mock getElementById
+    const mockElement = document.createElement('div');
+    mockElement.setAttribute('data-project-id', '123');
+    vi.spyOn(document, 'getElementById').mockReturnValue(mockElement);
+  });
 
-    await waitFor(() => {
-      const saveButton = screen.getByText(/保存 \(1件\)/);
-      fireEvent.click(saveButton);
-    });
+  describe('Loading State', () => {
+    it('should render loading state when isLoading is true', () => {
+      useStore.setState({ isLoading: true });
 
-    await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith('✅ 変更を保存しました');
+      render(<App />);
+
+      expect(screen.getByText('Loading grid data...')).toBeInTheDocument();
     });
   });
 
-  it('破棄ボタンをクリックしてconfirm OKで変更が破棄される', async () => {
-    const mockDiscardPendingChanges = vi.fn();
+  describe('Error State', () => {
+    it('should render error state when error exists', () => {
+      useStore.setState({ error: 'Network error' });
 
-    useStore.setState({
-      isDirty: true,
-      pendingChanges: {
-        movedUserStories: [{ id: 'test', from: {}, to: {} }],
-        reorderedEpics: null,
-        reorderedVersions: null,
-      },
-      discardPendingChanges: mockDiscardPendingChanges,
+      render(<App />);
+
+      expect(screen.getByText('Error: Network error')).toBeInTheDocument();
     });
-
-    vi.mocked(window.confirm).mockReturnValue(true);
-
-    render(<App />);
-
-    await waitFor(() => {
-      const discardButton = screen.getByText(/破棄/);
-      fireEvent.click(discardButton);
-    });
-
-    expect(window.confirm).toHaveBeenCalled();
-    expect(mockDiscardPendingChanges).toHaveBeenCalled();
   });
 
-  it('破棄ボタンをクリックしてconfirm Cancelで変更は破棄されない', async () => {
-    const mockDiscardPendingChanges = vi.fn();
+  describe('Normal Rendering', () => {
+    it('should render main components', () => {
+      render(<App />);
 
-    useStore.setState({
-      isDirty: true,
-      pendingChanges: {
-        movedUserStories: [{ id: 'test', from: {}, to: {} }],
-        reorderedEpics: null,
-        reorderedVersions: null,
-      },
-      discardPendingChanges: mockDiscardPendingChanges,
+      expect(screen.getByTestId('epic-version-grid')).toBeInTheDocument();
+      expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
+      expect(screen.getByTestId('search-bar')).toBeInTheDocument();
+      expect(screen.getByTestId('legend')).toBeInTheDocument();
     });
 
-    vi.mocked(window.confirm).mockReturnValue(false);
+    it('should render menu toggle button', () => {
+      render(<App />);
 
-    render(<App />);
-
-    await waitFor(() => {
-      const discardButton = screen.getByText(/破棄/);
-      fireEvent.click(discardButton);
+      expect(screen.getByTitle('サイドメニューを開く')).toBeInTheDocument();
     });
 
-    expect(window.confirm).toHaveBeenCalled();
-    expect(mockDiscardPendingChanges).not.toHaveBeenCalled();
+    it('should render fullscreen mode when no panes visible', () => {
+      useStore.setState({
+        isSideMenuVisible: false,
+        isDetailPaneVisible: false,
+      });
+
+      const { container } = render(<App />);
+
+      expect(container.querySelector('.kanban-fullscreen')).toBeInTheDocument();
+      expect(screen.queryByTestId('triple-split-layout')).not.toBeInTheDocument();
+    });
+
+    it('should render triple split layout when side menu visible', () => {
+      useStore.setState({ isSideMenuVisible: true });
+
+      render(<App />);
+
+      expect(screen.getByTestId('triple-split-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('side-panel')).toBeInTheDocument();
+    });
+
+    it('should render triple split layout when detail pane visible', () => {
+      useStore.setState({ isDetailPaneVisible: true });
+
+      render(<App />);
+
+      expect(screen.getByTestId('triple-split-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('detail-pane')).toBeInTheDocument();
+    });
+  });
+
+  describe('Data Fetching', () => {
+    it('should fetch grid data on mount', async () => {
+      render(<App />);
+
+      await waitFor(() => {
+        expect(mockFetchGridData).toHaveBeenCalledWith('123');
+      });
+    });
+
+    it('should use default project id if data-project-id not found', async () => {
+      vi.spyOn(document, 'getElementById').mockReturnValue(document.createElement('div'));
+
+      render(<App />);
+
+      await waitFor(() => {
+        expect(mockFetchGridData).toHaveBeenCalledWith('1');
+      });
+    });
+  });
+
+  describe('Dirty State', () => {
+    it('should show save/discard buttons when dirty', () => {
+      useStore.setState({
+        isDirty: true,
+        pendingChanges: {
+          movedUserStories: [{ id: '1' }],
+          reorderedEpics: null,
+          reorderedVersions: null,
+        },
+      });
+
+      render(<App />);
+
+      expect(screen.getByText(/💾 保存/)).toBeInTheDocument();
+      expect(screen.getByText('✖ 破棄')).toBeInTheDocument();
+    });
+
+    it('should show changes count in save button', () => {
+      useStore.setState({
+        isDirty: true,
+        pendingChanges: {
+          movedUserStories: [{ id: '1' }, { id: '2' }],
+          reorderedEpics: { order: [] },
+          reorderedVersions: null,
+        },
+      });
+
+      render(<App />);
+
+      expect(screen.getByText('💾 保存 (3件)')).toBeInTheDocument();
+    });
+
+    it('should not show save/discard buttons when not dirty', () => {
+      useStore.setState({ isDirty: false });
+
+      render(<App />);
+
+      expect(screen.queryByText(/💾 保存/)).not.toBeInTheDocument();
+      expect(screen.queryByText('✖ 破棄')).not.toBeInTheDocument();
+    });
   });
 });

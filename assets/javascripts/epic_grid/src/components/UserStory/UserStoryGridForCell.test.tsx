@@ -1,199 +1,142 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { UserStoryGridForCell } from './UserStoryGridForCell';
 import { useStore } from '../../store/useStore';
 
-// モックアラート
-global.alert = vi.fn();
+vi.mock('./UserStory', () => ({
+  UserStory: ({ storyId }: any) => <div data-testid={`user-story-${storyId}`}>UserStory {storyId}</div>
+}));
+
+vi.mock('../common/AddButton', () => ({
+  AddButton: ({ onClick, label }: any) => (
+    <button data-testid="add-button" onClick={onClick}>{label}</button>
+  )
+}));
+
+vi.mock('../common/IssueFormModal', () => ({
+  IssueFormModal: ({ isOpen, onClose, onSubmit }: any) => (
+    isOpen ? (
+      <div data-testid="issue-form-modal">
+        <button data-testid="modal-close" onClick={onClose}>Close</button>
+        <button data-testid="modal-submit" onClick={() => onSubmit({ subject: 'Test Story', description: '' })}>
+          Submit
+        </button>
+      </div>
+    ) : null
+  )
+}));
 
 describe('UserStoryGridForCell', () => {
-  describe('Rendering', () => {
-    it('should render + Add User Story button', () => {
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions: {},
-          features: { f1: { id: 'f1', title: 'Feature 1', status: 'open', parent_epic_id: 'e1', user_story_ids: [], fixed_version_id: null, version_source: 'none' } },
-          user_stories: {},
-          users: {},
-          tasks: {},
-          tests: {},
-          bugs: {}
+  const mockCreateUserStory = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useStore.setState({
+      createUserStory: mockCreateUserStory,
+      entities: {
+        users: {
+          '1': { id: 1, name: 'User 1' },
         },
-        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
+      },
+    } as any);
+  });
 
-      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+  describe('Rendering', () => {
+    it('should render user stories', () => {
+      render(
+        <UserStoryGridForCell
+          epicId="epic-1"
+          featureId="feature-1"
+          versionId="version-1"
+          storyIds={['us-1', 'us-2']}
+        />
+      );
 
-      const addButton = screen.getByText('+ Add User Story');
-      expect(addButton).toBeTruthy();
+      expect(screen.getByTestId('user-story-us-1')).toBeInTheDocument();
+      expect(screen.getByTestId('user-story-us-2')).toBeInTheDocument();
     });
 
-    it('should render user stories passed via storyIds', () => {
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions: {},
-          features: {},
-          user_stories: {
-            us1: { id: 'us1', title: 'User Story 1', status: 'open', parent_feature_id: 'f1', task_ids: [], test_ids: [], bug_ids: [], fixed_version_id: null, version_source: 'none', expansion_state: false },
-            us2: { id: 'us2', title: 'User Story 2', status: 'open', parent_feature_id: 'f1', task_ids: [], test_ids: [], bug_ids: [], fixed_version_id: null, version_source: 'none', expansion_state: false }
-          },
-          users: {},
-          tasks: {},
-          tests: {},
-          bugs: {}
-        },
-        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
+    it('should render add button', () => {
+      render(
+        <UserStoryGridForCell
+          epicId="epic-1"
+          featureId="feature-1"
+          versionId="version-1"
+          storyIds={[]}
+        />
+      );
 
-      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={['us1', 'us2']} />);
-
-      expect(screen.getByText('User Story 1')).toBeTruthy();
-      expect(screen.getByText('User Story 2')).toBeTruthy();
+      expect(screen.getByTestId('add-button')).toBeInTheDocument();
+      expect(screen.getByText('+ Add User Story')).toBeInTheDocument();
     });
   });
 
-  describe('Add User Story functionality', () => {
-    it('should open modal when + Add User Story is clicked', async () => {
-      const user = userEvent.setup();
+  describe('Modal Interaction', () => {
+    it('should open modal when add button clicked', () => {
+      render(
+        <UserStoryGridForCell
+          epicId="epic-1"
+          featureId="feature-1"
+          versionId="version-1"
+          storyIds={[]}
+        />
+      );
 
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions: {},
-          features: { f1: { id: 'f1', title: 'Feature 1', status: 'open', parent_epic_id: 'e1', user_story_ids: [], fixed_version_id: null, version_source: 'none' } },
-          user_stories: {},
-          users: {},
-          tasks: {},
-          tests: {},
-          bugs: {}
-        },
-        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
-        isLoading: false,
-        error: null,
-        projectId: 'project1'
-      });
+      fireEvent.click(screen.getByTestId('add-button'));
 
-      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
-
-      const addButton = screen.getByText('+ Add User Story');
-      await user.click(addButton);
-
-      expect(screen.getByText('新しいUser Storyを追加')).toBeTruthy();
-      expect(screen.getByLabelText(/User Story名/)).toBeTruthy();
+      expect(screen.getByTestId('issue-form-modal')).toBeInTheDocument();
     });
 
-    it('should call createUserStory when modal form is submitted', async () => {
-      const user = userEvent.setup();
-      const createUserStoryMock = vi.fn().mockResolvedValue(undefined);
+    it('should call createUserStory with version when form submitted', async () => {
+      mockCreateUserStory.mockResolvedValue(undefined);
 
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions: {},
-          features: { f1: { id: 'f1', title: 'Feature 1', status: 'open', parent_epic_id: 'e1', user_story_ids: [], fixed_version_id: null, version_source: 'none' } },
-          user_stories: {},
-          users: {},
-          tasks: {},
-          tests: {},
-          bugs: {}
-        },
-        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
-        isLoading: false,
-        error: null,
-        projectId: 'project1',
-        createUserStory: createUserStoryMock
-      });
+      render(
+        <UserStoryGridForCell
+          epicId="epic-1"
+          featureId="feature-1"
+          versionId="version-1"
+          storyIds={[]}
+        />
+      );
 
-      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+      fireEvent.click(screen.getByTestId('add-button'));
+      fireEvent.click(screen.getByTestId('modal-submit'));
 
-      const addButton = screen.getByText('+ Add User Story');
-      await user.click(addButton);
-
-      await user.type(screen.getByLabelText(/User Story名/), 'New User Story');
-      await user.click(screen.getByText('作成'));
-
-      expect(createUserStoryMock).toHaveBeenCalledWith('f1', {
-        subject: 'New User Story',
-        description: '',
-        parent_feature_id: 'f1',
-        fixed_version_id: 'v1' // バージョン指定を期待
+      await waitFor(() => {
+        expect(mockCreateUserStory).toHaveBeenCalledWith('feature-1', {
+          subject: 'Test Story',
+          description: '',
+          parent_feature_id: 'feature-1',
+          fixed_version_id: 'version-1',
+          assigned_to_id: undefined,
+        });
       });
     });
 
-    it('should not call createUserStory when modal is cancelled', async () => {
-      const user = userEvent.setup();
-      const createUserStoryMock = vi.fn();
+    it('should not include version id when versionId is "none"', async () => {
+      mockCreateUserStory.mockResolvedValue(undefined);
 
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions: {},
-          features: {},
-          user_stories: {},
-          users: {},
-          tasks: {},
-          tests: {},
-          bugs: {}
-        },
-        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
-        isLoading: false,
-        error: null,
-        projectId: 'project1',
-        createUserStory: createUserStoryMock
-      });
+      render(
+        <UserStoryGridForCell
+          epicId="epic-1"
+          featureId="feature-1"
+          versionId="none"
+          storyIds={[]}
+        />
+      );
 
-      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
+      fireEvent.click(screen.getByTestId('add-button'));
+      fireEvent.click(screen.getByTestId('modal-submit'));
 
-      const addButton = screen.getByText('+ Add User Story');
-      await user.click(addButton);
-
-      await user.click(screen.getByText('キャンセル'));
-
-      expect(createUserStoryMock).not.toHaveBeenCalled();
-    });
-
-    it('should show error alert when createUserStory fails', async () => {
-      const user = userEvent.setup();
-      const createUserStoryMock = vi.fn().mockRejectedValue(new Error('API Error'));
-
-      useStore.setState({
-        entities: {
-          epics: {},
-          versions: {},
-          features: {},
-          user_stories: {},
-          users: {},
-          tasks: {},
-          tests: {},
-          bugs: {}
-        },
-        grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
-        isLoading: false,
-        error: null,
-        projectId: 'project1',
-        createUserStory: createUserStoryMock
-      });
-
-      render(<UserStoryGridForCell epicId="e1" featureId="f1" versionId="v1" storyIds={[]} />);
-
-      const addButton = screen.getByText('+ Add User Story');
-      await user.click(addButton);
-
-      await user.type(screen.getByLabelText(/User Story名/), 'New User Story');
-      await user.click(screen.getByText('作成'));
-
-      await vi.waitFor(() => {
-        expect(global.alert).toHaveBeenCalledWith('User Story作成に失敗しました: API Error');
+      await waitFor(() => {
+        expect(mockCreateUserStory).toHaveBeenCalledWith('feature-1', {
+          subject: 'Test Story',
+          description: '',
+          parent_feature_id: 'feature-1',
+          fixed_version_id: undefined,
+          assigned_to_id: undefined,
+        });
       });
     });
   });

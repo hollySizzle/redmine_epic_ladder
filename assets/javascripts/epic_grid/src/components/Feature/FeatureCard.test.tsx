@@ -1,127 +1,142 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { FeatureCard } from './FeatureCard';
 import { useStore } from '../../store/useStore';
 
-describe('FeatureCard - Collapse Functionality', () => {
-  beforeEach(() => {
-    // ストアを初期状態にリセット
-    useStore.setState({
-      entities: {
-        epics: {},
-        versions: {},
-        features: {
-          f1: {
-            id: 'f1',
-            title: 'Test Feature',
-            description: '',
-            status: 'open',
-            parent_epic_id: 'e1',
-            user_story_ids: ['us1'],
-            fixed_version_id: null,
-            version_source: 'none',
-            statistics: {
-              total_user_stories: 1,
-              completed_user_stories: 0,
-              total_child_items: 0,
-              child_items_by_type: { tasks: 0, tests: 0, bugs: 0 }
-            },
-            created_on: '2025-01-01',
-            updated_on: '2025-01-01'
-          }
-        },
-        user_stories: {
-          us1: {
-            id: 'us1',
-            title: 'Test Story',
-            description: '',
-            status: 'open',
-            parent_feature_id: 'f1',
-            task_ids: ['t1'],
-            test_ids: [],
-            bug_ids: [],
-            fixed_version_id: null,
-            version_source: 'none',
-            statistics: {
-              total_tasks: 1,
-              total_tests: 0,
-              total_bugs: 0,
-              completed_tasks: 0,
-              completed_tests: 0,
-              completed_bugs: 0
-            },
-            created_on: '2025-01-01',
-            updated_on: '2025-01-01'
-          }
-        },
-        tasks: {
-          t1: { id: 't1', title: 'Task 1', status: 'open', parent_user_story_id: 'us1', fixed_version_id: null }
-        },
-        tests: {},
-        bugs: {},
-        users: {}
+vi.mock('../common/StatusIndicator', () => ({
+  StatusIndicator: ({ status }: any) => (
+    <span data-testid="status-indicator" data-status={status}>Status</span>
+  )
+}));
+
+vi.mock('../UserStory/UserStoryGridForCard', () => ({
+  UserStoryGridForCard: ({ featureId, storyIds }: any) => (
+    <div data-testid="user-story-grid" data-feature-id={featureId}>
+      {storyIds.length} stories
+    </div>
+  )
+}));
+
+vi.mock('../../hooks/useDraggableAndDropTarget', () => ({
+  useDraggableAndDropTarget: () => ({ current: null })
+}));
+
+describe('FeatureCard', () => {
+  const mockSetSelectedEntity = vi.fn();
+  const mockToggleDetailPane = vi.fn();
+
+  const mockFeature = {
+    id: 'feature-1',
+    title: 'Test Feature',
+    status: 'open' as const,
+    user_story_ids: ['us-1', 'us-2'],
+  };
+
+  const defaultState = {
+    entities: {
+      features: {
+        'feature-1': mockFeature,
       },
-      grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
-      isLoading: false,
-      error: null,
-      projectId: 'project1',
-      userStoryCollapseStates: {}
-    });
+    },
+    setSelectedEntity: mockSetSelectedEntity,
+    toggleDetailPane: mockToggleDetailPane,
+    isDetailPaneVisible: false,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useStore.setState(defaultState as any);
   });
 
   describe('Rendering', () => {
-    it('should render feature card with title and status', () => {
-      render(<FeatureCard featureId="f1" />);
+    it('should render feature card', () => {
+      render(<FeatureCard featureId="feature-1" />);
 
-      expect(screen.getByText('Test Feature')).toBeTruthy();
+      expect(screen.getByText('Test Feature')).toBeInTheDocument();
     });
 
-    it('should render closed class when status is closed', () => {
+    it('should render null if feature not found', () => {
+      const { container } = render(<FeatureCard featureId="non-existent" />);
+
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('should render status indicator', () => {
+      render(<FeatureCard featureId="feature-1" />);
+
+      expect(screen.getByTestId('status-indicator')).toBeInTheDocument();
+      expect(screen.getByTestId('status-indicator')).toHaveAttribute('data-status', 'open');
+    });
+
+    it('should render user story grid', () => {
+      render(<FeatureCard featureId="feature-1" />);
+
+      expect(screen.getByTestId('user-story-grid')).toBeInTheDocument();
+      expect(screen.getByTestId('user-story-grid')).toHaveAttribute('data-feature-id', 'feature-1');
+      expect(screen.getByText('2 stories')).toBeInTheDocument();
+    });
+  });
+
+  describe('Status Classes', () => {
+    it('should apply feature-card class', () => {
+      const { container } = render(<FeatureCard featureId="feature-1" />);
+
+      expect(container.querySelector('.feature-card')).toBeInTheDocument();
+    });
+
+    it('should apply closed class when status is closed', () => {
       useStore.setState({
+        ...defaultState,
         entities: {
-          ...useStore.getState().entities,
           features: {
-            f1: {
-              ...useStore.getState().entities.features.f1,
-              status: 'closed'
-            }
-          }
-        }
-      });
+            'feature-1': { ...mockFeature, status: 'closed' },
+          },
+        },
+      } as any);
 
-      const { container } = render(<FeatureCard featureId="f1" />);
+      const { container } = render(<FeatureCard featureId="feature-1" />);
 
-      const featureCard = container.querySelector('.feature-card.closed');
-      expect(featureCard).toBeTruthy();
+      expect(container.querySelector('.feature-card.closed')).toBeInTheDocument();
+    });
+
+    it('should not apply closed class when status is open', () => {
+      const { container } = render(<FeatureCard featureId="feature-1" />);
+
+      expect(container.querySelector('.feature-card')).toBeInTheDocument();
+      expect(container.querySelector('.feature-card.closed')).not.toBeInTheDocument();
     });
   });
 
-  describe('Interaction', () => {
-    it('should set selectedIssueId when header is clicked', async () => {
-      const user = userEvent.setup();
+  describe('Header Click', () => {
+    it('should select entity and toggle detail pane', () => {
+      render(<FeatureCard featureId="feature-1" />);
 
-      render(<FeatureCard featureId="f1" />);
+      const header = screen.getByText('Test Feature').closest('.feature-header');
+      fireEvent.click(header!);
 
-      const header = screen.getByText('Test Feature');
+      expect(mockToggleDetailPane).toHaveBeenCalled();
+      expect(mockSetSelectedEntity).toHaveBeenCalledWith('issue', 'feature-1');
+    });
 
-      // ヘッダーをクリック
-      await user.click(header);
+    it('should not toggle detail pane if already visible', () => {
+      useStore.setState({ ...defaultState, isDetailPaneVisible: true } as any);
 
-      // selectedIssueIdが設定される
-      expect(useStore.getState().selectedIssueId).toBe('f1');
+      render(<FeatureCard featureId="feature-1" />);
+
+      const header = screen.getByText('Test Feature').closest('.feature-header');
+      fireEvent.click(header!);
+
+      expect(mockToggleDetailPane).not.toHaveBeenCalled();
+      expect(mockSetSelectedEntity).toHaveBeenCalledWith('issue', 'feature-1');
     });
   });
 
-  describe('Child Components', () => {
-    it('should display child user stories and their tasks', () => {
-      render(<FeatureCard featureId="f1" />);
+  describe('Data Attributes', () => {
+    it('should set data-feature attribute', () => {
+      const { container } = render(<FeatureCard featureId="feature-1" />);
 
-      // UserStoryが表示されている
-      expect(screen.getByText('Test Story')).toBeTruthy();
-      // Taskが表示されている
-      expect(screen.getByText('Task 1')).toBeTruthy();
+      expect(container.querySelector('[data-feature="feature-1"]')).toBeInTheDocument();
     });
   });
 });
