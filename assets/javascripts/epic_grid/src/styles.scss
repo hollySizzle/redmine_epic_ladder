@@ -399,6 +399,11 @@
       position: sticky; // 念のため明示
       z-index: 900;
     }
+
+    // ハイライト時のスタイル（ボーダー＆影強調）
+    &--highlight {
+      animation: epic-feature-highlight 3s ease-in-out;
+    }
   }
 
   // Feature列セル
@@ -419,6 +424,11 @@
     &--focused {
       position: sticky; // 念のため明示
       z-index: 900;
+    }
+
+    // ハイライト時のスタイル（ボーダー＆影強調）
+    &--highlight {
+      animation: epic-feature-highlight 3s ease-in-out;
     }
 
     // D&D対応Feature列
@@ -2404,57 +2414,87 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: var(--size-16);
     width: 100%;
 
     .input_form {
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--size-4);
     }
 
     &__input-area {
       display: flex;
       width: 100%;
       flex-direction: column;
-      gap: var(--size-8);
-      margin-bottom: var(
-        --size-16
-      ); // 要素間の間隔、padding変換不可のためmargin使用
+      gap: var(--size-4);
+      padding: var(--size-4) var(--size-8);
+      border-bottom: var(--border-width-thin) solid #e0e0e0;
+      background-color: #fff;
     }
 
     &__input {
       flex: 1;
       width: 100%;
-      padding: var(--size-8) var(--size-12);
+      padding: var(--size-6) var(--size-8);
       border: var(--border-width-thin) solid #ddd;
-      border-radius: var(--button-border-radius);
-      font-size: var(--size-14);
+      border-radius: var(--border-radius-md);
+      font-size: var(--size-13);
+      background-color: #fff;
+      transition: border-color 0.2s ease;
 
       &:focus {
-        outline: var(--border-width-normal) solid var(--primary-color, #3498db);
-        border-color: transparent;
+        outline: none;
+        border-color: #628db6;
+        box-shadow: 0 0 0 var(--size-2) rgba(98, 141, 182, 0.1);
+      }
+
+      &::placeholder {
+        color: #999;
       }
     }
 
     &__button {
       width: 100%;
-      padding: var(--size-8) var(--size-16);
+      padding: var(--size-6) var(--size-12);
       background-color: var(--primary-color, #3498db);
       color: white;
       border: none;
       border-radius: var(--button-border-radius);
-      font-size: var(--size-14);
+      font-size: var(--size-13);
+      font-weight: 500;
       cursor: pointer;
       transition: background-color 0.2s;
 
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: #2980b9;
       }
 
-      &:active {
+      &:active:not(:disabled) {
         background-color: #21618c;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      &--clear {
+        background-color: #fff;
+        color: #666;
+        border: var(--border-width-thin) solid #ddd;
+        padding: var(--size-6);
+        font-size: var(--size-14);
+
+        &:hover {
+          background-color: #f5f5f5;
+          border-color: #bbb;
+          color: #333;
+        }
+
+        &:active {
+          background-color: #e0e0e0;
+        }
       }
     }
 
@@ -2466,12 +2506,12 @@
     &__placeholder {
       text-align: center;
       color: #999;
-      padding: var(--size-32) var(--size-16);
+      padding: var(--size-16) var(--size-8);
 
       p {
-        font-size: var(--size-16);
+        font-size: var(--size-14);
         margin-bottom: var(
-          --size-16
+          --size-8
         ); // 要素間の間隔、padding変換不可のためmargin使用
       }
     }
@@ -2483,8 +2523,8 @@
       display: inline-block;
 
       li {
-        padding: var(--size-8) 0;
-        font-size: var(--size-14);
+        padding: var(--size-4) 0;
+        font-size: var(--size-13);
 
         &::before {
           content: "✓ ";
@@ -2492,6 +2532,100 @@
           font-weight: bold;
         }
       }
+    }
+
+    &__no-results {
+      text-align: center;
+      color: #999;
+      padding: var(--size-16) var(--size-8);
+      font-size: var(--size-14);
+    }
+
+    // 検索結果リストコンテナ
+    &__results-list {
+      padding: var(--size-4);
+    }
+
+    &__results-header {
+      padding: var(--size-6) var(--size-8);
+      background-color: #f0f8ff;
+      border: var(--border-width-thin) solid #e0e0e0;
+      border-radius: var(--border-radius-md);
+      margin-bottom: var(
+        --size-6
+      ); // 要素間の間隔、padding変換不可のためmargin使用
+
+      p {
+        margin: 0;
+        font-size: var(--size-13);
+        font-weight: 600;
+        color: var(--primary-color, #3498db);
+      }
+    }
+
+    // 検索結果リスト
+    &__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--size-4);
+    }
+
+    // 検索結果リストアイテム（ListTab風のカードデザイン）
+    &__list-item {
+      display: flex;
+      align-items: center;
+      gap: var(--size-6);
+      padding: var(--size-6);
+      background: #fff;
+      border: var(--border-width-thin) solid #e8e8e8;
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: #f0f7ff;
+        border-color: #2196f3;
+        transform: translateX(var(--size-4));
+        box-shadow: 0 var(--size-2) var(--size-8) rgba(0, 0, 0, 0.1);
+      }
+
+      &:active {
+        transform: translateX(var(--size-2));
+      }
+    }
+
+    &__item-icon {
+      font-size: var(--size-16);
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    &__item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &__item-type {
+      font-size: var(--size-12);
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(
+        --size-2
+      ); // 要素間の間隔、padding変換不可のためmargin使用
+    }
+
+    &__item-subject {
+      font-size: var(--size-13);
+      font-weight: 500;
+      color: #333;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.4;
     }
   }
 
@@ -2525,7 +2659,7 @@
     }
 
     &__control {
-      padding: var(--size-8) var(--size-16);
+      padding: var(--size-4) var(--size-16);
       border-bottom: var(--border-width-thin) solid #e0e0e0;
       background-color: #fff;
       display: flex;
@@ -2583,7 +2717,7 @@
     &__content {
       flex: 1;
       overflow-y: auto;
-      padding: var(--size-16);
+      padding: var(--size-4);
     }
 
     &__empty {
@@ -2621,7 +2755,7 @@
       display: flex;
       align-items: center;
       gap: var(--size-8);
-      padding: var(--size-12);
+      padding: var(--size-6);
       cursor: pointer;
       list-style: none; // デフォルトのマーカーを非表示
 
@@ -2674,7 +2808,7 @@
     // Features (ul要素)
     &__features {
       list-style: none;
-      padding: 0 var(--size-12) var(--size-12) var(--size-12);
+      padding: 0 var(--size-4) var(--size-4) var(--size-4);
       display: flex;
       flex-direction: column;
       gap: var(--size-6);
@@ -2685,7 +2819,7 @@
       display: flex;
       align-items: center;
       gap: var(--size-8);
-      padding: var(--size-8);
+      padding: var(--size-4);
       background: #fff;
       border: var(--border-width-thin) solid #e8e8e8;
       border-radius: var(--border-radius-sm);
@@ -2893,5 +3027,23 @@
     box-shadow: none;
     border: 3px solid transparent;
     // transform: scale(1);
+  }
+}
+
+// Epic/Feature用のボーダー＆影強調アニメーション（sticky ヘッダー用）
+@keyframes epic-feature-highlight {
+  0%,
+  100% {
+    border-width: var(--border-width-normal);
+    box-shadow: none;
+  }
+  25%,
+  75% {
+    border-width: var(--border-width-thick);
+    box-shadow: 0 0 var(--size-15) var(--size-3) rgba(25, 118, 210, 0.6);
+  }
+  50% {
+    border-width: calc(var(--border-width-thick) * 1.5);
+    box-shadow: 0 0 var(--size-25) var(--size-6) rgba(25, 118, 210, 0.8);
   }
 }

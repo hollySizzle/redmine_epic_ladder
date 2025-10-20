@@ -414,9 +414,44 @@ export function enableFocusMode(issueId: string, issueType: string): void {
 export function highlightIssue(issueId: string, issueType: string): void {
   console.log('✨ [highlightIssue] Called with:', { issueId, issueType });
 
-  // Epic/Featureはstickyヘッダーなのでハイライトアニメーション不要
-  if (['epic', 'feature'].includes(issueType)) {
-    console.log('✨ [highlightIssue] Skipping highlight for sticky header (epic/feature)');
+  // Epic/Featureはstickyヘッダー専用のボーダー＆影強調アニメーションを使用
+  if (issueType === 'epic') {
+    const selectors = getIssueSelectors(issueId, issueType);
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const epicCell = element.closest('.epic-cell');
+        if (epicCell) {
+          epicCell.classList.add('epic-cell--highlight');
+          console.log('✨ [highlightIssue] Added epic-cell--highlight class');
+
+          setTimeout(() => {
+            epicCell.classList.remove('epic-cell--highlight');
+            console.log('✨ [highlightIssue] Removed epic-cell--highlight class');
+          }, 3000);
+        }
+        break;
+      }
+    }
+    return;
+  } else if (issueType === 'feature') {
+    const selectors = getIssueSelectors(issueId, issueType);
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const featureCell = element.closest('.feature-cell');
+        if (featureCell) {
+          featureCell.classList.add('feature-cell--highlight');
+          console.log('✨ [highlightIssue] Added feature-cell--highlight class');
+
+          setTimeout(() => {
+            featureCell.classList.remove('feature-cell--highlight');
+            console.log('✨ [highlightIssue] Removed feature-cell--highlight class');
+          }, 3000);
+        }
+        break;
+      }
+    }
     return;
   }
 

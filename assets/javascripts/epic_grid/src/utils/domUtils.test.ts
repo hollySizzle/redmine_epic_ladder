@@ -461,15 +461,23 @@ describe('domUtils', () => {
 
     it('Epic要素にハイライトクラスを追加し、3秒後に削除する', () => {
       // Setup
+      const epicCell = document.createElement('div');
+      epicCell.className = 'epic-cell';
+
       const epicDiv = document.createElement('div');
       epicDiv.setAttribute('data-epic', '123');
-      document.body.appendChild(epicDiv);
+      epicCell.appendChild(epicDiv);
+      document.body.appendChild(epicCell);
 
       // Execute
       highlightIssue('123', 'epic');
 
-      // Assert - Epic/Featureはstickyヘッダーなのでハイライトをスキップ
-      expect(epicDiv.classList.contains('search-highlight')).toBe(false);
+      // Assert - Epic専用のハイライトクラスが追加される
+      expect(epicCell.classList.contains('epic-cell--highlight')).toBe(true);
+
+      // Assert - 3秒後に削除される
+      vi.advanceTimersByTime(3000);
+      expect(epicCell.classList.contains('epic-cell--highlight')).toBe(false);
     });
 
     it('UserStory要素にハイライトクラスを追加する', () => {
