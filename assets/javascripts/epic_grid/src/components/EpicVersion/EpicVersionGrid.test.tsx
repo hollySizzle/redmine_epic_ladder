@@ -41,6 +41,32 @@ describe('EpicVersionGrid', () => {
       'epic-1': ['feature-1', 'feature-2'],
       'epic-2': ['feature-3'],
     },
+    feature_order_by_epic: {
+      'epic-1': ['feature-1', 'feature-2'],
+      'epic-2': ['feature-3'],
+    },
+    feature_expansion_states: {
+      'epic-1:feature-1:v1': false,
+      'epic-1:feature-1:v2': false,
+      'epic-1:feature-1:none': false,
+      'epic-1:feature-2:v1': false,
+      'epic-1:feature-2:v2': false,
+      'epic-1:feature-2:none': false,
+      'epic-2:feature-3:v1': false,
+      'epic-2:feature-3:v2': false,
+      'epic-2:feature-3:none': false,
+    },
+    index: {
+      'epic-1:feature-1:v1': ['us-1'],
+      'epic-1:feature-1:v2': [],
+      'epic-1:feature-1:none': [],
+      'epic-1:feature-2:v1': ['us-2'],
+      'epic-1:feature-2:v2': ['us-3'],
+      'epic-1:feature-2:none': [],
+      'epic-2:feature-3:v1': [],
+      'epic-2:feature-3:v2': [],
+      'epic-2:feature-3:none': [],
+    },
     epic_version_user_stories: {
       'epic-1': {
         'v1': {
@@ -111,7 +137,7 @@ describe('EpicVersionGrid', () => {
     it('should render grid container', () => {
       const { container } = render(<EpicVersionGrid />);
 
-      expect(container.querySelector('.epic-version-grid')).toBeInTheDocument();
+      expect(container.querySelector('.epic-feature-version-grid')).toBeInTheDocument();
     });
 
     it('should render epic headers', () => {
@@ -175,13 +201,16 @@ describe('EpicVersionGrid', () => {
           epic_order: [],
           version_order: [],
           epic_features: {},
+          feature_order_by_epic: {},
+          feature_expansion_states: {},
+          index: {},
           epic_version_user_stories: {},
         },
       } as any);
 
       const { container } = render(<EpicVersionGrid />);
 
-      expect(container.querySelector('.epic-version-grid')).toBeInTheDocument();
+      expect(container.querySelector('.epic-feature-version-grid')).toBeInTheDocument();
     });
   });
 
@@ -189,8 +218,9 @@ describe('EpicVersionGrid', () => {
     it('should render version dates', () => {
       render(<EpicVersionGrid />);
 
-      expect(screen.getByText(/2025/)).toBeInTheDocument();
-      expect(screen.getByText(/2026/)).toBeInTheDocument();
+      // formatDate outputs "12/31" and "6/30" format
+      expect(screen.getByText(/12\/31/)).toBeInTheDocument();
+      expect(screen.getByText(/6\/30/)).toBeInTheDocument();
     });
   });
 });

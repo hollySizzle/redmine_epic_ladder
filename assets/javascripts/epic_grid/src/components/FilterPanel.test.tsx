@@ -17,8 +17,8 @@ describe('FilterPanel', () => {
         '2': { id: 2, name: 'v2.0', status: 'open', effective_date: '2026-06-30' },
       },
       users: {
-        '1': { id: 1, name: 'User 1' },
-        '2': { id: 2, name: 'User 2' },
+        '1': { id: 1, firstname: 'User', lastname: '1' },
+        '2': { id: 2, firstname: 'User', lastname: '2' },
       },
       epics: {},
       features: {},
@@ -55,24 +55,24 @@ describe('FilterPanel', () => {
     it('should render filter button', () => {
       render(<FilterPanel />);
 
-      expect(screen.getByText(/🔍 フィルター/)).toBeInTheDocument();
+      expect(screen.getByText(/🔍 フィルタ/)).toBeInTheDocument();
     });
 
     it('should toggle expansion when button clicked', () => {
       render(<FilterPanel />);
 
-      const button = screen.getByText(/🔍 フィルター/);
-      
-      // Initially collapsed
-      expect(screen.queryByText('バージョン絞込')).not.toBeInTheDocument();
+      const button = screen.getByText(/🔍 フィルタ/);
+
+      // Initially collapsed - check for filter dropdown
+      expect(screen.queryByText('クローズ済みバージョンを非表示')).not.toBeInTheDocument();
 
       // Click to expand
       fireEvent.click(button);
-      expect(screen.getByText('バージョン絞込')).toBeInTheDocument();
+      expect(screen.getByText('クローズ済みバージョンを非表示')).toBeInTheDocument();
 
       // Click to collapse
       fireEvent.click(button);
-      expect(screen.queryByText('バージョン絞込')).not.toBeInTheDocument();
+      expect(screen.queryByText('クローズ済みバージョンを非表示')).not.toBeInTheDocument();
     });
   });
 
@@ -80,7 +80,7 @@ describe('FilterPanel', () => {
     it('should render version checkboxes when expanded', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
       expect(screen.getByText('v1.0')).toBeInTheDocument();
       expect(screen.getByText('v2.0')).toBeInTheDocument();
@@ -89,9 +89,9 @@ describe('FilterPanel', () => {
     it('should show exclude closed versions toggle', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
-      expect(screen.getByText(/クローズ済みバージョンを除外/)).toBeInTheDocument();
+      expect(screen.getByText(/クローズ済みバージョンを非表示/)).toBeInTheDocument();
     });
   });
 
@@ -99,7 +99,7 @@ describe('FilterPanel', () => {
     it('should render user checkboxes when expanded', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
       expect(screen.getByText('User 1')).toBeInTheDocument();
       expect(screen.getByText('User 2')).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe('FilterPanel', () => {
     it('should render status checkboxes when expanded', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
       expect(screen.getByText('New')).toBeInTheDocument();
       expect(screen.getByText('In Progress')).toBeInTheDocument();
@@ -119,12 +119,16 @@ describe('FilterPanel', () => {
 
   describe('Tracker Filter', () => {
     it('should render tracker checkboxes when expanded', () => {
-      render(<FilterPanel />);
+      const { container } = render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
-      expect(screen.getByText('Bug')).toBeInTheDocument();
-      expect(screen.getByText('Feature')).toBeInTheDocument();
+      // Check within tracker section
+      const trackerSection = Array.from(container.querySelectorAll('.filter-section'))
+        .find(section => section.querySelector('h4')?.textContent === 'トラッカー');
+
+      expect(trackerSection?.textContent).toContain('Bug');
+      expect(trackerSection?.textContent).toContain('Feature');
     });
   });
 
@@ -132,7 +136,7 @@ describe('FilterPanel', () => {
     it('should show apply button when expanded', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
       expect(screen.getByText('適用')).toBeInTheDocument();
     });
@@ -140,7 +144,7 @@ describe('FilterPanel', () => {
     it('should show clear button when expanded', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
       expect(screen.getByText('クリア')).toBeInTheDocument();
     });
@@ -148,7 +152,7 @@ describe('FilterPanel', () => {
     it('should call clearFilters when clear button clicked', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
       fireEvent.click(screen.getByText('クリア'));
 
       expect(mockClearFilters).toHaveBeenCalled();
@@ -159,9 +163,9 @@ describe('FilterPanel', () => {
     it('should show hide empty toggle', () => {
       render(<FilterPanel />);
 
-      fireEvent.click(screen.getByText(/🔍 フィルター/));
+      fireEvent.click(screen.getByText(/🔍 フィルタ/));
 
-      expect(screen.getByText(/空のEpic\/Versionを非表示/)).toBeInTheDocument();
+      expect(screen.getByText(/ヒットしなかったEpic\/Versionを非表示/)).toBeInTheDocument();
     });
   });
 
@@ -177,14 +181,14 @@ describe('FilterPanel', () => {
 
       render(<FilterPanel />);
 
-      expect(screen.getByText(/🔍 フィルター \(2\)/)).toBeInTheDocument();
+      expect(screen.getByText(/🔍 フィルタ \(2\)/)).toBeInTheDocument();
     });
 
     it('should not show count when no filters', () => {
       render(<FilterPanel />);
 
-      expect(screen.getByText('🔍 フィルター')).toBeInTheDocument();
-      expect(screen.queryByText(/🔍 フィルター \(/)).not.toBeInTheDocument();
+      expect(screen.getByText('🔍 フィルタ')).toBeInTheDocument();
+      expect(screen.queryByText(/🔍 フィルタ \(/)).not.toBeInTheDocument();
     });
   });
 });

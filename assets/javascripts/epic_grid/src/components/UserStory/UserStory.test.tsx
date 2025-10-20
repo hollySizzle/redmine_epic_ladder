@@ -154,7 +154,8 @@ describe('UserStory', () => {
     it('should show date range when isDueDateVisible is true', () => {
       render(<UserStory storyId="us-1" />);
 
-      expect(screen.getByText(/2025/)).toBeInTheDocument();
+      // formatDateRange outputs "1/1~12/31" format
+      expect(screen.getByText(/1\/1~12\/31/)).toBeInTheDocument();
     });
 
     it('should hide date range when isDueDateVisible is false', () => {
@@ -162,7 +163,7 @@ describe('UserStory', () => {
 
       render(<UserStory storyId="us-1" />);
 
-      expect(screen.queryByText(/2025/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/1\/1~12\/31/)).not.toBeInTheDocument();
     });
   });
 

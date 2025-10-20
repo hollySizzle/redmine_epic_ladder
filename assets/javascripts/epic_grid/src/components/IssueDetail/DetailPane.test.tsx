@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DetailPane } from './DetailPane';
 import { useStore } from '../../store/useStore';
@@ -109,9 +109,10 @@ describe('DetailPane', () => {
       // Fast-forward 3 seconds
       vi.advanceTimersByTime(3000);
 
-      await waitFor(() => {
-        expect(screen.queryByText('読み込み中...')).not.toBeInTheDocument();
-      });
+      // Use runAllTimers to flush all pending timers
+      await vi.runAllTimersAsync();
+
+      expect(screen.queryByText('読み込み中...')).not.toBeInTheDocument();
     });
   });
 
