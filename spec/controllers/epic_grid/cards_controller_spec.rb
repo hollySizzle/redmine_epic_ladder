@@ -287,7 +287,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       let!(:version_b) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 15)) }
 
       before do
-        user_story.update!(fixed_version: version_b)
+        user_story.reload.update!(fixed_version: version_b)
       end
 
       it 'Task作成時にバージョンの期日範囲から開始日・終了日が自動設定される' do
@@ -377,7 +377,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       let!(:version_b) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 15)) }
 
       before do
-        user_story.update!(fixed_version: version_b)
+        user_story.reload.update!(fixed_version: version_b)
       end
 
       it 'Test作成時にバージョンの期日範囲から開始日・終了日が自動設定される' do
@@ -468,7 +468,7 @@ RSpec.describe EpicGrid::CardsController, type: :controller do
       let!(:version_b) { create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 15)) }
 
       before do
-        user_story.update!(fixed_version: version_b)
+        user_story.reload.update!(fixed_version: version_b)
       end
 
       it 'Bug作成時にバージョンの期日範囲から開始日・終了日が自動設定される' do

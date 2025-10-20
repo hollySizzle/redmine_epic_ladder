@@ -155,13 +155,26 @@ module EpicGrid
         return render_error('UserStoryトラッカーが設定されていません', :unprocessable_entity)
       end
 
+      # バージョンの決定
+      target_version_id = user_story_params[:fixed_version_id] || feature.fixed_version_id
+
+      # バージョンに基づく日付の自動設定
+      dates = if target_version_id
+        version = Version.find(target_version_id)
+        # create時はまだIssueが存在しないため、projectだけ持つ仮のオブジェクトを渡す
+        temp_issue = Issue.new(project: @project)
+        EpicGrid::VersionDateManager.update_dates_for_version_change(temp_issue, version)
+      end
+
       user_story = Issue.create!(
         project: @project,
         tracker: user_story_tracker,
         author: User.current,
         status: IssueStatus.first,
         parent_issue_id: feature_id,
-        fixed_version_id: user_story_params[:fixed_version_id] || feature.fixed_version_id, # クライアント指定を優先
+        fixed_version_id: target_version_id,
+        start_date: dates&.dig(:start_date),
+        due_date: dates&.dig(:due_date),
         **user_story_params.except(:fixed_version_id)
       )
 
@@ -259,6 +272,13 @@ module EpicGrid
         return render_error('Taskトラッカーが設定されていません', :unprocessable_entity)
       end
 
+      # バージョンに基づく日付の自動設定
+      dates = if user_story.fixed_version_id
+        version = Version.find(user_story.fixed_version_id)
+        temp_issue = Issue.new(project: @project)
+        EpicGrid::VersionDateManager.update_dates_for_version_change(temp_issue, version)
+      end
+
       task = Issue.create!(
         project: @project,
         tracker: task_tracker,
@@ -266,8 +286,8 @@ module EpicGrid
         status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
-        start_date: user_story.start_date,
-        due_date: user_story.due_date,
+        start_date: dates&.dig(:start_date) || user_story.start_date,
+        due_date: dates&.dig(:due_date) || user_story.due_date,
         **task_params
       )
 
@@ -307,6 +327,13 @@ module EpicGrid
         return render_error('Testトラッカーが設定されていません', :unprocessable_entity)
       end
 
+      # バージョンに基づく日付の自動設定
+      dates = if user_story.fixed_version_id
+        version = Version.find(user_story.fixed_version_id)
+        temp_issue = Issue.new(project: @project)
+        EpicGrid::VersionDateManager.update_dates_for_version_change(temp_issue, version)
+      end
+
       test = Issue.create!(
         project: @project,
         tracker: test_tracker,
@@ -314,8 +341,8 @@ module EpicGrid
         status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
-        start_date: user_story.start_date,
-        due_date: user_story.due_date,
+        start_date: dates&.dig(:start_date) || user_story.start_date,
+        due_date: dates&.dig(:due_date) || user_story.due_date,
         **test_params
       )
 
@@ -352,6 +379,13 @@ module EpicGrid
         return render_error('Bugトラッカーが設定されていません', :unprocessable_entity)
       end
 
+      # バージョンに基づく日付の自動設定
+      dates = if user_story.fixed_version_id
+        version = Version.find(user_story.fixed_version_id)
+        temp_issue = Issue.new(project: @project)
+        EpicGrid::VersionDateManager.update_dates_for_version_change(temp_issue, version)
+      end
+
       bug = Issue.create!(
         project: @project,
         tracker: bug_tracker,
@@ -359,8 +393,8 @@ module EpicGrid
         status: IssueStatus.first,
         parent_issue_id: user_story_id,
         fixed_version_id: user_story.fixed_version_id,
-        start_date: user_story.start_date,
-        due_date: user_story.due_date,
+        start_date: dates&.dig(:start_date) || user_story.start_date,
+        due_date: dates&.dig(:due_date) || user_story.due_date,
         **bug_params
       )
 

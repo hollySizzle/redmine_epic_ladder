@@ -952,4 +952,191 @@ describe('useStore - Normalized API (3D Grid)', () => {
       expect(useStore.getState().selectedEntity).toBeNull();
     });
   });
+
+  describe('API Functions - Move Operations', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      localStorage.clear();
+
+      useStore.setState({
+        entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
+        grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
+        isLoading: false,
+        error: null,
+        projectId: '1'
+      });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should move feature to different epic', async () => {
+      const mockResponse = {
+        updated_entities: {
+          features: {
+            'f1': {
+              id: 'f1',
+              subject: 'Feature 1',
+              parent_epic_id: 'epic2',
+              fixed_version_id: 'v1'
+            }
+          }
+        },
+        updated_grid_index: {
+          'epic2:f1:v1': ['us1']
+        }
+      };
+
+      vi.spyOn(API, 'moveFeature').mockResolvedValue(mockResponse);
+
+      const { moveFeature } = useStore.getState();
+      await moveFeature('f1', 'epic2', 'v1');
+
+      const state = useStore.getState();
+      expect(state.entities.features['f1'].parent_epic_id).toBe('epic2');
+      expect(API.moveFeature).toHaveBeenCalledWith('1', {
+        feature_id: 'f1',
+        target_epic_id: 'epic2',
+        target_version_id: 'v1'
+      });
+    });
+
+    it('should handle moveFeature error', async () => {
+      vi.spyOn(API, 'moveFeature').mockRejectedValue(new Error('Move failed'));
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { moveFeature } = useStore.getState();
+
+      await expect(moveFeature('f1', 'epic2', 'v1')).rejects.toThrow('Move failed');
+
+      const state = useStore.getState();
+      expect(state.error).toBe('Move failed');
+    });
+
+    it('should move user story to different feature', async () => {
+      const mockResponse = {
+        updated_entities: {
+          user_stories: {
+            'us1': {
+              id: 'us1',
+              title: 'User Story 1',
+              parent_feature_id: 'f2',
+              fixed_version_id: 'v1'
+            }
+          }
+        },
+        updated_grid_index: {
+          'epic1:f2:v1': ['us1']
+        }
+      };
+
+      vi.spyOn(API, 'moveUserStory').mockResolvedValue(mockResponse);
+
+      const { moveUserStory } = useStore.getState();
+      await moveUserStory('us1', 'f2', 'v1');
+
+      expect(API.moveUserStory).toHaveBeenCalledWith('1', {
+        user_story_id: 'us1',
+        target_feature_id: 'f2',
+        target_version_id: 'v1'
+      });
+    });
+
+    it('should handle moveUserStory error', async () => {
+      vi.spyOn(API, 'moveUserStory').mockRejectedValue(new Error('Move failed'));
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const { moveUserStory } = useStore.getState();
+
+      await expect(moveUserStory('us1', 'f2', 'v1')).rejects.toThrow('Move failed');
+
+      const state = useStore.getState();
+      expect(state.error).toBe('Move failed');
+    });
+
+    it('should throw error when projectId is not set for moveFeature', async () => {
+      useStore.setState({ projectId: null });
+
+      const { moveFeature } = useStore.getState();
+
+      await expect(moveFeature('f1', 'epic2', 'v1')).rejects.toThrow('Project ID not set');
+    });
+
+    it('should throw error when projectId is not set for moveUserStory', async () => {
+      useStore.setState({ projectId: null });
+
+      const { moveUserStory } = useStore.getState();
+
+      await expect(moveUserStory('us1', 'f2', 'v1')).rejects.toThrow('Project ID not set');
+    });
+  });
+
+  describe('API Functions - Create with Error Handling', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      useStore.setState({
+        entities: JSON.parse(JSON.stringify(normalizedMockData.entities)),
+        grid: JSON.parse(JSON.stringify(normalizedMockData.grid)),
+        isLoading: false,
+        error: null,
+        projectId: '1',
+        isDetailPaneVisible: false
+      });
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should handle createEpic error', async () => {
+      vi.spyOn(API, 'createEpic').mockRejectedValue(new Error('Create failed'));
+
+      const { createEpic } = useStore.getState();
+
+      await expect(createEpic({ subject: 'New Epic', description: '' })).rejects.toThrow('Create failed');
+
+      const state = useStore.getState();
+      expect(state.error).toBe('Create failed');
+    });
+
+    it('should handle createVersion error', async () => {
+      vi.spyOn(API, 'createVersion').mockRejectedValue(new Error('Create failed'));
+
+      const { createVersion } = useStore.getState();
+
+      await expect(createVersion({ name: 'v1.0', status: 'open' })).rejects.toThrow('Create failed');
+
+      const state = useStore.getState();
+      expect(state.error).toBe('Create failed');
+    });
+
+    it('should handle createFeature error', async () => {
+      vi.spyOn(API, 'createFeature').mockRejectedValue(new Error('Create failed'));
+
+      const { createFeature } = useStore.getState();
+
+      await expect(createFeature('1', { subject: 'New Feature', description: '', parent_epic_id: 'e1' })).rejects.toThrow('Create failed');
+
+      const state = useStore.getState();
+      expect(state.error).toBe('Create failed');
+    });
+
+    it('should throw error when projectId is not set for createEpic', async () => {
+      useStore.setState({ projectId: null });
+
+      const { createEpic } = useStore.getState();
+
+      await expect(createEpic({ subject: 'New Epic', description: '' })).rejects.toThrow('Project ID not set');
+    });
+
+    it('should throw error when projectId is not set for createVersion', async () => {
+      useStore.setState({ projectId: null });
+
+      const { createVersion } = useStore.getState();
+
+      await expect(createVersion({ name: 'v1.0', status: 'open' })).rejects.toThrow('Project ID not set');
+    });
+  });
+
 });
