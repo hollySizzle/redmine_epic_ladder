@@ -21,7 +21,8 @@ describe('TaskTestBugGrid - Collapse Functionality', () => {
         },
         bugs: {
           b1: { id: 'b1', title: 'Bug 1', status: 'open', severity: 'minor', parent_user_story_id: 'us1', fixed_version_id: null }
-        }
+        },
+        users: {}
       },
       grid: { index: {}, epic_order: [], feature_order_by_epic: {}, version_order: [] },
       isLoading: false,

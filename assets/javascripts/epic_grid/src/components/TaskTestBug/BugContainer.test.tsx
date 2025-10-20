@@ -71,7 +71,8 @@ describe('BugContainer', () => {
           bugs: {
             b1: { id: 'b1', title: 'Bug 1', status: 'open', parent_user_story_id: 'us1', fixed_version_id: null },
             b2: { id: 'b2', title: 'Bug 2', status: 'open', parent_user_story_id: 'us1', fixed_version_id: null }
-          }
+          },
+          users: {}
         },
         grid: { index: {}, epic_order: [], version_order: [] },
         isLoading: false,
