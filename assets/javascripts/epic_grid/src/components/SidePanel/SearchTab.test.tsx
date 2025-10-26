@@ -17,11 +17,11 @@ describe('SearchTab', () => {
 
   const mockEntities = {
     epics: {
-      'epic-1': { id: 'epic-1', subject: 'ユーザー認証機能' },
+      'epic-1': { id: 'epic-1', subject: 'ユーザー認証機能', status: 'Open', due_date: null },
     },
     features: {
-      'feature-1': { id: 'feature-1', title: 'ログイン画面' },
-      'feature-2': { id: 'feature-2', title: 'ログインAPI' },
+      'feature-1': { id: 'feature-1', title: 'ログイン画面', status: 'In Progress', due_date: null },
+      'feature-2': { id: 'feature-2', title: 'ログインAPI', status: 'Open', due_date: null },
     },
     user_stories: {},
     tasks: {},
@@ -53,6 +53,9 @@ describe('SearchTab', () => {
 
     // sortSearchResults のモック（デフォルトはそのまま返す）
     vi.mocked(searchUtils.sortSearchResults).mockImplementation((results) => results);
+
+    // filterClosedIssues のモック（デフォルトはそのまま返す）
+    vi.mocked(searchUtils.filterClosedIssues).mockImplementation((results) => results);
   });
 
   it('初期表示時はプレースホルダーが表示される', () => {
@@ -77,8 +80,8 @@ describe('SearchTab', () => {
 
   it('検索実行時に searchAllIssues が呼ばれる', () => {
     const mockResults = [
-      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
-      { id: 'feature-2', type: 'feature' as const, subject: 'ログインAPI' },
+      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', status: 'Open', due_date: null },
+      { id: 'feature-2', type: 'feature' as const, subject: 'ログインAPI', status: 'Open', due_date: null },
     ];
     vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResults);
 
@@ -99,8 +102,8 @@ describe('SearchTab', () => {
 
   it('検索結果が複数ある場合、一覧表示される', () => {
     const mockResults = [
-      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
-      { id: 'feature-2', type: 'feature' as const, subject: 'ログインAPI' },
+      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', status: 'Open', due_date: null },
+      { id: 'feature-2', type: 'feature' as const, subject: 'ログインAPI', status: 'Open', due_date: null },
     ];
     vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResults);
 
@@ -131,7 +134,7 @@ describe('SearchTab', () => {
 
   it('検索結果をクリックするとスクロール&ハイライト処理が呼ばれる', async () => {
     const mockResults = [
-      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
+      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', status: 'Open', due_date: null },
     ];
     vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResults);
 
@@ -153,7 +156,7 @@ describe('SearchTab', () => {
 
   it('検索結果クリック時にスクロール&ハイライトが実行される', async () => {
     const mockResults = [
-      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
+      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', status: 'Open', due_date: null },
     ];
     vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResults);
     vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
@@ -179,7 +182,7 @@ describe('SearchTab', () => {
 
   it('クリアボタンをクリックすると検索状態がリセットされる', () => {
     const mockResults = [
-      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
+      { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', status: 'Open', due_date: null },
     ];
     vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResults);
 
@@ -201,12 +204,12 @@ describe('SearchTab', () => {
 
   it('各エンティティタイプに対応するアイコンが表示される', () => {
     const mockResults = [
-      { id: 'epic-1', type: 'epic' as const, subject: 'Epic件名' },
-      { id: 'feature-1', type: 'feature' as const, subject: 'Feature件名' },
-      { id: 'story-1', type: 'user-story' as const, subject: 'UserStory件名' },
-      { id: 'task-1', type: 'task' as const, subject: 'Task件名' },
-      { id: 'test-1', type: 'test' as const, subject: 'Test件名' },
-      { id: 'bug-1', type: 'bug' as const, subject: 'Bug件名' },
+      { id: 'epic-1', type: 'epic' as const, subject: 'Epic件名', status: 'Open', due_date: null },
+      { id: 'feature-1', type: 'feature' as const, subject: 'Feature件名', status: 'Open', due_date: null },
+      { id: 'story-1', type: 'user-story' as const, subject: 'UserStory件名', status: 'Open', due_date: null },
+      { id: 'task-1', type: 'task' as const, subject: 'Task件名', status: 'Open', due_date: null },
+      { id: 'test-1', type: 'test' as const, subject: 'Test件名', status: 'Open', due_date: null },
+      { id: 'bug-1', type: 'bug' as const, subject: 'Bug件名', status: 'Open', due_date: null },
     ];
     vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResults);
 
@@ -229,7 +232,7 @@ describe('SearchTab', () => {
   describe('Phase 1: ID検索機能', () => {
     it('数値のみ入力時はID完全一致検索が実行される', () => {
       const mockResult = [
-        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', isExactIdMatch: true },
+        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', status: 'Open', due_date: null, isExactIdMatch: true },
       ];
       vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
 
@@ -252,7 +255,7 @@ describe('SearchTab', () => {
 
     it('ID完全一致時はDetailPane自動表示フラグがtrue', async () => {
       const mockResult = [
-        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', isExactIdMatch: true },
+        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', status: 'Open', due_date: null, isExactIdMatch: true },
       ];
       vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
       vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
@@ -277,7 +280,7 @@ describe('SearchTab', () => {
 
     it('ID完全一致時でDetailPaneが既に表示されている場合はtoggleDetailPaneは呼ばれない', async () => {
       const mockResult = [
-        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', isExactIdMatch: true },
+        { id: '101', type: 'epic' as const, subject: 'ID検索テスト用Epic', status: 'Open', due_date: null, isExactIdMatch: true },
       ];
       vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
       vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
@@ -314,7 +317,7 @@ describe('SearchTab', () => {
 
     it('通常のsubject検索時はDetailPane自動表示されない', () => {
       const mockResult = [
-        { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', isExactIdMatch: false },
+        { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', status: 'Open', due_date: null, isExactIdMatch: false },
       ];
       vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
       vi.mocked(domUtils.scrollToIssue).mockReturnValue(true);
@@ -339,7 +342,7 @@ describe('SearchTab', () => {
   describe('フォーム操作', () => {
     it('空文字列でフォーム送信すると検索がリセットされる', () => {
       vi.mocked(searchUtils.searchAllIssues).mockReturnValue([
-        { id: 'feature-1', type: 'feature' as const, subject: 'テスト' },
+        { id: 'feature-1', type: 'feature' as const, subject: 'テスト', status: 'Open', due_date: null },
       ]);
 
       render(<SearchTab />);
@@ -409,7 +412,7 @@ describe('SearchTab', () => {
     it('scrollToIssueがfalseを返した場合は警告がコンソールに出力される', async () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const mockResult = [
-        { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面' },
+        { id: 'feature-1', type: 'feature' as const, subject: 'ログイン画面', status: 'Open', due_date: null },
       ];
       vi.mocked(searchUtils.searchAllIssues).mockReturnValue(mockResult);
       vi.mocked(domUtils.scrollToIssue).mockReturnValue(false); // スクロール失敗

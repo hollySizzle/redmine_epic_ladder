@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode } from '../../utils/domUtils';
-import { searchAllIssues, sortSearchResults, type SortOrder } from '../../utils/searchUtils';
+import { searchAllIssues, sortSearchResults, filterClosedIssues, type SortOrder } from '../../utils/searchUtils';
 import type { SearchResult } from '../../types/normalized-api';
 
 /**
@@ -19,6 +19,7 @@ export const SearchTab: React.FC = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('hierarchy'); // デフォルトは階層順
+  const [excludeClosed, setExcludeClosed] = useState(false); // クローズ除外フラグ
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 検索対象トグル
@@ -57,8 +58,10 @@ export const SearchTab: React.FC = () => {
 
     // 全マッチするissueを検索（検索対象トグルを渡す）
     const results = searchAllIssues(entities, query, searchTargets, users);
+    // クローズissue除外フィルター適用
+    const filteredResults = filterClosedIssues(results, excludeClosed);
     // ソート適用
-    const sortedResults = sortSearchResults(results, sortOrder);
+    const sortedResults = sortSearchResults(filteredResults, sortOrder);
     setSearchResults(sortedResults);
     setHasSearched(true);
   };
@@ -153,6 +156,18 @@ export const SearchTab: React.FC = () => {
     }
   };
 
+  const handleExcludeClosedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newExcludeClosed = e.target.checked;
+    setExcludeClosed(newExcludeClosed);
+    // 既存の検索結果を再実行（フィルター適用）
+    if (hasSearched && query.trim()) {
+      const results = searchAllIssues(entities, query, searchTargets, users);
+      const filteredResults = filterClosedIssues(results, newExcludeClosed);
+      const sortedResults = sortSearchResults(filteredResults, sortOrder);
+      setSearchResults(sortedResults);
+    }
+  };
+
   const getSortLabel = (order: SortOrder): string => {
     switch (order) {
       case 'due-date-asc': return '📅 期限が近い順';
@@ -219,6 +234,17 @@ export const SearchTab: React.FC = () => {
             onChange={() => handleToggleTarget('assignee')}
           />
           <span>担当者名を含む</span>
+        </label>
+      </div>
+
+      <div className="search-tab__filters">
+        <label className="search-tab__filter">
+          <input
+            type="checkbox"
+            checked={excludeClosed}
+            onChange={handleExcludeClosedChange}
+          />
+          <span>クローズ済みを除外</span>
         </label>
       </div>
 
