@@ -62,7 +62,10 @@ module Kanban
         user_story_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
         if issue.tracker.name == user_story_tracker_name
           version = issue.fixed_version
-          VersionPropagationService.propagate_to_children(issue, version)
+          # TODO: Implement version propagation to children
+          # See: vibes/docs/temps/backend_file_structure.md:173
+          # Plan: Move to Issue#propagate_version_to_children
+          # VersionPropagationService.propagate_to_children(issue, version)
         end
       end
 
