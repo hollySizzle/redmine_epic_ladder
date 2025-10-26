@@ -152,46 +152,101 @@ export function searchAllIssues(
   // Epic検索
   for (const epic of Object.values(entities.epics)) {
     if (isMatch(epic)) {
-      results.push({ id: epic.id, type: 'epic', subject: epic.subject });
+      results.push({ id: epic.id, type: 'epic', subject: epic.subject, due_date: epic.due_date });
     }
   }
 
   // Feature検索
   for (const feature of Object.values(entities.features)) {
     if (isMatch(feature)) {
-      results.push({ id: feature.id, type: 'feature', subject: feature.title });
+      results.push({ id: feature.id, type: 'feature', subject: feature.title, due_date: feature.due_date });
     }
   }
 
   // UserStory検索
   for (const story of Object.values(entities.user_stories)) {
     if (isMatch(story)) {
-      results.push({ id: story.id, type: 'user-story', subject: story.title });
+      results.push({ id: story.id, type: 'user-story', subject: story.title, due_date: story.due_date });
     }
   }
 
   // Task検索
   for (const task of Object.values(entities.tasks)) {
     if (isMatch(task)) {
-      results.push({ id: task.id, type: 'task', subject: task.title });
+      results.push({ id: task.id, type: 'task', subject: task.title, due_date: task.due_date });
     }
   }
 
   // Test検索
   for (const test of Object.values(entities.tests)) {
     if (isMatch(test)) {
-      results.push({ id: test.id, type: 'test', subject: test.title });
+      results.push({ id: test.id, type: 'test', subject: test.title, due_date: test.due_date });
     }
   }
 
   // Bug検索
   for (const bug of Object.values(entities.bugs)) {
     if (isMatch(bug)) {
-      results.push({ id: bug.id, type: 'bug', subject: bug.title });
+      results.push({ id: bug.id, type: 'bug', subject: bug.title, due_date: bug.due_date });
     }
   }
 
   return results;
+}
+
+/**
+ * 検索結果のソート順序
+ */
+export type SortOrder = 'due-date-asc' | 'due-date-desc' | 'hierarchy';
+
+/**
+ * 検索結果をソートする
+ *
+ * @param results - ソート対象の検索結果
+ * @param order - ソート順序
+ * @returns ソート済みの検索結果
+ */
+export function sortSearchResults(results: SearchResult[], order: SortOrder): SearchResult[] {
+  const sorted = [...results];
+
+  switch (order) {
+    case 'due-date-asc':
+      // 期限が近い順（nullは最後）
+      return sorted.sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0;
+        if (!a.due_date) return 1;  // nullは最後
+        if (!b.due_date) return -1; // nullは最後
+        return a.due_date.localeCompare(b.due_date);
+      });
+
+    case 'due-date-desc':
+      // 期限が遠い順（nullは最後）
+      return sorted.sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0;
+        if (!a.due_date) return 1;  // nullは最後
+        if (!b.due_date) return -1; // nullは最後
+        return b.due_date.localeCompare(a.due_date);
+      });
+
+    case 'hierarchy':
+      // 階層順（Epic → Feature → UserStory → Task → Test → Bug）
+      const typeOrder: Record<string, number> = {
+        'epic': 1,
+        'feature': 2,
+        'user-story': 3,
+        'task': 4,
+        'test': 5,
+        'bug': 6
+      };
+      return sorted.sort((a, b) => {
+        const orderA = typeOrder[a.type] ?? 999;
+        const orderB = typeOrder[b.type] ?? 999;
+        return orderA - orderB;
+      });
+
+    default:
+      return sorted;
+  }
 }
 
 /**

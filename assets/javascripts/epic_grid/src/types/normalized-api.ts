@@ -50,6 +50,7 @@ export interface SearchResult {
   type: 'epic' | 'feature' | 'user-story' | 'task' | 'test' | 'bug';
   subject: string;
   isExactIdMatch?: boolean; // ID完全一致の場合true
+  due_date?: string | null; // ソート用の期限日（YYYY-MM-DD形式、nullの場合は期限なし）
 }
 
 // ========================================

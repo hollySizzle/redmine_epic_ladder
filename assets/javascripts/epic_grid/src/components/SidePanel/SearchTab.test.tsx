@@ -50,6 +50,9 @@ describe('SearchTab', () => {
     vi.mocked(domUtils.highlightIssue).mockImplementation(() => {});
     vi.mocked(domUtils.enableFocusMode).mockImplementation(() => {});
     vi.mocked(domUtils.expandParentUserStory).mockReturnValue(false); // 展開不要（既に展開済み）
+
+    // sortSearchResults のモック（デフォルトはそのまま返す）
+    vi.mocked(searchUtils.sortSearchResults).mockImplementation((results) => results);
   });
 
   it('初期表示時はプレースホルダーが表示される', () => {

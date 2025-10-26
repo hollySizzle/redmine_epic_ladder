@@ -175,20 +175,85 @@ else
     print_warning "db/seeds.rbが存在しないため、基本シードデータ投入をスキップします"
 fi
 
-# ステップ5: カンバンテストデータ投入
+# ステップ5: カンバンテストデータ投入（分割seed実行）
 print_step "5. 桜商店カンバンテストデータ投入"
-KANBAN_SEED_FILE="$KANBAN_PLUGIN_ROOT/db/seeds/kanban_test_data.rb"
-if [ -f "$KANBAN_SEED_FILE" ]; then
-    if RAILS_ENV=development rails runner "$KANBAN_SEED_FILE"; then
-        print_success "桜商店カンバンテストデータ投入完了"
+
+# 5-1: 基礎データ投入
+print_step "5-1. 基礎データ投入 (01_base_data.rb)"
+SEED_FILE="$KANBAN_PLUGIN_ROOT/db/seeds/01_base_data.rb"
+if [ -f "$SEED_FILE" ]; then
+    if RAILS_ENV=development rails runner "$SEED_FILE"; then
+        print_success "[1/5] 基礎データ投入完了"
     else
-        print_error "桜商店カンバンテストデータ投入に失敗しました"
+        print_error "[1/5] 基礎データ投入に失敗しました"
         exit 1
     fi
 else
-    print_error "カンバンテストデータファイルが見つかりません: $KANBAN_SEED_FILE"
+    print_error "シードファイルが見つかりません: $SEED_FILE"
     exit 1
 fi
+
+# 5-2: プロジェクト・メンバー投入
+print_step "5-2. プロジェクト・メンバー投入 (02_projects.rb)"
+SEED_FILE="$KANBAN_PLUGIN_ROOT/db/seeds/02_projects.rb"
+if [ -f "$SEED_FILE" ]; then
+    if RAILS_ENV=development rails runner "$SEED_FILE"; then
+        print_success "[2/5] プロジェクト・メンバー投入完了"
+    else
+        print_error "[2/5] プロジェクト・メンバー投入に失敗しました"
+        exit 1
+    fi
+else
+    print_error "シードファイルが見つかりません: $SEED_FILE"
+    exit 1
+fi
+
+# 5-3: バージョン投入
+print_step "5-3. バージョン投入 (03_versions.rb)"
+SEED_FILE="$KANBAN_PLUGIN_ROOT/db/seeds/03_versions.rb"
+if [ -f "$SEED_FILE" ]; then
+    if RAILS_ENV=development rails runner "$SEED_FILE"; then
+        print_success "[3/5] バージョン投入完了"
+    else
+        print_error "[3/5] バージョン投入に失敗しました"
+        exit 1
+    fi
+else
+    print_error "シードファイルが見つかりません: $SEED_FILE"
+    exit 1
+fi
+
+# 5-4: Issue階層構造投入
+print_step "5-4. Issue階層構造投入 (04_issues.rb)"
+SEED_FILE="$KANBAN_PLUGIN_ROOT/db/seeds/04_issues.rb"
+if [ -f "$SEED_FILE" ]; then
+    if RAILS_ENV=development rails runner "$SEED_FILE"; then
+        print_success "[4/5] Issue階層構造投入完了"
+    else
+        print_error "[4/5] Issue階層構造投入に失敗しました"
+        exit 1
+    fi
+else
+    print_error "シードファイルが見つかりません: $SEED_FILE"
+    exit 1
+fi
+
+# 5-5: バージョン最終化
+print_step "5-5. バージョン最終化 (05_finalize_versions.rb)"
+SEED_FILE="$KANBAN_PLUGIN_ROOT/db/seeds/05_finalize_versions.rb"
+if [ -f "$SEED_FILE" ]; then
+    if RAILS_ENV=development rails runner "$SEED_FILE"; then
+        print_success "[5/5] バージョン最終化完了"
+    else
+        print_error "[5/5] バージョン最終化に失敗しました"
+        exit 1
+    fi
+else
+    print_error "シードファイルが見つかりません: $SEED_FILE"
+    exit 1
+fi
+
+print_success "桜商店カンバンテストデータ投入完了（全5ステップ）"
 
 # 完了報告
 print_header "🎉 データベースリセット完了！"

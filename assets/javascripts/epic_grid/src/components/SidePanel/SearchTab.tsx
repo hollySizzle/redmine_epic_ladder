@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode } from '../../utils/domUtils';
-import { searchAllIssues } from '../../utils/searchUtils';
+import { searchAllIssues, sortSearchResults, type SortOrder } from '../../utils/searchUtils';
 import type { SearchResult } from '../../types/normalized-api';
 
 /**
@@ -18,6 +18,7 @@ export const SearchTab: React.FC = () => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('hierarchy'); // デフォルトは階層順
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 検索対象トグル
@@ -56,7 +57,9 @@ export const SearchTab: React.FC = () => {
 
     // 全マッチするissueを検索（検索対象トグルを渡す）
     const results = searchAllIssues(entities, query, searchTargets, users);
-    setSearchResults(results);
+    // ソート適用
+    const sortedResults = sortSearchResults(results, sortOrder);
+    setSearchResults(sortedResults);
     setHasSearched(true);
   };
 
@@ -139,6 +142,24 @@ export const SearchTab: React.FC = () => {
       ...prev,
       [target]: !prev[target]
     }));
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newOrder = e.target.value as SortOrder;
+    setSortOrder(newOrder);
+    // 既存の検索結果を再ソート
+    if (searchResults.length > 0) {
+      setSearchResults(sortSearchResults(searchResults, newOrder));
+    }
+  };
+
+  const getSortLabel = (order: SortOrder): string => {
+    switch (order) {
+      case 'due-date-asc': return '📅 期限が近い順';
+      case 'due-date-desc': return '📅 期限が遠い順';
+      case 'hierarchy': return '📦 Epic/Feature順';
+      default: return order;
+    }
   };
 
   return (
@@ -225,6 +246,19 @@ export const SearchTab: React.FC = () => {
           <div className="search-tab__results-list">
             <div className="search-tab__results-header">
               <p>✅ {searchResults.length}件見つかりました</p>
+              <div className="search-tab__sort">
+                <label htmlFor="sort-order">並び替え:</label>
+                <select
+                  id="sort-order"
+                  value={sortOrder}
+                  onChange={handleSortChange}
+                  className="search-tab__sort-select"
+                >
+                  <option value="hierarchy">📦 Epic/Feature順</option>
+                  <option value="due-date-asc">📅 期限が近い順</option>
+                  <option value="due-date-desc">📅 期限が遠い順</option>
+                </select>
+              </div>
             </div>
             <ul className="search-tab__list">
               {searchResults.map((result) => (
