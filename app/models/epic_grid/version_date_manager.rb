@@ -96,8 +96,8 @@ module EpicGrid
     # ロジック:
     # 1. Issueのバージョン・開始日・期日を更新
     # 2. update_parent=trueの場合:
-    #    - 親Issueを更新
-    #    - 兄弟Issue（同じ親の子issue）も全て更新
+    #    - 兄弟Issue（同じ親の子issue）を先に更新
+    #    - 親Issueを最後に更新（子の日付更新後に親を更新することで、Redmineの自動計算を考慮）
     # 3. Redmine標準のJournal記録を生成
     def self.change_version_with_dates(issue, new_version_id, update_parent: false)
       new_version_id = nil if new_version_id.blank?
@@ -124,21 +124,8 @@ module EpicGrid
 
         # 親も更新
         if update_parent && issue.parent
-          parent_dates = update_dates_for_version_change(issue.parent, new_version)
-          result[:parent] = issue.parent
-          result[:parent_dates] = parent_dates
-
-          issue.parent.reload # 親もリロード（init_journalの前に実行）
-
-          issue.parent.init_journal(User.current)
-          issue.parent.safe_attributes = {
-            'fixed_version_id' => new_version_id,
-            'start_date' => parent_dates&.dig(:start_date),
-            'due_date' => parent_dates&.dig(:due_date)
-          }
-          issue.parent.save!
-
-          # 兄弟issue（同じ親の子issue）も全て更新
+          # 兄弟issue（同じ親の子issue）を先に更新
+          # （親の日付が子から自動計算される場合を考慮し、子を先に更新）
           siblings = issue.parent.children.where.not(id: issue.id)
           siblings.each do |sibling|
             sibling_dates = update_dates_for_version_change(sibling, new_version)
@@ -154,6 +141,26 @@ module EpicGrid
 
             result[:siblings] << sibling
           end
+
+          # 親を最後に更新
+          parent_dates = update_dates_for_version_change(issue.parent, new_version)
+          result[:parent] = issue.parent
+          result[:parent_dates] = parent_dates
+
+          issue.parent.reload # 親もリロード（init_journalの前に実行）
+
+          issue.parent.init_journal(User.current)
+          # 親の日付更新設定を考慮
+          # dates_derived? = true の場合、日付は子から自動計算されるため設定しない
+          # dates_derived? = false の場合、独立した日付を設定可能
+          parent_attributes = { 'fixed_version_id' => new_version_id }
+          unless issue.parent.dates_derived?
+            parent_attributes['start_date'] = parent_dates&.dig(:start_date)
+            parent_attributes['due_date'] = parent_dates&.dig(:due_date)
+          end
+
+          issue.parent.safe_attributes = parent_attributes
+          issue.parent.save!
         end
       end
 

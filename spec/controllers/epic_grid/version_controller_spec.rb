@@ -201,5 +201,142 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
         expect(response).to have_http_status(:not_found)
       end
     end
+
+    context 'Setting.parent_issue_dates = "derived"の場合（デフォルト）' do
+      let(:user_story) { FactoryBot.create(:user_story, project: project, fixed_version: version_v1) }
+      let(:task1) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, start_date: Date.new(2025, 10, 1), due_date: Date.new(2025, 10, 5)) }
+      let(:task2) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, start_date: Date.new(2025, 10, 15), due_date: Date.new(2025, 10, 19)) }
+
+      before do
+        Setting.parent_issue_dates = 'derived'
+        task1
+        task2
+      end
+
+      it '親の日付は子から自動計算され、手動設定は無視される' do
+        patch :update, params: {
+          id: task1.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        task1.reload
+        task2.reload
+        user_story.reload
+
+        # 子issueは更新される
+        expect(task1.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task1.due_date).to eq(Date.new(2025, 10, 20))
+        expect(task2.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task2.due_date).to eq(Date.new(2025, 10, 20))
+
+        # 親の日付は子から自動計算される
+        expect(user_story.start_date).to eq(Date.new(2025, 10, 10)) # min(task1, task2)
+        expect(user_story.due_date).to eq(Date.new(2025, 10, 20))   # max(task1, task2)
+      end
+    end
+
+    context 'Setting.parent_issue_dates = "independent"の場合' do
+      let(:user_story) { FactoryBot.create(:user_story, project: project, fixed_version: version_v1) }
+      let(:task) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1) }
+
+      before do
+        Setting.parent_issue_dates = 'independent'
+      end
+
+      after do
+        Setting.parent_issue_dates = 'derived' # デフォルトに戻す
+      end
+
+      it '親の日付も明示的に設定される' do
+        patch :update, params: {
+          id: task.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        task.reload
+        user_story.reload
+
+        expect(task.fixed_version_id).to eq(version_v2.id)
+        expect(task.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task.due_date).to eq(Date.new(2025, 10, 20))
+
+        # independent設定の場合、親の日付も明示的に設定される
+        expect(user_story.fixed_version_id).to eq(version_v2.id)
+        expect(user_story.start_date).to eq(Date.new(2025, 10, 10))
+        expect(user_story.due_date).to eq(Date.new(2025, 10, 20))
+      end
+    end
+
+    context 'バージョンなし → バージョンありへの変更' do
+      let(:task) { FactoryBot.create(:task, project: project, fixed_version: nil) }
+
+      it 'バージョンと日付が設定される' do
+        # version_v1, version_v2が存在することを明示的に確保
+        version_v1
+        version_v2
+
+        patch :update, params: { id: task.id, fixed_version_id: version_v2.id }
+
+        task.reload
+        expect(task.fixed_version_id).to eq(version_v2.id)
+        # version_v2より前のversion_v1が存在するので、開始日は version_v1.effective_date
+        expect(task.start_date).to eq(Date.new(2025, 10, 10)) # version_v1の期日
+        expect(task.due_date).to eq(Date.new(2025, 10, 20))   # version_v2の期日
+      end
+    end
+
+    context 'クローズ済みissueのバージョン変更' do
+      let(:closed_status) { IssueStatus.where(is_closed: true).first || IssueStatus.create!(name: 'Closed', is_closed: true) }
+      let(:task) do
+        t = FactoryBot.build(:task, project: project, fixed_version: version_v1)
+        t.status = closed_status
+        t.save!
+        t
+      end
+
+      it 'クローズ済みでもバージョン変更できる' do
+        expect(task.closed?).to be true # 前提条件確認
+
+        patch :update, params: { id: task.id, fixed_version_id: version_v2.id }
+
+        task.reload
+        expect(task.fixed_version_id).to eq(version_v2.id)
+        expect(task.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task.due_date).to eq(Date.new(2025, 10, 20))
+        expect(task.closed?).to be true # クローズ状態が維持される
+      end
+    end
+
+    context 'Journal記録の確認' do
+      let(:user_story) { FactoryBot.create(:user_story, project: project, fixed_version: version_v1) }
+      let(:task1) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, subject: 'Task1') }
+      let(:task2) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, subject: 'Task2') }
+
+      before do
+        task1
+        task2
+      end
+
+      it '全てのissueにJournalが作成される' do
+        expect {
+          patch :update, params: {
+            id: task1.id,
+            fixed_version_id: version_v2.id,
+            update_parent_version: '1'
+          }
+        }.to change { Journal.count }.by(3) # task1 + user_story + task2
+
+        # 各issueのJournalを確認
+        task1.reload
+        task2.reload
+        user_story.reload
+
+        expect(task1.journals.last.details.map(&:prop_key)).to include('fixed_version_id', 'start_date', 'due_date')
+        expect(task2.journals.last.details.map(&:prop_key)).to include('fixed_version_id', 'start_date', 'due_date')
+        expect(user_story.journals.last.details.map(&:prop_key)).to include('fixed_version_id')
+      end
+    end
   end
 end
