@@ -20,12 +20,21 @@ module EpicGrid
 
       # フラッシュメッセージの構築
       if update_parent && result[:parent]
+        # 影響を受けたissueの総数を表示
+        total_count = 1 + 1 + result[:siblings].size # issue + parent + siblings
+        sibling_info = if result[:siblings].any?
+                        " " + l(:notice_epic_grid_siblings_updated, count: result[:siblings].size)
+                      else
+                        ""
+                      end
+
         flash[:notice] = l(
           :notice_epic_grid_version_updated_with_parent,
           issue: "##{@issue.id}",
           parent: "##{result[:parent].id}",
-          version: new_version&.name || l(:label_none)
-        )
+          version: new_version&.name || l(:label_none),
+          total: total_count
+        ) + sibling_info
       else
         # 親とズレている場合は警告
         if @issue.parent && @issue.parent.fixed_version_id != new_version_id.to_i

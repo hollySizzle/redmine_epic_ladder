@@ -102,6 +102,70 @@ RSpec.describe EpicGrid::VersionDateManager do
     end
   end
 
+  describe '.calculate_impact' do
+    context '親が存在しない場合' do
+      it '自分自身のみがカウントされる' do
+        impact = described_class.calculate_impact(issue, update_parent: false)
+
+        expect(impact[:total]).to eq(1)
+        expect(impact[:issue_ids]).to eq([issue.id])
+        expect(impact[:parent_id]).to be_nil
+        expect(impact[:sibling_ids]).to eq([])
+      end
+    end
+
+    context '親が存在するがupdate_parent=falseの場合' do
+      let(:user_story_tracker) { create(:user_story_tracker) }
+      let(:task_tracker) { create(:task_tracker) }
+      let(:user_story) { create(:user_story, project: project, author: user) }
+      let(:task) { create(:task, project: project, parent: user_story, author: user) }
+
+      before do
+        project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+        project.trackers << task_tracker unless project.trackers.include?(task_tracker)
+      end
+
+      it '自分自身のみがカウントされる' do
+        impact = described_class.calculate_impact(task, update_parent: false)
+
+        expect(impact[:total]).to eq(1)
+        expect(impact[:issue_ids]).to eq([task.id])
+        expect(impact[:parent_id]).to be_nil
+        expect(impact[:sibling_ids]).to eq([])
+      end
+    end
+
+    context '親と兄弟が存在しupdate_parent=trueの場合' do
+      let(:user_story_tracker) { create(:user_story_tracker) }
+      let(:task_tracker) { create(:task_tracker) }
+      let(:bug_tracker) { create(:bug_tracker) }
+
+      let(:user_story) { create(:user_story, project: project, author: user) }
+      let(:task1) { create(:task, project: project, parent: user_story, author: user, subject: 'Task1') }
+      let(:task2) { create(:task, project: project, parent: user_story, author: user, subject: 'Task2') }
+      let(:bug) { create(:bug, project: project, parent: user_story, author: user, subject: 'Bug1') }
+
+      before do
+        project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+        project.trackers << task_tracker unless project.trackers.include?(task_tracker)
+        project.trackers << bug_tracker unless project.trackers.include?(bug_tracker)
+        # 全てのissueを作成
+        task1
+        task2
+        bug
+      end
+
+      it '自分+親+兄弟がカウントされる' do
+        impact = described_class.calculate_impact(task1, update_parent: true)
+
+        expect(impact[:total]).to eq(4) # task1 + user_story + task2 + bug
+        expect(impact[:issue_ids]).to contain_exactly(task1.id, user_story.id, task2.id, bug.id)
+        expect(impact[:parent_id]).to eq(user_story.id)
+        expect(impact[:sibling_ids]).to contain_exactly(task2.id, bug.id)
+      end
+    end
+  end
+
   describe '.change_version_with_dates' do
     # NOTE: この共通メソッドの統合テストは spec/controllers/epic_grid/version_controller_spec.rb で実施
     # ここでは基本的な動作のみを確認

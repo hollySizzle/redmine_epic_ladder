@@ -15,6 +15,7 @@ en:
   label_epic_grid_version_change: "Change Version"
   label_epic_grid_update_parent_version: "Also update parent %{parent}"
   notice_epic_grid_version_updated: "Version updated successfully"
-  notice_epic_grid_version_updated_with_parent: "Updated version to %{version} for %{issue} and parent %{parent}"
+  notice_epic_grid_version_updated_with_parent: "Updated version to %{version} for %{issue} and parent %{parent} (total: %{total} issues)"
+  notice_epic_grid_siblings_updated: "%{count} sibling issues were also updated"
   warning_epic_grid_version_mismatch_with_parent: "⚠️ Parent %{parent} remains at %{parent_version}"
   error_epic_grid_version_update_failed: "Failed to update version: %{error}"

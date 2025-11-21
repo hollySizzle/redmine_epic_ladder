@@ -79,6 +79,71 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
       end
     end
 
+    context '親と兄弟issue（Task/Bug/Test）も一緒に変更' do
+      let(:user_story) { FactoryBot.create(:user_story, project: project, fixed_version: version_v1) }
+      let(:task1) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, subject: 'Task1') }
+      let(:task2) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, subject: 'Task2') }
+      let(:bug) { FactoryBot.create(:bug, project: project, parent: user_story, fixed_version: version_v1, subject: 'Bug1') }
+      let(:test) { FactoryBot.create(:test, project: project, parent: user_story, fixed_version: version_v1, subject: 'Test1') }
+
+      let(:bug_tracker) { FactoryBot.create(:bug_tracker) }
+      let(:test_tracker) { FactoryBot.create(:test_tracker) }
+
+      before do
+        project.trackers << [bug_tracker, test_tracker]
+        # 全てのissueを作成
+        task1
+        task2
+        bug
+        test
+      end
+
+      it 'Task1を変更すると、親UserStoryと兄弟（Task2, Bug, Test）も全て変更される' do
+        patch :update, params: {
+          id: task1.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        # 全てリロード
+        task1.reload
+        task2.reload
+        bug.reload
+        test.reload
+        user_story.reload
+
+        # Task1（操作対象）
+        expect(task1.fixed_version_id).to eq(version_v2.id)
+        expect(task1.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task1.due_date).to eq(Date.new(2025, 10, 20))
+
+        # 親UserStory
+        expect(user_story.fixed_version_id).to eq(version_v2.id)
+        expect(user_story.start_date).to eq(Date.new(2025, 10, 10))
+        expect(user_story.due_date).to eq(Date.new(2025, 10, 20))
+
+        # 兄弟Task2
+        expect(task2.fixed_version_id).to eq(version_v2.id)
+        expect(task2.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task2.due_date).to eq(Date.new(2025, 10, 20))
+
+        # 兄弟Bug
+        expect(bug.fixed_version_id).to eq(version_v2.id)
+        expect(bug.start_date).to eq(Date.new(2025, 10, 10))
+        expect(bug.due_date).to eq(Date.new(2025, 10, 20))
+
+        # 兄弟Test
+        expect(test.fixed_version_id).to eq(version_v2.id)
+        expect(test.start_date).to eq(Date.new(2025, 10, 10))
+        expect(test.due_date).to eq(Date.new(2025, 10, 20))
+
+        # フラッシュメッセージに総数と兄弟数が含まれる
+        expect(flash[:notice]).to include('5') # 計5件（task1 + user_story + task2 + bug + test）
+        expect(flash[:notice]).to include('3') # 兄弟3件（task2 + bug + test）
+        expect(response).to redirect_to(issue_path(task1))
+      end
+    end
+
     context 'UserStoryのVersion変更' do
       let(:feature) { FactoryBot.create(:feature, project: project, fixed_version: version_v1) }
       let(:user_story) { FactoryBot.create(:user_story, project: project, parent: feature, fixed_version: version_v1) }
