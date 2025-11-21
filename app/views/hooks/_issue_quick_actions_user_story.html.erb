@@ -3,7 +3,7 @@
     <%= l(:label_epic_grid_quick_actions) %>
   </h3>
   <p style="margin: 0 0 10px 0; font-size: 12px; color: #666;">
-    <%= l(:text_epic_grid_create_under_user_story, user_story: link_to("##{user_story.id} #{user_story.subject}", issue_path(user_story))).html_safe %>
+    <%= l(:text_epic_grid_create_under_this_user_story, issue: link_to("##{issue.id} #{issue.subject}", issue_path(issue))).html_safe %>
   </p>
   <div class="epic-grid-action-buttons">
     <%
@@ -27,11 +27,11 @@
       <%= link_to(
         l(:label_epic_grid_create_task),
         common_params.merge(issue: {
-          parent_issue_id: user_story.id,
+          parent_issue_id: issue.id,
           tracker_id: task_tracker.id,
-          fixed_version_id: user_story.fixed_version_id,
-          due_date: user_story.fixed_version&.effective_date,
-          subject: "#{user_story.subject} - Task"
+          fixed_version_id: issue.fixed_version_id,
+          due_date: issue.fixed_version&.effective_date,
+          subject: "#{issue.subject} - Task"
         }),
         class: 'icon icon-add',
         style: 'margin-right: 10px;'
@@ -42,11 +42,11 @@
       <%= link_to(
         l(:label_epic_grid_create_test),
         common_params.merge(issue: {
-          parent_issue_id: user_story.id,
+          parent_issue_id: issue.id,
           tracker_id: test_tracker.id,
-          fixed_version_id: user_story.fixed_version_id,
-          due_date: user_story.fixed_version&.effective_date,
-          subject: "#{user_story.subject} - Test"
+          fixed_version_id: issue.fixed_version_id,
+          due_date: issue.fixed_version&.effective_date,
+          subject: "#{issue.subject} - Test"
         }),
         class: 'icon icon-add',
         style: 'margin-right: 10px;'
@@ -57,11 +57,11 @@
       <%= link_to(
         l(:label_epic_grid_create_bug),
         common_params.merge(issue: {
-          parent_issue_id: user_story.id,
+          parent_issue_id: issue.id,
           tracker_id: bug_tracker.id,
-          fixed_version_id: user_story.fixed_version_id,
-          due_date: user_story.fixed_version&.effective_date,
-          subject: "#{user_story.subject} - Bug"
+          fixed_version_id: issue.fixed_version_id,
+          due_date: issue.fixed_version&.effective_date,
+          subject: "#{issue.subject} - Bug"
         }),
         class: 'icon icon-add'
       ) %>

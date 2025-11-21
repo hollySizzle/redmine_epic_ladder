@@ -56,22 +56,61 @@ RSpec.describe EpicGrid::Hooks::IssueDetailHooks, type: :view do
       expect(result).to include('Quick Actions')
     end
 
-    it 'Epic/Featureトラッカーの場合、ボタンを表示しない' do
+    it 'UserStoryトラッカーの場合、クイックアクションを表示する' do
+      project.enable_module!(:epic_grid)
+      user_story = FactoryBot.create(:user_story, project: project)
+
+      context = {
+        issue: user_story,
+        project: project,
+        controller: controller
+      }
+
+      allow(controller).to receive(:render_to_string).and_return('<div class="epic-grid-quick-actions">UserStory Actions</div>')
+
+      hook = described_class.send(:new)
+      result = hook.view_issues_show_details_bottom(context)
+
+      expect(result).to include('UserStory Actions')
+    end
+
+    it 'Featureトラッカーの場合、クイックアクションを表示する' do
+      project.enable_module!(:epic_grid)
+      feature = FactoryBot.create(:feature, project: project)
+
+      context = {
+        issue: feature,
+        project: project,
+        controller: controller
+      }
+
+      allow(controller).to receive(:render_to_string).and_return('<div class="epic-grid-quick-actions">Feature Actions</div>')
+
+      hook = described_class.send(:new)
+      result = hook.view_issues_show_details_bottom(context)
+
+      expect(result).to include('Feature Actions')
+    end
+
+    it 'Epicトラッカーの場合、クイックアクションを表示する' do
       project.enable_module!(:epic_grid)
       epic = FactoryBot.create(:epic, project: project)
 
       context = {
         issue: epic,
-        project: project
+        project: project,
+        controller: controller
       }
+
+      allow(controller).to receive(:render_to_string).and_return('<div class="epic-grid-quick-actions">Epic Actions</div>')
 
       hook = described_class.send(:new)
       result = hook.view_issues_show_details_bottom(context)
 
-      expect(result).to eq('')
+      expect(result).to include('Epic Actions')
     end
 
-    it 'UserStoryが見つからない場合、ボタンを表示しない' do
+    it 'UserStoryが見つからない場合（Task/Test/Bug）、ボタンを表示しない' do
       project.enable_module!(:epic_grid)
       task = FactoryBot.create(:task, project: project, parent: nil)
 
@@ -90,19 +129,77 @@ RSpec.describe EpicGrid::Hooks::IssueDetailHooks, type: :view do
   describe 'Private Methods (via send)' do
     let(:hook) { described_class.send(:new) }
 
-    describe '#should_show_buttons?' do
-      it 'Taskトラッカーの場合はtrueを返す' do
+    describe '#get_tracker_type' do
+      it 'Taskトラッカーの場合は:task_levelを返す' do
         issue = FactoryBot.create(:task, project: project)
-        result = hook.send(:should_show_buttons?, issue)
+        result = hook.send(:get_tracker_type, issue)
 
-        expect(result).to be true
+        expect(result).to eq(:task_level)
       end
 
-      it 'Epicトラッカーの場合はfalseを返す' do
-        issue = FactoryBot.create(:epic, project: project)
-        result = hook.send(:should_show_buttons?, issue)
+      it 'UserStoryトラッカーの場合は:user_storyを返す' do
+        issue = FactoryBot.create(:user_story, project: project)
+        result = hook.send(:get_tracker_type, issue)
 
-        expect(result).to be false
+        expect(result).to eq(:user_story)
+      end
+
+      it 'Featureトラッカーの場合は:featureを返す' do
+        issue = FactoryBot.create(:feature, project: project)
+        result = hook.send(:get_tracker_type, issue)
+
+        expect(result).to eq(:feature)
+      end
+
+      it 'Epicトラッカーの場合は:epicを返す' do
+        issue = FactoryBot.create(:epic, project: project)
+        result = hook.send(:get_tracker_type, issue)
+
+        expect(result).to eq(:epic)
+      end
+    end
+
+    describe '#build_partial_context' do
+      it 'task_levelの場合、正しいパーシャルとlocalsを返す' do
+        user_story = FactoryBot.create(:user_story, project: project)
+        task = FactoryBot.create(:task, project: project, parent: user_story)
+
+        partial_name, locals = hook.send(:build_partial_context, task, project, :task_level)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions')
+        expect(locals[:issue]).to eq(task)
+        expect(locals[:user_story]).to eq(user_story)
+        expect(locals[:project]).to eq(project)
+      end
+
+      it 'user_storyの場合、正しいパーシャルとlocalsを返す' do
+        user_story = FactoryBot.create(:user_story, project: project)
+
+        partial_name, locals = hook.send(:build_partial_context, user_story, project, :user_story)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions_user_story')
+        expect(locals[:issue]).to eq(user_story)
+        expect(locals[:project]).to eq(project)
+      end
+
+      it 'featureの場合、正しいパーシャルとlocalsを返す' do
+        feature = FactoryBot.create(:feature, project: project)
+
+        partial_name, locals = hook.send(:build_partial_context, feature, project, :feature)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions_feature')
+        expect(locals[:issue]).to eq(feature)
+        expect(locals[:project]).to eq(project)
+      end
+
+      it 'epicの場合、正しいパーシャルとlocalsを返す' do
+        epic = FactoryBot.create(:epic, project: project)
+
+        partial_name, locals = hook.send(:build_partial_context, epic, project, :epic)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions_epic')
+        expect(locals[:issue]).to eq(epic)
+        expect(locals[:project]).to eq(project)
       end
     end
 
@@ -140,6 +237,57 @@ RSpec.describe EpicGrid::Hooks::IssueDetailHooks, type: :view do
         result = hook.send(:find_user_story, task)
 
         expect(result).to eq(user_story)
+      end
+    end
+  end
+
+  describe 'Version期日継承 - View Context' do
+    let(:hook) { described_class.send(:new) }
+
+    before do
+      project.enable_module!(:epic_grid)
+    end
+
+    context 'Versionの期日が設定されている場合' do
+      it 'UserStoryトラッカーから作成する場合、Version期日が継承される' do
+        version = FactoryBot.create(:version, project: project, effective_date: '2025-12-31')
+        user_story = FactoryBot.create(:user_story, project: project, fixed_version: version)
+
+        partial_name, locals = hook.send(:build_partial_context, user_story, project, :user_story)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions_user_story')
+        expect(locals[:issue].fixed_version.effective_date.to_s).to eq('2025-12-31')
+      end
+
+      it 'Featureトラッカーから作成する場合、Version期日が継承される' do
+        version = FactoryBot.create(:version, project: project, effective_date: '2025-12-31')
+        feature = FactoryBot.create(:feature, project: project, fixed_version: version)
+
+        partial_name, locals = hook.send(:build_partial_context, feature, project, :feature)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions_feature')
+        expect(locals[:issue].fixed_version.effective_date.to_s).to eq('2025-12-31')
+      end
+
+      it 'Epicトラッカーから作成する場合、Version期日が継承される' do
+        version = FactoryBot.create(:version, project: project, effective_date: '2025-12-31')
+        epic = FactoryBot.create(:epic, project: project, fixed_version: version)
+
+        partial_name, locals = hook.send(:build_partial_context, epic, project, :epic)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions_epic')
+        expect(locals[:issue].fixed_version.effective_date.to_s).to eq('2025-12-31')
+      end
+    end
+
+    context 'Versionが未設定の場合' do
+      it 'UserStoryからTask作成時、期日はnilになる' do
+        user_story = FactoryBot.create(:user_story, project: project, fixed_version: nil)
+
+        partial_name, locals = hook.send(:build_partial_context, user_story, project, :user_story)
+
+        expect(partial_name).to eq('hooks/issue_quick_actions_user_story')
+        expect(locals[:issue].fixed_version).to be_nil
       end
     end
   end

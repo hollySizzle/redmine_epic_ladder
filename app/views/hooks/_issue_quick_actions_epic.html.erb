@@ -1,0 +1,38 @@
+<div class="epic-grid-quick-actions contextual" style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; background-color: #f8f8f8;">
+  <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
+    <%= l(:label_epic_grid_quick_actions) %>
+  </h3>
+  <p style="margin: 0 0 10px 0; font-size: 12px; color: #666;">
+    <%= l(:text_epic_grid_create_under_this_epic, issue: link_to("##{issue.id} #{issue.subject}", issue_path(issue))).html_safe %>
+  </p>
+  <div class="epic-grid-action-buttons">
+    <%
+      tracker_names = EpicGrid::TrackerHierarchy.tracker_names
+
+      # トラッカーIDを取得
+      feature_tracker = Tracker.find_by(name: tracker_names[:feature])
+
+      # 共通パラメータ
+      common_params = {
+        controller: 'issues',
+        action: 'new',
+        project_id: project.identifier,
+        back_url: issue_path(issue)
+      }
+    %>
+
+    <% if feature_tracker %>
+      <%= link_to(
+        l(:label_epic_grid_create_feature),
+        common_params.merge(issue: {
+          parent_issue_id: issue.id,
+          tracker_id: feature_tracker.id,
+          fixed_version_id: issue.fixed_version_id,
+          due_date: issue.fixed_version&.effective_date,
+          subject: "#{issue.subject} - Feature"
+        }),
+        class: 'icon icon-add'
+      ) %>
+    <% end %>
+  </div>
+</div>

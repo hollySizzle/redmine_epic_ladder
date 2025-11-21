@@ -3,7 +3,7 @@
 module EpicGrid
   module Hooks
     # Issue詳細画面へのView Hook
-    # Task/Test/Bug作成ボタンを追加
+    # 各トラッカーに応じたクイックアクションボタンを追加
     class IssueDetailHooks < Redmine::Hook::ViewListener
       # チケット詳細画面の下部にボタンを表示
       def view_issues_show_details_bottom(context = {})
@@ -14,37 +14,75 @@ module EpicGrid
         return '' unless project&.module_enabled?(:epic_grid)
 
         # ボタン表示対象トラッカーかチェック
-        return '' unless should_show_buttons?(issue)
+        tracker_type = get_tracker_type(issue)
+        return '' if tracker_type.nil?
 
-        # 所属するUserStoryを取得
-        user_story = find_user_story(issue)
-        return '' unless user_story
+        # トラッカータイプに応じてパーシャルを選択
+        partial_name, locals = build_partial_context(issue, project, tracker_type)
+        return '' if partial_name.blank?
 
         # パーシャルをレンダリング
         context[:controller].send(
           :render_to_string,
-          partial: 'hooks/issue_quick_actions',
-          locals: {
-            issue: issue,
-            user_story: user_story,
-            project: project
-          }
+          partial: partial_name,
+          locals: locals
         )
       end
 
       private
 
-      # ボタン表示対象トラッカーかチェック
-      def should_show_buttons?(issue)
+      # トラッカータイプを判定
+      # @return [Symbol, nil] :task_level, :user_story, :feature, :epic, nil
+      def get_tracker_type(issue)
         tracker_names = EpicGrid::TrackerHierarchy.tracker_names
         current_tracker = issue.tracker.name
 
-        # Task/Test/Bugトラッカーのみ表示
-        [
-          tracker_names[:task],
-          tracker_names[:test],
-          tracker_names[:bug]
-        ].include?(current_tracker)
+        case current_tracker
+        when tracker_names[:task], tracker_names[:test], tracker_names[:bug]
+          :task_level
+        when tracker_names[:user_story]
+          :user_story
+        when tracker_names[:feature]
+          :feature
+        when tracker_names[:epic]
+          :epic
+        end
+      end
+
+      # トラッカータイプに応じてパーシャル名とlocalsを構築
+      def build_partial_context(issue, project, tracker_type)
+        case tracker_type
+        when :task_level
+          # Task/Test/Bug: 親UserStoryを見つけて、その下にTask/Test/Bugを作成
+          user_story = find_user_story(issue)
+          return ['', {}] unless user_story
+
+          ['hooks/issue_quick_actions', {
+            issue: issue,
+            user_story: user_story,
+            project: project
+          }]
+        when :user_story
+          # UserStory: 自身の下にTask/Test/Bugを作成
+          ['hooks/issue_quick_actions_user_story', {
+            issue: issue,
+            project: project
+          }]
+        when :feature
+          # Feature: 自身の下にUserStoryを作成
+          ['hooks/issue_quick_actions_feature', {
+            issue: issue,
+            project: project
+          }]
+        when :epic
+          # Epic: 自身の下にFeatureを作成
+          ['hooks/issue_quick_actions_epic', {
+            issue: issue,
+            project: project
+          }]
+        else
+          ['', {}]
+        end
       end
 
       # 所属するUserStoryを取得
