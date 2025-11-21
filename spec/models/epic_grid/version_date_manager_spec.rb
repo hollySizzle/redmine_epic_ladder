@@ -101,4 +101,12 @@ RSpec.describe EpicGrid::VersionDateManager do
       end
     end
   end
+
+  describe '.change_version_with_dates' do
+    # NOTE: この共通メソッドの統合テストは spec/controllers/epic_grid/version_controller_spec.rb で実施
+    # ここでは基本的な動作のみを確認
+    it 'メソッドが定義されている' do
+      expect(described_class).to respond_to(:change_version_with_dates)
+    end
+  end
 end

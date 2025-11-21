@@ -8,8 +8,8 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
   let(:role) { FactoryBot.create(:role, permissions: [:view_issues, :edit_issues]) }
   let(:member) { FactoryBot.create(:member, project: project, user: user, roles: [role]) }
 
-  let(:version_v1) { FactoryBot.create(:version, project: project, name: 'v1.0') }
-  let(:version_v2) { FactoryBot.create(:version, project: project, name: 'v2.0') }
+  let(:version_v1) { FactoryBot.create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 10, 10)) }
+  let(:version_v2) { FactoryBot.create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 10, 20)) }
 
   let(:task_tracker) { FactoryBot.create(:task_tracker) }
   let(:user_story_tracker) { FactoryBot.create(:user_story_tracker) }
@@ -34,6 +34,8 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
 
         task.reload
         expect(task.fixed_version_id).to eq(version_v2.id)
+        expect(task.start_date).to eq(Date.new(2025, 10, 10)) # v1.0の期日（直前のバージョン）
+        expect(task.due_date).to eq(Date.new(2025, 10, 20))   # v2.0の期日
         expect(user_story.reload.fixed_version_id).to eq(version_v1.id) # 親は変更されない
         expect(flash[:warning]).to be_present # 親とのズレを警告
         expect(response).to redirect_to(issue_path(task))
@@ -44,6 +46,8 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
 
         task.reload
         expect(task.fixed_version_id).to be_nil
+        expect(task.start_date).to be_nil # バージョンなし→日付も未設定
+        expect(task.due_date).to be_nil
         expect(response).to redirect_to(issue_path(task))
       end
     end
@@ -63,7 +67,13 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
         user_story.reload
 
         expect(task.fixed_version_id).to eq(version_v2.id)
+        expect(task.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task.due_date).to eq(Date.new(2025, 10, 20))
+
         expect(user_story.fixed_version_id).to eq(version_v2.id)
+        expect(user_story.start_date).to eq(Date.new(2025, 10, 10)) # 親も日付更新
+        expect(user_story.due_date).to eq(Date.new(2025, 10, 20))
+
         expect(flash[:notice]).to include('v2.0')
         expect(response).to redirect_to(issue_path(task))
       end
@@ -78,6 +88,8 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
 
         user_story.reload
         expect(user_story.fixed_version_id).to eq(version_v2.id)
+        expect(user_story.start_date).to eq(Date.new(2025, 10, 10))
+        expect(user_story.due_date).to eq(Date.new(2025, 10, 20))
         expect(feature.reload.fixed_version_id).to eq(version_v1.id) # 親は変更されない
         expect(response).to redirect_to(issue_path(user_story))
       end
@@ -91,6 +103,8 @@ RSpec.describe EpicGrid::VersionController, type: :controller do
 
         task.reload
         expect(task.fixed_version_id).to eq(version_v2.id)
+        expect(task.start_date).to eq(Date.new(2025, 10, 10))
+        expect(task.due_date).to eq(Date.new(2025, 10, 20))
         expect(flash[:warning]).to be_nil # 親がいないので警告なし
         expect(flash[:notice]).to be_present
         expect(response).to redirect_to(issue_path(task))

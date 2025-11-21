@@ -43,5 +43,67 @@ module EpicGrid
 
       { start_date: start_date, due_date: due_date }
     end
+
+    # バージョン変更＋日付自動設定を一括実行（共通メソッド）
+    #
+    # @param issue [Issue] 対象のチケット
+    # @param new_version_id [String, Integer, nil] 新しいバージョンID（空文字列の場合はnil扱い）
+    # @param update_parent [Boolean] 親Issueも同時に更新するか（デフォルト: false）
+    # @return [Hash] { issue: Issue, parent: Issue|nil, dates: Hash|nil, parent_dates: Hash|nil }
+    #
+    # @example
+    #   result = VersionDateManager.change_version_with_dates(task, '2', update_parent: true)
+    #   result[:issue]        # 更新されたIssue
+    #   result[:parent]       # 更新された親Issue（存在する場合）
+    #   result[:dates]        # 計算された日付 { start_date:, due_date: }
+    #   result[:parent_dates] # 親の日付（存在する場合）
+    #
+    # ロジック:
+    # 1. Issueのバージョン・開始日・期日を更新
+    # 2. update_parent=trueの場合、親Issueも同様に更新
+    # 3. Redmine標準のJournal記録を生成
+    def self.change_version_with_dates(issue, new_version_id, update_parent: false)
+      new_version_id = nil if new_version_id.blank?
+      new_version = new_version_id ? Version.find(new_version_id) : nil
+
+      result = { issue: issue, parent: nil, dates: nil, parent_dates: nil }
+
+      ActiveRecord::Base.transaction do
+        # Issue本体の日付計算（reloadする前に計算）
+        dates = update_dates_for_version_change(issue, new_version)
+        result[:dates] = dates
+
+        # lock_versionを最新にするためリロード（init_journalの前に実行）
+        issue.reload
+
+        # Issue更新
+        issue.init_journal(User.current)
+        issue.safe_attributes = {
+          'fixed_version_id' => new_version_id,
+          'start_date' => dates&.dig(:start_date),
+          'due_date' => dates&.dig(:due_date)
+        }
+        issue.save!
+
+        # 親も更新
+        if update_parent && issue.parent
+          parent_dates = update_dates_for_version_change(issue.parent, new_version)
+          result[:parent] = issue.parent
+          result[:parent_dates] = parent_dates
+
+          issue.parent.reload # 親もリロード（init_journalの前に実行）
+
+          issue.parent.init_journal(User.current)
+          issue.parent.safe_attributes = {
+            'fixed_version_id' => new_version_id,
+            'start_date' => parent_dates&.dig(:start_date),
+            'due_date' => parent_dates&.dig(:due_date)
+          }
+          issue.parent.save!
+        end
+      end
+
+      result
+    end
   end
 end

@@ -11,35 +11,31 @@ module EpicGrid
       new_version_id = params[:fixed_version_id].presence
       update_parent = params[:update_parent_version] == '1'
 
-      ActiveRecord::Base.transaction do
-        # Issue本体を更新（Redmine標準のupdateメソッドを使用）
-        @issue.init_journal(User.current)
-        @issue.safe_attributes = { 'fixed_version_id' => new_version_id }
-        @issue.save!
+      # VersionDateManagerで一括更新（バージョン＋開始日＋期日）
+      result = EpicGrid::VersionDateManager.change_version_with_dates(
+        @issue,
+        new_version_id,
+        update_parent: update_parent
+      )
 
-        # 親も更新するか？
-        if update_parent && @issue.parent
-          @issue.parent.init_journal(User.current)
-          @issue.parent.safe_attributes = { 'fixed_version_id' => new_version_id }
-          @issue.parent.save!
-
-          flash[:notice] = l(
-            :notice_epic_grid_version_updated_with_parent,
-            issue: "##{@issue.id}",
+      # フラッシュメッセージの構築
+      if update_parent && result[:parent]
+        flash[:notice] = l(
+          :notice_epic_grid_version_updated_with_parent,
+          issue: "##{@issue.id}",
+          parent: "##{result[:parent].id}",
+          version: new_version&.name || l(:label_none)
+        )
+      else
+        # 親とズレている場合は警告
+        if @issue.parent && @issue.parent.fixed_version_id != new_version_id.to_i
+          flash[:warning] = l(
+            :warning_epic_grid_version_mismatch_with_parent,
             parent: "##{@issue.parent.id}",
-            version: new_version&.name || l(:label_none)
+            parent_version: @issue.parent.fixed_version&.name || l(:label_none)
           )
         else
-          # 親とズレている場合は警告
-          if @issue.parent && @issue.parent.fixed_version_id != new_version_id
-            flash[:warning] = l(
-              :warning_epic_grid_version_mismatch_with_parent,
-              parent: "##{@issue.parent.id}",
-              parent_version: @issue.parent.fixed_version&.name || l(:label_none)
-            )
-          else
-            flash[:notice] = l(:notice_epic_grid_version_updated)
-          end
+          flash[:notice] = l(:notice_epic_grid_version_updated)
         end
       end
 
