@@ -4,18 +4,26 @@
   </h3>
 
   <%= form_tag(epic_grid_update_version_path(issue), method: :patch, style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;') do %>
-    <select name="fixed_version_id" style="min-width: 150px;">
-      <option value=""><%= l(:label_none) %></option>
+    <select name="fixed_version_id" id="epic_grid_version_select" style="min-width: 150px;">
+      <option value="" data-due-date=""><%= l(:label_none) %></option>
       <% project.versions.open.each do |version| %>
-        <option value="<%= version.id %>" <%= 'selected' if issue.fixed_version_id == version.id %>>
+        <option value="<%= version.id %>"
+                data-due-date="<%= version.effective_date ? format_date(version.effective_date) : '' %>"
+                <%= 'selected' if issue.fixed_version_id == version.id %>>
           <%= version.name %>
         </option>
       <% end %>
     </select>
 
+    <span id="epic_grid_version_due_date" style="font-size: 12px; color: #666;">
+      <% if issue.fixed_version&.effective_date %>
+        (<%= l(:field_due_date) %>: <%= format_date(issue.fixed_version.effective_date) %>)
+      <% end %>
+    </span>
+
     <% if issue.parent %>
       <label style="display: flex; align-items: center; gap: 5px; font-size: 12px;">
-        <input type="checkbox" name="update_parent_version" value="1">
+        <input type="checkbox" name="update_parent_version" value="1" checked>
         <%= l(:label_epic_grid_update_parent_version, parent: issue.parent.tracker.name) %>
         (#<%= issue.parent.id %>)
       </label>
@@ -24,3 +32,23 @@
     <%= submit_tag l(:button_change), class: 'button-small' %>
   <% end %>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const selectElement = document.getElementById('epic_grid_version_select');
+  const dueDateSpan = document.getElementById('epic_grid_version_due_date');
+
+  if (selectElement && dueDateSpan) {
+    selectElement.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const dueDate = selectedOption.getAttribute('data-due-date');
+
+      if (dueDate) {
+        dueDateSpan.textContent = '(<%= l(:field_due_date) %>: ' + dueDate + ')';
+      } else {
+        dueDateSpan.textContent = '';
+      }
+    });
+  }
+});
+</script>
