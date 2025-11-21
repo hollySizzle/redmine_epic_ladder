@@ -1,0 +1,26 @@
+<div class="epic-grid-version-quick-change contextual" style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; background-color: #f8f8f8;">
+  <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
+    <%= l(:label_epic_grid_version_change) %>
+  </h3>
+
+  <%= form_tag(epic_grid_update_version_path(issue), method: :patch, style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;') do %>
+    <select name="fixed_version_id" style="min-width: 150px;">
+      <option value=""><%= l(:label_none) %></option>
+      <% project.versions.open.each do |version| %>
+        <option value="<%= version.id %>" <%= 'selected' if issue.fixed_version_id == version.id %>>
+          <%= version.name %>
+        </option>
+      <% end %>
+    </select>
+
+    <% if issue.parent %>
+      <label style="display: flex; align-items: center; gap: 5px; font-size: 12px;">
+        <input type="checkbox" name="update_parent_version" value="1">
+        <%= l(:label_epic_grid_update_parent_version, parent: issue.parent.tracker.name) %>
+        (#<%= issue.parent.id %>)
+      </label>
+    <% end %>
+
+    <%= submit_tag l(:button_change), class: 'button-small' %>
+  <% end %>
+</div>

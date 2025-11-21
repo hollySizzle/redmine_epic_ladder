@@ -13,20 +13,34 @@ module EpicGrid
         # epic_gridモジュールが有効化されていない場合は何も表示しない
         return '' unless project&.module_enabled?(:epic_grid)
 
-        # ボタン表示対象トラッカーかチェック
+        html_parts = []
+
+        # クイックアクション（子Issue作成）
         tracker_type = get_tracker_type(issue)
-        return '' if tracker_type.nil?
+        if tracker_type.present?
+          partial_name, locals = build_partial_context(issue, project, tracker_type)
+          if partial_name.present?
+            html_parts << context[:controller].send(
+              :render_to_string,
+              partial: partial_name,
+              locals: locals
+            )
+          end
+        end
 
-        # トラッカータイプに応じてパーシャルを選択
-        partial_name, locals = build_partial_context(issue, project, tracker_type)
-        return '' if partial_name.blank?
+        # Version変更クイックアクション
+        if should_show_version_changer?(issue)
+          html_parts << context[:controller].send(
+            :render_to_string,
+            partial: 'hooks/issue_version_quick_change',
+            locals: {
+              issue: issue,
+              project: project
+            }
+          )
+        end
 
-        # パーシャルをレンダリング
-        context[:controller].send(
-          :render_to_string,
-          partial: partial_name,
-          locals: locals
-        )
+        html_parts.join("\n").html_safe
       end
 
       private
@@ -83,6 +97,20 @@ module EpicGrid
         else
           ['', {}]
         end
+      end
+
+      # Version変更UIを表示すべきか判定
+      # Task/Test/Bug + UserStory に表示
+      def should_show_version_changer?(issue)
+        tracker_names = EpicGrid::TrackerHierarchy.tracker_names
+        current_tracker = issue.tracker.name
+
+        [
+          tracker_names[:task],
+          tracker_names[:test],
+          tracker_names[:bug],
+          tracker_names[:user_story]
+        ].include?(current_tracker)
       end
 
       # 所属するUserStoryを取得

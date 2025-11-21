@@ -52,4 +52,7 @@ RedmineApp::Application.routes.draw do
   resources :projects do
     get 'epic_grid', to: 'epic_grid#index'
   end
+
+  # Version変更クイックアクション
+  patch 'epic_grid/issues/:id/update_version', to: 'epic_grid/version#update', as: 'epic_grid_update_version'
 end

@@ -10,3 +10,11 @@ en:
   text_epic_grid_create_under_this_user_story: "Create under this User Story: %{issue}"
   text_epic_grid_create_under_this_feature: "Create under this Feature: %{issue}"
   text_epic_grid_create_under_this_epic: "Create under this Epic: %{issue}"
+
+  # Version Quick Change
+  label_epic_grid_version_change: "Change Version"
+  label_epic_grid_update_parent_version: "Also update parent %{parent}"
+  notice_epic_grid_version_updated: "Version updated successfully"
+  notice_epic_grid_version_updated_with_parent: "Updated version to %{version} for %{issue} and parent %{parent}"
+  warning_epic_grid_version_mismatch_with_parent: "⚠️ Parent %{parent} remains at %{parent_version}"
+  error_epic_grid_version_update_failed: "Failed to update version: %{error}"
