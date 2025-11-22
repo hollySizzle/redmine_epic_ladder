@@ -30,6 +30,7 @@ module Mcp
 
       # MCP::Serverでリクエスト処理
       response_json = mcp_server.handle_json(rpc_request)
+      Rails.logger.info "MCP RPC Response: #{response_json}"
 
       # Notificationリクエスト（idがnil）の場合はレスポンスを返さない（MCP仕様）
       if @request_id.nil?
@@ -111,7 +112,7 @@ module Mcp
         name: "redmine_epic_grid",
         version: "1.0.0",
         tools: [
-          EpicGrid::McpTools::CreateTaskTool
+          EpicGrid::McpTools::CreateTaskTool.new
         ],
         server_context: {
           user: User.current

@@ -24,8 +24,12 @@ module EpicGrid
       )
 
       def call(project_id:, description:, parent_user_story_id: nil, version_id: nil, assigned_to_id: nil, server_context:)
-        # プロジェクト取得（識別子 or 数値IDどちらでも対応）
-        project = find_project(project_id)
+        Rails.logger.info "CreateTaskTool#call started: project_id=#{project_id}, description=#{description}"
+
+        begin
+          # プロジェクト取得（識別子 or 数値IDどちらでも対応）
+          project = find_project(project_id)
+        Rails.logger.info "Project found: #{project&.identifier}"
         unless project
           return error_response("プロジェクトが見つかりません: #{project_id}")
         end
@@ -62,7 +66,7 @@ module EpicGrid
           fixed_version_id: version&.id,
           assigned_to: assigned_to,
           author: user,
-          status: IssueStatus.default || IssueStatus.first
+          status: IssueStatus.first
         )
 
         unless task.save
@@ -87,6 +91,11 @@ module EpicGrid
             name: assigned_to.name
           } : nil
         )
+        rescue StandardError => e
+          Rails.logger.error "CreateTaskTool error: #{e.class.name}: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error_response("予期しないエラーが発生しました: #{e.message}", { error_class: e.class.name })
+        end
       end
 
       private
