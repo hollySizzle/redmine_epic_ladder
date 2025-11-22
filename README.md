@@ -294,3 +294,168 @@ git commit -m "Update production build"
 
 `BaseApiController`で`skip_before_action :check_if_login_required`が設定されているか確認してください。
 これにより、Railsの標準認証をスキップし、API専用の認証処理が動作します。
+
+---
+
+## 🤖 MCP Server (AI連携機能)
+
+このプラグインは**Model Context Protocol (MCP)**に対応しており、Claude DesktopなどのAIエージェントから直接タスクを作成できます。
+
+### 🔌 対応クライアント
+
+**Claude Desktop (Pro/Max/Team/Enterprise)** に対応しています。
+
+HTTP経由でRedmineに接続し、チーム全体で共有可能です。
+
+### 🎯 できること
+
+**Before (従来):**
+```
+エンジニア: 「カート画面のリファクタリングをしたい」
+  ↓ (10分)
+  - RedmineでEpic/Feature/User Storyを探す
+  - Versionを選択
+  - チケットフォーム入力
+  ↓
+  疲れて諦める
+```
+
+**After (MCP Server導入後):**
+```
+エンジニア: 「カートのリファクタリングタスクを作って」
+  ↓ (3秒)
+AI (Claude): 「Task #9999を作成しました！」
+  ↓
+  完了！フロー状態を維持
+```
+
+### 📦 共通インストール手順
+
+#### 1. 依存関係のインストール
+
+Redmineルートディレクトリで `bundle install` を実行してください:
+
+```bash
+cd /usr/src/redmine  # または /path/to/your/redmine
+bundle install
+```
+
+プラグイン内の `PluginGemfile` に記載された依存関係（`mcp` gem等）が自動的にインストールされます。
+
+---
+
+### 🌐 HTTP版セットアップ (Claude Desktop)
+
+Claude Desktop (Pro/Max/Team/Enterprise) からHTTP経由でRedmineに接続します。
+
+#### 1. Redmine APIキーの取得
+
+1. Redmineにログイン
+2. 右上のアカウントメニュー → 「個人設定」
+3. 「APIアクセスキー」セクションで「表示」をクリック
+4. 表示されたAPIキーをコピー（例: `a1b2c3d4e5f6...`）
+
+#### 2. Claude Desktopでの設定
+
+1. Claude Desktopを開く
+2. 設定 (Settings) → Connectors → Add Connector
+3. 以下のように設定:
+
+| 項目 | 値 |
+|------|---|
+| **Name** | `Redmine Epic Grid` |
+| **URL** | `https://your-redmine.com/mcp/rpc` |
+| **Authorization Header** | `X-Redmine-API-Key: [Your API Key]` |
+
+**例:**
+```
+Name: Redmine Epic Grid
+URL: https://redmine.example.com/mcp/rpc
+Authorization Header: X-Redmine-API-Key: a1b2c3d4e5f6789abcdef0123456789abcdef012
+```
+
+#### 3. 接続確認
+
+Claude Desktopで以下のように話しかけてみてください:
+
+```
+「利用可能なMCPツールを教えて」
+```
+
+成功すると、`create_task_tool` が表示されます！
+
+#### 4. 使用例
+
+```
+「sakura-ecプロジェクトで、カートのリファクタリングタスクを作って」
+```
+
+Claude が自動的に:
+- Taskチケット作成
+- 適切な親UserStoryを推論
+- Versionを継承
+
+#### ❌ HTTP版トラブルシューティング
+
+**症状:** 「Connection failed」エラー
+
+**解決策:**
+1. RedmineサーバーがHTTPSで公開されているか確認
+   - Claude Desktopは **HTTPS必須** です
+   - ローカル開発環境（HTTP）では接続できません
+2. APIキーが正しいか確認
+3. Redmineサーバーでエラーログを確認
+   ```bash
+   tail -f log/development.log
+   ```
+
+---
+
+### 🛠️ 利用可能なツール
+
+#### `create_task_tool` - タスク作成
+
+自然言語からTaskチケットを作成します。
+
+**パラメータ:**
+- `project_id` (必須): プロジェクトID（識別子または数値ID）
+- `description` (必須): タスクの説明（自然言語OK）
+- `parent_user_story_id` (省略可): 親UserStory ID（省略時は推論）
+- `version_id` (省略可): Version ID（省略時は親から継承）
+- `assigned_to_id` (省略可): 担当者ID（省略時は現在のユーザー）
+
+**使用例:**
+
+```
+# Claude Desktopで
+ユーザー: 「sakura-ecプロジェクトで、カートのリファクタリングタスクを作って」
+
+Claude: create_task_toolを呼び出し
+  → Task #9999が作成される
+  → 親UserStory: #123 カート機能改善 (自動推論)
+  → Version: Sprint 2025-01 (親から継承)
+```
+
+### 🧠 親UserStory自動推論
+
+`parent_user_story_id`を省略すると、AIが以下のロジックで最適な親UserStoryを推論します:
+
+1. `description`からキーワード抽出
+2. プロジェクト内のUserStoryのsubjectと照合
+3. 最もキーワードが一致するUserStoryを選択
+
+**例:**
+- description: "カートのリファクタリング"
+- 推論結果: UserStory #123 "カート機能改善"
+
+### ❌ 共通トラブルシューティング
+
+#### タスク作成権限エラー
+
+**症状:** 「タスク作成権限がありません」エラー
+
+**解決策:**
+- Redmineで該当プロジェクトの権限設定を確認
+- ユーザーに「課題の追加」権限を付与
+
+---

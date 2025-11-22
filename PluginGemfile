@@ -4,6 +4,9 @@
 # Ransack - Flexible filtering for ActiveRecord
 gem 'ransack', '~> 4.2'
 
+# MCP (Model Context Protocol) - Shopify公式SDK
+gem 'mcp', '~> 0.4.0'
+
 group :test do
   gem 'rspec-rails', '~> 6.1'
   # gem 'factory_bot_rails', '~> 6.4'  # Redmine本体で定義済み
