@@ -303,7 +303,10 @@ git commit -m "Update production build"
 
 ### 🔌 対応クライアント
 
-**Claude Desktop (Pro/Max/Team/Enterprise)** に対応しています。
+以下のクライアントに対応しています（すべてHTTP接続）:
+
+- **Claude Desktop** (Pro/Max/Team/Enterprise) - GUI設定で簡単接続
+- **Claude Code** - CLIコマンドで接続
 
 HTTP経由でRedmineに接続し、チーム全体で共有可能です。
 
@@ -408,6 +411,75 @@ Claude が自動的に:
    ```bash
    tail -f log/development.log
    ```
+
+---
+
+### 💻 Claude Code セットアップ
+
+Claude Code (CLI) からHTTP経由で接続します。
+
+#### 1. Redmine APIキーの取得
+
+Claude Desktopと同じ手順でAPIキーを取得してください（上記参照）。
+
+#### 2. Claude Code CLIで接続
+
+```bash
+# 基本的な構文
+claude mcp add --transport http redmine_epic_grid \
+  https://your-redmine.com/mcp/rpc \
+  --header "X-Redmine-API-Key: YOUR_API_KEY"
+
+# 実際の例
+claude mcp add --transport http redmine_epic_grid \
+  https://redmine.example.com/mcp/rpc \
+  --header "X-Redmine-API-Key: a1b2c3d4e5f6789abcdef0123456789abcdef012"
+
+# ローカル開発環境（HTTP）の例
+claude mcp add --transport http redmine_epic_grid \
+  http://localhost:3000/mcp/rpc \
+  --header "X-Redmine-API-Key: YOUR_API_KEY"
+```
+
+#### 3. 接続確認
+
+```bash
+# 設定したサーバーを確認
+claude mcp list
+
+# Claude Code内で確認
+/mcp
+```
+
+#### 4. 使用例
+
+Claude Code内で以下のように使います:
+
+```
+「sakura-ecプロジェクトで、カートのリファクタリングタスクを作って」
+```
+
+#### ❌ Claude Code トラブルシューティング
+
+**症状:** 「Connection failed」エラー
+
+**解決策:**
+1. Redmineサーバーが起動しているか確認
+   ```bash
+   curl http://localhost:3000/mcp/rpc \
+     -X POST \
+     -H "Content-Type: application/json" \
+     -H "X-Redmine-API-Key: YOUR_API_KEY" \
+     -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
+   ```
+2. APIキーが正しいか確認
+3. URLが正しいか確認（HTTPSかHTTPか）
+
+**症状:** 「Invalid API key」エラー
+
+**解決策:**
+- Redmineで新しいAPIキーを生成
+- `claude mcp remove redmine_epic_grid` で削除してから再設定
 
 ---
 
