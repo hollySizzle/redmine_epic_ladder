@@ -23,7 +23,7 @@ module EpicGrid
         required: ["project_id", "description"]
       )
 
-      def call(project_id:, description:, parent_user_story_id: nil, version_id: nil, assigned_to_id: nil, server_context:)
+      def self.call(project_id:, description:, parent_user_story_id: nil, version_id: nil, assigned_to_id: nil, server_context:)
         Rails.logger.info "CreateTaskTool#call started: project_id=#{project_id}, description=#{description}"
 
         begin
@@ -98,10 +98,11 @@ module EpicGrid
         end
       end
 
-      private
+      class << self
+        private
 
-      # プロジェクト取得（識別子 or ID）
-      def find_project(project_id)
+        # プロジェクト取得（識別子 or ID）
+        def find_project(project_id)
         # 数値ならID検索、文字列なら識別子検索
         if project_id.to_i.to_s == project_id
           Project.find_by(id: project_id.to_i)
@@ -207,6 +208,7 @@ module EpicGrid
           }.merge(data))
         }])
       end
+      end # class << self
     end
   end
 end

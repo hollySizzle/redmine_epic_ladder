@@ -112,7 +112,7 @@ module Mcp
         name: "redmine_epic_grid",
         version: "1.0.0",
         tools: [
-          EpicGrid::McpTools::CreateTaskTool.new
+          EpicGrid::McpTools::CreateTaskTool
         ],
         server_context: {
           user: User.current
