@@ -25,8 +25,17 @@ module Mcp
       rpc_request = request.body.read
       Rails.logger.info "MCP RPC Request: #{rpc_request}"
 
+      # リクエストIDを事前にパース（エラーハンドリング用）
+      @request_id = parse_request_id(rpc_request)
+
       # MCP::Serverでリクエスト処理
       response_json = mcp_server.handle_json(rpc_request)
+
+      # Notificationリクエスト（idがnil）の場合はレスポンスを返さない（MCP仕様）
+      if @request_id.nil?
+        head :no_content
+        return
+      end
 
       # レスポンス返却（既にJSON文字列なのでそのまま返す）
       render json: JSON.parse(response_json), status: :ok
@@ -45,7 +54,7 @@ module Mcp
             timestamp: Time.current.iso8601
           }
         },
-        id: parsed_request_id
+        id: @request_id
       }, status: :internal_server_error
     end
 
@@ -111,12 +120,10 @@ module Mcp
     end
 
     # リクエストIDをパース（エラーレスポンス用）
-    def parsed_request_id
-      return nil unless request.body
+    def parse_request_id(rpc_request)
+      return nil if rpc_request.blank?
 
-      request.body.rewind
-      body = request.body.read
-      parsed = JSON.parse(body)
+      parsed = JSON.parse(rpc_request)
       parsed["id"]
     rescue StandardError
       nil

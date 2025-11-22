@@ -59,6 +59,7 @@ RedmineApp::Application.routes.draw do
   # ===== MCP Server (Streamable HTTP) =====
   # POST /mcp/rpc - JSON-RPC 2.0エンドポイント
   # OPTIONS /mcp/rpc - CORSプリフライト対応
+  # OAuth Discovery: config/initializers/mcp_oauth_rejection.rb で処理
   namespace :mcp do
     post '/rpc', to: 'server#handle'
     options '/rpc', to: 'server#options'
