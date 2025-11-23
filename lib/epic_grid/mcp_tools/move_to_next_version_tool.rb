@@ -14,13 +14,14 @@ module EpicGrid
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" }
+          issue_id: { type: "string", description: "チケットID" },
+          confirmed: { type: "boolean", description: "確認済みフラグ（危険な操作の場合に必要）", default: false }
         },
         required: ["issue_id"]
       )
 
-      def self.call(issue_id:, server_context:)
-        Rails.logger.info "MoveToNextVersionTool#call started: issue_id=#{issue_id}"
+      def self.call(issue_id:, confirmed: false, server_context:)
+        Rails.logger.info "MoveToNextVersionTool#call started: issue_id=#{issue_id}, confirmed=#{confirmed}"
 
         begin
           # チケット取得
@@ -40,6 +41,32 @@ module EpicGrid
           # 次のVersionを検索
           next_version = find_next_version(issue.project, current_version)
           return error_response("次のVersionが見つかりません", { current_version: current_version.name }) unless next_version
+
+          # 環境変数チェック: REQUIRE_CONFIRMATION_FOR
+          require_confirmation = check_confirmation_required('move_version')
+          if require_confirmation && !confirmed
+            # 配下のチケット数を取得
+            children_count = issue.children.count
+
+            return confirmation_required_response(
+              operation: 'move_version',
+              issue_id: issue.id.to_s,
+              subject: issue.subject,
+              tracker: issue.tracker.name,
+              old_version: {
+                id: current_version.id.to_s,
+                name: current_version.name,
+                effective_date: current_version.effective_date&.to_s
+              },
+              new_version: {
+                id: next_version.id.to_s,
+                name: next_version.name,
+                effective_date: next_version.effective_date&.to_s
+              },
+              children_count: children_count,
+              confirmation_message: "UserStory ##{issue.id} 「#{issue.subject}」を#{current_version.name}から#{next_version.name}に移動します。配下の#{children_count}件のチケットも移動されます。実行しますか？"
+            )
+          end
 
           # チケットに次のVersionを設定
           old_version = issue.fixed_version
@@ -128,6 +155,27 @@ module EpicGrid
             type: "text",
             text: JSON.generate({
               success: true
+            }.merge(data))
+          }])
+        end
+
+        # 確認が必要かチェック
+        # @param operation [String] 操作名（例: 'move_version', 'delete', 'close'）
+        # @return [Boolean] 確認が必要ならtrue
+        def check_confirmation_required(operation)
+          require_confirmation_for = ENV.fetch('REQUIRE_CONFIRMATION_FOR', '')
+          operations = require_confirmation_for.split(',').map(&:strip)
+          operations.include?(operation)
+        end
+
+        # 確認要求レスポンス生成
+        def confirmation_required_response(data = {})
+          MCP::Tool::Response.new([{
+            type: "text",
+            text: JSON.generate({
+              success: false,
+              confirmation_required: true,
+              error: "この操作には確認が必要です。確認後、confirmed=trueを追加して再実行してください。"
             }.merge(data))
           }])
         end

@@ -116,8 +116,24 @@ module EpicGrid
         if parent_user_story_id.present?
           Issue.find_by(id: parent_user_story_id)
         else
-          # 推論: descriptionから類似UserStoryを検索
-          find_best_parent_user_story(project, description)
+          # 環境変数チェック: AUTO_INFER_PARENT（デフォルトtrue）
+          auto_infer_enabled = ENV.fetch('AUTO_INFER_PARENT', 'true') == 'true'
+
+          if auto_infer_enabled
+            # 推論: descriptionから類似UserStoryを検索
+            result = find_best_parent_user_story_with_confidence(project, description)
+
+            if result
+              Rails.logger.info "Auto-inferred parent UserStory: ##{result[:story].id} (confidence: #{result[:confidence]})"
+              result[:story]
+            else
+              Rails.logger.info "No suitable parent UserStory found (below threshold)"
+              nil
+            end
+          else
+            Rails.logger.info "AUTO_INFER_PARENT is disabled"
+            nil
+          end
         end
       end
 
@@ -144,8 +160,8 @@ module EpicGrid
         end
       end
 
-      # descriptionから類似UserStoryを検索
-      def find_best_parent_user_story(project, description)
+      # descriptionから類似UserStoryを検索（確信度スコア付き）
+      def find_best_parent_user_story_with_confidence(project, description)
         user_story_tracker = find_tracker(:user_story, project)
         return nil unless user_story_tracker
 
@@ -153,18 +169,46 @@ module EpicGrid
         keywords = description.split(/[、。\s]/).reject(&:blank?).map(&:strip)
         return nil if keywords.empty?
 
-        # プロジェクト内のUserStoryを検索
+        # プロジェクト内のUserStoryを検索（openのみ）
         user_stories = project.issues.where(tracker: user_story_tracker)
+                               .where("#{IssueStatus.table_name}.is_closed = ?", false)
+                               .joins(:status)
 
-        # スコアリング: subjectに含まれるキーワード数でランク付け
+        return nil if user_stories.empty?
+
+        # スコアリング: subjectとdescriptionに含まれるキーワード数でランク付け
         scored_stories = user_stories.map do |story|
-          score = keywords.count { |kw| story.subject.include?(kw) }
-          { story: story, score: score }
+          subject_matches = keywords.count { |kw| story.subject.include?(kw) }
+          description_matches = keywords.count { |kw| story.description.to_s.include?(kw) }
+
+          # スコア計算: subject一致を重視（weight: 2.0）
+          raw_score = (subject_matches * 2.0) + description_matches
+
+          # 正規化: 最大スコアはキーワード数 * 3（subject全一致 + description全一致）
+          max_possible_score = keywords.size * 3.0
+          confidence = max_possible_score > 0 ? (raw_score / max_possible_score) : 0.0
+
+          {
+            story: story,
+            raw_score: raw_score,
+            confidence: confidence.round(2)
+          }
         end
 
-        # スコアが1以上のものから最高スコアを選択
-        best_match = scored_stories.select { |s| s[:score] > 0 }.max_by { |s| s[:score] }
-        best_match&.dig(:story)
+        # 確信度で降順ソート
+        scored_stories.sort_by! { |s| -s[:confidence] }
+
+        # 環境変数で閾値を取得（デフォルト0.3 = 30%）
+        threshold = ENV.fetch('AUTO_INFER_THRESHOLD', '0.3').to_f
+
+        # 閾値以上の最高スコアを選択
+        best_match = scored_stories.find { |s| s[:confidence] >= threshold }
+
+        if best_match
+          Rails.logger.info "Parent inference candidates: #{scored_stories.first(3).map { |s| "##{s[:story].id} (#{s[:confidence]})" }.join(', ')}"
+        end
+
+        best_match
       end
 
       # descriptionから簡潔なsubjectを抽出

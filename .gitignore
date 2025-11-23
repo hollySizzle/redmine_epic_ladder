@@ -2,6 +2,7 @@
 node_modules/**
 node_modules
 assets/javascripts/epic_grid/node_modules/
+tmp/
 
 # Build outputs
 # Note: Redmine Plugin の配布特性により、以下の運用方針を採用:

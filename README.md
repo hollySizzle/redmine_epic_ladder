@@ -757,6 +757,78 @@ PM: 「sakura-ecプロジェクトの構造を見せて」
 - description: "カートのリファクタリング"
 - 推論結果: UserStory #123 "カート機能改善"（"カート"がマッチ）
 
+---
+
+### ⚙️ 環境変数設定
+
+MCPサーバーの動作は環境変数でカスタマイズできます。`.mcp.json` に追加してください。
+
+#### 設定例
+
+```jsonc
+{
+  "mcpServers": {
+    "redmine_epic_grid": {
+      "type": "http",
+      "url": "http://localhost:8500/mcp/rpc",
+      "headers": {
+        "X-Redmine-API-Key": "your_api_key_here"
+      },
+      "env": {
+        // 親UserStory自動推論を有効化（デフォルト: true）
+        "AUTO_INFER_PARENT": "true",
+
+        // 推論の確信度閾値 0.0〜1.0（デフォルト: 0.3）
+        // 0.3 = 30%以上の一致で推論を採用
+        "AUTO_INFER_THRESHOLD": "0.3",
+
+        // 確認が必要な操作（デフォルト: ""）
+        // カンマ区切りで指定: move_version, close
+        "REQUIRE_CONFIRMATION_FOR": "move_version,close"
+      }
+    }
+  }
+}
+```
+
+#### 環境変数の説明
+
+| 環境変数 | デフォルト | 説明 | 推奨設定 |
+|---------|----------|------|---------|
+| `AUTO_INFER_PARENT` | `true` | Task/Bug/Test作成時に親UserStoryを自動推論 | 開発: `true`<br>本番: `true` |
+| `AUTO_INFER_THRESHOLD` | `0.3` | 推論の確信度閾値（0.0〜1.0）<br>0.3 = 30%以上の一致で採用 | 開発: `0.2`<br>本番: `0.5` |
+| `REQUIRE_CONFIRMATION_FOR` | `""` | 確認が必要な操作をカンマ区切りで指定<br>- `move_version`: Version移動<br>- `close`: チケットClose | 開発: `""`<br>本番: `"move_version,close"` |
+
+#### 推奨設定パターン
+
+**パターン1: 開発環境（寛容・高速）**
+```jsonc
+{
+  "env": {
+    "AUTO_INFER_PARENT": "true",
+    "AUTO_INFER_THRESHOLD": "0.2",
+    "REQUIRE_CONFIRMATION_FOR": ""
+  }
+}
+```
+- 親UserStoryを積極的に推論（閾値20%）
+- 確認なしで操作実行（素早くテスト可能）
+
+**パターン2: 本番環境（安全・厳格）**
+```jsonc
+{
+  "env": {
+    "AUTO_INFER_PARENT": "true",
+    "AUTO_INFER_THRESHOLD": "0.5",
+    "REQUIRE_CONFIRMATION_FOR": "move_version,close"
+  }
+}
+```
+- 親UserStory推論は慎重（閾値50%）
+- 危険な操作は確認必須（事故防止）
+
+---
+
 ### ❌ 共通トラブルシューティング
 
 #### タスク作成権限エラー

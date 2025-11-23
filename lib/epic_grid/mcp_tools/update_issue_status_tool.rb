@@ -15,13 +15,14 @@ module EpicGrid
       input_schema(
         properties: {
           issue_id: { type: "string", description: "チケットID" },
-          status_name: { type: "string", description: "ステータス名（例: 'Open', 'In Progress', 'Closed'）" }
+          status_name: { type: "string", description: "ステータス名（例: 'Open', 'In Progress', 'Closed'）" },
+          confirmed: { type: "boolean", description: "確認済みフラグ（危険な操作の場合に必要）", default: false }
         },
         required: ["issue_id", "status_name"]
       )
 
-      def self.call(issue_id:, status_name:, server_context:)
-        Rails.logger.info "UpdateIssueStatusTool#call started: issue_id=#{issue_id}, status_name=#{status_name}"
+      def self.call(issue_id:, status_name:, confirmed: false, server_context:)
+        Rails.logger.info "UpdateIssueStatusTool#call started: issue_id=#{issue_id}, status_name=#{status_name}, confirmed=#{confirmed}"
 
         begin
           # チケット取得
@@ -37,6 +38,32 @@ module EpicGrid
           # ステータス取得（曖昧検索対応）
           status = find_status(status_name)
           return error_response("ステータスが見つかりません: #{status_name}") unless status
+
+          # 環境変数チェック: close操作で確認が必要か
+          if status.is_closed && check_confirmation_required('close') && !confirmed
+            # Epic/Featureの場合は配下のチケット数を取得
+            children_count = issue.children.count
+
+            return confirmation_required_response(
+              operation: 'close',
+              issue_id: issue.id.to_s,
+              subject: issue.subject,
+              tracker: issue.tracker.name,
+              old_status: {
+                id: issue.status.id.to_s,
+                name: issue.status.name
+              },
+              new_status: {
+                id: status.id.to_s,
+                name: status.name,
+                is_closed: status.is_closed
+              },
+              children_count: children_count,
+              confirmation_message: "チケット ##{issue.id} 「#{issue.subject}」を#{status.name}にします。" +
+                                  (children_count > 0 ? " 配下に#{children_count}件のチケットがあります。" : "") +
+                                  " 実行しますか？"
+            )
+          end
 
           # ステータス更新
           old_status = issue.status
@@ -109,6 +136,27 @@ module EpicGrid
             type: "text",
             text: JSON.generate({
               success: true
+            }.merge(data))
+          }])
+        end
+
+        # 確認が必要かチェック
+        # @param operation [String] 操作名（例: 'move_version', 'delete', 'close'）
+        # @return [Boolean] 確認が必要ならtrue
+        def check_confirmation_required(operation)
+          require_confirmation_for = ENV.fetch('REQUIRE_CONFIRMATION_FOR', '')
+          operations = require_confirmation_for.split(',').map(&:strip)
+          operations.include?(operation)
+        end
+
+        # 確認要求レスポンス生成
+        def confirmation_required_response(data = {})
+          MCP::Tool::Response.new([{
+            type: "text",
+            text: JSON.generate({
+              success: false,
+              confirmation_required: true,
+              error: "この操作には確認が必要です。確認後、confirmed=trueを追加して再実行してください。"
             }.merge(data))
           }])
         end
