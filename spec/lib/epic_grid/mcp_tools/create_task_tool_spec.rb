@@ -135,8 +135,8 @@ RSpec.describe EpicGrid::McpTools::CreateTaskTool, type: :model do
       end
 
       it 'returns error when Task tracker not configured' do
-        # Taskトラッカーを完全に削除
-        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:task]).destroy_all
+        # Taskトラッカーをプロジェクトから削除
+        project.trackers.delete(task_tracker)
 
         result = described_class.call(
           project_id: project.identifier,

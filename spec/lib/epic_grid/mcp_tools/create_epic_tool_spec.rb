@@ -98,8 +98,8 @@ RSpec.describe EpicGrid::McpTools::CreateEpicTool, type: :model do
       end
 
       it 'returns error when Epic tracker not configured' do
-        # Epicトラッカーを完全に削除
-        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:epic]).destroy_all
+        # Epicトラッカーをプロジェクトから削除
+        project.trackers.delete(epic_tracker)
 
         result = described_class.call(
           project_id: project.identifier,

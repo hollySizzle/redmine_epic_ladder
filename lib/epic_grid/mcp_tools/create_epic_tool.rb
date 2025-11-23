@@ -39,7 +39,7 @@ module EpicGrid
           end
 
           # Epicトラッカー取得
-          epic_tracker = find_tracker(:epic)
+          epic_tracker = find_tracker(:epic, project)
           return error_response("Epicトラッカーが設定されていません") unless epic_tracker
 
           # 担当者解決
@@ -99,9 +99,12 @@ module EpicGrid
         end
 
         # トラッカー取得ヘルパー
-        def find_tracker(tracker_type)
+        def find_tracker(tracker_type, project)
           tracker_name = EpicGrid::TrackerHierarchy.tracker_names[tracker_type]
-          Tracker.find_by(name: tracker_name)
+          tracker = Tracker.find_by(name: tracker_name)
+          return nil unless tracker
+          return nil unless project.trackers.include?(tracker)
+          tracker
         end
 
         # RedmineのIssue URLを生成

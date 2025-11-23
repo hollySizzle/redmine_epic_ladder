@@ -128,8 +128,8 @@ RSpec.describe EpicGrid::McpTools::CreateUserStoryTool, type: :model do
       end
 
       it 'returns error when UserStory tracker not configured' do
-        # UserStoryトラッカーを完全に削除
-        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:user_story]).destroy_all
+        # UserStoryトラッカーをプロジェクトから削除
+        project.trackers.delete(user_story_tracker)
 
         result = described_class.call(
           project_id: project.identifier,

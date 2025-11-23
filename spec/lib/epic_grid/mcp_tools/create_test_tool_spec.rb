@@ -135,8 +135,8 @@ RSpec.describe EpicGrid::McpTools::CreateTestTool, type: :model do
       end
 
       it 'returns error when Test tracker not configured' do
-        # Testトラッカーを完全に削除
-        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:test]).destroy_all
+        # Testトラッカーをプロジェクトから削除
+        project.trackers.delete(test_tracker)
 
         result = described_class.call(
           project_id: project.identifier,

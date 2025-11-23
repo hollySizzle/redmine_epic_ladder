@@ -135,8 +135,8 @@ RSpec.describe EpicGrid::McpTools::CreateBugTool, type: :model do
       end
 
       it 'returns error when Bug tracker not configured' do
-        # Bugトラッカーを完全に削除
-        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:bug]).destroy_all
+        # Bugトラッカーをプロジェクトから削除
+        project.trackers.delete(bug_tracker)
 
         result = described_class.call(
           project_id: project.identifier,
