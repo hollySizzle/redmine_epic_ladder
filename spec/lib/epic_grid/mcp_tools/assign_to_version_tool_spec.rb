@@ -111,6 +111,55 @@ RSpec.describe EpicGrid::McpTools::AssignToVersionTool, type: :model do
         expect(response_text['success']).to be false
         expect(response_text['error']).to include('チケット編集権限がありません')
       end
+
+      it 'returns error with assignable versions when version is not assignable' do
+        # closedのバージョンを作成（割り当て不可）
+        closed_version = create(:version, project: project, name: 'Closed Version', status: 'closed')
+
+        # openのバージョンも作成（割り当て可能）
+        open_version1 = create(:version, project: project, name: 'Open Version 1', status: 'open')
+        open_version2 = create(:version, project: project, name: 'Open Version 2', status: 'open')
+
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          version_id: closed_version.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # エラーレスポンスの検証
+        expect(response_text['success']).to be false
+        expect(response_text['error']).to include('Version割り当てに失敗しました')
+
+        # エラー詳細の検証
+        details = response_text['details']
+        expect(details).to be_present
+        expect(details['errors']).to include('Target version is not included in the list')
+
+        # リクエストされたバージョン情報
+        expect(details['requested_version_id']).to eq(closed_version.id.to_s)
+        expect(details['requested_version_name']).to eq('Closed Version')
+        expect(details['requested_version_status']).to eq('closed')
+
+        # 割り当て可能なバージョンリストの検証
+        assignable_versions = details['assignable_versions']
+        expect(assignable_versions).to be_present
+        expect(assignable_versions).to be_an(Array)
+        expect(details['assignable_version_count']).to eq(2) # open_version1とopen_version2のみ
+
+        # closedバージョンが含まれていないことを確認
+        assignable_ids = assignable_versions.map { |v| v['id'] }
+        expect(assignable_ids).not_to include(closed_version.id.to_s)
+
+        # openバージョンが含まれていることを確認
+        expect(assignable_ids).to include(open_version1.id.to_s, open_version2.id.to_s)
+
+        # バージョン情報の構造を確認
+        first_version = assignable_versions.first
+        expect(first_version).to include('id', 'name', 'status', 'effective_date', 'project_id')
+        expect(first_version['status']).to eq('open')
+      end
     end
   end
 

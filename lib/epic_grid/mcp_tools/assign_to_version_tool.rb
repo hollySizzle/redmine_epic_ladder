@@ -42,7 +42,28 @@ module EpicGrid
           issue.fixed_version = version
 
           unless issue.save
-            return error_response("Version割り当てに失敗しました", { errors: issue.errors.full_messages })
+            # 利用可能なバージョンリストを取得
+            assignable_versions = issue.assignable_versions.map do |v|
+              {
+                id: v.id.to_s,
+                name: v.name,
+                status: v.status,
+                effective_date: v.effective_date&.to_s,
+                project_id: v.project_id.to_s
+              }
+            end
+
+            return error_response(
+              "Version割り当てに失敗しました",
+              {
+                errors: issue.errors.full_messages,
+                requested_version_id: version_id,
+                requested_version_name: version.name,
+                requested_version_status: version.status,
+                assignable_versions: assignable_versions,
+                assignable_version_count: assignable_versions.size
+              }
+            )
           end
 
           # 配下のチケット（子チケット）も同じVersionに設定
