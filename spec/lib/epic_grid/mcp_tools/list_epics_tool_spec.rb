@@ -18,6 +18,7 @@ RSpec.describe EpicGrid::McpTools::ListEpicsTool, type: :model do
 
   before do
     member # ensure member exists
+    project.trackers << epic_tracker unless project.trackers.include?(epic_tracker)
     open_status
     closed_status
   end
@@ -135,6 +136,7 @@ RSpec.describe EpicGrid::McpTools::ListEpicsTool, type: :model do
       it 'includes children count' do
         epic = create(:issue, project: project, tracker: epic_tracker)
         feature_tracker = Tracker.create!(name: EpicGrid::TrackerHierarchy.tracker_names[:feature], default_status: IssueStatus.first)
+        project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
         create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id)
         create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id)
 
@@ -200,8 +202,8 @@ RSpec.describe EpicGrid::McpTools::ListEpicsTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:project_id)
-      expect(schema[:required]).to include('project_id')
+      expect(schema.properties).to include(:project_id)
+      expect(schema.instance_variable_get(:@required)).to include(:project_id)
     end
   end
 end

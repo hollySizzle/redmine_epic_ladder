@@ -98,8 +98,8 @@ RSpec.describe EpicGrid::McpTools::CreateEpicTool, type: :model do
       end
 
       it 'returns error when Epic tracker not configured' do
-        # Epicトラッカーを削除
-        project.trackers.delete(epic_tracker)
+        # Epicトラッカーを完全に削除
+        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:epic]).destroy_all
 
         result = described_class.call(
           project_id: project.identifier,
@@ -122,8 +122,8 @@ RSpec.describe EpicGrid::McpTools::CreateEpicTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:project_id, :subject)
-      expect(schema[:required]).to include('project_id', 'subject')
+      expect(schema.properties).to include(:project_id, :subject)
+      expect(schema.instance_variable_get(:@required)).to include(:project_id, :subject)
     end
   end
 end

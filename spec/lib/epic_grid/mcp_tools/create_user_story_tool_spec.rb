@@ -128,8 +128,8 @@ RSpec.describe EpicGrid::McpTools::CreateUserStoryTool, type: :model do
       end
 
       it 'returns error when UserStory tracker not configured' do
-        # UserStoryトラッカーを削除
-        project.trackers.delete(user_story_tracker)
+        # UserStoryトラッカーを完全に削除
+        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:user_story]).destroy_all
 
         result = described_class.call(
           project_id: project.identifier,
@@ -166,8 +166,8 @@ RSpec.describe EpicGrid::McpTools::CreateUserStoryTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:project_id, :subject, :parent_feature_id)
-      expect(schema[:required]).to include('project_id', 'subject', 'parent_feature_id')
+      expect(schema.properties).to include(:project_id, :subject, :parent_feature_id)
+      expect(schema.instance_variable_get(:@required)).to include(:project_id, :subject, :parent_feature_id)
     end
   end
 end

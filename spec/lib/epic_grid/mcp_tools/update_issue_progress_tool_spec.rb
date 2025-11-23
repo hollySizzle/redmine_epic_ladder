@@ -17,6 +17,7 @@ RSpec.describe EpicGrid::McpTools::UpdateIssueProgressTool, type: :model do
 
   before do
     member # ensure member exists
+    project.trackers << task_tracker unless project.trackers.include?(task_tracker)
   end
 
   describe '.call' do
@@ -139,8 +140,8 @@ RSpec.describe EpicGrid::McpTools::UpdateIssueProgressTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:issue_id, :progress)
-      expect(schema[:required]).to include('issue_id', 'progress')
+      expect(schema.properties).to include(:issue_id, :progress)
+      expect(schema.instance_variable_get(:@required)).to include(:issue_id, :progress)
     end
   end
 end

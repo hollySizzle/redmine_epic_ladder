@@ -135,8 +135,8 @@ RSpec.describe EpicGrid::McpTools::CreateTaskTool, type: :model do
       end
 
       it 'returns error when Task tracker not configured' do
-        # Taskトラッカーを削除
-        project.trackers.delete(task_tracker)
+        # Taskトラッカーを完全に削除
+        Tracker.where(name: EpicGrid::TrackerHierarchy.tracker_names[:task]).destroy_all
 
         result = described_class.call(
           project_id: project.identifier,
@@ -159,8 +159,8 @@ RSpec.describe EpicGrid::McpTools::CreateTaskTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:project_id, :description)
-      expect(schema[:required]).to include('project_id', 'description')
+      expect(schema.properties).to include(:project_id, :description)
+      expect(schema.instance_variable_get(:@required)).to include(:project_id, :description)
     end
   end
 end

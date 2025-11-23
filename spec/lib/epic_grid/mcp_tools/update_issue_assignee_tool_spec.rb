@@ -20,6 +20,7 @@ RSpec.describe EpicGrid::McpTools::UpdateIssueAssigneeTool, type: :model do
   before do
     member # ensure member exists
     another_member
+    project.trackers << task_tracker unless project.trackers.include?(task_tracker)
   end
 
   describe '.call' do
@@ -140,8 +141,8 @@ RSpec.describe EpicGrid::McpTools::UpdateIssueAssigneeTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:issue_id, :assigned_to_id)
-      expect(schema[:required]).to include('issue_id', 'assigned_to_id')
+      expect(schema.properties).to include(:issue_id, :assigned_to_id)
+      expect(schema.instance_variable_get(:@required)).to include(:issue_id, :assigned_to_id)
     end
   end
 end

@@ -120,8 +120,8 @@ RSpec.describe EpicGrid::McpTools::CreateVersionTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:project_id, :name, :effective_date)
-      expect(schema[:required]).to include('project_id', 'name', 'effective_date')
+      expect(schema.properties).to include(:project_id, :name, :effective_date)
+      expect(schema.instance_variable_get(:@required)).to include(:project_id, :name, :effective_date)
     end
   end
 end

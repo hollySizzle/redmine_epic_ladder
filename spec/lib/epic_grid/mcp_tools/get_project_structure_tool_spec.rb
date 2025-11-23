@@ -31,6 +31,9 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
 
   before do
     member # ensure member exists
+    project.trackers << epic_tracker unless project.trackers.include?(epic_tracker)
+    project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
+    project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
     open_status
     closed_status
   end
@@ -244,8 +247,8 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema[:properties]).to include(:project_id)
-      expect(schema[:required]).to include('project_id')
+      expect(schema.properties).to include(:project_id)
+      expect(schema.instance_variable_get(:@required)).to include(:project_id)
     end
   end
 end
