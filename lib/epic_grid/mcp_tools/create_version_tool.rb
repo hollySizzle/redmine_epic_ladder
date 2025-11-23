@@ -1,0 +1,121 @@
+# frozen_string_literal: true
+
+module EpicGrid
+  module McpTools
+    # Version作成MCPツール
+    # Version（リリース予定）を作成する
+    #
+    # @example
+    #   ユーザー: 「Sprint 2025-02のVersionを作って」
+    #   AI: CreateVersionToolを呼び出し
+    #   結果: Version「Sprint 2025-02」が作成される
+    class CreateVersionTool < MCP::Tool
+      description "Version（リリース予定）を作成します。例: 'Sprint 2025-02（2025-02-28まで）'"
+
+      input_schema(
+        properties: {
+          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID）" },
+          name: { type: "string", description: "Version名" },
+          effective_date: { type: "string", description: "リリース予定日（YYYY-MM-DD形式）" },
+          description: { type: "string", description: "Versionの説明（省略可）" },
+          status: { type: "string", description: "ステータス（open/locked/closed、デフォルト: open）" }
+        },
+        required: ["project_id", "name", "effective_date"]
+      )
+
+      def self.call(project_id:, name:, effective_date:, description: nil, status: "open", server_context:)
+        Rails.logger.info "CreateVersionTool#call started: project_id=#{project_id}, name=#{name}, effective_date=#{effective_date}"
+
+        begin
+          # プロジェクト取得
+          project = find_project(project_id)
+          unless project
+            return error_response("プロジェクトが見つかりません: #{project_id}")
+          end
+
+          # 権限チェック
+          user = server_context[:user] || User.current
+          unless user.allowed_to?(:manage_versions, project)
+            return error_response("Version作成権限がありません", { project: project.identifier })
+          end
+
+          # effective_dateをパース
+          parsed_date = parse_date(effective_date)
+          return error_response("無効な日付形式です: #{effective_date}（YYYY-MM-DD形式で指定してください）") unless parsed_date
+
+          # Version作成
+          version = project.versions.build(
+            name: name,
+            description: description,
+            effective_date: parsed_date,
+            status: status
+          )
+
+          unless version.save
+            return error_response("Version作成に失敗しました", { errors: version.errors.full_messages })
+          end
+
+          # 成功レスポンス
+          success_response(
+            version_id: version.id.to_s,
+            version_url: version_url(project, version),
+            name: version.name,
+            effective_date: version.effective_date.to_s,
+            status: version.status
+          )
+        rescue StandardError => e
+          Rails.logger.error "CreateVersionTool error: #{e.class.name}: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error_response("予期しないエラーが発生しました: #{e.message}", { error_class: e.class.name })
+        end
+      end
+
+      class << self
+        private
+
+        # プロジェクト取得（識別子 or ID）
+        def find_project(project_id)
+          if project_id.to_i.to_s == project_id
+            Project.find_by(id: project_id.to_i)
+          else
+            Project.find_by(identifier: project_id) || Project.find_by(id: project_id.to_i)
+          end
+        end
+
+        # 日付パース
+        def parse_date(date_string)
+          Date.parse(date_string)
+        rescue ArgumentError
+          nil
+        end
+
+        # RedmineのVersion URLを生成
+        def version_url(project, version)
+          "#{Setting.protocol}://#{Setting.host_name}/projects/#{project.identifier}/versions/#{version.id}"
+        end
+
+        # エラーレスポンス生成
+        def error_response(message, details = {})
+          MCP::Tool::Response.new([{
+            type: "text",
+            text: JSON.generate({
+              success: false,
+              error: message,
+              details: details
+            })
+          }])
+        end
+
+        # 成功レスポンス生成
+        def success_response(data = {})
+          MCP::Tool::Response.new([{
+            type: "text",
+            text: JSON.generate({
+              success: true
+            }.merge(data))
+          }])
+        end
+      end
+    end
+  end
+end

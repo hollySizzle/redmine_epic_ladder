@@ -107,9 +107,35 @@ RSpec.describe Mcp::ServerController, type: :controller do
         expect(json['result']['tools']).to be_present
         expect(json['result']['tools']).to be_an(Array)
 
-        # CreateTaskToolが含まれていること
+        # 全16ツールが含まれていること
         tool_names = json['result']['tools'].map { |t| t['name'] }
+
+        # カテゴリ1: チケット作成ツール（6個）
+        expect(tool_names).to include('create_epic_tool')
+        expect(tool_names).to include('create_feature_tool')
+        expect(tool_names).to include('create_user_story_tool')
         expect(tool_names).to include('create_task_tool')
+        expect(tool_names).to include('create_bug_tool')
+        expect(tool_names).to include('create_test_tool')
+
+        # カテゴリ2: Version管理ツール（3個）
+        expect(tool_names).to include('create_version_tool')
+        expect(tool_names).to include('assign_to_version_tool')
+        expect(tool_names).to include('move_to_next_version_tool')
+
+        # カテゴリ3: チケット操作ツール（4個）
+        expect(tool_names).to include('update_issue_status_tool')
+        expect(tool_names).to include('add_issue_comment_tool')
+        expect(tool_names).to include('update_issue_progress_tool')
+        expect(tool_names).to include('update_issue_assignee_tool')
+
+        # カテゴリ4: 検索・参照ツール（3個）
+        expect(tool_names).to include('list_user_stories_tool')
+        expect(tool_names).to include('list_epics_tool')
+        expect(tool_names).to include('get_project_structure_tool')
+
+        # 合計16ツール
+        expect(tool_names.size).to eq(16)
       end
 
       it 'includes tool schema information' do

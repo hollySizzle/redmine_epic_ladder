@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "redmine_epic_grid": {
+      "type": "http",
+      "url": "http://localhost:8500/mcp/rpc",
+      "headers": {
+        "X-Redmine-API-Key": "04d405fb8471d869a47a31da041df326f7cd959a"
+      }
+    }
+  }
+}

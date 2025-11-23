@@ -1,0 +1,118 @@
+# frozen_string_literal: true
+
+module EpicGrid
+  module McpTools
+    # チケットステータス更新MCPツール
+    # チケットのステータスを更新する（Open→InProgress→Closed）
+    #
+    # @example
+    #   ユーザー: 「Task #9999をClosedにして」
+    #   AI: UpdateIssueStatusToolを呼び出し
+    #   結果: Task #9999がClosedになる
+    class UpdateIssueStatusTool < MCP::Tool
+      description "チケットのステータスを更新します。例: 'Open', 'In Progress', 'Closed'"
+
+      input_schema(
+        properties: {
+          issue_id: { type: "string", description: "チケットID" },
+          status_name: { type: "string", description: "ステータス名（例: 'Open', 'In Progress', 'Closed'）" }
+        },
+        required: ["issue_id", "status_name"]
+      )
+
+      def self.call(issue_id:, status_name:, server_context:)
+        Rails.logger.info "UpdateIssueStatusTool#call started: issue_id=#{issue_id}, status_name=#{status_name}"
+
+        begin
+          # チケット取得
+          issue = Issue.find_by(id: issue_id)
+          return error_response("チケットが見つかりません: #{issue_id}") unless issue
+
+          # 権限チェック
+          user = server_context[:user] || User.current
+          unless user.allowed_to?(:edit_issues, issue.project)
+            return error_response("チケット編集権限がありません", { project: issue.project.identifier })
+          end
+
+          # ステータス取得（曖昧検索対応）
+          status = find_status(status_name)
+          return error_response("ステータスが見つかりません: #{status_name}") unless status
+
+          # ステータス更新
+          old_status = issue.status
+          issue.status = status
+
+          unless issue.save
+            return error_response("ステータス更新に失敗しました", { errors: issue.errors.full_messages })
+          end
+
+          # 成功レスポンス
+          success_response(
+            issue_id: issue.id.to_s,
+            issue_url: issue_url(issue.id),
+            subject: issue.subject,
+            old_status: {
+              id: old_status.id.to_s,
+              name: old_status.name
+            },
+            new_status: {
+              id: status.id.to_s,
+              name: status.name,
+              is_closed: status.is_closed
+            }
+          )
+        rescue StandardError => e
+          Rails.logger.error "UpdateIssueStatusTool error: #{e.class.name}: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+          error_response("予期しないエラーが発生しました: #{e.message}", { error_class: e.class.name })
+        end
+      end
+
+      class << self
+        private
+
+        # ステータスを曖昧検索
+        # 例: "closed" → "Closed", "in progress" → "In Progress"
+        def find_status(status_name)
+          # 完全一致
+          status = IssueStatus.find_by(name: status_name)
+          return status if status
+
+          # 大文字小文字を無視して検索
+          status = IssueStatus.where('LOWER(name) = ?', status_name.downcase).first
+          return status if status
+
+          # 部分一致
+          IssueStatus.where('LOWER(name) LIKE ?', "%#{status_name.downcase}%").first
+        end
+
+        # RedmineのIssue URLを生成
+        def issue_url(issue_id)
+          "#{Setting.protocol}://#{Setting.host_name}/issues/#{issue_id}"
+        end
+
+        # エラーレスポンス生成
+        def error_response(message, details = {})
+          MCP::Tool::Response.new([{
+            type: "text",
+            text: JSON.generate({
+              success: false,
+              error: message,
+              details: details
+            })
+          }])
+        end
+
+        # 成功レスポンス生成
+        def success_response(data = {})
+          MCP::Tool::Response.new([{
+            type: "text",
+            text: JSON.generate({
+              success: true
+            }.merge(data))
+          }])
+        end
+      end
+    end
+  end
+end

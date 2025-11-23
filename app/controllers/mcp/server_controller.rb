@@ -112,7 +112,26 @@ module Mcp
         name: "redmine_epic_grid",
         version: "1.0.0",
         tools: [
-          EpicGrid::McpTools::CreateTaskTool
+          # カテゴリ1: チケット作成ツール
+          EpicGrid::McpTools::CreateEpicTool,
+          EpicGrid::McpTools::CreateFeatureTool,
+          EpicGrid::McpTools::CreateUserStoryTool,
+          EpicGrid::McpTools::CreateTaskTool,
+          EpicGrid::McpTools::CreateBugTool,
+          EpicGrid::McpTools::CreateTestTool,
+          # カテゴリ2: Version管理ツール
+          EpicGrid::McpTools::CreateVersionTool,
+          EpicGrid::McpTools::AssignToVersionTool,
+          EpicGrid::McpTools::MoveToNextVersionTool,
+          # カテゴリ3: チケット操作ツール
+          EpicGrid::McpTools::UpdateIssueStatusTool,
+          EpicGrid::McpTools::AddIssueCommentTool,
+          EpicGrid::McpTools::UpdateIssueProgressTool,
+          EpicGrid::McpTools::UpdateIssueAssigneeTool,
+          # カテゴリ4: 検索・参照ツール
+          EpicGrid::McpTools::ListUserStoriesTool,
+          EpicGrid::McpTools::ListEpicsTool,
+          EpicGrid::McpTools::GetProjectStructureTool
         ],
         server_context: {
           user: User.current

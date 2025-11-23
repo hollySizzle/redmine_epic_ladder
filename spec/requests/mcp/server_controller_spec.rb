@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require_relative '../../rails_helper'
 
 RSpec.describe 'Mcp::ServerController', type: :request do
   let(:user) { FactoryBot.create(:user) }
@@ -36,7 +36,12 @@ RSpec.describe 'Mcp::ServerController', type: :request do
     end
 
     context 'tools/call request' do
-      let(:task_tracker) { FactoryBot.create(:tracker, name: 'Task') }
+      let(:task_tracker) do
+        Tracker.find_by(name: 'Task') || begin
+          default_status = IssueStatus.first || IssueStatus.create!(name: 'New')
+          Tracker.create!(name: 'Task', default_status: default_status)
+        end
+      end
 
       before do
         project.trackers << task_tracker
@@ -49,7 +54,7 @@ RSpec.describe 'Mcp::ServerController', type: :request do
             jsonrpc: '2.0',
             method: 'tools/call',
             params: {
-              name: 'create_task',
+              name: 'create_task_tool',
               arguments: {
                 project_id: project.identifier,
                 description: 'Refactor cart module'
@@ -66,6 +71,78 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         json = JSON.parse(response.body)
         expect(json['jsonrpc']).to eq('2.0')
         expect(json['result']).to be_present
+
+        # Response形式の検証
+        expect(json['result']['content']).to be_an(Array)
+        expect(json['result']['content'].first['type']).to eq('text')
+
+        # 成功レスポンスの検証
+        result_data = JSON.parse(json['result']['content'].first['text'])
+        expect(result_data['success']).to be true
+        expect(result_data['task_id']).to be_present
+        expect(result_data['subject']).to be_present
+      end
+
+      it 'returns error when tool execution fails' do
+        # 存在しないプロジェクトを指定
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                project_id: 'nonexistent-project',
+                description: 'Test task'
+              }
+            },
+            id: 3
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json['jsonrpc']).to eq('2.0')
+
+        # エラーレスポンスの検証
+        result_data = JSON.parse(json['result']['content'].first['text'])
+        expect(result_data['success']).to be false
+        expect(result_data['error']).to include('プロジェクトが見つかりません')
+      end
+
+      it 'returns error when user lacks permission' do
+        # 権限のないユーザーを作成
+        unauthorized_user = FactoryBot.create(:user)
+        api_token = Token.create!(user: unauthorized_user, action: 'api', value: SecureRandom.hex(20))
+
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                project_id: project.identifier,
+                description: 'Test task'
+              }
+            },
+            id: 4
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_token.value
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+
+        # エラーレスポンスの検証
+        result_data = JSON.parse(json['result']['content'].first['text'])
+        expect(result_data['success']).to be false
+        expect(result_data['error']).to include('権限')
       end
     end
 
@@ -79,6 +156,36 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         json = JSON.parse(response.body)
         expect(json['jsonrpc']).to eq('2.0')
         expect(json['error']).to be_present
+        expect(json['error']['message']).to include('APIキー')
+      end
+
+      it 'rejects request with invalid API key' do
+        post '/mcp/rpc',
+          params: { jsonrpc: '2.0', method: 'tools/list', id: 1 }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => 'invalid_key_12345'
+          }
+
+        expect(response).to have_http_status(:unauthorized)
+        json = JSON.parse(response.body)
+        expect(json['jsonrpc']).to eq('2.0')
+        expect(json['error']).to be_present
+        expect(json['error']['message']).to include('無効')
+      end
+
+      it 'accepts valid API key in header' do
+        post '/mcp/rpc',
+          params: { jsonrpc: '2.0', method: 'tools/list', id: 1 }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json['jsonrpc']).to eq('2.0')
+        expect(json['result']).to be_present
       end
     end
 
@@ -93,6 +200,86 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
         expect(response.headers['Access-Control-Allow-Origin']).to eq('*')
         expect(response.headers['Access-Control-Allow-Methods']).to include('POST')
+      end
+    end
+
+    context 'JSON-RPC error handling' do
+      it 'returns error for unknown method' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'unknown/method',
+            id: 99
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json['jsonrpc']).to eq('2.0')
+        expect(json['error']).to be_present
+        expect(json['error']['code']).to eq(-32601) # Method not found
+      end
+
+      it 'returns error for invalid JSON-RPC request' do
+        post '/mcp/rpc',
+          params: { invalid: 'request' }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        # 無効なJSON-RPCリクエストは204または200+errorを返す
+        expect([200, 204]).to include(response.status)
+
+        if response.status == 200 && response.body.present?
+          json = JSON.parse(response.body)
+          expect(json['jsonrpc']).to eq('2.0')
+          expect(json['error']).to be_present
+        end
+      end
+
+      it 'handles malformed JSON gracefully' do
+        post '/mcp/rpc',
+          params: 'not a json',
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        # Controllerがmalformed JSONをどう扱うかは実装依存
+        # 400 Bad RequestまたはJSON-RPCエラーを返すべき
+        expect([400, 200]).to include(response.status)
+
+        if response.body.present?
+          json = JSON.parse(response.body)
+          expect(json['jsonrpc']).to eq('2.0')
+          expect(json['error']).to be_present
+        end
+      end
+
+      it 'returns error when tool name does not exist' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'nonexistent_tool',
+              arguments: {}
+            },
+            id: 98
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json['jsonrpc']).to eq('2.0')
+        expect(json['error']).to be_present
       end
     end
   end

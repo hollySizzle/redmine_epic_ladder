@@ -299,6 +299,7 @@ git commit -m "Update production build"
 
 ## 🤖 MCP Server (AI連携機能)
 
+
 このプラグインは**Model Context Protocol (MCP)**に対応しており、Claude DesktopなどのAIエージェントから直接タスクを作成できます。
 
 ### 🔌 対応クライアント
@@ -483,42 +484,278 @@ Claude Code内で以下のように使います:
 
 ---
 
-### 🛠️ 利用可能なツール
+### 🛠️ 利用可能なツール（全16ツール）
 
-#### `create_task_tool` - タスク作成
+Epic-Grid MCP Serverは、PMの過労死を防ぐための16のツールを提供します。
 
-自然言語からTaskチケットを作成します。
+#### カテゴリ1: チケット作成ツール（6個）
+
+**Epic階層に沿ったチケット作成**を支援します。
+
+##### 1. `create_epic_tool` - Epic作成
+
+Epic（大分類）を作成します。
 
 **パラメータ:**
-- `project_id` (必須): プロジェクトID（識別子または数値ID）
-- `description` (必須): タスクの説明（自然言語OK）
-- `parent_user_story_id` (省略可): 親UserStory ID（省略時は推論）
-- `version_id` (省略可): Version ID（省略時は親から継承）
-- `assigned_to_id` (省略可): 担当者ID（省略時は現在のユーザー）
+- `project_id` (必須): プロジェクトID
+- `subject` (必須): Epicの件名
+- `description` (省略可): 説明
+- `assigned_to_id` (省略可): 担当者ID
 
 **使用例:**
-
 ```
-# Claude Desktopで
-ユーザー: 「sakura-ecプロジェクトで、カートのリファクタリングタスクを作って」
-
-Claude: create_task_toolを呼び出し
-  → Task #9999が作成される
-  → 親UserStory: #123 カート機能改善 (自動推論)
-  → Version: Sprint 2025-01 (親から継承)
+ユーザー: 「ユーザー動線のEpicを作って」
+→ Epic #1000「ユーザー動線」が作成される
 ```
+
+##### 2. `create_feature_tool` - Feature作成
+
+Feature（分類を行うための中間層）を作成します。
+
+**パラメータ:**
+- `project_id` (必須): プロジェクトID
+- `subject` (必須): Featureの件名
+- `parent_epic_id` (必須): 親Epic ID
+- `description` (省略可): 説明
+
+**使用例:**
+```
+ユーザー: 「Epic #1000配下にCTAのFeatureを作って」
+→ Feature #1001「CTA」が作成される（親: Epic #1000）
+```
+
+##### 3. `create_user_story_tool` - UserStory作成
+
+UserStory（ユーザの要求など､ざっくりとした目標）を作成します。
+
+**パラメータ:**
+- `project_id` (必須): プロジェクトID
+- `subject` (必須): UserStoryの件名
+- `parent_feature_id` (必須): 親Feature ID
+- `version_id` (省略可): Version ID
+- `description` (省略可): 説明
+
+**使用例:**
+```
+ユーザー: 「Feature #1001配下に申込画面を作るUserStoryを作って、Version 1.1に割り当てて」
+→ UserStory #1002「申込画面を作る」が作成される（親: Feature #1001、Version: 1.1）
+```
+
+##### 4. `create_task_tool` - Task作成
+
+Task（作業者が実際にやるべきこと）を作成します。自然言語対応。
+
+**パラメータ:**
+- `project_id` (必須): プロジェクトID
+- `description` (必須): タスクの説明（自然言語OK）
+- `parent_user_story_id` (省略可): 親UserStory ID（**省略時は自動推論**）
+- `version_id` (省略可): Version ID（省略時は親から継承）
+
+**使用例:**
+```
+ユーザー: 「カートのリファクタリングタスクを作って」
+→ Task #9999が作成される
+→ 親UserStory: #123 カート機能改善（自動推論）
+→ Version: Sprint 2025-01（親から継承）
+```
+
+##### 5. `create_bug_tool` - Bug作成
+
+Bug（発生した不具合）を作成します。自然言語対応。
+
+**パラメータ:** `create_task_tool` と同じ
+
+**使用例:**
+```
+ユーザー: 「申込フォームのバリデーションが効かないBugを作って」
+→ Bug #1003が作成される（親UserStory自動推論）
+```
+
+##### 6. `create_test_tool` - Test作成
+
+Test（やるべきテストや検証）を作成します。自然言語対応。
+
+**パラメータ:** `create_task_tool` と同じ
+
+**使用例:**
+```
+ユーザー: 「申込完了までのE2Eテストを作って」
+→ Test #1004が作成される（親UserStory自動推論）
+```
+
+---
+
+#### カテゴリ2: Version管理ツール（3個）
+
+**PMの最大の悩み「スケジュール変更」を解決**します。
+
+##### 7. `create_version_tool` - Version作成
+
+Version（リリース予定）を作成します。
+
+**パラメータ:**
+- `project_id` (必須): プロジェクトID
+- `name` (必須): Version名
+- `effective_date` (必須): リリース予定日（YYYY-MM-DD）
+- `description` (省略可): 説明
+- `status` (省略可): ステータス（open/locked/closed、デフォルト: open）
+
+**使用例:**
+```
+ユーザー: 「Sprint 2025-02のVersionを作って、リリース日は2025-02-28で」
+→ Version「Sprint 2025-02」が作成される（2025-02-28リリース予定）
+```
+
+##### 8. `assign_to_version_tool` - チケットをVersionに割り当て
+
+チケット（UserStory推奨）をVersionに割り当て、**配下のTask/Bug/Testも自動的に同じVersionに設定**します。
+
+**パラメータ:**
+- `issue_id` (必須): チケットID
+- `version_id` (必須): Version ID
+
+**使用例:**
+```
+ユーザー: 「UserStory #123をVersion 1.2に割り当てて」
+→ UserStory #123とその配下5個のTask/Bug/TestがVersion 1.2に設定される
+```
+
+##### 9. `move_to_next_version_tool` - 次のVersionに移動（リスケ）
+
+チケットを次のVersionに移動（リスケ）。**配下のTask/Bug/Testも自動的に移動**されます。
+
+**パラメータ:**
+- `issue_id` (必須): チケットID
+
+**使用例:**
+```
+ユーザー: 「UserStory #123を次のVersionに移動して（リスケ）」
+→ UserStory #123が Version 1.1 → Version 1.2 に移動
+→ 配下のTask/Bug/Testも自動的にVersion 1.2に移動
+```
+
+---
+
+#### カテゴリ3: チケット操作ツール（4個）
+
+**AIがコード作業しながらチケット同期**できます。
+
+##### 10. `update_issue_status_tool` - ステータス更新
+
+チケットのステータスを更新します（Open→InProgress→Closed）。
+
+**パラメータ:**
+- `issue_id` (必須): チケットID
+- `status_name` (必須): ステータス名（例: 'Open', 'In Progress', 'Closed'）
+
+**使用例:**
+```
+Claude Code: 「Task #9999のバグを修正しました」
+→ 自動で update_issue_status_tool(issue_id: 9999, status_name: "Closed")
+→ Task #9999がClosedになる
+```
+
+##### 11. `add_issue_comment_tool` - コメント追加
+
+チケットにコメント（ノート）を追加します。
+
+**パラメータ:**
+- `issue_id` (必須): チケットID
+- `comment` (必須): コメント内容
+
+**使用例:**
+```
+ユーザー: 「このTask、後で見直したいからコメント残しといて」
+Claude Code:
+  → add_issue_comment_tool(issue_id: 9999, comment: "実装完了。ただし以下の懸念あり:\n- パフォーマンス要検証")
+```
+
+##### 12. `update_issue_progress_tool` - 進捗率更新
+
+チケットの進捗率を更新します（0%→50%→100%）。
+
+**パラメータ:**
+- `issue_id` (必須): チケットID
+- `progress` (必須): 進捗率（0〜100）
+
+**使用例:**
+```
+Claude Code: 「Task #9999の実装が半分終わりました」
+→ update_issue_progress_tool(issue_id: 9999, progress: 50)
+```
+
+##### 13. `update_issue_assignee_tool` - 担当者変更
+
+チケットの担当者を変更します。
+
+**パラメータ:**
+- `issue_id` (必須): チケットID
+- `assigned_to_id` (必須): 担当者ID（nullで担当者解除）
+
+**使用例:**
+```
+PM: 「Task #9999を田中さん（ID:5）にアサインして」
+→ Task #9999の担当者が田中さんになる
+```
+
+---
+
+#### カテゴリ4: 検索・参照ツール（3個）
+
+**AIが親UserStoryを推論する精度向上**に役立ちます。
+
+##### 14. `list_user_stories_tool` - UserStory一覧取得
+
+プロジェクト内のUserStory一覧を取得します。
+
+**パラメータ:**
+- `project_id` (必須): プロジェクトID
+- `version_id` (省略可): Version IDでフィルタ
+- `assigned_to_id` (省略可): 担当者IDでフィルタ
+- `status` (省略可): ステータスでフィルタ（open/closed）
+- `limit` (省略可): 取得件数上限（デフォルト: 50）
+
+**使用例:**
+```
+ユーザー: 「sakura-ecプロジェクトのUserStory一覧を見せて」
+→ UserStory一覧が返却される（subject, status, version, 担当者など）
+```
+
+##### 15. `list_epics_tool` - Epic一覧取得
+
+プロジェクト内のEpic一覧を取得します。
+
+**パラメータ:** `list_user_stories_tool` と類似（version_idフィルタなし）
+
+##### 16. `get_project_structure_tool` - プロジェクト構造可視化
+
+プロジェクトのEpic階層構造（Epic→Feature→UserStory）を可視化します。
+
+**パラメータ:**
+- `project_id` (必須): プロジェクトID
+- `version_id` (省略可): Version IDでフィルタ
+- `status` (省略可): ステータスでフィルタ
+
+**使用例:**
+```
+PM: 「sakura-ecプロジェクトの構造を見せて」
+→ Epic→Feature→UserStoryの階層構造がJSON形式で返却される
+→ PMがプロジェクト全体を一目で把握できる
+```
+
+---
 
 ### 🧠 親UserStory自動推論
 
-`parent_user_story_id`を省略すると、AIが以下のロジックで最適な親UserStoryを推論します:
+`create_task_tool`, `create_bug_tool`, `create_test_tool` で `parent_user_story_id` を省略すると、AIが以下のロジックで最適な親UserStoryを推論します:
 
-1. `description`からキーワード抽出
+1. `description`からキーワード抽出（スペース・句読点で分割）
 2. プロジェクト内のUserStoryのsubjectと照合
 3. 最もキーワードが一致するUserStoryを選択
 
 **例:**
 - description: "カートのリファクタリング"
-- 推論結果: UserStory #123 "カート機能改善"
+- 推論結果: UserStory #123 "カート機能改善"（"カート"がマッチ）
 
 ### ❌ 共通トラブルシューティング
 
