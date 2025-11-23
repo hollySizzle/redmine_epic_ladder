@@ -73,6 +73,67 @@ RSpec.describe EpicGrid::McpTools::MoveToNextVersionTool, type: :model do
       end
     end
 
+    context 'REQUIRE_CONFIRMATION_FOR environment variable' do
+      it 'requires confirmation when REQUIRE_CONFIRMATION_FOR includes move_version' do
+        ClimateControl.modify REQUIRE_CONFIRMATION_FOR: 'move_version' do
+          result = described_class.call(
+            issue_id: user_story.id.to_s,
+            confirmed: false,
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+
+          # 確認が必要
+          expect(response_text['success']).to be false
+          expect(response_text['confirmation_required']).to be true
+          expect(response_text['confirmation_message']).to be_present
+          expect(response_text['operation']).to eq('move_version')
+
+          # Versionは変更されていない
+          user_story.reload
+          expect(user_story.fixed_version).to eq(current_version)
+        end
+      end
+
+      it 'executes when confirmed=true' do
+        ClimateControl.modify REQUIRE_CONFIRMATION_FOR: 'move_version' do
+          result = described_class.call(
+            issue_id: user_story.id.to_s,
+            confirmed: true,
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+
+          # 実行される
+          expect(response_text['success']).to be true
+          expect(response_text['old_version']['id']).to eq(current_version.id.to_s)
+          expect(response_text['new_version']['id']).to eq(next_version.id.to_s)
+
+          # Versionが変更されている
+          user_story.reload
+          expect(user_story.fixed_version).to eq(next_version)
+        end
+      end
+
+      it 'does not require confirmation when REQUIRE_CONFIRMATION_FOR is empty' do
+        ClimateControl.modify REQUIRE_CONFIRMATION_FOR: '' do
+          result = described_class.call(
+            issue_id: user_story.id.to_s,
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+
+          # 確認なしで実行される
+          expect(response_text['success']).to be true
+          user_story.reload
+          expect(user_story.fixed_version).to eq(next_version)
+        end
+      end
+    end
+
     context 'with invalid parameters' do
       it 'returns error when issue not found' do
         result = described_class.call(

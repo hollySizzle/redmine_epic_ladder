@@ -12,6 +12,7 @@ group :test do
   # gem 'factory_bot_rails', '~> 6.4'  # Redmine本体で定義済み
   gem 'faker', '~> 3.2'
   gem 'database_cleaner-active_record', '~> 2.1'
+  gem 'climate_control', '~> 1.2'  # 環境変数テスト用
   # gem 'simplecov', '~> 0.22.0', require: false  # Redmine本体で定義済み
   # gem 'capybara', '>= 3.39'  # Redmine本体で定義済み
   # gem 'selenium-webdriver', '>= 4.11.0'  # Redmine本体で定義済み
