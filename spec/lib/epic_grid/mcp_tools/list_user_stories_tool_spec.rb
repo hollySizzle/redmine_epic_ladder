@@ -14,8 +14,8 @@ RSpec.describe EpicGrid::McpTools::ListUserStoriesTool, type: :model do
     )
   end
   let(:version) { create(:version, project: project, name: 'Version 1.0') }
-  let(:open_status) { IssueStatus.create!(name: 'Open', is_closed: false) }
-  let(:closed_status) { IssueStatus.create!(name: 'Closed', is_closed: true) }
+  let(:open_status) { IssueStatus.find_or_create_by!(name: 'Open') { |s| s.is_closed = false } }
+  let(:closed_status) { IssueStatus.find_or_create_by!(name: 'Closed') { |s| s.is_closed = true } }
 
   before do
     member # ensure member exists

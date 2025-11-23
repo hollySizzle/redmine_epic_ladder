@@ -13,8 +13,8 @@ RSpec.describe EpicGrid::McpTools::ListEpicsTool, type: :model do
       default_status: IssueStatus.first
     )
   end
-  let(:open_status) { IssueStatus.create!(name: 'Open', is_closed: false) }
-  let(:closed_status) { IssueStatus.create!(name: 'Closed', is_closed: true) }
+  let(:open_status) { IssueStatus.find_or_create_by!(name: 'Open') { |s| s.is_closed = false } }
+  let(:closed_status) { IssueStatus.find_or_create_by!(name: 'Closed') { |s| s.is_closed = true } }
 
   before do
     member # ensure member exists

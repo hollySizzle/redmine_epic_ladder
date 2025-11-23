@@ -60,7 +60,7 @@ RSpec.describe EpicGrid::McpTools::UpdateIssueProgressTool, type: :model do
       end
 
       it 'updates issue progress to 0%' do
-        task.update!(done_ratio: 50)
+        task.reload.update!(done_ratio: 50)
 
         result = described_class.call(
           issue_id: task.id.to_s,

@@ -13,9 +13,9 @@ RSpec.describe EpicGrid::McpTools::UpdateIssueStatusTool, type: :model do
       default_status: IssueStatus.first
     )
   end
-  let(:open_status) { IssueStatus.create!(name: 'Open', is_closed: false) }
-  let(:in_progress_status) { IssueStatus.create!(name: 'In Progress', is_closed: false) }
-  let(:closed_status) { IssueStatus.create!(name: 'Closed', is_closed: true) }
+  let(:open_status) { IssueStatus.find_or_create_by!(name: 'Open') { |s| s.is_closed = false } }
+  let(:in_progress_status) { IssueStatus.find_or_create_by!(name: 'In Progress') { |s| s.is_closed = false } }
+  let(:closed_status) { IssueStatus.find_or_create_by!(name: 'Closed') { |s| s.is_closed = true } }
   let(:task) { create(:issue, project: project, tracker: task_tracker, status: open_status) }
 
   before do
