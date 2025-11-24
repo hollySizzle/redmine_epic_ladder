@@ -125,9 +125,49 @@ module EpicGrid
                 id: story.assigned_to.id.to_s,
                 name: story.assigned_to.name
               } : nil,
-              children_count: story.children.count
+              children_count: story.children.count,
+              children: build_children(story)
             }
           end
+        end
+
+        # UserStoryの子チケット（Task/Bug/Test）構築
+        def build_children(user_story)
+          task_tracker = find_tracker(:task)
+          bug_tracker = find_tracker(:bug)
+          test_tracker = find_tracker(:test)
+
+          children = {
+            tasks: [],
+            bugs: [],
+            tests: []
+          }
+
+          user_story.children.each do |child|
+            child_data = {
+              id: child.id.to_s,
+              subject: child.subject,
+              status: {
+                name: child.status.name,
+                is_closed: child.status.is_closed
+              },
+              assigned_to: child.assigned_to ? {
+                id: child.assigned_to.id.to_s,
+                name: child.assigned_to.name
+              } : nil,
+              done_ratio: child.done_ratio
+            }
+
+            if child.tracker_id == task_tracker&.id
+              children[:tasks] << child_data
+            elsif child.tracker_id == bug_tracker&.id
+              children[:bugs] << child_data
+            elsif child.tracker_id == test_tracker&.id
+              children[:tests] << child_data
+            end
+          end
+
+          children
         end
 
         # フィルタ適用
@@ -147,10 +187,27 @@ module EpicGrid
           total_features = structure.sum { |e| e[:features].size }
           total_user_stories = structure.sum { |e| e[:features].sum { |f| f[:user_stories].size } }
 
+          total_tasks = 0
+          total_bugs = 0
+          total_tests = 0
+
+          structure.each do |epic|
+            epic[:features].each do |feature|
+              feature[:user_stories].each do |story|
+                total_tasks += story[:children][:tasks].size
+                total_bugs += story[:children][:bugs].size
+                total_tests += story[:children][:tests].size
+              end
+            end
+          end
+
           {
             total_epics: structure.size,
             total_features: total_features,
-            total_user_stories: total_user_stories
+            total_user_stories: total_user_stories,
+            total_tasks: total_tasks,
+            total_bugs: total_bugs,
+            total_tests: total_tests
           }
         end
 

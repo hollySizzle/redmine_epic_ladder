@@ -16,7 +16,7 @@ module EpicGrid
         properties: {
           project_id: { type: "string", description: "プロジェクトID（識別子または数値ID）" },
           description: { type: "string", description: "タスクの説明（自然言語OK）" },
-          parent_user_story_id: { type: "string", description: "親UserStory ID（省略時は推論）" },
+          parent_user_story_id: { type: "string", description: "親UserStory ID（省略可）" },
           version_id: { type: "string", description: "Version ID（省略時は親から継承）" },
           assigned_to_id: { type: "string", description: "担当者ID（省略時は現在のユーザー）" }
         },
@@ -44,8 +44,8 @@ module EpicGrid
         task_tracker = find_tracker(:task, project)
         return error_response("Taskトラッカーが設定されていません") unless task_tracker
 
-        # 親UserStory解決
-        parent_user_story = resolve_parent_user_story(project, parent_user_story_id, description)
+        # 親UserStory解決（指定された場合のみ）
+        parent_user_story = parent_user_story_id.present? ? Issue.find_by(id: parent_user_story_id) : nil
 
         # Version解決
         version = resolve_version(project, version_id, parent_user_story)
@@ -111,32 +111,6 @@ module EpicGrid
         end
       end
 
-      # 親UserStoryを解決
-      def resolve_parent_user_story(project, parent_user_story_id, description)
-        if parent_user_story_id.present?
-          Issue.find_by(id: parent_user_story_id)
-        else
-          # 環境変数チェック: AUTO_INFER_PARENT（デフォルトtrue）
-          auto_infer_enabled = ENV.fetch('AUTO_INFER_PARENT', 'true') == 'true'
-
-          if auto_infer_enabled
-            # 推論: descriptionから類似UserStoryを検索
-            result = find_best_parent_user_story_with_confidence(project, description)
-
-            if result
-              Rails.logger.info "Auto-inferred parent UserStory: ##{result[:story].id} (confidence: #{result[:confidence]})"
-              result[:story]
-            else
-              Rails.logger.info "No suitable parent UserStory found (below threshold)"
-              nil
-            end
-          else
-            Rails.logger.info "AUTO_INFER_PARENT is disabled"
-            nil
-          end
-        end
-      end
-
       # Versionを解決
       def resolve_version(project, version_id, parent_user_story)
         if version_id.present?
@@ -158,57 +132,6 @@ module EpicGrid
           # デフォルトは現在のユーザー
           current_user
         end
-      end
-
-      # descriptionから類似UserStoryを検索（確信度スコア付き）
-      def find_best_parent_user_story_with_confidence(project, description)
-        user_story_tracker = find_tracker(:user_story, project)
-        return nil unless user_story_tracker
-
-        # キーワード抽出（簡易版: スペース・句読点で分割）
-        keywords = description.split(/[、。\s]/).reject(&:blank?).map(&:strip)
-        return nil if keywords.empty?
-
-        # プロジェクト内のUserStoryを検索（openのみ）
-        user_stories = project.issues.where(tracker: user_story_tracker)
-                               .where("#{IssueStatus.table_name}.is_closed = ?", false)
-                               .joins(:status)
-
-        return nil if user_stories.empty?
-
-        # スコアリング: subjectとdescriptionに含まれるキーワード数でランク付け
-        scored_stories = user_stories.map do |story|
-          subject_matches = keywords.count { |kw| story.subject.include?(kw) }
-          description_matches = keywords.count { |kw| story.description.to_s.include?(kw) }
-
-          # スコア計算: subject一致を重視（weight: 2.0）
-          raw_score = (subject_matches * 2.0) + description_matches
-
-          # 正規化: 最大スコアはキーワード数 * 3（subject全一致 + description全一致）
-          max_possible_score = keywords.size * 3.0
-          confidence = max_possible_score > 0 ? (raw_score / max_possible_score) : 0.0
-
-          {
-            story: story,
-            raw_score: raw_score,
-            confidence: confidence.round(2)
-          }
-        end
-
-        # 確信度で降順ソート
-        scored_stories.sort_by! { |s| -s[:confidence] }
-
-        # 環境変数で閾値を取得（デフォルト0.3 = 30%）
-        threshold = ENV.fetch('AUTO_INFER_THRESHOLD', '0.3').to_f
-
-        # 閾値以上の最高スコアを選択
-        best_match = scored_stories.find { |s| s[:confidence] >= threshold }
-
-        if best_match
-          Rails.logger.info "Parent inference candidates: #{scored_stories.first(3).map { |s| "##{s[:story].id} (#{s[:confidence]})" }.join(', ')}"
-        end
-
-        best_match
       end
 
       # descriptionから簡潔なsubjectを抽出

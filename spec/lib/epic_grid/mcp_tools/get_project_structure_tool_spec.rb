@@ -25,6 +25,24 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
       default_status: IssueStatus.first
     )
   end
+  let(:task_tracker) do
+    Tracker.create!(
+      name: EpicGrid::TrackerHierarchy.tracker_names[:task],
+      default_status: IssueStatus.first
+    )
+  end
+  let(:bug_tracker) do
+    Tracker.create!(
+      name: EpicGrid::TrackerHierarchy.tracker_names[:bug],
+      default_status: IssueStatus.first
+    )
+  end
+  let(:test_tracker) do
+    Tracker.create!(
+      name: EpicGrid::TrackerHierarchy.tracker_names[:test],
+      default_status: IssueStatus.first
+    )
+  end
   let(:version) { create(:version, project: project, name: 'Version 1.0') }
   let(:open_status) { IssueStatus.find_or_create_by!(name: 'Open') { |s| s.is_closed = false } }
   let(:closed_status) { IssueStatus.find_or_create_by!(name: 'Closed') { |s| s.is_closed = true } }
@@ -34,6 +52,9 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
     project.trackers << epic_tracker unless project.trackers.include?(epic_tracker)
     project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
     project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+    project.trackers << task_tracker unless project.trackers.include?(task_tracker)
+    project.trackers << bug_tracker unless project.trackers.include?(bug_tracker)
+    project.trackers << test_tracker unless project.trackers.include?(test_tracker)
     open_status
     closed_status
   end
@@ -193,6 +214,82 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
         expect(response_text['summary']['total_epics']).to eq(2)
         expect(response_text['summary']['total_features']).to eq(2)
         expect(response_text['summary']['total_user_stories']).to eq(2)
+      end
+
+      it 'includes children (Task/Bug/Test) under UserStory' do
+        epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Epic 1')
+        feature = create(:issue, project: project, tracker: feature_tracker, subject: 'Feature 1', parent_issue_id: epic.id)
+        user_story = create(:issue, project: project, tracker: user_story_tracker, subject: 'User Story 1', parent_issue_id: feature.id)
+
+        # Task/Bug/Testを作成
+        task1 = create(:issue, project: project, tracker: task_tracker, subject: 'Task 1', parent_issue_id: user_story.id, assigned_to: user, done_ratio: 30)
+        task2 = create(:issue, project: project, tracker: task_tracker, subject: 'Task 2', parent_issue_id: user_story.id, done_ratio: 0)
+        bug1 = create(:issue, project: project, tracker: bug_tracker, subject: 'Bug 1', parent_issue_id: user_story.id, status: open_status, done_ratio: 50)
+        test1 = create(:issue, project: project, tracker: test_tracker, subject: 'Test 1', parent_issue_id: user_story.id, done_ratio: 100)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        story_data = response_text['structure'].first['features'].first['user_stories'].first
+
+        # children構造の検証
+        expect(story_data['children']).to be_present
+        expect(story_data['children']['tasks']).to be_an(Array)
+        expect(story_data['children']['bugs']).to be_an(Array)
+        expect(story_data['children']['tests']).to be_an(Array)
+
+        # Task検証
+        expect(story_data['children']['tasks'].size).to eq(2)
+        task_data = story_data['children']['tasks'].find { |t| t['id'] == task1.id.to_s }
+        expect(task_data['subject']).to eq('Task 1')
+        expect(task_data['assigned_to']['id']).to eq(user.id.to_s)
+        expect(task_data['done_ratio']).to eq(30)
+        expect(task_data['status']['name']).to be_present
+
+        # Bug検証
+        expect(story_data['children']['bugs'].size).to eq(1)
+        bug_data = story_data['children']['bugs'].first
+        expect(bug_data['subject']).to eq('Bug 1')
+        expect(bug_data['done_ratio']).to eq(50)
+        expect(bug_data['status']['is_closed']).to be false
+
+        # Test検証
+        expect(story_data['children']['tests'].size).to eq(1)
+        test_data = story_data['children']['tests'].first
+        expect(test_data['subject']).to eq('Test 1')
+        expect(test_data['done_ratio']).to eq(100)
+
+        # Summary検証
+        summary = response_text['summary']
+        expect(summary['total_tasks']).to eq(2)
+        expect(summary['total_bugs']).to eq(1)
+        expect(summary['total_tests']).to eq(1)
+      end
+
+      it 'returns empty children arrays when no child tickets exist' do
+        epic = create(:issue, project: project, tracker: epic_tracker)
+        feature = create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id)
+        user_story = create(:issue, project: project, tracker: user_story_tracker, parent_issue_id: feature.id)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        story_data = response_text['structure'].first['features'].first['user_stories'].first
+
+        expect(story_data['children']['tasks']).to eq([])
+        expect(story_data['children']['bugs']).to eq([])
+        expect(story_data['children']['tests']).to eq([])
+
+        summary = response_text['summary']
+        expect(summary['total_tasks']).to eq(0)
+        expect(summary['total_bugs']).to eq(0)
+        expect(summary['total_tests']).to eq(0)
       end
     end
 

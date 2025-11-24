@@ -131,7 +131,8 @@ module Mcp
           # カテゴリ4: 検索・参照ツール
           EpicGrid::McpTools::ListUserStoriesTool,
           EpicGrid::McpTools::ListEpicsTool,
-          EpicGrid::McpTools::GetProjectStructureTool
+          EpicGrid::McpTools::GetProjectStructureTool,
+          EpicGrid::McpTools::GetIssueDetailTool
         ],
         server_context: {
           user: User.current
