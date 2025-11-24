@@ -16,7 +16,7 @@ module EpicGrid
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT_ID）" },
+          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
           description: { type: "string", description: "Testの説明（自然言語OK）" },
           parent_user_story_id: { type: "string", description: "親UserStory ID（省略可）" },
           version_id: { type: "string", description: "Version ID（省略時は親から継承）" },

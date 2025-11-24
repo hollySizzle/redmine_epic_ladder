@@ -3,7 +3,7 @@
 module EpicGrid
   module McpTools
     # MCPツール用のプロジェクトバリデーションヘルパー
-    # ALLOWED_PROJECTS と DEFAULT_PROJECT_ID の機能を提供
+    # ALLOWED_PROJECTS と DEFAULT_PROJECT の機能を提供
     module ProjectValidator
       module_function
 
@@ -13,9 +13,9 @@ module EpicGrid
       def resolve_project_id(project_id)
         return project_id if project_id.present?
 
-        # DEFAULT_PROJECT_IDを使用
-        default_project_id = ENV.fetch('DEFAULT_PROJECT_ID', nil)
-        return default_project_id if default_project_id.present?
+        # DEFAULT_PROJECTを使用
+        default_project = ENV.fetch('DEFAULT_PROJECT', nil)
+        return default_project if default_project.present?
 
         nil
       end

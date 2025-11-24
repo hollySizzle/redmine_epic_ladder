@@ -16,7 +16,7 @@ module EpicGrid
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT_ID）" },
+          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
           subject: { type: "string", description: "Epicの件名" },
           description: { type: "string", description: "Epicの説明（省略可）" },
           assigned_to_id: { type: "string", description: "担当者ID（省略時は現在のユーザー）" }

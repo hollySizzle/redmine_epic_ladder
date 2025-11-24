@@ -16,7 +16,7 @@ module EpicGrid
 
       # チケット作成メインメソッド
       # @param tracker_type [Symbol] トラッカー種別（:task, :bug, :test, :epic, :feature, :user_story）
-      # @param project_id [String, nil] プロジェクトID（省略時はDEFAULT_PROJECT_ID）
+      # @param project_id [String, nil] プロジェクトID（省略時はDEFAULT_PROJECT）
       # @param subject [String, nil] 件名（省略時はdescriptionから抽出）
       # @param description [String] 説明
       # @param parent_issue_id [String, nil] 親チケットID
@@ -26,7 +26,7 @@ module EpicGrid
       def create_issue(tracker_type:, project_id: nil, subject: nil, description:, parent_issue_id: nil, version_id: nil, assigned_to_id: nil)
         # 1. プロジェクトID解決
         resolved_project_id = ProjectValidator.resolve_project_id(project_id)
-        return error_result("プロジェクトIDが指定されていません。DEFAULT_PROJECT_IDを設定するか、project_idを指定してください") unless resolved_project_id
+        return error_result("プロジェクトIDが指定されていません。DEFAULT_PROJECTを設定するか、project_idを指定してください") unless resolved_project_id
 
         # 2. プロジェクト取得
         project = find_project(resolved_project_id)
