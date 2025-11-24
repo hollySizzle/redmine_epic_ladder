@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base_helper'
+
 module EpicGrid
   module McpTools
     # プロジェクト構造取得MCPツール
@@ -10,6 +12,7 @@ module EpicGrid
     #   AI: GetProjectStructureToolを呼び出し
     #   結果: Epic→Feature→UserStoryの階層構造が返却される
     class GetProjectStructureTool < MCP::Tool
+      extend BaseHelper
       description "プロジェクトのEpic階層構造（Epic→Feature→UserStory）を可視化します。PMがプロジェクト全体を把握するのに便利です。"
 
       input_schema(
@@ -41,6 +44,9 @@ module EpicGrid
           epic_tracker = find_tracker(:epic)
           feature_tracker = find_tracker(:feature)
           user_story_tracker = find_tracker(:user_story)
+          task_tracker = find_tracker(:task)
+          bug_tracker = find_tracker(:bug)
+          test_tracker = find_tracker(:test)
 
           return error_response("Epic階層のトラッカーが設定されていません") unless epic_tracker && feature_tracker && user_story_tracker
 
@@ -49,6 +55,7 @@ module EpicGrid
           epics = apply_filters(epics, status)
 
           # 構造構築
+          trackers = { task: task_tracker, bug: bug_tracker, test: test_tracker }
           structure = epics.map do |epic|
             {
               id: epic.id.to_s,
@@ -58,7 +65,7 @@ module EpicGrid
                 name: epic.status.name,
                 is_closed: epic.status.is_closed
               },
-              features: build_features(epic, feature_tracker, user_story_tracker, version_id, status)
+              features: build_features(epic, feature_tracker, user_story_tracker, trackers, version_id, status)
             }
           end
 
@@ -70,7 +77,6 @@ module EpicGrid
               name: project.name
             },
             structure: structure,
-            epic_count: structure.size,
             summary: build_summary(structure)
           )
         rescue StandardError => e
@@ -84,7 +90,7 @@ module EpicGrid
         private
 
         # Feature構造構築
-        def build_features(epic, feature_tracker, user_story_tracker, version_id, status)
+        def build_features(epic, feature_tracker, user_story_tracker, trackers, version_id, status)
           features = epic.children.where(tracker: feature_tracker)
           features = apply_filters(features, status)
 
@@ -97,13 +103,13 @@ module EpicGrid
                 name: feature.status.name,
                 is_closed: feature.status.is_closed
               },
-              user_stories: build_user_stories(feature, user_story_tracker, version_id, status)
+              user_stories: build_user_stories(feature, user_story_tracker, trackers, version_id, status)
             }
           end
         end
 
         # UserStory構造構築
-        def build_user_stories(feature, user_story_tracker, version_id, status)
+        def build_user_stories(feature, user_story_tracker, trackers, version_id, status)
           user_stories = feature.children.where(tracker: user_story_tracker)
           user_stories = user_stories.where(fixed_version_id: version_id) if version_id.present?
           user_stories = apply_filters(user_stories, status)
@@ -125,18 +131,13 @@ module EpicGrid
                 id: story.assigned_to.id.to_s,
                 name: story.assigned_to.name
               } : nil,
-              children_count: story.children.count,
-              children: build_children(story)
+              children: build_children(story, trackers)
             }
           end
         end
 
         # UserStoryの子チケット（Task/Bug/Test）構築
-        def build_children(user_story)
-          task_tracker = find_tracker(:task)
-          bug_tracker = find_tracker(:bug)
-          test_tracker = find_tracker(:test)
-
+        def build_children(user_story, trackers)
           children = {
             tasks: [],
             bugs: [],
@@ -158,11 +159,11 @@ module EpicGrid
               done_ratio: child.done_ratio
             }
 
-            if child.tracker_id == task_tracker&.id
+            if child.tracker_id == trackers[:task]&.id
               children[:tasks] << child_data
-            elsif child.tracker_id == bug_tracker&.id
+            elsif child.tracker_id == trackers[:bug]&.id
               children[:bugs] << child_data
-            elsif child.tracker_id == test_tracker&.id
+            elsif child.tracker_id == trackers[:test]&.id
               children[:tests] << child_data
             end
           end
@@ -211,42 +212,6 @@ module EpicGrid
           }
         end
 
-        # プロジェクト取得（識別子 or ID）
-        def find_project(project_id)
-          if project_id.to_i.to_s == project_id
-            Project.find_by(id: project_id.to_i)
-          else
-            Project.find_by(identifier: project_id) || Project.find_by(id: project_id.to_i)
-          end
-        end
-
-        # トラッカー取得ヘルパー
-        def find_tracker(tracker_type)
-          tracker_name = EpicGrid::TrackerHierarchy.tracker_names[tracker_type]
-          Tracker.find_by(name: tracker_name)
-        end
-
-        # エラーレスポンス生成
-        def error_response(message, details = {})
-          MCP::Tool::Response.new([{
-            type: "text",
-            text: JSON.generate({
-              success: false,
-              error: message,
-              details: details
-            })
-          }])
-        end
-
-        # 成功レスポンス生成
-        def success_response(data = {})
-          MCP::Tool::Response.new([{
-            type: "text",
-            text: JSON.generate({
-              success: true
-            }.merge(data))
-          }])
-        end
       end
     end
   end

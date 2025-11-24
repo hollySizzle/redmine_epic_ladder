@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base_helper'
+
 module EpicGrid
   module McpTools
     # Epic一覧取得MCPツール
@@ -10,7 +12,9 @@ module EpicGrid
     #   AI: ListEpicsToolを呼び出し
     #   結果: Epic一覧が返却される
     class ListEpicsTool < MCP::Tool
-      description "プロジェクト内のEpic一覧を取得します。"
+      extend BaseHelper
+
+      description "プロジェクト内のEpic一覧を取得します。担当者、ステータスでフィルタリング可能です。"
 
       input_schema(
         properties: {
@@ -42,12 +46,11 @@ module EpicGrid
           epic_tracker = find_tracker(:epic)
           return error_response("Epicトラッカーが設定されていません") unless epic_tracker
 
-          # Epic検索
+          # Epic一覧取得
           epics = project.issues.where(tracker: epic_tracker)
-
-          # フィルタ適用
           epics = epics.where(assigned_to_id: assigned_to_id) if assigned_to_id.present?
 
+          # ステータスフィルタ
           if status.present?
             if status.downcase == 'open'
               epics = epics.where(status: IssueStatus.where(is_closed: false))
@@ -57,16 +60,15 @@ module EpicGrid
           end
 
           # 件数制限
-          epics = epics.limit(limit.to_i)
+          epics = epics.limit(limit) if limit
 
-          # レスポンス構築
-          epics_data = epics.map do |epic|
+          # Epic情報構築
+          epic_list = epics.map do |epic|
             {
               id: epic.id.to_s,
               subject: epic.subject,
-              description: epic.description&.truncate(200),
+              description: epic.description,
               status: {
-                id: epic.status.id.to_s,
                 name: epic.status.name,
                 is_closed: epic.status.is_closed
               },
@@ -74,7 +76,6 @@ module EpicGrid
                 id: epic.assigned_to.id.to_s,
                 name: epic.assigned_to.name
               } : nil,
-              children_count: epic.children.count,
               url: issue_url(epic.id)
             }
           end
@@ -86,8 +87,8 @@ module EpicGrid
               identifier: project.identifier,
               name: project.name
             },
-            epics: epics_data,
-            total_count: epics_data.size
+            epics: epic_list,
+            total_count: epic_list.size
           )
         rescue StandardError => e
           Rails.logger.error "ListEpicsTool error: #{e.class.name}: #{e.message}"
@@ -99,46 +100,9 @@ module EpicGrid
       class << self
         private
 
-        # プロジェクト取得（識別子 or ID）
-        def find_project(project_id)
-          if project_id.to_i.to_s == project_id
-            Project.find_by(id: project_id.to_i)
-          else
-            Project.find_by(identifier: project_id) || Project.find_by(id: project_id.to_i)
-          end
-        end
-
-        # トラッカー取得ヘルパー
-        def find_tracker(tracker_type)
-          tracker_name = EpicGrid::TrackerHierarchy.tracker_names[tracker_type]
-          Tracker.find_by(name: tracker_name)
-        end
-
         # RedmineのIssue URLを生成
         def issue_url(issue_id)
           "#{Setting.protocol}://#{Setting.host_name}/issues/#{issue_id}"
-        end
-
-        # エラーレスポンス生成
-        def error_response(message, details = {})
-          MCP::Tool::Response.new([{
-            type: "text",
-            text: JSON.generate({
-              success: false,
-              error: message,
-              details: details
-            })
-          }])
-        end
-
-        # 成功レスポンス生成
-        def success_response(data = {})
-          MCP::Tool::Response.new([{
-            type: "text",
-            text: JSON.generate({
-              success: true
-            }.merge(data))
-          }])
         end
       end
     end

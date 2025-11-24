@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require_relative 'base_helper'
 
 module EpicGrid
   module McpTools
@@ -10,6 +11,7 @@ module EpicGrid
     #   AI: GetIssueDetailToolを呼び出し
     #   結果: チケット詳細+コメント+子チケット情報が返却される
     class GetIssueDetailTool < MCP::Tool
+      extend BaseHelper
       description "チケットの詳細情報、コメント（更新履歴）、子チケットを取得します。"
 
       input_schema(
@@ -148,30 +150,7 @@ module EpicGrid
         # RedmineのIssue URLを生成
         def issue_url(issue_id)
           "#{Setting.protocol}://#{Setting.host_name}/issues/#{issue_id}"
-        end
-
-        # エラーレスポンス生成
-        def error_response(message, details = {})
-          MCP::Tool::Response.new([{
-            type: "text",
-            text: JSON.generate({
-              success: false,
-              error: message,
-              details: details
-            })
-          }])
-        end
-
-        # 成功レスポンス生成
-        def success_response(data = {})
-          MCP::Tool::Response.new([{
-            type: "text",
-            text: JSON.generate({
-              success: true
-            }.merge(data))
-          }])
-        end
-      end
+        end      end
     end
   end
 end

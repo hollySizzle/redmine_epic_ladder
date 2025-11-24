@@ -76,7 +76,6 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
         response_text = JSON.parse(result.content.first[:text])
 
         expect(response_text['success']).to be true
-        expect(response_text['epic_count']).to eq(1)
         expect(response_text['structure'].size).to eq(1)
 
         epic_data = response_text['structure'].first
