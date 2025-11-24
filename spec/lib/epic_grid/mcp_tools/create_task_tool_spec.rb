@@ -120,7 +120,7 @@ RSpec.describe EpicGrid::McpTools::CreateTaskTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('タスク作成権限がありません')
+        expect(response_text['error']).to include('チケット作成権限がありません')
       end
 
       it 'returns error when Task tracker not configured' do
@@ -149,7 +149,8 @@ RSpec.describe EpicGrid::McpTools::CreateTaskTool, type: :model do
     it 'has required input schema' do
       schema = described_class.input_schema
       expect(schema.properties).to include(:project_id, :description)
-      expect(schema.instance_variable_get(:@required)).to include(:project_id, :description)
+      expect(schema.instance_variable_get(:@required)).to include(:description)
+      expect(schema.instance_variable_get(:@required)).not_to include(:project_id)
     end
   end
 end

@@ -497,7 +497,7 @@ Epic-Grid MCP Serverは、PMの過労死を防ぐための16のツールを提�
 Epic（大分類）を作成します。
 
 **パラメータ:**
-- `project_id` (必須): プロジェクトID
+- `project_id` (省略可): プロジェクトID（省略時はDEFAULT_PROJECT_ID）
 - `subject` (必須): Epicの件名
 - `description` (省略可): 説明
 - `assigned_to_id` (省略可): 担当者ID
@@ -513,7 +513,7 @@ Epic（大分類）を作成します。
 Feature（分類を行うための中間層）を作成します。
 
 **パラメータ:**
-- `project_id` (必須): プロジェクトID
+- `project_id` (省略可): プロジェクトID（省略時はDEFAULT_PROJECT_ID）
 - `subject` (必須): Featureの件名
 - `parent_epic_id` (必須): 親Epic ID
 - `description` (省略可): 説明
@@ -529,7 +529,7 @@ Feature（分類を行うための中間層）を作成します。
 UserStory（ユーザの要求など､ざっくりとした目標）を作成します。
 
 **パラメータ:**
-- `project_id` (必須): プロジェクトID
+- `project_id` (省略可): プロジェクトID（省略時はDEFAULT_PROJECT_ID）
 - `subject` (必須): UserStoryの件名
 - `parent_feature_id` (必須): 親Feature ID
 - `version_id` (省略可): Version ID
@@ -546,7 +546,7 @@ UserStory（ユーザの要求など､ざっくりとした目標）を作成�
 Task（作業者が実際にやるべきこと）を作成します。自然言語対応。
 
 **パラメータ:**
-- `project_id` (必須): プロジェクトID
+- `project_id` (省略可): プロジェクトID（省略時はDEFAULT_PROJECT_ID）
 - `description` (必須): タスクの説明（自然言語OK）
 - `parent_user_story_id` (省略可): 親UserStory ID（**省略時は自動推論**）
 - `version_id` (省略可): Version ID（省略時は親から継承）
@@ -775,6 +775,15 @@ MCPサーバーの動作は環境変数でカスタマイズできます。`.mcp
         "X-Redmine-API-Key": "your_api_key_here"
       },
       "env": {
+        // アクセス可能なプロジェクトを制限（デフォルト: ""）
+        // カンマ区切りで指定: sakura-ec,sakura-mobile
+        // 空文字列の場合はすべてのプロジェクトにアクセス可能
+        "ALLOWED_PROJECTS": "sakura-ec,sakura-mobile",
+
+        // デフォルトプロジェクトID（デフォルト: ""）
+        // project_id省略時に使用される
+        "DEFAULT_PROJECT_ID": "sakura-ec",
+
         // 親UserStory自動推論を有効化（デフォルト: true）
         "AUTO_INFER_PARENT": "true",
 
@@ -795,6 +804,8 @@ MCPサーバーの動作は環境変数でカスタマイズできます。`.mcp
 
 | 環境変数 | デフォルト | 説明 | 推奨設定 |
 |---------|----------|------|---------|
+| `ALLOWED_PROJECTS` | `""` | アクセス可能なプロジェクトをカンマ区切りで指定<br>空文字列の場合はすべてのプロジェクトにアクセス可能<br>例: `"sakura-ec,sakura-mobile"` | 開発: `""`<br>本番: `"project1,project2"` |
+| `DEFAULT_PROJECT_ID` | `""` | デフォルトプロジェクトID<br>`project_id`省略時に使用される<br>識別子または数値IDを指定可能 | 開発: `""`<br>本番: `"main-project"` |
 | `AUTO_INFER_PARENT` | `true` | Task/Bug/Test作成時に親UserStoryを自動推論 | 開発: `true`<br>本番: `true` |
 | `AUTO_INFER_THRESHOLD` | `0.3` | 推論の確信度閾値（0.0〜1.0）<br>0.3 = 30%以上の一致で採用 | 開発: `0.2`<br>本番: `0.5` |
 | `REQUIRE_CONFIRMATION_FOR` | `""` | 確認が必要な操作をカンマ区切りで指定<br>- `move_version`: Version移動<br>- `close`: チケットClose | 開発: `""`<br>本番: `"move_version,close"` |
@@ -805,12 +816,16 @@ MCPサーバーの動作は環境変数でカスタマイズできます。`.mcp
 ```jsonc
 {
   "env": {
+    "ALLOWED_PROJECTS": "",
+    "DEFAULT_PROJECT_ID": "",
     "AUTO_INFER_PARENT": "true",
     "AUTO_INFER_THRESHOLD": "0.2",
     "REQUIRE_CONFIRMATION_FOR": ""
   }
 }
 ```
+- すべてのプロジェクトにアクセス可能
+- project_id指定必須（明示的な指定を推奨）
 - 親UserStoryを積極的に推論（閾値20%）
 - 確認なしで操作実行（素早くテスト可能）
 
@@ -818,12 +833,16 @@ MCPサーバーの動作は環境変数でカスタマイズできます。`.mcp
 ```jsonc
 {
   "env": {
+    "ALLOWED_PROJECTS": "sakura-ec,sakura-mobile",
+    "DEFAULT_PROJECT_ID": "sakura-ec",
     "AUTO_INFER_PARENT": "true",
     "AUTO_INFER_THRESHOLD": "0.5",
     "REQUIRE_CONFIRMATION_FOR": "move_version,close"
   }
 }
 ```
+- アクセス可能プロジェクトを制限（意図しない変更を防止）
+- デフォルトプロジェクトを設定（project_id省略可能）
 - 親UserStory推論は慎重（閾値50%）
 - 危険な操作は確認必須（事故防止）
 
