@@ -1,0 +1,178 @@
+---
+# ========================================
+# MCP Tools SSoT化計画
+# ========================================
+# 用途: Ruby MCPツールをソースとしたドキュメント・型定義の自動生成
+# 特徴: Ruby DSL/YARDコメントをSSoTとして活用
+# フォーマットバージョン: 1.0
+# ========================================
+
+plan_type: implementation
+title: "MCP Tools SSoT化 - Ruby DSL駆動のドキュメント自動生成"
+reference: "/vibes/docs/rules/ai_collaboration_redmine.md"
+date: "2025-11-24"
+priority: medium
+status: pending
+
+overview: |
+  lib/epic_grid/mcp_tools/ 配下の17個のMCPツールクラスをSSoTとして、
+  以下を自動生成する仕組みを構築する：
+  1. Markdownリファレンスドキュメント（人間可読）
+  2. JSONマニフェスト（機械可読）
+  3. ツール自動登録機構（DRY改善）
+
+  これにより、ツール追加時のドキュメント更新漏れを防ぎ、
+  開発者体験とAI協働効率を向上させる。
+
+estimated_total_time: "7-14 hours"
+
+prerequisites:
+  - Ruby 3.x環境（Redmine開発環境）
+  - 17個のMCPツールクラスが存在（lib/epic_grid/mcp_tools/*_tool.rb）
+  - MCP Gem v0.4.0 がインストール済み
+  - vibes/docs/ ディレクトリ構造が存在
+
+goals:
+  - Ruby MCP Toolsコードを変更せずにSSoT化を実現
+  - Markdownリファレンスを vibes/docs/specs/ に自動生成
+  - JSONマニフェストを .mcp-tools-manifest.json に出力
+  - Mcp::ServerController の手動ツール配列を自動登録に置き換え
+  - CI/pre-commit hookでドキュメント自動更新を実現
+
+phases:
+  - phase: 1
+    title: "Phase 1: 最小限のSSoT実装（必須）"
+    estimated_time: "7 hours"
+    description: |
+      Ruby DSL/YARDコメントをパースしてドキュメント生成し、
+      ツール自動登録機構を導入する。
+      既存コードは一切変更しない。
+
+    tasks:
+      - task: 1.1
+        title: "DocumentationGenerator クラス実装"
+        estimated_time: "4 hours"
+        actions:
+          - lib/epic_grid/mcp_tools/documentation_generator.rb を新規作成
+          - Ruby ASTパーサー（Parser gem）または正規表現でツールクラスを解析
+          - クラス名、description、@example、input_schemaを抽出
+          - Markdown形式のリファレンスドキュメントを生成
+          - JSON形式のマニフェストを生成（MCP仕様準拠）
+        deliverables:
+          - lib/epic_grid/mcp_tools/documentation_generator.rb
+          - テスト用サンプル出力（Markdown/JSON）
+        checkpoint: "CreateTaskTool.rb を入力として正しくMarkdown/JSON出力できるか確認"
+
+      - task: 1.2
+        title: "Registry クラス実装（自動登録機構）"
+        estimated_time: "2 hours"
+        actions:
+          - lib/epic_grid/mcp_tools/registry.rb を新規作成
+          - Dir.glob で *_tool.rb をスキャン
+          - constantize でクラスオブジェクトを取得
+          - MCP::Tool を継承しているクラスのみをフィルタ
+        deliverables:
+          - lib/epic_grid/mcp_tools/registry.rb
+          - Registry.all_tools が17個のツールクラスを返す
+        checkpoint: "Registry.all_tools.count == 17 であることを確認"
+
+      - task: 1.3
+        title: "Rakeタスク作成とCI統合"
+        estimated_time: "1 hour"
+        actions:
+          - lib/tasks/mcp_docs.rake を作成
+          - rake mcp:generate_docs タスクを実装
+          - vibes/docs/specs/mcp_tools_reference.md を生成
+          - .mcp-tools-manifest.json をルートに生成
+          - .gitignore を更新（自動生成ファイルを追跡対象に）
+          - Lefthook設定にpre-commit hookを追加（検討）
+        deliverables:
+          - lib/tasks/mcp_docs.rake
+          - vibes/docs/specs/mcp_tools_reference.md（初回生成）
+          - .mcp-tools-manifest.json（初回生成）
+        checkpoint: "rake mcp:generate_docs を実行してエラーなく完了、生成ファイルがコミット可能"
+
+    checkpoints:
+      - "全17ツールがMarkdownリファレンスに掲載されている"
+      - "JSONマニフェストが有効なJSON形式である"
+      - "Registry.all_tools が正しく動作する"
+      - "既存のMCP Toolsコードに変更がない"
+
+  - phase: 2
+    title: "Phase 2: オプション強化（必要に応じて実装）"
+    estimated_time: "3-7 hours"
+    description: |
+      TypeScript型定義生成またはCLIツールを追加実装する。
+      Phase 1 完了後、プロジェクトニーズに応じて選択。
+
+    tasks:
+      - task: 2.1
+        title: "Option A: TypeScript型定義生成"
+        estimated_time: "3 hours"
+        actions:
+          - TypeScriptGenerator クラスを実装
+          - Ruby Hash → TypeScript interface 変換ロジック
+          - assets/javascripts/epic_grid/src/types/mcp-tools.d.ts 生成
+          - Request/Response型を定義
+          - MSWモック用の型エクスポート
+        deliverables:
+          - lib/epic_grid/mcp_tools/typescript_generator.rb
+          - assets/javascripts/epic_grid/src/types/mcp-tools.d.ts
+        checkpoint: "生成された.d.tsファイルがTypeScriptコンパイラでエラーなし"
+
+      - task: 2.2
+        title: "Option B: MCP Tools CLI実装"
+        estimated_time: "4 hours"
+        actions:
+          - lib/tasks/mcp_cli.rake を作成
+          - rake mcp:list でツール一覧表示
+          - rake mcp:inspect[ToolName] でツール詳細表示
+          - rake mcp:call[ToolName, JSON] でツール実行
+          - 色付き出力（Rainbow gem）で視認性向上
+        deliverables:
+          - lib/tasks/mcp_cli.rake
+          - 対話的なCLIインターフェース
+        checkpoint: "rake mcp:list が正しく17ツールを表示、rake mcp:call でツール実行可能"
+
+    checkpoints:
+      - "選択したオプションが正しく動作する"
+      - "既存のPhase 1成果物と統合されている"
+
+success_criteria:
+  required:
+    - rake mcp:generate_docs が正常に動作する
+    - vibes/docs/specs/mcp_tools_reference.md が完全なリファレンスとして機能
+    - .mcp-tools-manifest.json が有効なMCP仕様準拠JSON
+    - Registry.all_tools が17個のツールを返す
+    - 既存のMCP::ServerController の動作に影響がない
+    - 既存の17個のツールファイルに変更がない
+  optional:
+    - TypeScript型定義が生成され、tscでエラーなし
+    - CLIツールが実装され、開発者が利用可能
+    - pre-commit hookで自動ドキュメント更新が動作
+
+known_issues:
+  - Ruby ASTパース vs 正規表現パース: Parser gemを使うか、シンプルな正規表現で済ませるか要検討
+  - input_schemaのネスト構造: 複雑なスキーマの場合、Markdown表現が冗長になる可能性
+  - constantize の安全性: ツールクラスのロード順序やautoload問題に注意
+  - TypeScript型変換の限界: Ruby Hash の dynamic な構造を完全には表現できない
+  - CLI実装の工数: Rainbow gem等の依存関係追加が必要になる可能性
+
+next_steps:
+  - Phase 1完了後、バトーさんに Phase 2 の必要性を確認
+  - Phase 2-A（TypeScript）: MSWモック実装計画と連動
+  - Phase 2-B（CLI）: 開発者フィードバックを収集して優先度判断
+  - 成功時: README.md に MCP Tools 開発ガイドを追記
+  - 失敗時: 既存の手動ドキュメント管理を継続、課題をIssue登録
+
+notes:
+  - 本プランは「AI協働規約」に準拠し、オーナー承認後に実装開始
+  - Phase 1のみでも十分な価値提供が可能（最小限のSSoT実現）
+  - Phase 2は段階的に導入可能（TypeScript/CLI いずれか、または両方）
+  - ドキュメント生成は「Code as Document」原則に沿った設計
+  - 既存コード変更ゼロで実現可能なため、リスクが低い
+
+# ========================================
+# 実装詳細ガイドは別途作成予定
+# ========================================
+# implementation_guide: "/vibes/docs/temps/20251124_mcp_ssot_implementation_guide.md"

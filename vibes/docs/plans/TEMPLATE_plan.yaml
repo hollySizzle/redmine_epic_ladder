@@ -1,0 +1,101 @@
+---
+# ========================================
+# プランテンプレート
+# ========================================
+# 用途: 実装計画、テスト計画、デプロイ計画
+# 特徴: タスクリストとチェックポイントに絞ったシンプルな構造
+# フォーマットバージョン: 1.0
+# ========================================
+
+plan_type: testing  # testing, implementation, deployment, maintenance
+title: "プランのタイトル（簡潔に）"
+reference: "/Vibes/参照ドキュメント.yaml"  # 関連する設計書・仕様書
+date: "YYYY-MM-DD"
+priority: high  # low, medium, high, highest
+status: pending  # pending, in_progress, completed, cancelled
+
+overview: |
+  プランの概要を3-5行で記載。
+  何を実現するか、なぜ必要か、期待される結果。
+
+estimated_total_time: "X-Y hours"
+
+prerequisites:
+  - 前提条件1（必要なツール、環境、完了済みタスク）
+  - 前提条件2
+
+goals:
+  - 目標1（具体的な成果物や状態）
+  - 目標2
+  - 目標3
+
+phases:
+  - phase: 1
+    title: "Phase 1のタイトル"
+    estimated_time: "X min"
+    description: |
+      このPhaseで実現すること（1-2行）
+
+    tasks:
+      - task: 1.1
+        title: "Task 1.1のタイトル"
+        estimated_time: "X min"
+        actions:
+          - アクション1（簡潔に、コマンドは書かない）
+          - アクション2
+        deliverables:
+          - 成果物1（ファイルパス、機能名など）
+          - 成果物2
+        checkpoint: "何を確認するか（簡潔に）"
+
+      - task: 1.2
+        title: "Task 1.2のタイトル"
+        estimated_time: "X min"
+        actions:
+          - アクション1
+          - アクション2
+        checkpoint: "何を確認するか"
+
+    checkpoints:
+      - "Phase 1全体のチェックポイント1"
+      - "Phase 1全体のチェックポイント2"
+
+  - phase: 2
+    title: "Phase 2のタイトル"
+    estimated_time: "X min"
+    description: |
+      このPhaseで実現すること
+
+    tasks:
+      - task: 2.1
+        title: "Task 2.1のタイトル"
+        actions:
+          - アクション1
+          - アクション2
+        checkpoint: "何を確認するか"
+
+success_criteria:
+  required:
+    - 必須の成功基準1
+    - 必須の成功基準2
+  optional:
+    - オプションの成功基準1
+    - オプションの成功基準2
+
+known_issues:
+  - 既知の問題1（制約事項、注意点）
+  - 既知の問題2
+
+next_steps:
+  - 成功時のアクション
+  - 失敗時のアクション
+
+notes:
+  - 補足事項1
+  - 補足事項2
+
+# ========================================
+# 詳細な手順は別ファイルに記載
+# ========================================
+# implementation_guide: "/Vibes/実装ガイド/YYYYMMDD_実装手順.md"
+# コマンド例、コード例は実装ガイドに分離
