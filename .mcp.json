@@ -7,6 +7,8 @@
         "X-Redmine-API-Key": "04d405fb8471d869a47a31da041df326f7cd959a"
       },
       "env": {
+        "ALLOWED_PROJECTS": "",
+        "DEFAULT_PROJECT_ID": "",
         "AUTO_INFER_PARENT": "true",
         "AUTO_INFER_THRESHOLD": "0.3",
         "REQUIRE_CONFIRMATION_FOR": "move_version,close"

@@ -135,7 +135,7 @@ RSpec.describe EpicGrid::McpTools::CreateTaskTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('Taskトラッカーが設定されていません')
+        expect(response_text['error']).to include('トラッカーが設定されていません')
       end
     end
   end

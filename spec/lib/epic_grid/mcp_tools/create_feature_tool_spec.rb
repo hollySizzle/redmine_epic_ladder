@@ -58,7 +58,7 @@ RSpec.describe EpicGrid::McpTools::CreateFeatureTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('親Epicが見つかりません')
+        expect(response_text['error']).to include('親チケットが見つかりません')
       end
     end
   end

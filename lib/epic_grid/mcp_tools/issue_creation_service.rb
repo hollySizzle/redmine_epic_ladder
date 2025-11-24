@@ -48,10 +48,13 @@ module EpicGrid
 
         # 5. トラッカー取得
         tracker = find_tracker(tracker_type, project)
-        return error_result("#{tracker_type.to_s.capitalize}トラッカーが設定されていません") unless tracker
+        tracker_display_name = EpicGrid::TrackerHierarchy.tracker_names[tracker_type]
+        return error_result("#{tracker_display_name}トラッカーが設定されていません") unless tracker
 
         # 6. 親チケット解決
-        parent_issue = resolve_parent_issue(parent_issue_id)
+        parent_issue_result = resolve_parent_issue(parent_issue_id)
+        return parent_issue_result if parent_issue_result.is_a?(Hash) && !parent_issue_result[:success]
+        parent_issue = parent_issue_result
 
         # 7. Version解決
         version = resolve_version(project, version_id, parent_issue)
@@ -111,7 +114,11 @@ module EpicGrid
       # 親チケット解決
       def resolve_parent_issue(parent_issue_id)
         return nil if parent_issue_id.blank?
-        Issue.find_by(id: parent_issue_id)
+
+        issue = Issue.find_by(id: parent_issue_id)
+        return error_result("親チケットが見つかりません: #{parent_issue_id}") unless issue
+
+        issue
       end
 
       # Version解決

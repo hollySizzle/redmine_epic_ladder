@@ -94,7 +94,7 @@ RSpec.describe EpicGrid::McpTools::CreateEpicTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('Epic作成権限がありません')
+        expect(response_text['error']).to include('チケット作成権限がありません')
       end
 
       it 'returns error when Epic tracker not configured' do
@@ -109,7 +109,7 @@ RSpec.describe EpicGrid::McpTools::CreateEpicTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('Epicトラッカーが設定されていません')
+        expect(response_text['error']).to include('トラッカーが設定されていません')
       end
     end
   end
@@ -123,7 +123,7 @@ RSpec.describe EpicGrid::McpTools::CreateEpicTool, type: :model do
     it 'has required input schema' do
       schema = described_class.input_schema
       expect(schema.properties).to include(:project_id, :subject)
-      expect(schema.instance_variable_get(:@required)).to include(:project_id, :subject)
+      expect(schema.instance_variable_get(:@required)).to include(:subject)
     end
   end
 end

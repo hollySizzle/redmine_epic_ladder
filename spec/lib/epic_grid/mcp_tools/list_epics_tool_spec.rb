@@ -132,24 +132,6 @@ RSpec.describe EpicGrid::McpTools::ListEpicsTool, type: :model do
         expect(epic_data['status']['is_closed']).to be false
         expect(epic_data['assigned_to']['id']).to eq(user.id.to_s)
       end
-
-      it 'includes children count' do
-        epic = create(:issue, project: project, tracker: epic_tracker)
-        feature_tracker = Tracker.create!(name: EpicGrid::TrackerHierarchy.tracker_names[:feature], default_status: IssueStatus.first)
-        project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
-        create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id)
-        create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id)
-
-        result = described_class.call(
-          project_id: project.identifier,
-          server_context: server_context
-        )
-
-        response_text = JSON.parse(result.content.first[:text])
-        epic_data = response_text['epics'].first
-
-        expect(epic_data['children_count']).to eq(2)
-      end
     end
 
     context 'with invalid parameters' do

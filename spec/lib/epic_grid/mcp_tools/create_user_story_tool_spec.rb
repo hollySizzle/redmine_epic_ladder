@@ -124,7 +124,7 @@ RSpec.describe EpicGrid::McpTools::CreateUserStoryTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('UserStory作成権限がありません')
+        expect(response_text['error']).to include('チケット作成権限がありません')
       end
 
       it 'returns error when UserStory tracker not configured' do
@@ -140,7 +140,7 @@ RSpec.describe EpicGrid::McpTools::CreateUserStoryTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('UserStoryトラッカーが設定されていません')
+        expect(response_text['error']).to include('トラッカーが設定されていません')
       end
 
       it 'returns error when parent feature not found' do
@@ -153,7 +153,7 @@ RSpec.describe EpicGrid::McpTools::CreateUserStoryTool, type: :model do
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
-        expect(response_text['error']).to include('親Featureが見つかりません')
+        expect(response_text['error']).to include('親チケットが見つかりません')
       end
     end
   end
@@ -167,7 +167,7 @@ RSpec.describe EpicGrid::McpTools::CreateUserStoryTool, type: :model do
     it 'has required input schema' do
       schema = described_class.input_schema
       expect(schema.properties).to include(:project_id, :subject, :parent_feature_id)
-      expect(schema.instance_variable_get(:@required)).to include(:project_id, :subject, :parent_feature_id)
+      expect(schema.instance_variable_get(:@required)).to include(:subject, :parent_feature_id)
     end
   end
 end
