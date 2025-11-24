@@ -1,0 +1,448 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-11-24T12:38:20Z",
+  "tools": [
+    {
+      "name": "AddIssueCommentTool",
+      "description": "チケットにコメント（ノート）を追加します。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "comment": {
+            "type": "string",
+            "description": "コメント内容"
+          }
+        },
+        "required": [
+          "issue_id",
+          "comment"
+        ]
+      }
+    },
+    {
+      "name": "AssignToVersionTool",
+      "description": "チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version ID"
+          }
+        },
+        "required": [
+          "issue_id",
+          "version_id"
+        ]
+      }
+    },
+    {
+      "name": "CreateBugTool",
+      "description": "Bug（発生した不具合）チケットを作成します。例: ",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
+          },
+          "description": {
+            "type": "string",
+            "description": "Bugの説明（自然言語OK）"
+          },
+          "parent_user_story_id": {
+            "type": "string",
+            "description": "親UserStory ID（省略可）"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version ID（省略時は親から継承）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者ID（省略時は現在のユーザー）"
+          }
+        },
+        "required": [
+          "description"
+        ]
+      }
+    },
+    {
+      "name": "CreateEpicTool",
+      "description": "Epic（大分類）チケットを作成します。例: ",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Epicの件名"
+          },
+          "description": {
+            "type": "string",
+            "description": "Epicの説明（省略可）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者ID（省略時は現在のユーザー）"
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      }
+    },
+    {
+      "name": "CreateFeatureTool",
+      "description": "Feature（分類を行うための中間層）チケットを作成します。例: ",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Featureの件名"
+          },
+          "parent_epic_id": {
+            "type": "string",
+            "description": "親Epic ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Featureの説明（省略可）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者ID（省略時は現在のユーザー）"
+          }
+        },
+        "required": [
+          "subject",
+          "parent_epic_id"
+        ]
+      }
+    },
+    {
+      "name": "CreateTaskTool",
+      "description": "自然言語からTaskチケットを作成します。例: ",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
+          },
+          "description": {
+            "type": "string",
+            "description": "タスクの説明（自然言語OK）"
+          },
+          "parent_user_story_id": {
+            "type": "string",
+            "description": "親UserStory ID（省略可）"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version ID（省略時は親から継承）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者ID（省略時は現在のユーザー）"
+          }
+        },
+        "required": [
+          "description"
+        ]
+      }
+    },
+    {
+      "name": "CreateTestTool",
+      "description": "Test（やるべきテストや検証）チケットを作成します。例: ",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
+          },
+          "description": {
+            "type": "string",
+            "description": "Testの説明（自然言語OK）"
+          },
+          "parent_user_story_id": {
+            "type": "string",
+            "description": "親UserStory ID（省略可）"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version ID（省略時は親から継承）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者ID（省略時は現在のユーザー）"
+          }
+        },
+        "required": [
+          "description"
+        ]
+      }
+    },
+    {
+      "name": "CreateUserStoryTool",
+      "description": "UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: ",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
+          },
+          "subject": {
+            "type": "string",
+            "description": "UserStoryの件名"
+          },
+          "parent_feature_id": {
+            "type": "string",
+            "description": "親Feature ID"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version ID（リリース予定）"
+          },
+          "description": {
+            "type": "string",
+            "description": "UserStoryの説明（省略可）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者ID（省略時は現在のユーザー）"
+          }
+        },
+        "required": [
+          "subject",
+          "parent_feature_id"
+        ]
+      }
+    },
+    {
+      "name": "CreateVersionTool",
+      "description": "Version（リリース予定）を作成します。例: ",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID）"
+          },
+          "name": {
+            "type": "string",
+            "description": "Version名"
+          },
+          "effective_date": {
+            "type": "string",
+            "description": "リリース予定日（YYYY-MM-DD形式）"
+          },
+          "description": {
+            "type": "string",
+            "description": "Versionの説明（省略可）"
+          },
+          "status": {
+            "type": "string",
+            "description": "ステータス（open/locked/closed、デフォルト: open）"
+          }
+        },
+        "required": [
+          "project_id",
+          "name",
+          "effective_date"
+        ]
+      }
+    },
+    {
+      "name": "GetIssueDetailTool",
+      "description": "チケットの詳細情報、コメント（更新履歴）、子チケットを取得します。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          }
+        },
+        "required": [
+          "issue_id"
+        ]
+      }
+    },
+    {
+      "name": "GetProjectStructureTool",
+      "description": "プロジェクトのEpic階層構造（Epic→Feature→UserStory）を可視化します。PMがプロジェクト全体を把握するのに便利です。",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID）"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version IDでフィルタ（省略可）"
+          },
+          "status": {
+            "type": "string",
+            "description": "ステータスでフィルタ（open/closed、省略可）"
+          }
+        },
+        "required": [
+          "project_id"
+        ]
+      }
+    },
+    {
+      "name": "ListEpicsTool",
+      "description": "プロジェクト内のEpic一覧を取得します。担当者、ステータスでフィルタリング可能です。",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者IDでフィルタ（省略可）"
+          },
+          "status": {
+            "type": "string",
+            "description": "ステータスでフィルタ（open/closed、省略可）"
+          },
+          "limit": {
+            "type": "number",
+            "description": "取得件数上限（デフォルト: 50）"
+          }
+        },
+        "required": [
+          "project_id"
+        ]
+      }
+    },
+    {
+      "name": "ListUserStoriesTool",
+      "description": "プロジェクト内のUserStory一覧を取得します。Version、担当者でフィルタリング可能です。",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID）"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version IDでフィルタ（省略可）"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者IDでフィルタ（省略可）"
+          },
+          "status": {
+            "type": "string",
+            "description": "ステータスでフィルタ（open/closed、省略可）"
+          },
+          "limit": {
+            "type": "number",
+            "description": "取得件数上限（デフォルト: 50）"
+          }
+        },
+        "required": [
+          "project_id"
+        ]
+      }
+    },
+    {
+      "name": "MoveToNextVersionTool",
+      "description": "チケット（UserStory推奨）を次のVersionに移動します（リスケ）。配下のTask/Bug/Testも自動的に移動されます。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "description": "確認済みフラグ（危険な操作の場合に必要）",
+            "default": false
+          }
+        },
+        "required": [
+          "issue_id"
+        ]
+      }
+    },
+    {
+      "name": "UpdateIssueAssigneeTool",
+      "description": "チケットの担当者を変更します。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "assigned_to_id": {
+            "type": "string",
+            "description": "担当者ID（nullで担当者解除）"
+          }
+        },
+        "required": [
+          "issue_id",
+          "assigned_to_id"
+        ]
+      }
+    },
+    {
+      "name": "UpdateIssueProgressTool",
+      "description": "チケットの進捗率を更新します。0〜100の整数で指定してください。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "progress": {
+            "type": "number",
+            "description": "進捗率（0〜100の整数）"
+          }
+        },
+        "required": [
+          "issue_id",
+          "progress"
+        ]
+      }
+    },
+    {
+      "name": "UpdateIssueStatusTool",
+      "description": "チケットのステータスを更新します。例: ",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "status_name": {
+            "type": "string",
+            "description": "ステータス名（例: 'Open', 'In Progress', 'Closed'）"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "description": "確認済みフラグ（危険な操作の場合に必要）",
+            "default": false
+          }
+        },
+        "required": [
+          "issue_id",
+          "status_name"
+        ]
+      }
+    }
+  ]
+}
