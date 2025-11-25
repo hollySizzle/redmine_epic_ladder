@@ -23,3 +23,6 @@ group :development, :test do
   # gem 'pry-rails', '~> 0.3'  # Redmine本体で定義済み
   # gem 'pry-byebug', '~> 3.10'  # Redmine本体で定義済み
 end
+
+# Note: yard gem is already defined elsewhere (Redmine base or another plugin)
+# DocumentationGenerator will use it if available, skip otherwise

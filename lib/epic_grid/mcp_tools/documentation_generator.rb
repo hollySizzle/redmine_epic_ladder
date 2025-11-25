@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
-require 'yard'
+begin
+  require 'yard'
+rescue LoadError
+  # YARDがない場合（本番環境など）はスキップ
+  Rails.logger.warn('[DocumentationGenerator] YARD gem not available - skipping documentation features') if defined?(Rails)
+end
 require 'json'
 
 module EpicGrid
@@ -27,6 +32,11 @@ module EpicGrid
 
       # 単一ツールファイルをパース
       def parse_tool_file(file_path)
+        unless defined?(YARD)
+          Rails.logger.warn('[DocumentationGenerator] YARD not available - cannot parse tools') if defined?(Rails)
+          return nil
+        end
+
         YARD.parse(file_path)
 
         # ファイル名からクラス名を推測
