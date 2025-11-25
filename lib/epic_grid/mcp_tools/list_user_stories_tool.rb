@@ -18,24 +18,24 @@ module EpicGrid
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID）" },
+          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
           version_id: { type: "string", description: "Version IDでフィルタ（省略可）" },
           assigned_to_id: { type: "string", description: "担当者IDでフィルタ（省略可）" },
           status: { type: "string", description: "ステータスでフィルタ（open/closed、省略可）" },
           limit: { type: "number", description: "取得件数上限（デフォルト: 50）" }
         },
-        required: ["project_id"]
+        required: []
       )
 
-      def self.call(project_id:, version_id: nil, assigned_to_id: nil, status: nil, limit: 50, server_context:)
-        Rails.logger.info "ListUserStoriesTool#call started: project_id=#{project_id}"
+      def self.call(project_id: nil, version_id: nil, assigned_to_id: nil, status: nil, limit: 50, server_context:)
+        Rails.logger.info "ListUserStoriesTool#call started: project_id=#{project_id || 'DEFAULT'}"
 
         begin
-          # プロジェクト取得
-          project = find_project(project_id)
-          unless project
-            return error_response("プロジェクトが見つかりません: #{project_id}")
-          end
+          # プロジェクト取得と権限チェック
+          result = resolve_and_validate_project(project_id)
+          return error_response(result[:error], result[:details] || {}) if result[:error]
+
+          project = result[:project]
 
           # 権限チェック
           user = server_context[:user] || User.current

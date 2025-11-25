@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'base_helper'
+
 module EpicGrid
   module McpTools
     # Version作成MCPツール
@@ -10,28 +12,30 @@ module EpicGrid
     #   AI: CreateVersionToolを呼び出し
     #   結果: Version「Sprint 2025-02」が作成される
     class CreateVersionTool < MCP::Tool
+      extend BaseHelper
+
       description "Version（リリース予定）を作成します。例: 'Sprint 2025-02（2025-02-28まで）'"
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID）" },
+          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
           name: { type: "string", description: "Version名" },
           effective_date: { type: "string", description: "リリース予定日（YYYY-MM-DD形式）" },
           description: { type: "string", description: "Versionの説明（省略可）" },
           status: { type: "string", description: "ステータス（open/locked/closed、デフォルト: open）" }
         },
-        required: ["project_id", "name", "effective_date"]
+        required: ["name", "effective_date"]
       )
 
-      def self.call(project_id:, name:, effective_date:, description: nil, status: "open", server_context:)
-        Rails.logger.info "CreateVersionTool#call started: project_id=#{project_id}, name=#{name}, effective_date=#{effective_date}"
+      def self.call(project_id: nil, name:, effective_date:, description: nil, status: "open", server_context:)
+        Rails.logger.info "CreateVersionTool#call started: project_id=#{project_id || 'DEFAULT'}, name=#{name}, effective_date=#{effective_date}"
 
         begin
-          # プロジェクト取得
-          project = find_project(project_id)
-          unless project
-            return error_response("プロジェクトが見つかりません: #{project_id}")
-          end
+          # プロジェクト取得と権限チェック
+          result = resolve_and_validate_project(project_id)
+          return error_response(result[:error], result[:details] || {}) if result[:error]
+
+          project = result[:project]
 
           # 権限チェック
           user = server_context[:user] || User.current
@@ -72,15 +76,6 @@ module EpicGrid
 
       class << self
         private
-
-        # プロジェクト取得（識別子 or ID）
-        def find_project(project_id)
-          if project_id.to_i.to_s == project_id
-            Project.find_by(id: project_id.to_i)
-          else
-            Project.find_by(identifier: project_id) || Project.find_by(id: project_id.to_i)
-          end
-        end
 
         # 日付パース
         def parse_date(date_string)
