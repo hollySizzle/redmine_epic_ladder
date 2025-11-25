@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2025-11-24T12:38:20Z",
+  "generated_at": "2025-11-24T13:32:01Z",
   "tools": [
     {
       "name": "AddIssueCommentTool",
@@ -44,7 +44,7 @@
     },
     {
       "name": "CreateBugTool",
-      "description": "Bug（発生した不具合）チケットを作成します。例: ",
+      "description": "Bug（発生した不具合）チケットを作成します。例: '申込フォームのバリデーションが効かない'",
       "inputSchema": {
         "properties": {
           "project_id": {
@@ -75,7 +75,7 @@
     },
     {
       "name": "CreateEpicTool",
-      "description": "Epic（大分類）チケットを作成します。例: ",
+      "description": "Epic（大分類）チケットを作成します。例: 'ユーザー動線'",
       "inputSchema": {
         "properties": {
           "project_id": {
@@ -102,7 +102,7 @@
     },
     {
       "name": "CreateFeatureTool",
-      "description": "Feature（分類を行うための中間層）チケットを作成します。例: ",
+      "description": "Feature（分類を行うための中間層）チケットを作成します。例: 'CTA'",
       "inputSchema": {
         "properties": {
           "project_id": {
@@ -134,7 +134,7 @@
     },
     {
       "name": "CreateTaskTool",
-      "description": "自然言語からTaskチケットを作成します。例: ",
+      "description": "自然言語からTaskチケットを作成します。例: 'カートのリファクタリング'",
       "inputSchema": {
         "properties": {
           "project_id": {
@@ -165,7 +165,7 @@
     },
     {
       "name": "CreateTestTool",
-      "description": "Test（やるべきテストや検証）チケットを作成します。例: ",
+      "description": "Test（やるべきテストや検証）チケットを作成します。例: '申込完了までのE2Eテスト'",
       "inputSchema": {
         "properties": {
           "project_id": {
@@ -196,7 +196,7 @@
     },
     {
       "name": "CreateUserStoryTool",
-      "description": "UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: ",
+      "description": "UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: '申込画面を作る'",
       "inputSchema": {
         "properties": {
           "project_id": {
@@ -232,7 +232,7 @@
     },
     {
       "name": "CreateVersionTool",
-      "description": "Version（リリース予定）を作成します。例: ",
+      "description": "Version（リリース予定）を作成します。例: 'Sprint 2025-02（2025-02-28まで）'",
       "inputSchema": {
         "properties": {
           "project_id": {
@@ -421,7 +421,7 @@
     },
     {
       "name": "UpdateIssueStatusTool",
-      "description": "チケットのステータスを更新します。例: ",
+      "description": "チケットのステータスを更新します。例: 'Open', 'In Progress', 'Closed'",
       "inputSchema": {
         "properties": {
           "issue_id": {

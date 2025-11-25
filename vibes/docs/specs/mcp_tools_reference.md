@@ -61,7 +61,7 @@ AI: AssignToVersionToolを呼び出し
 
 ## CreateBugTool
 
-**Description**: Bug（発生した不具合）チケットを作成します。例: 
+**Description**: Bug（発生した不具合）チケットを作成します。例: '申込フォームのバリデーションが効かない'
 
 **Class**: `EpicGrid::McpTools::CreateBugTool`
 
@@ -90,7 +90,7 @@ AI: CreateBugToolを呼び出し
 
 ## CreateEpicTool
 
-**Description**: Epic（大分類）チケットを作成します。例: 
+**Description**: Epic（大分類）チケットを作成します。例: 'ユーザー動線'
 
 **Class**: `EpicGrid::McpTools::CreateEpicTool`
 
@@ -118,7 +118,7 @@ AI: CreateEpicToolを呼び出し
 
 ## CreateFeatureTool
 
-**Description**: Feature（分類を行うための中間層）チケットを作成します。例: 
+**Description**: Feature（分類を行うための中間層）チケットを作成します。例: 'CTA'
 
 **Class**: `EpicGrid::McpTools::CreateFeatureTool`
 
@@ -147,7 +147,7 @@ AI: CreateFeatureToolを呼び出し
 
 ## CreateTaskTool
 
-**Description**: 自然言語からTaskチケットを作成します。例: 
+**Description**: 自然言語からTaskチケットを作成します。例: 'カートのリファクタリング'
 
 **Class**: `EpicGrid::McpTools::CreateTaskTool`
 
@@ -176,7 +176,7 @@ AI: CreateTaskToolを呼び出し
 
 ## CreateTestTool
 
-**Description**: Test（やるべきテストや検証）チケットを作成します。例: 
+**Description**: Test（やるべきテストや検証）チケットを作成します。例: '申込完了までのE2Eテスト'
 
 **Class**: `EpicGrid::McpTools::CreateTestTool`
 
@@ -205,7 +205,7 @@ AI: CreateTestToolを呼び出し
 
 ## CreateUserStoryTool
 
-**Description**: UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: 
+**Description**: UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: '申込画面を作る'
 
 **Class**: `EpicGrid::McpTools::CreateUserStoryTool`
 
@@ -235,7 +235,7 @@ AI: CreateUserStoryToolを呼び出し
 
 ## CreateVersionTool
 
-**Description**: Version（リリース予定）を作成します。例: 
+**Description**: Version（リリース予定）を作成します。例: 'Sprint 2025-02（2025-02-28まで）'
 
 **Class**: `EpicGrid::McpTools::CreateVersionTool`
 
@@ -451,7 +451,7 @@ AI: UpdateIssueProgressToolを呼び出し
 
 ## UpdateIssueStatusTool
 
-**Description**: チケットのステータスを更新します。例: 
+**Description**: チケットのステータスを更新します。例: 'Open', 'In Progress', 'Closed'
 
 **Class**: `EpicGrid::McpTools::UpdateIssueStatusTool`
 

@@ -96,8 +96,14 @@ module EpicGrid
       # descriptionを抽出（正規表現）
       def extract_description(source)
         # description "..." または description '...' を抽出
-        match = source.match(/description\s+["'](.+?)["']/m)
-        match ? match[1] : nil
+        # 改良版: 開始引用符と同じ種類の終了引用符を探す
+        # ダブルクォートの場合
+        match = source.match(/description\s+"([^"]+)"/m)
+        return match[1].strip if match
+
+        # シングルクォートの場合
+        match = source.match(/description\s+'([^']+)'/m)
+        match ? match[1].strip : nil
       end
 
       # input_schemaを抽出（Rubyコードとして評価）
