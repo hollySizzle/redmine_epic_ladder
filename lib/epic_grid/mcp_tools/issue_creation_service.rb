@@ -24,8 +24,8 @@ module EpicGrid
       # @param assigned_to_id [String, nil] 担当者ID
       # @return [Hash] 成功/エラー情報を含むハッシュ
       def create_issue(tracker_type:, project_id: nil, subject: nil, description:, parent_issue_id: nil, version_id: nil, assigned_to_id: nil)
-        # 1. プロジェクトID解決
-        resolved_project_id = ProjectValidator.resolve_project_id(project_id)
+        # 1. プロジェクトID解決（server_contextからX-Default-Projectヘッダー値を参照）
+        resolved_project_id = ProjectValidator.resolve_project_id(project_id, server_context: server_context)
         return error_result("プロジェクトIDが指定されていません。DEFAULT_PROJECTを設定するか、project_idを指定してください") unless resolved_project_id
 
         # 2. プロジェクト取得

@@ -31,8 +31,8 @@ module EpicGrid
         Rails.logger.info "CreateVersionTool#call started: project_id=#{project_id || 'DEFAULT'}, name=#{name}, effective_date=#{effective_date}"
 
         begin
-          # プロジェクト取得と権限チェック
-          result = resolve_and_validate_project(project_id)
+          # プロジェクト取得と権限チェック（server_contextからX-Default-Projectヘッダー値を参照）
+          result = resolve_and_validate_project(project_id, server_context: server_context)
           return error_response(result[:error], result[:details] || {}) if result[:error]
 
           project = result[:project]

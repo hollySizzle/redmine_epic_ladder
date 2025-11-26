@@ -65,7 +65,7 @@ module Mcp
     def set_cors_headers
       response.headers['Access-Control-Allow-Origin'] = '*'
       response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-      response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Redmine-API-Key'
+      response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Redmine-API-Key, X-Default-Project'
       response.headers['Access-Control-Max-Age'] = '86400' # 24時間
     end
 
@@ -135,9 +135,16 @@ module Mcp
           EpicGrid::McpTools::GetIssueDetailTool
         ],
         server_context: {
-          user: User.current
+          user: User.current,
+          default_project: extract_default_project_from_header
         }
       )
+    end
+
+    # X-Default-Projectヘッダーからデフォルトプロジェクトを取得
+    # .mcp.jsonのheadersセクションで指定された値をサーバー側で利用可能にする
+    def extract_default_project_from_header
+      request.headers['X-Default-Project'].presence
     end
 
     # リクエストIDをパース（エラーレスポンス用）

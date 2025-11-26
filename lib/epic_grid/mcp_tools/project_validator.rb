@@ -9,11 +9,22 @@ module EpicGrid
 
       # プロジェクトIDを解決する
       # @param project_id [String, nil] プロジェクトID（省略可能）
+      # @param server_context [Hash, nil] サーバーコンテキスト（X-Default-Projectヘッダー値を含む）
       # @return [String] 解決されたプロジェクトID
-      def resolve_project_id(project_id)
+      #
+      # 優先順位:
+      #   1. 明示的に指定されたproject_id
+      #   2. server_context[:default_project] (X-Default-Projectヘッダーから)
+      #   3. ENV['DEFAULT_PROJECT'] (サーバー側環境変数)
+      def resolve_project_id(project_id, server_context: nil)
         return project_id if project_id.present?
 
-        # DEFAULT_PROJECTを使用
+        # X-Default-Projectヘッダーから取得（.mcp.jsonで設定可能）
+        if server_context.is_a?(Hash) && server_context[:default_project].present?
+          return server_context[:default_project]
+        end
+
+        # フォールバック: サーバー側環境変数
         default_project = ENV.fetch('DEFAULT_PROJECT', nil)
         return default_project if default_project.present?
 

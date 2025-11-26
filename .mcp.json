@@ -4,14 +4,8 @@
       "type": "http",
       "url": "http://localhost:8500/mcp/rpc",
       "headers": {
-        "X-Redmine-API-Key": "04d405fb8471d869a47a31da041df326f7cd959a"
-      },
-      "env": {
-        "ALLOWED_PROJECTS": "sakura-ec,sakura-mobile,naisys,ai-recommend",
-        "DEFAULT_PROJECT": "sakura-ec",
-        "AUTO_INFER_PARENT": "true",
-        "AUTO_INFER_THRESHOLD": "0.3",
-        "REQUIRE_CONFIRMATION_FOR": ""
+        "X-Redmine-API-Key": "04d405fb8471d869a47a31da041df326f7cd959a",
+        "X-Default-Project": "sakura-ec"
       }
     }
   }

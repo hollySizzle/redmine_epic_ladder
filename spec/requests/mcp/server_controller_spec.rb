@@ -201,6 +201,127 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         expect(response.headers['Access-Control-Allow-Origin']).to eq('*')
         expect(response.headers['Access-Control-Allow-Methods']).to include('POST')
       end
+
+      it 'includes X-Default-Project in allowed headers' do
+        post '/mcp/rpc',
+          params: { jsonrpc: '2.0', method: 'tools/list', id: 1 }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response.headers['Access-Control-Allow-Headers']).to include('X-Default-Project')
+      end
+    end
+
+    context 'X-Default-Project header' do
+      let(:task_tracker) do
+        Tracker.find_by(name: 'Task') || begin
+          default_status = IssueStatus.first || IssueStatus.create!(name: 'New')
+          Tracker.create!(name: 'Task', default_status: default_status)
+        end
+      end
+
+      let(:default_project) { FactoryBot.create(:project, identifier: 'default-proj') }
+
+      before do
+        project.trackers << task_tracker
+        default_project.trackers << task_tracker
+        Setting.plugin_redmine_epic_grid = { 'task_tracker' => 'Task' }
+
+        # ユーザーにdefault_projectへのアクセス権限を付与
+        role = Role.find_by(name: 'Manager') || FactoryBot.create(:role, permissions: [:view_issues, :add_issues, :edit_issues])
+        FactoryBot.create(:member, project: default_project, user: user, roles: [role])
+      end
+
+      it 'uses X-Default-Project header when project_id is not specified' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                description: 'Task created with default project header'
+              }
+            },
+            id: 10
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key,
+            'X-Default-Project' => default_project.identifier
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        result_data = JSON.parse(json['result']['content'].first['text'])
+
+        expect(result_data['success']).to be true
+        expect(result_data['task_id']).to be_present
+
+        # 作成されたタスクがdefault_projectに属していることを確認
+        created_task = Issue.find(result_data['task_id'])
+        expect(created_task.project).to eq(default_project)
+      end
+
+      it 'prioritizes explicit project_id over X-Default-Project header' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                project_id: project.identifier,
+                description: 'Task with explicit project_id'
+              }
+            },
+            id: 11
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key,
+            'X-Default-Project' => default_project.identifier
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        result_data = JSON.parse(json['result']['content'].first['text'])
+
+        expect(result_data['success']).to be true
+
+        # 明示的に指定されたproject（default_projectではなく）に作成されることを確認
+        created_task = Issue.find(result_data['task_id'])
+        expect(created_task.project).to eq(project)
+      end
+
+      it 'returns error when X-Default-Project specifies non-existent project' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                description: 'Task with invalid default project'
+              }
+            },
+            id: 12
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key,
+            'X-Default-Project' => 'nonexistent-default-project'
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        result_data = JSON.parse(json['result']['content'].first['text'])
+
+        expect(result_data['success']).to be false
+        expect(result_data['error']).to include('プロジェクトが見つかりません')
+      end
     end
 
     context 'JSON-RPC error handling' do
