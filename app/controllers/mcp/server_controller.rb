@@ -123,6 +123,7 @@ module Mcp
           EpicGrid::McpTools::CreateVersionTool,
           EpicGrid::McpTools::AssignToVersionTool,
           EpicGrid::McpTools::MoveToNextVersionTool,
+          EpicGrid::McpTools::ListVersionsTool,
           # カテゴリ3: チケット操作ツール
           EpicGrid::McpTools::UpdateIssueStatusTool,
           EpicGrid::McpTools::AddIssueCommentTool,
