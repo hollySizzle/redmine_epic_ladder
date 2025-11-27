@@ -8,7 +8,9 @@ require_relative 'app/models/concerns/epic_grid/version_extensions'
 
 # View Hooks
 require_relative 'lib/epic_grid/hooks/issue_detail_hooks'
-require_relative 'lib/epic_grid/hooks/project_settings_hooks'
+
+# Helper Patches (プロジェクト設定タブ追加用)
+require_relative 'lib/epic_grid/projects_helper_patch'
 
 # Project Setting Model
 require_relative 'app/models/epic_grid/project_setting'

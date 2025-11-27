@@ -1,0 +1,37 @@
+<%# Epic Grid プロジェクト設定タブ %>
+<% setting = EpicGrid::ProjectSetting.for_project(@project) %>
+
+<%= form_tag(project_epic_grid_settings_path(@project), method: :patch, class: 'tabular') do %>
+  <fieldset class="box">
+    <legend><%= l(:label_epic_grid_mcp_settings) %></legend>
+
+    <p>
+      <label>
+        <%= hidden_field_tag 'epic_grid_project_setting[mcp_enabled]', '0' %>
+        <%= check_box_tag 'epic_grid_project_setting[mcp_enabled]', '1', setting.mcp_enabled,
+            id: 'epic_grid_mcp_enabled' %>
+        <strong><%= l(:label_epic_grid_mcp_enable) %></strong>
+      </label>
+      <em class="info"><%= l(:label_epic_grid_mcp_description) %></em>
+    </p>
+  </fieldset>
+
+  <p><%= submit_tag l(:button_save) %></p>
+<% end %>
+
+<style>
+.tabular fieldset.box {
+  margin-bottom: 1em;
+}
+.tabular fieldset.box legend {
+  font-weight: bold;
+}
+.tabular .info {
+  display: block;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 3px;
+  margin-left: 20px;
+}
+</style>

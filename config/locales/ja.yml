@@ -19,3 +19,10 @@ ja:
   notice_epic_grid_siblings_updated: "兄弟issue %{count}件も更新されました"
   warning_epic_grid_version_mismatch_with_parent: "⚠️ 親%{parent} は %{parent_version} のままです"
   error_epic_grid_version_update_failed: "バージョンの変更に失敗しました: %{error}"
+
+  # プロジェクト設定タブ
+  label_epic_grid_settings: "Epic Grid"
+  label_epic_grid_mcp_settings: "MCP API設定"
+  label_epic_grid_mcp_enable: "このプロジェクトでMCP APIを許可する"
+  label_epic_grid_mcp_description: "Claude Code等のAIツールからこのプロジェクトへのアクセスを許可します"
+  error_epic_grid_settings_save_failed: "Epic Grid設定の保存に失敗しました: %{errors}"
