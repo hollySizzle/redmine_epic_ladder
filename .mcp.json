@@ -4,7 +4,7 @@
       "type": "http",
       "url": "http://localhost:8500/mcp/rpc",
       "headers": {
-        "X-Redmine-API-Key": "04d405fb8471d869a47a31da041df326f7cd959a",
+        "X-Redmine-API-Key": "641f2e8897438712903883dbf94f05b4e2e37e60",
         "X-Default-Project": "sakura-ec"
       }
     }
