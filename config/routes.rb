@@ -51,6 +51,8 @@ RedmineApp::Application.routes.draw do
   # メインEpic Grid画面
   resources :projects do
     get 'epic_grid', to: 'epic_grid#index'
+    # プロジェクト設定タブ用
+    patch 'epic_grid/settings', to: 'epic_grid/project_settings#update', as: 'epic_grid_project_settings'
   end
 
   # Version変更クイックアクション

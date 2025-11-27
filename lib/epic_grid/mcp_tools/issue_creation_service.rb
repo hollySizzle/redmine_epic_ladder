@@ -24,6 +24,11 @@ module EpicGrid
       # @param assigned_to_id [String, nil] 担当者ID
       # @return [Hash] 成功/エラー情報を含むハッシュ
       def create_issue(tracker_type:, project_id: nil, subject: nil, description:, parent_issue_id: nil, version_id: nil, assigned_to_id: nil)
+        # 0. MCP API有効チェック
+        unless ProjectValidator.mcp_enabled?
+          return error_result("MCP APIが無効になっています。管理画面でMCP APIを有効にしてください。")
+        end
+
         # 1. プロジェクトID解決（server_contextからX-Default-Projectヘッダー値を参照）
         resolved_project_id = ProjectValidator.resolve_project_id(project_id, server_context: server_context)
         return error_result("プロジェクトIDが指定されていません。DEFAULT_PROJECTを設定するか、project_idを指定してください") unless resolved_project_id
@@ -32,12 +37,11 @@ module EpicGrid
         project = find_project(resolved_project_id)
         return error_result("プロジェクトが見つかりません: #{resolved_project_id}") unless project
 
-        # 3. ALLOWED_PROJECTSチェック
-        unless ProjectValidator.project_allowed?(resolved_project_id, project)
-          allowed_projects = ENV.fetch('ALLOWED_PROJECTS', '')
+        # 3. プロジェクト単位のMCP許可チェック
+        unless ProjectValidator.project_allowed?(project)
           return error_result(
-            "プロジェクト '#{resolved_project_id}' へのアクセスが許可されていません",
-            { allowed_projects: allowed_projects.split(',').map(&:strip) }
+            "プロジェクト '#{project.identifier}' でMCP APIが許可されていません",
+            { hint: "プロジェクト設定 → Epic Grid タブでMCP APIを有効にしてください" }
           )
         end
 

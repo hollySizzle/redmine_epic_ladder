@@ -178,7 +178,9 @@ plugin_settings = {
   'user_story_tracker' => 'ユーザストーリ',
   'task_tracker' => '作業',
   'test_tracker' => '評価',
-  'bug_tracker' => '不具合'
+  'bug_tracker' => '不具合',
+  # MCP API設定（グローバル有効）
+  'mcp_enabled' => '1'
 }
 
 # Settingモデルを使用してプラグイン設定を保存
@@ -186,6 +188,31 @@ Setting.plugin_redmine_epic_grid = plugin_settings
 puts "  ✅ カンバントラッカー設定完了"
 plugin_settings.each do |key, value|
   puts "    - #{key}: #{value}"
+end
+
+# ===== プロジェクト単位MCP設定 =====
+puts "\n🔌 プロジェクト単位のMCP設定を投入中..."
+
+# sakura-ecプロジェクトでMCPを有効化
+if created_projects['sakura-ec']
+  setting = EpicGrid::ProjectSetting.find_or_initialize_by(project: created_projects['sakura-ec'])
+  setting.mcp_enabled = true
+  if setting.save
+    puts "  ✅ 桜商店ECサイト: MCP API有効化"
+  else
+    puts "  ❌ MCP設定の保存に失敗: #{setting.errors.full_messages.join(', ')}"
+  end
+end
+
+# ai-recommendプロジェクトでもMCPを有効化
+if created_projects['ai-recommend']
+  setting = EpicGrid::ProjectSetting.find_or_initialize_by(project: created_projects['ai-recommend'])
+  setting.mcp_enabled = true
+  if setting.save
+    puts "  ✅ AIレコメンド機能開発: MCP API有効化"
+  else
+    puts "  ❌ MCP設定の保存に失敗: #{setting.errors.full_messages.join(', ')}"
+  end
 end
 
 puts "\n✅ [2/5] プロジェクト・メンバー投入完了"

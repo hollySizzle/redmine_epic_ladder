@@ -45,7 +45,9 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
       before do
         project.trackers << task_tracker
-        Setting.plugin_redmine_epic_grid = { 'task_tracker' => 'Task' }
+        Setting.plugin_redmine_epic_grid = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
+        # プロジェクト単位でMCP有効化
+        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
       end
 
       it 'creates a task via CreateTaskTool' do
@@ -227,7 +229,11 @@ RSpec.describe 'Mcp::ServerController', type: :request do
       before do
         project.trackers << task_tracker
         default_project.trackers << task_tracker
-        Setting.plugin_redmine_epic_grid = { 'task_tracker' => 'Task' }
+        Setting.plugin_redmine_epic_grid = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
+
+        # プロジェクト単位でMCP有効化
+        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
+        EpicGrid::ProjectSetting.create!(project: default_project, mcp_enabled: true)
 
         # ユーザーにdefault_projectへのアクセス権限を付与
         role = Role.find_by(name: 'Manager') || FactoryBot.create(:role, permissions: [:view_issues, :add_issues, :edit_issues])
@@ -411,6 +417,132 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.headers['Access-Control-Allow-Origin']).to eq('*')
+    end
+  end
+
+  describe 'Plugin settings for MCP' do
+    let(:task_tracker) do
+      Tracker.find_by(name: 'Task') || begin
+        default_status = IssueStatus.first || IssueStatus.create!(name: 'New')
+        Tracker.create!(name: 'Task', default_status: default_status)
+      end
+    end
+
+    before do
+      project.trackers << task_tracker
+    end
+
+    context 'when MCP is disabled globally' do
+      before do
+        Setting.plugin_redmine_epic_grid = {
+          'mcp_enabled' => '0',
+          'task_tracker' => 'Task'
+        }
+        # プロジェクト単位では有効化
+        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
+      end
+
+      it 'rejects all MCP requests' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                project_id: project.identifier,
+                description: 'Test task'
+              }
+            },
+            id: 20
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        result_data = JSON.parse(json['result']['content'].first['text'])
+
+        expect(result_data['success']).to be false
+        expect(result_data['error']).to include('MCP API')
+      end
+    end
+
+    context 'when MCP is not enabled for project' do
+      before do
+        Setting.plugin_redmine_epic_grid = {
+          'mcp_enabled' => '1',
+          'task_tracker' => 'Task'
+        }
+        # プロジェクト単位ではMCP無効（デフォルト）
+        EpicGrid::ProjectSetting.find_by(project: project)&.destroy
+      end
+
+      it 'rejects access to project without MCP enabled' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                project_id: project.identifier,
+                description: 'Test task'
+              }
+            },
+            id: 21
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        result_data = JSON.parse(json['result']['content'].first['text'])
+
+        expect(result_data['success']).to be false
+        expect(result_data['error']).to include('許可されていません')
+      end
+    end
+
+    context 'when MCP is enabled for project' do
+      before do
+        Setting.plugin_redmine_epic_grid = {
+          'mcp_enabled' => '1',
+          'task_tracker' => 'Task'
+        }
+        # プロジェクト単位でMCP有効化
+        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
+      end
+
+      it 'allows access to project with MCP enabled' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_task_tool',
+              arguments: {
+                project_id: project.identifier,
+                description: 'Test task on MCP-enabled project'
+              }
+            },
+            id: 22
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        result_data = JSON.parse(json['result']['content'].first['text'])
+
+        expect(result_data['success']).to be true
+      end
     end
   end
 end

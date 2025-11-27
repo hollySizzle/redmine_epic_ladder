@@ -113,6 +113,41 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<hr style="margin: 30px 0;">
+
+<div class="box tabular settings">
+  <h3>MCP API設定</h3>
+  <p class="description">
+    MCP (Model Context Protocol) 経由でのAPI アクセスを制御します。<br>
+    Claude Code等のAIツールからのアクセス許可を管理できます。
+  </p>
+
+  <fieldset class="box">
+    <legend>グローバル設定</legend>
+    <p>
+      <label for="settings_mcp_enabled">
+        <%= check_box_tag 'settings[mcp_enabled]', '1', @settings['mcp_enabled'] == '1',
+            id: 'settings_mcp_enabled' %>
+        MCP APIを有効にする
+      </label>
+      <em class="info">無効にするとすべてのMCPツール呼び出しが拒否されます</em>
+    </p>
+  </fieldset>
+
+  <fieldset class="box">
+    <legend>プロジェクト単位の設定</legend>
+    <p class="description">
+      プロジェクトごとのMCPアクセス許可は、各プロジェクトの設定画面で管理します。<br>
+      プロジェクト設定 → 「Epic Grid」タブ で設定できます。
+    </p>
+    <p class="mcp-project-info">
+      <strong>💡 ヒント:</strong> プロジェクトでMCP APIを使用するには、<br>
+      1. このグローバル設定でMCP APIを有効にする<br>
+      2. 各プロジェクトの設定で「このプロジェクトでMCP APIを許可する」を有効にする
+    </p>
+  </fieldset>
+</div>
+
 <style>
 .hierarchy-preview {
   background: #f8f8f8;
@@ -137,5 +172,13 @@ document.addEventListener('DOMContentLoaded', function() {
   display: block;
   font-size: 0.9em;
   margin-top: 3px;
+}
+
+.mcp-project-info {
+  padding: 10px;
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 4px;
+  margin-top: 10px;
 }
 </style>

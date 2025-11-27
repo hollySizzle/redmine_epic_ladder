@@ -8,6 +8,10 @@ require_relative 'app/models/concerns/epic_grid/version_extensions'
 
 # View Hooks
 require_relative 'lib/epic_grid/hooks/issue_detail_hooks'
+require_relative 'lib/epic_grid/hooks/project_settings_hooks'
+
+# Project Setting Model
+require_relative 'app/models/epic_grid/project_setting'
 
 # Asset Deployer (npm不要環境対応)
 require_relative 'lib/epic_grid/asset_deployer'
@@ -56,7 +60,8 @@ Redmine::Plugin.register :redmine_epic_grid do
     permission :manage_epic_grid, {
       'epic_grid/state_transitions' => [:move_card, :bulk_move_cards],
       'epic_grid/versions' => [:assign_version, :bulk_assign_version, :create_version],
-      'epic_grid/auto_generation' => [:generate_test, :batch_generate_tests]
+      'epic_grid/auto_generation' => [:generate_test, :batch_generate_tests],
+      'epic_grid/project_settings' => [:show, :update]
     }, require: :member
   end
 
@@ -75,6 +80,8 @@ Redmine::Plugin.register :redmine_epic_grid do
     'user_story_tracker' => 'UserStory',
     'task_tracker' => 'Task',
     'test_tracker' => 'Test',
-    'bug_tracker' => 'Bug'
+    'bug_tracker' => 'Bug',
+    # MCP API設定（グローバル有効/無効のみ）
+    'mcp_enabled' => '1'
   }, partial: 'settings/kanban_tracker_settings'
 end

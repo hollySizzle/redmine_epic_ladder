@@ -3,7 +3,7 @@
 module EpicGrid
   module McpTools
     # MCPツール用のプロジェクトバリデーションヘルパー
-    # ALLOWED_PROJECTS と DEFAULT_PROJECT の機能を提供
+    # グローバルMCP有効/無効 + プロジェクト単位のMCP許可設定をチェック
     module ProjectValidator
       module_function
 
@@ -15,7 +15,6 @@ module EpicGrid
       # 優先順位:
       #   1. 明示的に指定されたproject_id
       #   2. server_context[:default_project] (X-Default-Projectヘッダーから)
-      #   3. ENV['DEFAULT_PROJECT'] (サーバー側環境変数)
       def resolve_project_id(project_id, server_context: nil)
         return project_id if project_id.present?
 
@@ -24,45 +23,48 @@ module EpicGrid
           return server_context[:default_project]
         end
 
-        # フォールバック: サーバー側環境変数
-        default_project = ENV.fetch('DEFAULT_PROJECT', nil)
-        return default_project if default_project.present?
-
         nil
       end
 
-      # プロジェクトがALLOWED_PROJECTSに含まれているかチェック
-      # @param project_id [String] プロジェクトID（識別子または数値ID）
+      # MCP APIがグローバルで有効かどうかチェック
+      # @return [Boolean] MCP APIが有効な場合true
+      def mcp_enabled?
+        settings = Setting.plugin_redmine_epic_grid || {}
+        settings['mcp_enabled'] == '1'
+      end
+
+      # プロジェクトでMCPが許可されているかチェック
       # @param project [Project] Projectオブジェクト
       # @return [Boolean] 許可されている場合true
-      def project_allowed?(project_id, project)
-        allowed_projects_str = ENV.fetch('ALLOWED_PROJECTS', '')
-
-        # ALLOWED_PROJECTSが空の場合はすべて許可
-        return true if allowed_projects_str.blank?
-
-        allowed_projects = allowed_projects_str.split(',').map(&:strip)
-
-        # プロジェクトIDまたは識別子で照合
-        allowed_projects.include?(project_id.to_s) ||
-          allowed_projects.include?(project.id.to_s) ||
-          allowed_projects.include?(project.identifier)
+      def project_allowed?(project)
+        EpicGrid::ProjectSetting.mcp_enabled?(project)
       end
 
       # プロジェクトバリデーションエラーレスポンス生成
-      # @param project_id [String] プロジェクトID
-      # @param allowed_projects [String] 許可されているプロジェクトリスト
+      # @param project [Project] プロジェクト
       # @return [MCP::Tool::Response] エラーレスポンス
-      def project_not_allowed_response(project_id, allowed_projects)
+      def project_not_allowed_response(project)
         MCP::Tool::Response.new([{
           type: "text",
           text: JSON.generate({
             success: false,
-            error: "プロジェクト '#{project_id}' へのアクセスが許可されていません",
+            error: "プロジェクト '#{project.identifier}' でMCP APIが許可されていません",
             details: {
-              project_id: project_id,
-              allowed_projects: allowed_projects.split(',').map(&:strip)
+              project_id: project.identifier,
+              hint: "プロジェクト設定 → Epic Grid タブでMCP APIを有効にしてください"
             }
+          })
+        }])
+      end
+
+      # MCP無効エラーレスポンス生成
+      # @return [MCP::Tool::Response] エラーレスポンス
+      def mcp_disabled_response
+        MCP::Tool::Response.new([{
+          type: "text",
+          text: JSON.generate({
+            success: false,
+            error: "MCP APIが無効になっています。管理画面でMCP APIを有効にしてください。"
           })
         }])
       end
