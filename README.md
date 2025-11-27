@@ -106,6 +106,9 @@ docker compose restart redmine
 
 # 通常環境の場合
 bundle exec rails s
+
+# 本番環境でプラグインのマイグレーションを実行
+RAILS_ENV=production bundle exec rake redmine:plugins:migrate
 ```
 
 **それだけです！** Redmine起動時に自動的にアセットが配信されます。
