@@ -57,6 +57,8 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
     project.trackers << test_tracker unless project.trackers.include?(test_tracker)
     open_status
     closed_status
+    # MCP APIを有効化
+    EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
   end
 
   describe '.call' do
@@ -156,6 +158,7 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
         result = described_class.call(
           project_id: project.identifier,
           status: 'closed',
+          include_closed: true, # status: 'closed'を使う場合はinclude_closedも必要
           server_context: server_context
         )
 
@@ -216,18 +219,19 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
       end
 
       it 'includes children (Task/Bug/Test) under UserStory' do
-        epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Epic 1')
-        feature = create(:issue, project: project, tracker: feature_tracker, subject: 'Feature 1', parent_issue_id: epic.id)
-        user_story = create(:issue, project: project, tracker: user_story_tracker, subject: 'User Story 1', parent_issue_id: feature.id)
+        epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Epic 1', status: open_status)
+        feature = create(:issue, project: project, tracker: feature_tracker, subject: 'Feature 1', parent_issue_id: epic.id, status: open_status)
+        user_story = create(:issue, project: project, tracker: user_story_tracker, subject: 'User Story 1', parent_issue_id: feature.id, status: open_status)
 
         # Task/Bug/Testを作成
-        task1 = create(:issue, project: project, tracker: task_tracker, subject: 'Task 1', parent_issue_id: user_story.id, assigned_to: user, done_ratio: 30)
-        task2 = create(:issue, project: project, tracker: task_tracker, subject: 'Task 2', parent_issue_id: user_story.id, done_ratio: 0)
+        task1 = create(:issue, project: project, tracker: task_tracker, subject: 'Task 1', parent_issue_id: user_story.id, assigned_to: user, done_ratio: 30, status: open_status)
+        task2 = create(:issue, project: project, tracker: task_tracker, subject: 'Task 2', parent_issue_id: user_story.id, done_ratio: 0, status: open_status)
         bug1 = create(:issue, project: project, tracker: bug_tracker, subject: 'Bug 1', parent_issue_id: user_story.id, status: open_status, done_ratio: 50)
-        test1 = create(:issue, project: project, tracker: test_tracker, subject: 'Test 1', parent_issue_id: user_story.id, done_ratio: 100)
+        test1 = create(:issue, project: project, tracker: test_tracker, subject: 'Test 1', parent_issue_id: user_story.id, done_ratio: 100, status: open_status)
 
         result = described_class.call(
           project_id: project.identifier,
+          max_depth: 4, # childrenを取得するためにmax_depth: 4を指定
           server_context: server_context
         )
 
@@ -292,6 +296,158 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
       end
     end
 
+    context 'with max_depth parameter' do
+      it 'returns only Epics when max_depth is 1' do
+        epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Epic 1', status: open_status)
+        create(:issue, project: project, tracker: feature_tracker, subject: 'Feature 1', parent_issue_id: epic.id, status: open_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          max_depth: 1,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['structure'].size).to eq(1)
+        expect(response_text['structure'].first['subject']).to eq('Epic 1')
+        expect(response_text['structure'].first['features']).to eq([])
+      end
+
+      it 'returns Epics and Features when max_depth is 2' do
+        epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Epic 1', status: open_status)
+        feature = create(:issue, project: project, tracker: feature_tracker, subject: 'Feature 1', parent_issue_id: epic.id, status: open_status)
+        create(:issue, project: project, tracker: user_story_tracker, subject: 'Story 1', parent_issue_id: feature.id, status: open_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          max_depth: 2,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['structure'].first['features'].size).to eq(1)
+        expect(response_text['structure'].first['features'].first['subject']).to eq('Feature 1')
+        expect(response_text['structure'].first['features'].first['user_stories']).to eq([])
+      end
+
+      it 'returns up to UserStories when max_depth is 3 (default)' do
+        epic = create(:issue, project: project, tracker: epic_tracker, status: open_status)
+        feature = create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id, status: open_status)
+        user_story = create(:issue, project: project, tracker: user_story_tracker, parent_issue_id: feature.id, status: open_status)
+        create(:issue, project: project, tracker: task_tracker, parent_issue_id: user_story.id, status: open_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          # max_depth: 3 is default
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        story_data = response_text['structure'].first['features'].first['user_stories'].first
+
+        expect(story_data).to be_present
+        # max_depth=3ではchildren(Task/Bug/Test)は空
+        expect(story_data['children']['tasks']).to eq([])
+      end
+
+      it 'includes all levels including children when max_depth is 4' do
+        epic = create(:issue, project: project, tracker: epic_tracker, status: open_status)
+        feature = create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id, status: open_status)
+        user_story = create(:issue, project: project, tracker: user_story_tracker, parent_issue_id: feature.id, status: open_status)
+        task = create(:issue, project: project, tracker: task_tracker, subject: 'Task 1', parent_issue_id: user_story.id, status: open_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          max_depth: 4,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        story_data = response_text['structure'].first['features'].first['user_stories'].first
+
+        expect(story_data['children']['tasks'].size).to eq(1)
+        expect(story_data['children']['tasks'].first['subject']).to eq('Task 1')
+      end
+    end
+
+    context 'with include_closed parameter' do
+      it 'excludes closed issues by default (include_closed: false)' do
+        open_epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Open Epic', status: open_status)
+        create(:issue, project: project, tracker: epic_tracker, subject: 'Closed Epic', status: closed_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['structure'].size).to eq(1)
+        expect(response_text['structure'].first['subject']).to eq('Open Epic')
+      end
+
+      it 'includes closed issues when include_closed: true' do
+        create(:issue, project: project, tracker: epic_tracker, subject: 'Open Epic', status: open_status)
+        create(:issue, project: project, tracker: epic_tracker, subject: 'Closed Epic', status: closed_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          include_closed: true,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['structure'].size).to eq(2)
+        subjects = response_text['structure'].map { |e| e['subject'] }
+        expect(subjects).to include('Open Epic', 'Closed Epic')
+      end
+
+      it 'filters closed children (Task/Bug/Test) by default' do
+        epic = create(:issue, project: project, tracker: epic_tracker, status: open_status)
+        feature = create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id, status: open_status)
+        user_story = create(:issue, project: project, tracker: user_story_tracker, parent_issue_id: feature.id, status: open_status)
+        create(:issue, project: project, tracker: task_tracker, subject: 'Open Task', parent_issue_id: user_story.id, status: open_status)
+        create(:issue, project: project, tracker: task_tracker, subject: 'Closed Task', parent_issue_id: user_story.id, status: closed_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          max_depth: 4,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        story_data = response_text['structure'].first['features'].first['user_stories'].first
+
+        expect(story_data['children']['tasks'].size).to eq(1)
+        expect(story_data['children']['tasks'].first['subject']).to eq('Open Task')
+      end
+
+      it 'includes closed children when include_closed: true' do
+        epic = create(:issue, project: project, tracker: epic_tracker, status: open_status)
+        feature = create(:issue, project: project, tracker: feature_tracker, parent_issue_id: epic.id, status: open_status)
+        user_story = create(:issue, project: project, tracker: user_story_tracker, parent_issue_id: feature.id, status: open_status)
+        create(:issue, project: project, tracker: task_tracker, subject: 'Open Task', parent_issue_id: user_story.id, status: open_status)
+        create(:issue, project: project, tracker: task_tracker, subject: 'Closed Task', parent_issue_id: user_story.id, status: closed_status)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          max_depth: 4,
+          include_closed: true,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        story_data = response_text['structure'].first['features'].first['user_stories'].first
+
+        expect(story_data['children']['tasks'].size).to eq(2)
+        subjects = story_data['children']['tasks'].map { |t| t['subject'] }
+        expect(subjects).to include('Open Task', 'Closed Task')
+      end
+    end
+
     context 'with invalid parameters' do
       it 'returns error when project not found' do
         result = described_class.call(
@@ -344,7 +500,10 @@ RSpec.describe EpicGrid::McpTools::GetProjectStructureTool, type: :model do
     it 'has required input schema' do
       schema = described_class.input_schema
       expect(schema.properties).to include(:project_id)
-      expect(schema.instance_variable_get(:@required)).to include(:project_id)
+      expect(schema.properties).to include(:max_depth)
+      expect(schema.properties).to include(:include_closed)
+      # project_idは任意（DEFAULT_PROJECTフォールバックあり）
+      expect(schema.instance_variable_get(:@required)).to eq([])
     end
   end
 end

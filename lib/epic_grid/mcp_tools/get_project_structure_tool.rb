@@ -19,13 +19,15 @@ module EpicGrid
         properties: {
           project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
           version_id: { type: "string", description: "Version IDでフィルタ（省略可）" },
-          status: { type: "string", description: "ステータスでフィルタ（open/closed、省略可）" }
+          status: { type: "string", description: "ステータスでフィルタ（open/closed、省略可）※include_closed推奨" },
+          max_depth: { type: "integer", description: "取得階層の深さ: 1=Epic, 2=+Feature, 3=+UserStory, 4=+Task/Bug/Test（デフォルト3）" },
+          include_closed: { type: "boolean", description: "クローズ済みチケットを含むか（デフォルトfalse=openのみ）" }
         },
         required: []
       )
 
-      def self.call(project_id: nil, version_id: nil, status: nil, server_context:)
-        Rails.logger.info "GetProjectStructureTool#call started: project_id=#{project_id || 'DEFAULT'}"
+      def self.call(project_id: nil, version_id: nil, status: nil, max_depth: 3, include_closed: false, server_context:)
+        Rails.logger.info "GetProjectStructureTool#call started: project_id=#{project_id || 'DEFAULT'}, max_depth=#{max_depth}, include_closed=#{include_closed}"
 
         begin
           # プロジェクト取得と権限チェック（server_contextからX-Default-Projectヘッダー値を参照）
@@ -50,23 +52,27 @@ module EpicGrid
 
           return error_response("Epic階層のトラッカーが設定されていません") unless epic_tracker && feature_tracker && user_story_tracker
 
-          # Epic取得
+          # Epic取得（include_closedがfalseの場合はopenのみ）
           epics = project.issues.where(tracker: epic_tracker)
-          epics = apply_filters(epics, status)
+          epics = apply_status_filter(epics, status, include_closed)
 
-          # 構造構築
+          # 構造構築（max_depthで階層を制御）
           trackers = { task: task_tracker, bug: bug_tracker, test: test_tracker }
+          filter_opts = { status: status, include_closed: include_closed, version_id: version_id }
+
           structure = epics.map do |epic|
-            {
+            epic_data = {
               id: epic.id.to_s,
               subject: epic.subject,
               type: "Epic",
               status: {
                 name: epic.status.name,
                 is_closed: epic.status.is_closed
-              },
-              features: build_features(epic, feature_tracker, user_story_tracker, trackers, version_id, status)
+              }
             }
+            # max_depth >= 2 の場合のみFeatureを取得
+            epic_data[:features] = max_depth >= 2 ? build_features(epic, feature_tracker, user_story_tracker, trackers, max_depth, filter_opts) : []
+            epic_data
           end
 
           # 成功レスポンス
@@ -90,32 +96,34 @@ module EpicGrid
         private
 
         # Feature構造構築
-        def build_features(epic, feature_tracker, user_story_tracker, trackers, version_id, status)
+        def build_features(epic, feature_tracker, user_story_tracker, trackers, max_depth, filter_opts)
           features = epic.children.where(tracker: feature_tracker)
-          features = apply_filters(features, status)
+          features = apply_status_filter(features, filter_opts[:status], filter_opts[:include_closed])
 
           features.map do |feature|
-            {
+            feature_data = {
               id: feature.id.to_s,
               subject: feature.subject,
               type: "Feature",
               status: {
                 name: feature.status.name,
                 is_closed: feature.status.is_closed
-              },
-              user_stories: build_user_stories(feature, user_story_tracker, trackers, version_id, status)
+              }
             }
+            # max_depth >= 3 の場合のみUserStoryを取得
+            feature_data[:user_stories] = max_depth >= 3 ? build_user_stories(feature, user_story_tracker, trackers, max_depth, filter_opts) : []
+            feature_data
           end
         end
 
         # UserStory構造構築
-        def build_user_stories(feature, user_story_tracker, trackers, version_id, status)
+        def build_user_stories(feature, user_story_tracker, trackers, max_depth, filter_opts)
           user_stories = feature.children.where(tracker: user_story_tracker)
-          user_stories = user_stories.where(fixed_version_id: version_id) if version_id.present?
-          user_stories = apply_filters(user_stories, status)
+          user_stories = user_stories.where(fixed_version_id: filter_opts[:version_id]) if filter_opts[:version_id].present?
+          user_stories = apply_status_filter(user_stories, filter_opts[:status], filter_opts[:include_closed])
 
           user_stories.map do |story|
-            {
+            story_data = {
               id: story.id.to_s,
               subject: story.subject,
               type: "UserStory",
@@ -130,21 +138,27 @@ module EpicGrid
               assigned_to: story.assigned_to ? {
                 id: story.assigned_to.id.to_s,
                 name: story.assigned_to.name
-              } : nil,
-              children: build_children(story, trackers)
+              } : nil
             }
+            # max_depth >= 4 の場合のみTask/Bug/Testを取得
+            story_data[:children] = max_depth >= 4 ? build_children(story, trackers, filter_opts[:include_closed]) : { tasks: [], bugs: [], tests: [] }
+            story_data
           end
         end
 
         # UserStoryの子チケット（Task/Bug/Test）構築
-        def build_children(user_story, trackers)
+        def build_children(user_story, trackers, include_closed)
           children = {
             tasks: [],
             bugs: [],
             tests: []
           }
 
-          user_story.children.each do |child|
+          child_issues = user_story.children
+          # include_closedがfalseの場合はopenのみ
+          child_issues = child_issues.joins(:status).where(issue_statuses: { is_closed: false }) unless include_closed
+
+          child_issues.each do |child|
             child_data = {
               id: child.id.to_s,
               subject: child.subject,
@@ -171,15 +185,25 @@ module EpicGrid
           children
         end
 
-        # フィルタ適用
-        def apply_filters(issues, status)
+        # ステータスフィルタ適用
+        # @param issues [ActiveRecord::Relation] チケットのクエリ
+        # @param status [String, nil] "open"または"closed"（明示的指定用、非推奨）
+        # @param include_closed [Boolean] クローズ済みを含むか（推奨）
+        def apply_status_filter(issues, status, include_closed)
+          # 明示的なstatusパラメータが指定されている場合はそちらを優先（後方互換性）
           if status.present?
             if status.downcase == 'open'
-              issues = issues.where(status: IssueStatus.where(is_closed: false))
+              return issues.joins(:status).where(issue_statuses: { is_closed: false })
             elsif status.downcase == 'closed'
-              issues = issues.where(status: IssueStatus.where(is_closed: true))
+              return issues.joins(:status).where(issue_statuses: { is_closed: true })
             end
           end
+
+          # include_closedがfalseの場合はopenのみ
+          unless include_closed
+            issues = issues.joins(:status).where(issue_statuses: { is_closed: false })
+          end
+
           issues
         end
 
