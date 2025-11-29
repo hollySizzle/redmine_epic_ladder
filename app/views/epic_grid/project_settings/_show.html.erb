@@ -19,6 +19,45 @@
   <p><%= submit_tag l(:button_save) %></p>
 <% end %>
 
+<%# MCPツールヒント設定（検証用: create_task, add_issue_comment のみ） %>
+<% pilot_tools = %w[create_task add_issue_comment] %>
+
+<%= form_tag(project_epic_grid_mcp_tool_hints_path(@project), method: :patch, class: 'tabular') do %>
+  <fieldset class="box">
+    <legend><%= l(:label_epic_grid_mcp_tool_hints) %></legend>
+    <em class="info" style="margin-bottom: 10px;"><%= l(:label_epic_grid_mcp_tool_hints_description) %></em>
+
+    <% pilot_tools.each do |tool_key| %>
+      <% hint = EpicGrid::McpToolHint.for_tool(@project, tool_key) %>
+      <div class="mcp-tool-hint-item">
+        <h4><%= l("epic_grid.mcp_tools.#{tool_key}") %> (<code><%= tool_key %></code>)</h4>
+        <p>
+          <label>
+            <%= hidden_field_tag "mcp_tool_hints[#{tool_key}][enabled]", '0' %>
+            <%= check_box_tag "mcp_tool_hints[#{tool_key}][enabled]", '1', hint.enabled,
+                id: "mcp_tool_hint_#{tool_key}_enabled" %>
+            <%= l(:label_epic_grid_mcp_tool_hint_enabled) %>
+          </label>
+        </p>
+        <p>
+          <%= text_area_tag "mcp_tool_hints[#{tool_key}][hint_text]", hint.hint_text,
+              rows: 3,
+              cols: 80,
+              maxlength: EpicGrid::McpToolHint::HINT_TEXT_MAX_LENGTH,
+              placeholder: l(:label_epic_grid_mcp_tool_hint_placeholder),
+              class: 'mcp-tool-hint-textarea',
+              id: "mcp_tool_hint_#{tool_key}_text" %>
+          <span class="char-count" data-for="mcp_tool_hint_<%= tool_key %>_text">
+            <span class="current">0</span> / <%= EpicGrid::McpToolHint::HINT_TEXT_MAX_LENGTH %>
+          </span>
+        </p>
+      </div>
+    <% end %>
+  </fieldset>
+
+  <p><%= submit_tag l(:button_save) %></p>
+<% end %>
+
 <style>
 .tabular fieldset.box {
   margin-bottom: 1em;
@@ -34,4 +73,58 @@
   margin-top: 3px;
   margin-left: 20px;
 }
+.mcp-tool-hint-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 15px;
+  margin: 10px 0;
+  background: #fafafa;
+}
+.mcp-tool-hint-item h4 {
+  margin: 0 0 10px 0;
+  font-size: 1em;
+  color: #333;
+}
+.mcp-tool-hint-item h4 code {
+  background: #e8e8e8;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+.mcp-tool-hint-textarea {
+  width: 100%;
+  max-width: 600px;
+  font-family: inherit;
+}
+.char-count {
+  display: block;
+  font-size: 0.85em;
+  color: #888;
+  margin-top: 3px;
+}
+.char-count .current.warning {
+  color: #c00;
+  font-weight: bold;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.mcp-tool-hint-textarea').forEach(function(textarea) {
+    var countSpan = document.querySelector('.char-count[data-for="' + textarea.id + '"] .current');
+    if (countSpan) {
+      function updateCount() {
+        var len = textarea.value.length;
+        countSpan.textContent = len;
+        if (len > <%= EpicGrid::McpToolHint::HINT_TEXT_MAX_LENGTH - 50 %>) {
+          countSpan.classList.add('warning');
+        } else {
+          countSpan.classList.remove('warning');
+        }
+      }
+      textarea.addEventListener('input', updateCount);
+      updateCount();
+    }
+  });
+});
+</script>

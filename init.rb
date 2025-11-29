@@ -63,7 +63,8 @@ Redmine::Plugin.register :redmine_epic_grid do
       'epic_grid/state_transitions' => [:move_card, :bulk_move_cards],
       'epic_grid/versions' => [:assign_version, :bulk_assign_version, :create_version],
       'epic_grid/auto_generation' => [:generate_test, :batch_generate_tests],
-      'epic_grid/project_settings' => [:show, :update]
+      'epic_grid/project_settings' => [:show, :update],
+      'epic_grid/mcp_tool_hints' => [:update]
     }, require: :member
   end
 

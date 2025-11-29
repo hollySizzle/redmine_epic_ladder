@@ -108,38 +108,76 @@ module Mcp
 
     # MCP::Serverインスタンス生成（Statelessモード）
     def mcp_server
-      @mcp_server ||= MCP::Server.new(
-        name: "redmine_epic_grid",
-        version: "1.0.0",
-        tools: [
-          # カテゴリ1: チケット作成ツール
-          EpicGrid::McpTools::CreateEpicTool,
-          EpicGrid::McpTools::CreateFeatureTool,
-          EpicGrid::McpTools::CreateUserStoryTool,
-          EpicGrid::McpTools::CreateTaskTool,
-          EpicGrid::McpTools::CreateBugTool,
-          EpicGrid::McpTools::CreateTestTool,
-          # カテゴリ2: Version管理ツール
-          EpicGrid::McpTools::CreateVersionTool,
-          EpicGrid::McpTools::AssignToVersionTool,
-          EpicGrid::McpTools::MoveToNextVersionTool,
-          EpicGrid::McpTools::ListVersionsTool,
-          # カテゴリ3: チケット操作ツール
-          EpicGrid::McpTools::UpdateIssueStatusTool,
-          EpicGrid::McpTools::AddIssueCommentTool,
-          EpicGrid::McpTools::UpdateIssueProgressTool,
-          EpicGrid::McpTools::UpdateIssueAssigneeTool,
-          # カテゴリ4: 検索・参照ツール
-          EpicGrid::McpTools::ListUserStoriesTool,
-          EpicGrid::McpTools::ListEpicsTool,
-          EpicGrid::McpTools::GetProjectStructureTool,
-          EpicGrid::McpTools::GetIssueDetailTool
-        ],
-        server_context: {
-          user: User.current,
-          default_project: extract_default_project_from_header
-        }
-      )
+      @mcp_server ||= begin
+        server = MCP::Server.new(
+          name: "redmine_epic_grid",
+          version: "1.0.0",
+          tools: all_mcp_tools,
+          server_context: {
+            user: User.current,
+            default_project: extract_default_project_from_header
+          }
+        )
+
+        # tools/list ハンドラをカスタマイズしてプロジェクト固有ヒントを注入
+        project = default_project_for_hints
+        server.tools_list_handler do |_request|
+          all_mcp_tools.map do |tool_class|
+            tool_hash = tool_class.to_h
+            tool_hash[:description] = build_description_with_hint(tool_class, project)
+            tool_hash
+          end
+        end
+
+        server
+      end
+    end
+
+    # 全MCPツールクラス一覧
+    def all_mcp_tools
+      [
+        # カテゴリ1: チケット作成ツール
+        EpicGrid::McpTools::CreateEpicTool,
+        EpicGrid::McpTools::CreateFeatureTool,
+        EpicGrid::McpTools::CreateUserStoryTool,
+        EpicGrid::McpTools::CreateTaskTool,
+        EpicGrid::McpTools::CreateBugTool,
+        EpicGrid::McpTools::CreateTestTool,
+        # カテゴリ2: Version管理ツール
+        EpicGrid::McpTools::CreateVersionTool,
+        EpicGrid::McpTools::AssignToVersionTool,
+        EpicGrid::McpTools::MoveToNextVersionTool,
+        EpicGrid::McpTools::ListVersionsTool,
+        # カテゴリ3: チケット操作ツール
+        EpicGrid::McpTools::UpdateIssueStatusTool,
+        EpicGrid::McpTools::AddIssueCommentTool,
+        EpicGrid::McpTools::UpdateIssueProgressTool,
+        EpicGrid::McpTools::UpdateIssueAssigneeTool,
+        # カテゴリ4: 検索・参照ツール
+        EpicGrid::McpTools::ListUserStoriesTool,
+        EpicGrid::McpTools::ListEpicsTool,
+        EpicGrid::McpTools::GetProjectStructureTool,
+        EpicGrid::McpTools::GetIssueDetailTool
+      ]
+    end
+
+    # X-Default-Projectヘッダーからプロジェクトを取得（ヒント用）
+    def default_project_for_hints
+      project_identifier = extract_default_project_from_header
+      return nil if project_identifier.blank?
+
+      Project.find_by(identifier: project_identifier) || Project.find_by(id: project_identifier)
+    end
+
+    # ツールのdescriptionにプロジェクト固有ヒントを付与
+    def build_description_with_hint(tool_class, project)
+      base_description = tool_class.description_value || ''
+      return base_description if project.nil?
+
+      # ツールクラス名からtool_keyを抽出（例: CreateTaskTool → create_task）
+      tool_key = tool_class.name.demodulize.underscore.sub(/_tool$/, '')
+
+      EpicGrid::McpToolHint.build_description(project, tool_key, base_description)
     end
 
     # X-Default-Projectヘッダーからデフォルトプロジェクトを取得

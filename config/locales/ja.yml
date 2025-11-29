@@ -26,3 +26,28 @@ ja:
   label_epic_grid_mcp_enable: "このプロジェクトでMCP APIを許可する"
   label_epic_grid_mcp_description: "Claude Code等のAIツールからこのプロジェクトへのアクセスを許可します"
   error_epic_grid_settings_save_failed: "Epic Grid設定の保存に失敗しました: %{errors}"
+
+  # MCPツールヒント設定
+  label_epic_grid_mcp_tool_hints: "MCPツール プロジェクト固有ルール"
+  label_epic_grid_mcp_tool_hints_description: "AIがツールを使用する際に参照するプロジェクト固有のルールを設定します（最大500文字）"
+  label_epic_grid_mcp_tool_hint_enabled: "有効"
+  label_epic_grid_mcp_tool_hint_placeholder: "例: レビュー依頼時は@hollyをメンション、緊急時は件名に【緊急】を付与"
+  notice_epic_grid_mcp_tool_hints_saved: "MCPツールヒント設定を保存しました"
+  error_epic_grid_mcp_tool_hints_save_failed: "MCPツールヒント設定の保存に失敗しました: %{errors}"
+
+  # MCPツール名
+  epic_grid:
+    mcp_tools:
+      create_epic: "Epic作成"
+      create_feature: "Feature作成"
+      create_user_story: "UserStory作成"
+      create_task: "Task作成"
+      create_bug: "Bug作成"
+      create_test: "Test作成"
+      create_version: "Version作成"
+      assign_to_version: "Versionへ割当"
+      move_to_next_version: "次Versionへ移動"
+      update_issue_status: "ステータス更新"
+      update_issue_progress: "進捗率更新"
+      update_issue_assignee: "担当者変更"
+      add_issue_comment: "コメント追加"

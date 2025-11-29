@@ -54,6 +54,9 @@ RedmineApp::Application.routes.draw do
   # プロジェクト設定タブ用（Epic Gridタブからのフォーム送信）
   patch 'projects/:project_id/epic_grid/settings', to: 'epic_grid/project_settings#update', as: 'project_epic_grid_settings'
 
+  # MCPツールヒント設定用
+  patch 'projects/:project_id/epic_grid/mcp_tool_hints', to: 'epic_grid/mcp_tool_hints#update', as: 'project_epic_grid_mcp_tool_hints'
+
   # Version変更クイックアクション
   patch 'epic_grid/issues/:id/update_version', to: 'epic_grid/version#update', as: 'epic_grid_update_version'
 
