@@ -4,7 +4,7 @@
       "type": "http",
       "url": "http://localhost:8500/mcp/rpc",
       "headers": {
-        "X-Redmine-API-Key": "test_api_key_admin_kanban_1234567890",
+        "X-Redmine-API-Key": "testapikeyadminkanban1234567890",
         "X-Default-Project": "sakura-ec"
       }
     }

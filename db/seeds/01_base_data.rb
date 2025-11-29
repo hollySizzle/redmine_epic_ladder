@@ -154,7 +154,7 @@ users_data.each do |data|
 
   if user.save
     # MCPテスト用に固定APIキーを設定（コールバックをスキップ）
-    fixed_api_key = "test_api_key_#{data[:login]}_1234567890"
+    fixed_api_key = "testapikey#{data[:login].gsub('_', '')}1234567890"
     token = Token.find_or_initialize_by(user_id: user.id, action: 'api')
     if token.new_record?
       token.save!  # まず保存してレコードを作成
