@@ -35,8 +35,12 @@ ja:
   notice_epic_grid_mcp_tool_hints_saved: "MCPツールヒント設定を保存しました"
   error_epic_grid_mcp_tool_hints_save_failed: "MCPツールヒント設定の保存に失敗しました: %{errors}"
 
-  # MCPツール名
+  # MCPツール名・カテゴリ
   epic_grid:
+    mcp_tool_categories:
+      create_issues: "📝 チケット作成"
+      version_management: "📅 Version管理"
+      issue_operations: "⚙️ チケット操作"
     mcp_tools:
       create_epic: "Epic作成"
       create_feature: "Feature作成"
