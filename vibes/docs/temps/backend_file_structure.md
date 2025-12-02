@@ -1,27 +1,27 @@
 # Backend File Structure - Epic Grid Plugin
 
 **作成日**: 2025-10-04
-**ステータス**: リファクタリング完了 (Kanban → EpicGrid 名前空間変更済み)
+**ステータス**: リファクタリング完了 (Kanban → EpicLadder 名前空間変更済み)
 
 ---
 
 ## 📁 ディレクトリ構造
 
 ```
-/usr/src/redmine/plugins/redmine_epic_grid/
+/usr/src/redmine/plugins/redmine_epic_ladder/
 ├── config/
 │   └── routes.rb                    # ルーティング定義 (MSW準拠)
 ├── app/
 │   ├── controllers/
 │   │   ├── concerns/
-│   │   │   └── epic_grid_api_concern.rb  # API共通Concern
-│   │   ├── epic_grid/
+│   │   │   └── epic_ladder_api_concern.rb  # API共通Concern
+│   │   ├── epic_ladder/
 │   │   │   ├── base_api_controller.rb    # API基底コントローラー
 │   │   │   ├── grid_controller.rb        # グリッドデータAPI
 │   │   │   └── cards_controller.rb       # Feature/UserStory CRUD API
-│   │   └── epic_grid_controller.rb        # メインビューコントローラー
+│   │   └── epic_ladder_controller.rb        # メインビューコントローラー
 │   └── models/
-│       └── epic_grid/
+│       └── epic_ladder/
 │           └── tracker_hierarchy.rb       # トラッカー階層管理
 └── spec/
     └── (テストファイル)
@@ -35,37 +35,37 @@
 
 | MSW Handler | Rails Route | Controller#Action |
 |------------|-------------|-------------------|
-| `GET /api/epic_grid/projects/:projectId/grid` | `GET /api/epic_grid/projects/:project_id/grid` | `EpicGrid::GridController#show` |
-| `POST /api/epic_grid/projects/:projectId/grid/move_feature` | `POST /api/epic_grid/projects/:project_id/grid/move_feature` | `EpicGrid::GridController#move_feature` |
-| `GET /api/epic_grid/projects/:projectId/grid/updates` | `GET /api/epic_grid/projects/:project_id/grid/updates` | `EpicGrid::GridController#updates` |
-| `POST /api/epic_grid/projects/:projectId/grid/reset` | `POST /api/epic_grid/projects/:project_id/grid/reset` | `EpicGrid::GridController#reset` |
+| `GET /api/epic_ladder/projects/:projectId/grid` | `GET /api/epic_ladder/projects/:project_id/grid` | `EpicLadder::GridController#show` |
+| `POST /api/epic_ladder/projects/:projectId/grid/move_feature` | `POST /api/epic_ladder/projects/:project_id/grid/move_feature` | `EpicLadder::GridController#move_feature` |
+| `GET /api/epic_ladder/projects/:projectId/grid/updates` | `GET /api/epic_ladder/projects/:project_id/grid/updates` | `EpicLadder::GridController#updates` |
+| `POST /api/epic_ladder/projects/:projectId/grid/reset` | `POST /api/epic_ladder/projects/:project_id/grid/reset` | `EpicLadder::GridController#reset` |
 
 ### Epic CRUD API
 
 | MSW Handler | Rails Route | Controller#Action |
 |------------|-------------|-------------------|
-| `POST /api/epic_grid/projects/:projectId/epics` | `POST /api/epic_grid/projects/:project_id/epics` | `EpicGrid::EpicsController#create` |
+| `POST /api/epic_ladder/projects/:projectId/epics` | `POST /api/epic_ladder/projects/:project_id/epics` | `EpicLadder::EpicsController#create` |
 
 ### Version CRUD API
 
 | MSW Handler | Rails Route | Controller#Action |
 |------------|-------------|-------------------|
-| `POST /api/epic_grid/projects/:projectId/versions` | `POST /api/epic_grid/projects/:project_id/versions` | `EpicGrid::VersionsController#create` |
+| `POST /api/epic_ladder/projects/:projectId/versions` | `POST /api/epic_ladder/projects/:project_id/versions` | `EpicLadder::VersionsController#create` |
 
 ### Feature Cards API
 
 | MSW Handler | Rails Route | Controller#Action |
 |------------|-------------|-------------------|
-| `POST /api/epic_grid/projects/:projectId/cards` | `POST /api/epic_grid/projects/:project_id/cards` | `EpicGrid::CardsController#create` |
-| `POST /api/epic_grid/projects/:projectId/cards/:featureId/user_stories` | `POST /api/epic_grid/projects/:project_id/cards/:feature_id/user_stories` | `EpicGrid::CardsController#create_user_story` |
+| `POST /api/epic_ladder/projects/:projectId/cards` | `POST /api/epic_ladder/projects/:project_id/cards` | `EpicLadder::CardsController#create` |
+| `POST /api/epic_ladder/projects/:projectId/cards/:featureId/user_stories` | `POST /api/epic_ladder/projects/:project_id/cards/:feature_id/user_stories` | `EpicLadder::CardsController#create_user_story` |
 
 ### UserStory子要素 CRUD API
 
 | MSW Handler | Rails Route | Controller#Action |
 |------------|-------------|-------------------|
-| `POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tasks` | `POST /api/epic_grid/projects/:project_id/cards/user_stories/:user_story_id/tasks` | `EpicGrid::CardsController#create_task` |
-| `POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tests` | `POST /api/epic_grid/projects/:project_id/cards/user_stories/:user_story_id/tests` | `EpicGrid::CardsController#create_test` |
-| `POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/bugs` | `POST /api/epic_grid/projects/:project_id/cards/user_stories/:user_story_id/bugs` | `EpicGrid::CardsController#create_bug` |
+| `POST /api/epic_ladder/projects/:projectId/cards/user_stories/:userStoryId/tasks` | `POST /api/epic_ladder/projects/:project_id/cards/user_stories/:user_story_id/tasks` | `EpicLadder::CardsController#create_task` |
+| `POST /api/epic_ladder/projects/:projectId/cards/user_stories/:userStoryId/tests` | `POST /api/epic_ladder/projects/:project_id/cards/user_stories/:user_story_id/tests` | `EpicLadder::CardsController#create_test` |
+| `POST /api/epic_ladder/projects/:projectId/cards/user_stories/:userStoryId/bugs` | `POST /api/epic_ladder/projects/:project_id/cards/user_stories/:user_story_id/bugs` | `EpicLadder::CardsController#create_bug` |
 
 ---
 
@@ -74,32 +74,32 @@
 ### 1. `config/routes.rb`
 **責務**: MSW準拠のエンドポイント定義
 **重要ポイント**:
-- 全エンドポイントが `/api/epic_grid/projects/:project_id/` で統一
+- 全エンドポイントが `/api/epic_ladder/projects/:project_id/` で統一
 - MSW handlers.ts と完全一致
 - `defaults: { format: 'json' }` でJSON API専用
 
 ---
 
-### 2. `app/controllers/epic_grid/base_api_controller.rb`
+### 2. `app/controllers/epic_ladder/base_api_controller.rb`
 **責務**: API共通基盤機能
 **提供機能**:
 - 統一レスポンス形式 (`render_success`, `render_error`)
-- 例外ハンドリング (`EpicGrid::PermissionDenied`, `EpicGrid::WorkflowViolation`)
+- 例外ハンドリング (`EpicLadder::PermissionDenied`, `EpicLadder::WorkflowViolation`)
 - 認証処理 (`api_require_login`, セッション/APIトークン両対応)
 - パフォーマンス監視 (`log_performance_metrics`)
 
 **カスタム例外クラス**:
 ```ruby
-module EpicGrid
-  class EpicGridError < StandardError
-  class PermissionDenied < EpicGridError
-  class WorkflowViolation < EpicGridError
+module EpicLadder
+  class EpicLadderError < StandardError
+  class PermissionDenied < EpicLadderError
+  class WorkflowViolation < EpicLadderError
 end
 ```
 
 ---
 
-### 3. `app/controllers/epic_grid/grid_controller.rb`
+### 3. `app/controllers/epic_ladder/grid_controller.rb`
 **責務**: グリッドデータ取得・操作API
 **アクション一覧**:
 - `show`: グリッド全体データ取得 (Normalized API形式)
@@ -111,12 +111,12 @@ end
 - `real_time_updates`: リアルタイム更新取得 (ポーリング用)
 
 **現在の実装状況**:
-- ❌ Service層への依存が残存 (`EpicGrid::FeatureMoveService` など)
+- ❌ Service層への依存が残存 (`EpicLadder::FeatureMoveService` など)
 - ⚠️ Fat Model原則への移行が必要
 
 ---
 
-### 4. `app/controllers/epic_grid/cards_controller.rb`
+### 4. `app/controllers/epic_ladder/cards_controller.rb`
 **責務**: Feature/UserStory CRUD操作API
 **アクション一覧**:
 - `index`: Feature Card一覧取得
@@ -140,7 +140,7 @@ end
 
 ---
 
-### 5. `app/models/epic_grid/tracker_hierarchy.rb`
+### 5. `app/models/epic_ladder/tracker_hierarchy.rb`
 **責務**: トラッカー階層制約管理
 **提供機能**:
 - トラッカー名取得 (`tracker_names`)
@@ -168,15 +168,15 @@ Epic (Level 0)
 
 | Service | 移行先 | 優先度 |
 |---------|--------|--------|
-| `EpicGrid::FeatureMoveService` | `Issue#move_to_cell` | 🔴 High |
-| `EpicGrid::EpicCreationService` | `Issue.create_epic` | 🔴 High |
-| `EpicGrid::VersionPropagationService` | `Issue#propagate_version_to_children` | 🔴 High |
-| `EpicGrid::CardMoveService` | `Issue#move_card` | 🟡 Medium |
-| `EpicGrid::FeatureCreationService` | `Issue.create_feature` | 🟡 Medium |
-| `EpicGrid::UserStoryCreationService` | `Issue.create_user_story` | 🟡 Medium |
-| `EpicGrid::TaskCreationService` | `Issue.create_task` | 🟡 Medium |
-| `EpicGrid::TestCreationService` | `Issue.create_test` | 🟡 Medium |
-| `EpicGrid::BugCreationService` | `Issue.create_bug` | 🟡 Medium |
+| `EpicLadder::FeatureMoveService` | `Issue#move_to_cell` | 🔴 High |
+| `EpicLadder::EpicCreationService` | `Issue.create_epic` | 🔴 High |
+| `EpicLadder::VersionPropagationService` | `Issue#propagate_version_to_children` | 🔴 High |
+| `EpicLadder::CardMoveService` | `Issue#move_card` | 🟡 Medium |
+| `EpicLadder::FeatureCreationService` | `Issue.create_feature` | 🟡 Medium |
+| `EpicLadder::UserStoryCreationService` | `Issue.create_user_story` | 🟡 Medium |
+| `EpicLadder::TaskCreationService` | `Issue.create_task` | 🟡 Medium |
+| `EpicLadder::TestCreationService` | `Issue.create_test` | 🟡 Medium |
+| `EpicLadder::BugCreationService` | `Issue.create_bug` | 🟡 Medium |
 | その他10個以上のService | Issueモデルに統合 | 🟢 Low |
 
 ### Controller簡素化目標
@@ -192,10 +192,10 @@ Epic (Level 0)
 
 **理想的なControllerの例**:
 ```ruby
-module EpicGrid
+module EpicLadder
   class GridController < BaseApiController
     def show
-      grid_data = @project.epic_grid_data(User.current, filter_params)
+      grid_data = @project.epic_ladder_data(User.current, filter_params)
       render_success(grid_data)
     end
 
@@ -218,11 +218,11 @@ end
 
 ## ✅ リファクタリング完了項目
 
-- ✅ `module Kanban` → `module EpicGrid` に全変更完了
+- ✅ `module Kanban` → `module EpicLadder` に全変更完了
 - ✅ routes.rb を MSW準拠エンドポイントに変更完了
-- ✅ カスタム例外クラスを `EpicGrid` 名前空間に統一
-- ✅ `app/controllers/concerns/kanban_api_concern.rb` → `epic_grid_api_concern.rb` にリネーム
-- ✅ ディレクトリ構造が既に `epic_grid/` に統一済み
+- ✅ カスタム例外クラスを `EpicLadder` 名前空間に統一
+- ✅ `app/controllers/concerns/kanban_api_concern.rb` → `epic_ladder_api_concern.rb` にリネーム
+- ✅ ディレクトリ構造が既に `epic_ladder/` に統一済み
 
 ---
 
@@ -232,11 +232,11 @@ end
 
 現在、以下のControllerが未実装:
 
-1. **`EpicGrid::EpicsController`**
+1. **`EpicLadder::EpicsController`**
    - `create`: Epic作成 (現在GridController#create_epicに実装済み)
    - → GridControllerから分離が必要
 
-2. **`EpicGrid::VersionsController`**
+2. **`EpicLadder::VersionsController`**
    - `create`: Version作成 (現在GridController#create_versionに実装済み)
    - → GridControllerから分離が必要
 
@@ -248,8 +248,8 @@ end
 - routes.rbは既に対応済み
 
 **Option B: Routesを修正してGridControllerに集約**
-- routes.rbの `epic_grid/epics#create` を `epic_grid/grid#create_epic` に変更
-- routes.rbの `epic_grid/versions#create` を `epic_grid/grid#create_version` に変更
+- routes.rbの `epic_ladder/epics#create` を `epic_ladder/grid#create_epic` に変更
+- routes.rbの `epic_ladder/versions#create` を `epic_ladder/grid#create_version` に変更
 - Controller構造をシンプルに保つ
 
 **推奨**: Option A (RESTful原則に準拠)
@@ -269,16 +269,16 @@ end
 
 ```bash
 # エンドポイント一覧確認
-bundle exec rake routes | grep epic_grid
+bundle exec rake routes | grep epic_ladder
 
 # Controllerファイル確認
-find app/controllers -name "*.rb" | xargs grep "module EpicGrid"
+find app/controllers -name "*.rb" | xargs grep "module EpicLadder"
 
 # Modelファイル確認
-find app/models -name "*.rb" | xargs grep "module EpicGrid"
+find app/models -name "*.rb" | xargs grep "module EpicLadder"
 
 # Service参照確認 (削除対象)
-grep -r "EpicGrid::.*Service" app/controllers/
+grep -r "EpicLadder::.*Service" app/controllers/
 ```
 
 ---

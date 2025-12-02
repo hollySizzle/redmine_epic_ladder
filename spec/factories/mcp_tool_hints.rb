@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :mcp_tool_hint, class: 'EpicGrid::McpToolHint' do
+  factory :mcp_tool_hint, class: 'EpicLadder::McpToolHint' do
     association :project
     tool_key { 'create_task' }
     hint_text { 'テスト用ヒント' }

@@ -45,9 +45,9 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
       before do
         project.trackers << task_tracker
-        Setting.plugin_redmine_epic_grid = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
+        Setting.plugin_redmine_epic_ladder = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
         # プロジェクト単位でMCP有効化
-        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
+        EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
       end
 
       it 'creates a task via CreateTaskTool' do
@@ -229,11 +229,11 @@ RSpec.describe 'Mcp::ServerController', type: :request do
       before do
         project.trackers << task_tracker
         default_project.trackers << task_tracker
-        Setting.plugin_redmine_epic_grid = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
+        Setting.plugin_redmine_epic_ladder = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
 
         # プロジェクト単位でMCP有効化
-        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
-        EpicGrid::ProjectSetting.create!(project: default_project, mcp_enabled: true)
+        EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
+        EpicLadder::ProjectSetting.create!(project: default_project, mcp_enabled: true)
 
         # ユーザーにdefault_projectへのアクセス権限を付与
         role = Role.find_by(name: 'Manager') || FactoryBot.create(:role, permissions: [:view_issues, :add_issues, :edit_issues])
@@ -434,12 +434,12 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
     context 'when MCP is disabled globally' do
       before do
-        Setting.plugin_redmine_epic_grid = {
+        Setting.plugin_redmine_epic_ladder = {
           'mcp_enabled' => '0',
           'task_tracker' => 'Task'
         }
         # プロジェクト単位では有効化
-        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
+        EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
       end
 
       it 'rejects all MCP requests' do
@@ -472,12 +472,12 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
     context 'when MCP is not enabled for project' do
       before do
-        Setting.plugin_redmine_epic_grid = {
+        Setting.plugin_redmine_epic_ladder = {
           'mcp_enabled' => '1',
           'task_tracker' => 'Task'
         }
         # プロジェクト単位ではMCP無効（デフォルト）
-        EpicGrid::ProjectSetting.find_by(project: project)&.destroy
+        EpicLadder::ProjectSetting.find_by(project: project)&.destroy
       end
 
       it 'rejects access to project without MCP enabled' do
@@ -510,12 +510,12 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
     context 'when MCP is enabled for project' do
       before do
-        Setting.plugin_redmine_epic_grid = {
+        Setting.plugin_redmine_epic_ladder = {
           'mcp_enabled' => '1',
           'task_tracker' => 'Task'
         }
         # プロジェクト単位でMCP有効化
-        EpicGrid::ProjectSetting.create!(project: project, mcp_enabled: true)
+        EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
       end
 
       it 'allows access to project with MCP enabled' do

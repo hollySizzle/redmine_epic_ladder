@@ -19,12 +19,12 @@ FactoryBot.define do
       permissions { Role.new.setable_permissions.map(&:name) }
     end
 
-    trait :with_epic_grid_permissions do
-      permissions { [:view_issues, :add_issues, :edit_issues, :view_epic_grid, :manage_epic_grid, :manage_versions] }
+    trait :with_epic_ladder_permissions do
+      permissions { [:view_issues, :add_issues, :edit_issues, :view_epic_ladder, :manage_epic_ladder, :manage_versions] }
     end
 
-    trait :with_view_epic_grid_only do
-      permissions { [:view_issues, :view_epic_grid] }
+    trait :with_view_epic_ladder_only do
+      permissions { [:view_issues, :view_epic_ladder] }
     end
   end
 end

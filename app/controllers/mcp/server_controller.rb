@@ -110,7 +110,7 @@ module Mcp
     def mcp_server
       @mcp_server ||= begin
         server = MCP::Server.new(
-          name: "redmine_epic_grid",
+          name: "redmine_epic_ladder",
           version: "1.0.0",
           tools: all_mcp_tools,
           server_context: {
@@ -137,27 +137,27 @@ module Mcp
     def all_mcp_tools
       [
         # カテゴリ1: チケット作成ツール
-        EpicGrid::McpTools::CreateEpicTool,
-        EpicGrid::McpTools::CreateFeatureTool,
-        EpicGrid::McpTools::CreateUserStoryTool,
-        EpicGrid::McpTools::CreateTaskTool,
-        EpicGrid::McpTools::CreateBugTool,
-        EpicGrid::McpTools::CreateTestTool,
+        EpicLadder::McpTools::CreateEpicTool,
+        EpicLadder::McpTools::CreateFeatureTool,
+        EpicLadder::McpTools::CreateUserStoryTool,
+        EpicLadder::McpTools::CreateTaskTool,
+        EpicLadder::McpTools::CreateBugTool,
+        EpicLadder::McpTools::CreateTestTool,
         # カテゴリ2: Version管理ツール
-        EpicGrid::McpTools::CreateVersionTool,
-        EpicGrid::McpTools::AssignToVersionTool,
-        EpicGrid::McpTools::MoveToNextVersionTool,
-        EpicGrid::McpTools::ListVersionsTool,
+        EpicLadder::McpTools::CreateVersionTool,
+        EpicLadder::McpTools::AssignToVersionTool,
+        EpicLadder::McpTools::MoveToNextVersionTool,
+        EpicLadder::McpTools::ListVersionsTool,
         # カテゴリ3: チケット操作ツール
-        EpicGrid::McpTools::UpdateIssueStatusTool,
-        EpicGrid::McpTools::AddIssueCommentTool,
-        EpicGrid::McpTools::UpdateIssueProgressTool,
-        EpicGrid::McpTools::UpdateIssueAssigneeTool,
+        EpicLadder::McpTools::UpdateIssueStatusTool,
+        EpicLadder::McpTools::AddIssueCommentTool,
+        EpicLadder::McpTools::UpdateIssueProgressTool,
+        EpicLadder::McpTools::UpdateIssueAssigneeTool,
         # カテゴリ4: 検索・参照ツール
-        EpicGrid::McpTools::ListUserStoriesTool,
-        EpicGrid::McpTools::ListEpicsTool,
-        EpicGrid::McpTools::GetProjectStructureTool,
-        EpicGrid::McpTools::GetIssueDetailTool
+        EpicLadder::McpTools::ListUserStoriesTool,
+        EpicLadder::McpTools::ListEpicsTool,
+        EpicLadder::McpTools::GetProjectStructureTool,
+        EpicLadder::McpTools::GetIssueDetailTool
       ]
     end
 
@@ -177,7 +177,7 @@ module Mcp
       # ツールクラス名からtool_keyを抽出（例: CreateTaskTool → create_task）
       tool_key = tool_class.name.demodulize.underscore.sub(/_tool$/, '')
 
-      EpicGrid::McpToolHint.build_description(project, tool_key, base_description)
+      EpicLadder::McpToolHint.build_description(project, tool_key, base_description)
     end
 
     # X-Default-Projectヘッダーからデフォルトプロジェクトを取得

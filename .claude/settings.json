@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "node /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/others/statusline.js"
+    "command": "node /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/others/statusline.js"
   },
   "env": { "DISABLE_AUTOUPDATER": "1" },
   "hooks": {
@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/src/domain/hooks/session_startup_hook.py"
+            "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/domain/hooks/session_startup_hook.py"
           }
         ]
       },
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+            "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
           }
         ]
       },
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+            "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
           }
         ]
       }
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"📢 Claude Code から通知があります\\\""
+            "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"📢 Claude Code から通知があります\\\""
           }
         ]
       }
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /usr/src/redmine/plugins/redmine_epic_grid/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"🛑 Claude Code セッションが停止されました\\\""
+            "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"🛑 Claude Code セッションが停止されました\\\""
           }
         ]
       }

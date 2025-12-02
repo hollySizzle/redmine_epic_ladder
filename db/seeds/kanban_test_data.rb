@@ -299,14 +299,14 @@ if created_projects['sakura-ec']
     'boards',
     'calendar',
     'gantt',
-    'epic_grid'  # Epic Grid モジュール追加
+    'epic_ladder'  # Epic Grid モジュール追加
   ]
 
   sakura_ec.enabled_module_names = enabled_modules
 
   if sakura_ec.save
     puts "  ✅ 桜商店ECサイト: #{enabled_modules.size}個のモジュールを有効化"
-    puts "    - epic_grid モジュールを含む"
+    puts "    - epic_ladder モジュールを含む"
   else
     puts "  ❌ 桜商店ECサイトのモジュール有効化に失敗: #{sakura_ec.errors.full_messages.join(', ')}"
   end
@@ -391,7 +391,7 @@ plugin_settings = {
 }
 
 # Settingモデルを使用してプラグイン設定を保存
-Setting.plugin_redmine_epic_grid = plugin_settings
+Setting.plugin_redmine_epic_ladder = plugin_settings
 puts "  ✅ カンバントラッカー設定完了"
 plugin_settings.each do |key, value|
   puts "    - #{key}: #{value}"
@@ -1856,7 +1856,7 @@ puts "    - UserStory: #{Issue.joins(:tracker).where(trackers: { name: 'ユー�
 puts "    - Task: #{Issue.joins(:tracker).where(trackers: { name: '作業' }).count}個"
 puts "    - Test: #{Issue.joins(:tracker).where(trackers: { name: '評価' }).count}個"
 puts "    - Bug: #{Issue.joins(:tracker).where(trackers: { name: '不具合' }).count}個"
-puts "  プラグイン設定: #{Setting.plugin_redmine_epic_grid.present? ? '設定済み' : '未設定'}"
+puts "  プラグイン設定: #{Setting.plugin_redmine_epic_ladder.present? ? '設定済み' : '未設定'}"
 
 puts "\n✨ === 実践的データ特徴 ==="
 puts "  📅 プロジェクト期間: 2025年8月〜2026年9月 (14ヶ月)"
@@ -1869,7 +1869,7 @@ puts "  🐛 不具合管理: リアルな不具合シナリオを含む"
 puts "\n🌸 === 桜商店カンバンテストデータ投入完了！ === 🌸"
 puts "以下のコマンドで実行:"
 puts "  cd /usr/src/redmine"
-puts "  RAILS_ENV=development rails runner plugins/redmine_epic_grid/db/seeds/kanban_test_data.rb"
+puts "  RAILS_ENV=development rails runner plugins/redmine_epic_ladder/db/seeds/kanban_test_data.rb"
 puts ""
 puts "💡 使い方:"
 puts "  1. ブラウザで http://localhost:3000 にアクセス"

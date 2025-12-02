@@ -19,7 +19,7 @@
 [Redmine Server: POST /mcp/rpc]
   ↓ Mcp::ServerController
   ↓ MCP::Server (gem 'mcp')
-  ↓ EpicGrid::McpTools::CreateTaskTool
+  ↓ EpicLadder::McpTools::CreateTaskTool
   ↓ Rails Models (Issue, Tracker, Version)
   ↓ PostgreSQL
 ```
@@ -41,7 +41,7 @@
 ### 変更不要
 - `Dockerfile.redmine` - 変更なし（既存gem使用）
 - `PluginGemfile` - gem 'mcp' 既に定義済み
-- `lib/epic_grid/mcp_tools/create_task_tool.rb` - そのまま使用
+- `lib/epic_ladder/mcp_tools/create_task_tool.rb` - そのまま使用
 
 ## 実装詳細
 
@@ -95,9 +95,9 @@ end
 **モード**: Stateless (マルチノード展開対応)
 ```ruby
 MCP::Server.new(
-  name: "redmine_epic_grid",
+  name: "redmine_epic_ladder",
   version: "1.0.0",
-  tools: [EpicGrid::McpTools::CreateTaskTool],
+  tools: [EpicLadder::McpTools::CreateTaskTool],
   server_context: { user: User.current }
 )
 ```

@@ -3,9 +3,9 @@
 namespace :mcp do
   desc "Generate MCP Tools documentation (Markdown + JSON)"
   task generate_docs: :environment do
-    require_relative '../epic_grid/mcp_tools/documentation_generator'
+    require_relative '../epic_ladder/mcp_tools/documentation_generator'
 
-    generator = EpicGrid::McpTools::DocumentationGenerator.new
+    generator = EpicLadder::McpTools::DocumentationGenerator.new
     plugin_root = File.expand_path('../..', __dir__)
 
     # 出力先パス
@@ -27,19 +27,19 @@ namespace :mcp do
 
   desc "List all MCP Tools"
   task list: :environment do
-    require_relative '../epic_grid/mcp_tools/registry'
+    require_relative '../epic_ladder/mcp_tools/registry'
 
-    puts "📋 MCP Tools (#{EpicGrid::McpTools::Registry.count} total)"
+    puts "📋 MCP Tools (#{EpicLadder::McpTools::Registry.count} total)"
     puts "=" * 60
 
-    EpicGrid::McpTools::Registry.all_tools.each_with_index do |tool, index|
+    EpicLadder::McpTools::Registry.all_tools.each_with_index do |tool, index|
       puts "#{index + 1}. #{tool.name.demodulize}"
     end
   end
 
   desc "Validate MCP Tools manifest"
   task validate: :environment do
-    require_relative '../epic_grid/mcp_tools/registry'
+    require_relative '../epic_ladder/mcp_tools/registry'
     require 'json'
 
     plugin_root = File.expand_path('../..', __dir__)
@@ -60,7 +60,7 @@ namespace :mcp do
       puts "   Tools: #{manifest['tools'].size}"
 
       # Registryとの整合性チェック
-      registry_count = EpicGrid::McpTools::Registry.count
+      registry_count = EpicLadder::McpTools::Registry.count
       manifest_count = manifest['tools'].size
 
       if registry_count == manifest_count

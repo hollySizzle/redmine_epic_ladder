@@ -1,0 +1,177 @@
+<%# Epic Grid プロジェクト設定タブ %>
+<% setting = EpicLadder::ProjectSetting.for_project(@project) %>
+
+<%= form_tag(project_epic_ladder_settings_path(@project), method: :patch, class: 'tabular') do %>
+  <fieldset class="box">
+    <legend><%= l(:label_epic_ladder_mcp_settings) %></legend>
+
+    <p>
+      <label>
+        <%= hidden_field_tag 'epic_ladder_project_setting[mcp_enabled]', '0' %>
+        <%= check_box_tag 'epic_ladder_project_setting[mcp_enabled]', '1', setting.mcp_enabled,
+            id: 'epic_ladder_mcp_enabled' %>
+        <strong><%= l(:label_epic_ladder_mcp_enable) %></strong>
+      </label>
+      <em class="info"><%= l(:label_epic_ladder_mcp_description) %></em>
+    </p>
+  </fieldset>
+
+  <p><%= submit_tag l(:button_save) %></p>
+<% end %>
+
+<%# MCPツールヒント設定（全データ変更系ツール） %>
+<%
+  # カテゴリ別にツールをグループ化
+  tool_categories = {
+    create_issues: %w[create_epic create_feature create_user_story create_task create_bug create_test],
+    version_management: %w[create_version assign_to_version move_to_next_version],
+    issue_operations: %w[update_issue_status update_issue_progress update_issue_assignee add_issue_comment]
+  }
+%>
+
+<%= form_tag(project_epic_ladder_mcp_tool_hints_path(@project), method: :patch, class: 'tabular') do %>
+  <fieldset class="box">
+    <legend><%= l(:label_epic_ladder_mcp_tool_hints) %></legend>
+    <em class="info" style="margin-bottom: 10px;"><%= l(:label_epic_ladder_mcp_tool_hints_description) %></em>
+
+    <% tool_categories.each do |category, tools| %>
+      <div class="mcp-tool-category">
+        <h4 class="category-header"><%= l("epic_ladder.mcp_tool_categories.#{category}") %></h4>
+        <% tools.each do |tool_key| %>
+          <% hint = EpicLadder::McpToolHint.for_tool(@project, tool_key) %>
+          <div class="mcp-tool-hint-item">
+            <div class="tool-header">
+              <span class="tool-name"><%= l("epic_ladder.mcp_tools.#{tool_key}") %></span>
+              <code class="tool-key"><%= tool_key %></code>
+              <label class="enabled-toggle">
+                <%= hidden_field_tag "mcp_tool_hints[#{tool_key}][enabled]", '0' %>
+                <%= check_box_tag "mcp_tool_hints[#{tool_key}][enabled]", '1', hint.enabled,
+                    id: "mcp_tool_hint_#{tool_key}_enabled" %>
+                <%= l(:label_epic_ladder_mcp_tool_hint_enabled) %>
+              </label>
+            </div>
+            <div class="tool-hint-input">
+              <%= text_area_tag "mcp_tool_hints[#{tool_key}][hint_text]", hint.hint_text,
+                  rows: 2,
+                  maxlength: EpicLadder::McpToolHint::HINT_TEXT_MAX_LENGTH,
+                  placeholder: l(:label_epic_ladder_mcp_tool_hint_placeholder),
+                  class: 'mcp-tool-hint-textarea',
+                  id: "mcp_tool_hint_#{tool_key}_text" %>
+              <span class="char-count" data-for="mcp_tool_hint_<%= tool_key %>_text">
+                <span class="current">0</span> / <%= EpicLadder::McpToolHint::HINT_TEXT_MAX_LENGTH %>
+              </span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </fieldset>
+
+  <p><%= submit_tag l(:button_save) %></p>
+<% end %>
+
+<style>
+.tabular fieldset.box {
+  margin-bottom: 1em;
+}
+.tabular fieldset.box legend {
+  font-weight: bold;
+}
+.tabular .info {
+  display: block;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 3px;
+  margin-left: 20px;
+}
+.mcp-tool-category {
+  margin: 15px 0;
+}
+.mcp-tool-category .category-header {
+  background: #4a7298;
+  color: #fff;
+  padding: 8px 12px;
+  margin: 0;
+  font-size: 0.95em;
+  border-radius: 4px 4px 0 0;
+}
+.mcp-tool-hint-item {
+  border: 1px solid #ddd;
+  border-top: none;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+.mcp-tool-hint-item:last-child {
+  border-radius: 0 0 4px 4px;
+}
+.mcp-tool-hint-item .tool-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.mcp-tool-hint-item .tool-name {
+  font-weight: bold;
+  color: #333;
+}
+.mcp-tool-hint-item .tool-key {
+  background: #e8e8e8;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8em;
+  color: #666;
+}
+.mcp-tool-hint-item .enabled-toggle {
+  margin-left: auto;
+  font-size: 0.9em;
+  color: #555;
+}
+.mcp-tool-hint-item .tool-hint-input {
+  margin-top: 5px;
+}
+.mcp-tool-hint-textarea {
+  width: 100%;
+  max-width: 700px;
+  font-family: inherit;
+  font-size: 0.9em;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+.mcp-tool-hint-textarea:focus {
+  border-color: #4a7298;
+  outline: none;
+}
+.char-count {
+  display: block;
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 3px;
+}
+.char-count .current.warning {
+  color: #c00;
+  font-weight: bold;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.mcp-tool-hint-textarea').forEach(function(textarea) {
+    var countSpan = document.querySelector('.char-count[data-for="' + textarea.id + '"] .current');
+    if (countSpan) {
+      function updateCount() {
+        var len = textarea.value.length;
+        countSpan.textContent = len;
+        if (len > <%= EpicLadder::McpToolHint::HINT_TEXT_MAX_LENGTH - 50 %>) {
+          countSpan.classList.add('warning');
+        } else {
+          countSpan.classList.remove('warning');
+        }
+      }
+      textarea.addEventListener('input', updateCount);
+      updateCount();
+    }
+  });
+});
+</script>

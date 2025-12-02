@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# DEPRECATED: このファイルは epic_grid_e2e_helpers.rb に置き換えられました
+# DEPRECATED: このファイルは epic_ladder_e2e_helpers.rb に置き換えられました
 # Playwrightベースの新しいヘルパーを使用してください
 
 # module SystemTestHelper

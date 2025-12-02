@@ -1,80 +1,80 @@
-# plugins/redmine_epic_grid/init.rb
+# plugins/redmine_epic_ladder/init.rb
 
 # Concern ファイルを先にrequire
-require_relative 'app/models/concerns/epic_grid/issue_extensions'
-require_relative 'app/models/concerns/epic_grid/project_extensions'
-require_relative 'app/models/concerns/epic_grid/ransackable_config'
-require_relative 'app/models/concerns/epic_grid/version_extensions'
+require_relative 'app/models/concerns/epic_ladder/issue_extensions'
+require_relative 'app/models/concerns/epic_ladder/project_extensions'
+require_relative 'app/models/concerns/epic_ladder/ransackable_config'
+require_relative 'app/models/concerns/epic_ladder/version_extensions'
 
 # View Hooks
-require_relative 'lib/epic_grid/hooks/issue_detail_hooks'
+require_relative 'lib/epic_ladder/hooks/issue_detail_hooks'
 
 # Helper Patches (プロジェクト設定タブ追加用)
-require_relative 'lib/epic_grid/projects_helper_patch'
+require_relative 'lib/epic_ladder/projects_helper_patch'
 
 # Project Setting Model
-require_relative 'app/models/epic_grid/project_setting'
+require_relative 'app/models/epic_ladder/project_setting'
 
 # Asset Deployer (npm不要環境対応)
-require_relative 'lib/epic_grid/asset_deployer'
+require_relative 'lib/epic_ladder/asset_deployer'
 
 # Redmine コアモデルに即座にinclude
 ActiveSupport.on_load(:active_record) do
-  Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
-  Issue.include(EpicGrid::RansackableConfig) unless Issue.included_modules.include?(EpicGrid::RansackableConfig)
-  Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
-  Version.include(EpicGrid::VersionExtensions) unless Version.included_modules.include?(EpicGrid::VersionExtensions)
-  Rails.logger.info '[EpicGrid] ✅ Model extensions loaded in init.rb'
+  Issue.include(EpicLadder::IssueExtensions) unless Issue.included_modules.include?(EpicLadder::IssueExtensions)
+  Issue.include(EpicLadder::RansackableConfig) unless Issue.included_modules.include?(EpicLadder::RansackableConfig)
+  Project.include(EpicLadder::ProjectExtensions) unless Project.included_modules.include?(EpicLadder::ProjectExtensions)
+  Version.include(EpicLadder::VersionExtensions) unless Version.included_modules.include?(EpicLadder::VersionExtensions)
+  Rails.logger.info '[EpicLadder] ✅ Model extensions loaded in init.rb'
 end
 
 # 念のためto_prepareでも実行（リロード対策）
 Rails.application.config.to_prepare do
-  Issue.include(EpicGrid::IssueExtensions) unless Issue.included_modules.include?(EpicGrid::IssueExtensions)
-  Issue.include(EpicGrid::RansackableConfig) unless Issue.included_modules.include?(EpicGrid::RansackableConfig)
-  Project.include(EpicGrid::ProjectExtensions) unless Project.included_modules.include?(EpicGrid::ProjectExtensions)
-  Version.include(EpicGrid::VersionExtensions) unless Version.included_modules.include?(EpicGrid::VersionExtensions)
-  Rails.logger.info '[EpicGrid] ✅ Model extensions reloaded in to_prepare'
+  Issue.include(EpicLadder::IssueExtensions) unless Issue.included_modules.include?(EpicLadder::IssueExtensions)
+  Issue.include(EpicLadder::RansackableConfig) unless Issue.included_modules.include?(EpicLadder::RansackableConfig)
+  Project.include(EpicLadder::ProjectExtensions) unless Project.included_modules.include?(EpicLadder::ProjectExtensions)
+  Version.include(EpicLadder::VersionExtensions) unless Version.included_modules.include?(EpicLadder::VersionExtensions)
+  Rails.logger.info '[EpicLadder] ✅ Model extensions reloaded in to_prepare'
 end
 
 # アセット自動デプロイ (npm不要環境対応)
 # after_initializeで実行 (to_prepareは開発環境で何度も実行されるため)
 Rails.application.config.after_initialize do
-  EpicGrid::AssetDeployer.deploy_if_needed
+  EpicLadder::AssetDeployer.deploy_if_needed
 end
 
-Redmine::Plugin.register :redmine_epic_grid do
+Redmine::Plugin.register :redmine_epic_ladder do
   name 'Redmine Epic Grid Plugin'
   author 'holly'
   description 'Epic→Feature→UserStory→Task/Test階層制約とVersion管理を統合したEpic Gridシステム'
   version '1.0.0'
-  url 'https://github.com/your-repo/redmine_epic_grid'
+  url 'https://github.com/your-repo/redmine_epic_ladder'
   author_url 'https://github.com/your-team'
 
   # プロジェクトモジュール定義
-  project_module :epic_grid do
-    permission :view_epic_grid, {
-      epic_grid: [:index],
-      'epic_grid/cards' => [:index],
-      'epic_grid/hierarchy' => [:hierarchy_tree],
-      'epic_grid/validations' => [:release_validation, :bulk_validation]
+  project_module :epic_ladder do
+    permission :view_epic_ladder, {
+      epic_ladder: [:index],
+      'epic_ladder/cards' => [:index],
+      'epic_ladder/hierarchy' => [:hierarchy_tree],
+      'epic_ladder/validations' => [:release_validation, :bulk_validation]
     }, require: :member
 
-    permission :manage_epic_grid, {
-      'epic_grid/state_transitions' => [:move_card, :bulk_move_cards],
-      'epic_grid/versions' => [:assign_version, :bulk_assign_version, :create_version],
-      'epic_grid/auto_generation' => [:generate_test, :batch_generate_tests],
-      'epic_grid/project_settings' => [:show, :update],
-      'epic_grid/mcp_tool_hints' => [:update]
+    permission :manage_epic_ladder, {
+      'epic_ladder/state_transitions' => [:move_card, :bulk_move_cards],
+      'epic_ladder/versions' => [:assign_version, :bulk_assign_version, :create_version],
+      'epic_ladder/auto_generation' => [:generate_test, :batch_generate_tests],
+      'epic_ladder/project_settings' => [:show, :update],
+      'epic_ladder/mcp_tool_hints' => [:update]
     }, require: :member
   end
 
   # プロジェクトメニューに追加
   menu :project_menu,
-       :epic_grid,
-       { controller: 'epic_grid', action: 'index' },
+       :epic_ladder,
+       { controller: 'epic_ladder', action: 'index' },
        caption: 'Epic Grid',
        param: :project_id,
-       if: Proc.new { |p| User.current.allowed_to?(:view_epic_grid, p) }
+       if: Proc.new { |p| User.current.allowed_to?(:view_epic_ladder, p) }
 
   # プラグイン設定画面
   settings default: {

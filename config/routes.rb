@@ -1,64 +1,64 @@
-# plugins/redmine_epic_grid/config/routes.rb
+# plugins/redmine_epic_ladder/config/routes.rb
 RedmineApp::Application.routes.draw do
   # MSW準拠のEpic Grid API設計
-  # エンドポイント: /api/epic_grid/projects/:projectId/...
-  scope 'api/epic_grid/projects/:project_id', defaults: { format: 'json' } do
+  # エンドポイント: /api/epic_ladder/projects/:projectId/...
+  scope 'api/epic_ladder/projects/:project_id', defaults: { format: 'json' } do
     # ===== Grid Data API (MSW handlers.ts準拠) =====
-    # GET /api/epic_grid/projects/:projectId/grid
-    get 'grid', to: 'epic_grid/grid#show'
+    # GET /api/epic_ladder/projects/:projectId/grid
+    get 'grid', to: 'epic_ladder/grid#show'
 
-    # POST /api/epic_grid/projects/:projectId/grid/move_feature
-    post 'grid/move_feature', to: 'epic_grid/grid#move_feature'
+    # POST /api/epic_ladder/projects/:projectId/grid/move_feature
+    post 'grid/move_feature', to: 'epic_ladder/grid#move_feature'
 
-    # POST /api/epic_grid/projects/:projectId/grid/move_user_story
-    post 'grid/move_user_story', to: 'epic_grid/grid#move_user_story'
+    # POST /api/epic_ladder/projects/:projectId/grid/move_user_story
+    post 'grid/move_user_story', to: 'epic_ladder/grid#move_user_story'
 
-    # POST /api/epic_grid/projects/:projectId/grid/batch_update
-    post 'grid/batch_update', to: 'epic_grid/grid#batch_update'
+    # POST /api/epic_ladder/projects/:projectId/grid/batch_update
+    post 'grid/batch_update', to: 'epic_ladder/grid#batch_update'
 
-    # GET /api/epic_grid/projects/:projectId/grid/updates
-    get 'grid/updates', to: 'epic_grid/grid#real_time_updates'
+    # GET /api/epic_ladder/projects/:projectId/grid/updates
+    get 'grid/updates', to: 'epic_ladder/grid#real_time_updates'
 
-    # POST /api/epic_grid/projects/:projectId/grid/reset (テスト用)
-    post 'grid/reset', to: 'epic_grid/grid#reset'
+    # POST /api/epic_ladder/projects/:projectId/grid/reset (テスト用)
+    post 'grid/reset', to: 'epic_ladder/grid#reset'
 
     # ===== Epic CRUD API =====
-    # POST /api/epic_grid/projects/:projectId/epics
-    post 'epics', to: 'epic_grid/grid#create_epic'
+    # POST /api/epic_ladder/projects/:projectId/epics
+    post 'epics', to: 'epic_ladder/grid#create_epic'
 
     # ===== Version CRUD API =====
-    # POST /api/epic_grid/projects/:projectId/versions
-    post 'versions', to: 'epic_grid/grid#create_version'
+    # POST /api/epic_ladder/projects/:projectId/versions
+    post 'versions', to: 'epic_ladder/grid#create_version'
 
     # ===== Feature Cards API =====
-    # POST /api/epic_grid/projects/:projectId/cards
-    post 'cards', to: 'epic_grid/cards#create'
+    # POST /api/epic_ladder/projects/:projectId/cards
+    post 'cards', to: 'epic_ladder/cards#create'
 
-    # POST /api/epic_grid/projects/:projectId/cards/:featureId/user_stories
-    post 'cards/:feature_id/user_stories', to: 'epic_grid/cards#create_user_story'
+    # POST /api/epic_ladder/projects/:projectId/cards/:featureId/user_stories
+    post 'cards/:feature_id/user_stories', to: 'epic_ladder/cards#create_user_story'
 
     # ===== UserStory子要素 CRUD API =====
-    # POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tasks
-    post 'cards/user_stories/:user_story_id/tasks', to: 'epic_grid/cards#create_task'
+    # POST /api/epic_ladder/projects/:projectId/cards/user_stories/:userStoryId/tasks
+    post 'cards/user_stories/:user_story_id/tasks', to: 'epic_ladder/cards#create_task'
 
-    # POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/tests
-    post 'cards/user_stories/:user_story_id/tests', to: 'epic_grid/cards#create_test'
+    # POST /api/epic_ladder/projects/:projectId/cards/user_stories/:userStoryId/tests
+    post 'cards/user_stories/:user_story_id/tests', to: 'epic_ladder/cards#create_test'
 
-    # POST /api/epic_grid/projects/:projectId/cards/user_stories/:userStoryId/bugs
-    post 'cards/user_stories/:user_story_id/bugs', to: 'epic_grid/cards#create_bug'
+    # POST /api/epic_ladder/projects/:projectId/cards/user_stories/:userStoryId/bugs
+    post 'cards/user_stories/:user_story_id/bugs', to: 'epic_ladder/cards#create_bug'
   end
 
   # メインEpic Grid画面
-  get 'projects/:project_id/epic_grid', to: 'epic_grid#index', as: 'project_epic_grid'
+  get 'projects/:project_id/epic_ladder', to: 'epic_ladder#index', as: 'project_epic_ladder'
 
   # プロジェクト設定タブ用（Epic Gridタブからのフォーム送信）
-  patch 'projects/:project_id/epic_grid/settings', to: 'epic_grid/project_settings#update', as: 'project_epic_grid_settings'
+  patch 'projects/:project_id/epic_ladder/settings', to: 'epic_ladder/project_settings#update', as: 'project_epic_ladder_settings'
 
   # MCPツールヒント設定用
-  patch 'projects/:project_id/epic_grid/mcp_tool_hints', to: 'epic_grid/mcp_tool_hints#update', as: 'project_epic_grid_mcp_tool_hints'
+  patch 'projects/:project_id/epic_ladder/mcp_tool_hints', to: 'epic_ladder/mcp_tool_hints#update', as: 'project_epic_ladder_mcp_tool_hints'
 
   # Version変更クイックアクション
-  patch 'epic_grid/issues/:id/update_version', to: 'epic_grid/version#update', as: 'epic_grid_update_version'
+  patch 'epic_ladder/issues/:id/update_version', to: 'epic_ladder/version#update', as: 'epic_ladder_update_version'
 
   # ===== MCP Server (Streamable HTTP) =====
   # POST /mcp/rpc - JSON-RPC 2.0エンドポイント

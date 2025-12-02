@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "redmine_epic_grid": {
+    "redmine_epic_ladder": {
       "type": "http",
       "url": "http://localhost:8500/mcp/rpc",
       "headers": {

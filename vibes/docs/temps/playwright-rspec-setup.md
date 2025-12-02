@@ -11,7 +11,7 @@ Capybara の i18n 問題を回避するため、**Pure Playwright 方式**（Cap
 
 ```bash
 # Playwright CLI をインストール
-cd plugins/redmine_epic_grid/
+cd plugins/redmine_epic_ladder/
 npm install --save-dev @playwright/test
 npx playwright install chromium
 
@@ -45,10 +45,10 @@ RAILS_ENV=test bundle exec rake redmine:load_default_data
 
 ```bash
 # 全テスト実行
-cd /usr/src/redmine && AILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system
+cd /usr/src/redmine && AILS_ENV=test bundle exec rspec plugins/redmine_epic_ladder/spec/system
 
 # 特定のテスト実行
-cd /usr/src/redmine/plugins/redmine_epic_grid/ && RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/system/kanban/grid_layout_measurement_spec.rb:59 --format documentation
+cd /usr/src/redmine/plugins/redmine_epic_ladder/ && RAILS_ENV=test bundle exec rspec plugins/redmine_epic_ladder/spec/system/kanban/grid_layout_measurement_spec.rb:59 --format documentation
 
 # 失敗時のスクリーンショット確認
 ls -lt tmp/playwright_screenshots/

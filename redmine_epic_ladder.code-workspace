@@ -1,0 +1,59 @@
+{
+  "folders": [
+    {
+      "path": "/usr/src/redmine/plugins/redmine_epic_ladder/"
+    },
+    {
+      "path": "/usr/src/redmine/tmp/test_artifacts/"
+    },
+    {
+      "path": "../../"
+    }
+  ],
+  "settings": {
+    "terminal.integrated.stickyScroll.enabled": true,
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/coverage/**": true,
+      "**/dist/**": true,
+      "**/public/**": true,
+      "**/assets/javascripts/react_gantt_chart/dist/**": true,
+      "**/.git/**": true,
+      "**/vibes/docs/temps/log.log": true,
+      "**/vibes/docs/apis/dhtmlx_gantt/official_referance/**": true,
+      "**/vibes/scripts/node_modules/**": true,
+      "**/scripts/log_capture/**": true,
+      "**/__mocks__/**": true,
+      "**/spec/**": true,
+      "**/test/**": true,
+      "**/testing/**": true,
+      "**/*.test.js": true,
+      "**/*.test.jsx": true,
+      "**/*.spec.js": true,
+      "**/*.spec.jsx": true,
+      "**/*.spec.rb": true,
+      "**/lcov-report/**": true,
+      "**/.nyc_output/**": true,
+      "**/jest_html_reporters.html": true,
+      "**/*.drawio": true,
+      "**/*.log": true
+    },
+    "search.exclude": {
+      "**/node_modules/**": true,
+      "**/coverage/**": true,
+      "**/dist/**": true,
+      "**/public/**": true,
+      "**/assets/javascripts/react_gantt_chart/dist/**": true,
+      "**/vibes/docs/apis/dhtmlx_gantt/official_referance/**": true,
+      "**/vibes/scripts/node_modules/**": true,
+      "**/lcov-report/**": true,
+      "**/.nyc_output/**": true
+    },
+    "files.exclude": {
+      "**/node_modules/**": true,
+      "**/coverage/lcov-report/**": true,
+      "**/vibes/scripts/node_modules/**": true
+    },
+    "terminal.integrated.cwd": "/usr/src/redmine/plugins/redmine_epic_ladder/"
+  }
+}

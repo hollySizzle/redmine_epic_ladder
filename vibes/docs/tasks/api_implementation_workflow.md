@@ -52,7 +52,7 @@
 - エラーハンドリング (alertなど)
 
 ### 6. テスト
-**場所**: `assets/javascripts/epic_grid/`
+**場所**: `assets/javascripts/epic_ladder/`
 
 - 全テストパス必須 (`npm test`)
 - 既存テストが壊れていないか確認
@@ -78,5 +78,5 @@
 | 問題 | 原因 | 解決策 |
 |------|------|--------|
 | デフォルトアラート表示 | 古いバンドル読み込み | `localhost:9000`でアクセス |
-| webpack error | 間違ったディレクトリ | `assets/javascripts/epic_grid/`で実行 |
+| webpack error | 間違ったディレクトリ | `assets/javascripts/epic_ladder/`で実行 |
 | テスト失敗 | 型定義とMSWの不整合 | `normalized-api.ts`と`handlers.ts`を照合 |

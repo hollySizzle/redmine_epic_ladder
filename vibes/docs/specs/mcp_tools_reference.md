@@ -11,7 +11,7 @@ Do not edit manually. Run `rake mcp:generate_docs` to regenerate.
 
 **Description**: チケットにコメント（ノート）を追加します。
 
-**Class**: `EpicGrid::McpTools::AddIssueCommentTool`
+**Class**: `EpicLadder::McpTools::AddIssueCommentTool`
 
 **Overview**:
 
@@ -37,7 +37,7 @@ AI: AddIssueCommentToolを呼び出し
 
 **Description**: チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。
 
-**Class**: `EpicGrid::McpTools::AssignToVersionTool`
+**Class**: `EpicLadder::McpTools::AssignToVersionTool`
 
 **Overview**:
 
@@ -63,7 +63,7 @@ AI: AssignToVersionToolを呼び出し
 
 **Description**: Bug（発生した不具合）チケットを作成します。例: '申込フォームのバリデーションが効かない'
 
-**Class**: `EpicGrid::McpTools::CreateBugTool`
+**Class**: `EpicLadder::McpTools::CreateBugTool`
 
 **Overview**:
 
@@ -92,7 +92,7 @@ AI: CreateBugToolを呼び出し
 
 **Description**: Epic（大分類）チケットを作成します。例: 'ユーザー動線'
 
-**Class**: `EpicGrid::McpTools::CreateEpicTool`
+**Class**: `EpicLadder::McpTools::CreateEpicTool`
 
 **Overview**:
 
@@ -120,7 +120,7 @@ AI: CreateEpicToolを呼び出し
 
 **Description**: Feature（分類を行うための中間層）チケットを作成します。例: 'CTA'
 
-**Class**: `EpicGrid::McpTools::CreateFeatureTool`
+**Class**: `EpicLadder::McpTools::CreateFeatureTool`
 
 **Overview**:
 
@@ -149,7 +149,7 @@ AI: CreateFeatureToolを呼び出し
 
 **Description**: 自然言語からTaskチケットを作成します。例: 'カートのリファクタリング'
 
-**Class**: `EpicGrid::McpTools::CreateTaskTool`
+**Class**: `EpicLadder::McpTools::CreateTaskTool`
 
 **Overview**:
 
@@ -178,7 +178,7 @@ AI: CreateTaskToolを呼び出し
 
 **Description**: Test（やるべきテストや検証）チケットを作成します。例: '申込完了までのE2Eテスト'
 
-**Class**: `EpicGrid::McpTools::CreateTestTool`
+**Class**: `EpicLadder::McpTools::CreateTestTool`
 
 **Overview**:
 
@@ -207,7 +207,7 @@ AI: CreateTestToolを呼び出し
 
 **Description**: UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: '申込画面を作る'
 
-**Class**: `EpicGrid::McpTools::CreateUserStoryTool`
+**Class**: `EpicLadder::McpTools::CreateUserStoryTool`
 
 **Overview**:
 
@@ -237,7 +237,7 @@ AI: CreateUserStoryToolを呼び出し
 
 **Description**: Version（リリース予定）を作成します。例: 'Sprint 2025-02（2025-02-28まで）'
 
-**Class**: `EpicGrid::McpTools::CreateVersionTool`
+**Class**: `EpicLadder::McpTools::CreateVersionTool`
 
 **Overview**:
 
@@ -266,7 +266,7 @@ AI: CreateVersionToolを呼び出し
 
 **Description**: チケットの詳細情報、コメント（更新履歴）、子チケットを取得します。
 
-**Class**: `EpicGrid::McpTools::GetIssueDetailTool`
+**Class**: `EpicLadder::McpTools::GetIssueDetailTool`
 
 **Overview**:
 
@@ -291,7 +291,7 @@ AI: GetIssueDetailToolを呼び出し
 
 **Description**: プロジェクトのEpic階層構造（Epic→Feature→UserStory）を可視化します。PMがプロジェクト全体を把握するのに便利です。
 
-**Class**: `EpicGrid::McpTools::GetProjectStructureTool`
+**Class**: `EpicLadder::McpTools::GetProjectStructureTool`
 
 **Overview**:
 
@@ -318,7 +318,7 @@ AI: GetProjectStructureToolを呼び出し
 
 **Description**: プロジェクト内のEpic一覧を取得します。担当者、ステータスでフィルタリング可能です。
 
-**Class**: `EpicGrid::McpTools::ListEpicsTool`
+**Class**: `EpicLadder::McpTools::ListEpicsTool`
 
 **Overview**:
 
@@ -346,7 +346,7 @@ AI: ListEpicsToolを呼び出し
 
 **Description**: プロジェクト内のUserStory一覧を取得します。Version、担当者でフィルタリング可能です。
 
-**Class**: `EpicGrid::McpTools::ListUserStoriesTool`
+**Class**: `EpicLadder::McpTools::ListUserStoriesTool`
 
 **Overview**:
 
@@ -375,7 +375,7 @@ AI: ListUserStoriesToolを呼び出し
 
 **Description**: チケット（UserStory推奨）を次のVersionに移動します（リスケ）。配下のTask/Bug/Testも自動的に移動されます。
 
-**Class**: `EpicGrid::McpTools::MoveToNextVersionTool`
+**Class**: `EpicLadder::McpTools::MoveToNextVersionTool`
 
 **Overview**:
 
@@ -401,7 +401,7 @@ AI: MoveToNextVersionToolを呼び出し
 
 **Description**: チケットの担当者を変更します。
 
-**Class**: `EpicGrid::McpTools::UpdateIssueAssigneeTool`
+**Class**: `EpicLadder::McpTools::UpdateIssueAssigneeTool`
 
 **Overview**:
 
@@ -427,7 +427,7 @@ AI: UpdateIssueAssigneeToolを呼び出し
 
 **Description**: チケットの進捗率を更新します。0〜100の整数で指定してください。
 
-**Class**: `EpicGrid::McpTools::UpdateIssueProgressTool`
+**Class**: `EpicLadder::McpTools::UpdateIssueProgressTool`
 
 **Overview**:
 
@@ -453,7 +453,7 @@ AI: UpdateIssueProgressToolを呼び出し
 
 **Description**: チケットのステータスを更新します。例: 'Open', 'In Progress', 'Closed'
 
-**Class**: `EpicGrid::McpTools::UpdateIssueStatusTool`
+**Class**: `EpicLadder::McpTools::UpdateIssueStatusTool`
 
 **Overview**:
 

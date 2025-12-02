@@ -1,11 +1,11 @@
-// plugins/redmine_epic_grid/webpack.config.js
+// plugins/redmine_epic_ladder/webpack.config.js
 const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   mode: "development",
-  entry: "./assets/javascripts/epic_grid/src/index.tsx",
+  entry: "./assets/javascripts/epic_ladder/src/index.tsx",
   output: {
     filename: "kanban_bundle.js",
     path: path.resolve(__dirname, "assets/build"),
@@ -31,7 +31,7 @@ module.exports = {
           options: {
             configFile: path.resolve(
               __dirname,
-              "assets/javascripts/epic_grid/tsconfig.json"
+              "assets/javascripts/epic_ladder/tsconfig.json"
             ),
             transpileOnly: true,
           },
@@ -72,7 +72,7 @@ module.exports = {
       {
         directory: path.resolve(
           __dirname,
-          "assets/javascripts/epic_grid/public"
+          "assets/javascripts/epic_ladder/public"
         ),
         publicPath: "/",
       },
@@ -100,7 +100,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: path.resolve(
         __dirname,
-        "assets/javascripts/epic_grid/nested_grid_test_template.html"
+        "assets/javascripts/epic_ladder/nested_grid_test_template.html"
       ),
       filename: "index.html",
     }),
@@ -109,7 +109,7 @@ module.exports = {
       patterns: [
         // MSW用ファイル
         {
-          from: path.resolve(__dirname, "assets/javascripts/epic_grid/public"),
+          from: path.resolve(__dirname, "assets/javascripts/epic_ladder/public"),
           to: path.resolve(__dirname, "assets/build"),
           noErrorOnMissing: true,
         },
@@ -125,7 +125,7 @@ module.exports = {
             "assets/build/kanban_bundle.js"
           );
           const destPath =
-            "/usr/src/redmine/public/plugin_assets/redmine_epic_grid/kanban_bundle.js";
+            "/usr/src/redmine/public/plugin_assets/redmine_epic_ladder/kanban_bundle.js";
 
           // ディレクトリが存在しない場合は作成
           const destDir = path.dirname(destPath);

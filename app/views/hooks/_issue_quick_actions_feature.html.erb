@@ -1,13 +1,13 @@
 <div class="epic-grid-quick-actions contextual" style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; background-color: #f8f8f8;">
   <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
-    <%= l(:label_epic_grid_quick_actions) %>
+    <%= l(:label_epic_ladder_quick_actions) %>
   </h3>
   <p style="margin: 0 0 10px 0; font-size: 12px; color: #666;">
-    <%= l(:text_epic_grid_create_under_this_feature, issue: link_to("##{issue.id} #{issue.subject}", issue_path(issue))).html_safe %>
+    <%= l(:text_epic_ladder_create_under_this_feature, issue: link_to("##{issue.id} #{issue.subject}", issue_path(issue))).html_safe %>
   </p>
   <div class="epic-grid-action-buttons">
     <%
-      tracker_names = EpicGrid::TrackerHierarchy.tracker_names
+      tracker_names = EpicLadder::TrackerHierarchy.tracker_names
 
       # トラッカーIDを取得
       user_story_tracker = Tracker.find_by(name: tracker_names[:user_story])
@@ -23,7 +23,7 @@
 
     <% if user_story_tracker %>
       <%= link_to(
-        l(:label_epic_grid_create_user_story),
+        l(:label_epic_ladder_create_user_story),
         common_params.merge(issue: {
           parent_issue_id: issue.id,
           tracker_id: user_story_tracker.id,

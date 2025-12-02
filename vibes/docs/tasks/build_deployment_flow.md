@@ -2,14 +2,14 @@
 
 ## 概要
 
-このドキュメントは redmine_epic_grid プラグインのフロントエンドビルドとデプロイメントの正規フローを記載します。
+このドキュメントは redmine_epic_ladder プラグインのフロントエンドビルドとデプロイメントの正規フローを記載します。
 
 ## ディレクトリ構造
 
 ```
-plugins/redmine_epic_grid/
+plugins/redmine_epic_ladder/
 ├── assets/
-│   ├── javascripts/epic_grid/     # フロントエンドソースコード
+│   ├── javascripts/epic_ladder/     # フロントエンドソースコード
 │   │   ├── src/                   # TypeScript/React ソース
 │   │   ├── webpack.config.js      # Webpack設定
 │   │   ├── package.json           # npm設定
@@ -25,7 +25,7 @@ plugins/redmine_epic_grid/
 
 ```
 [1. ソースコード編集]
-  assets/javascripts/epic_grid/src/**/*.tsx
+  assets/javascripts/epic_ladder/src/**/*.tsx
 
         ↓
 
@@ -37,19 +37,19 @@ plugins/redmine_epic_grid/
 
 [3. Redmine Public へデプロイ]
   $ npm run deploy
-  → cp assets/build/*.js /usr/src/redmine/public/plugin_assets/redmine_epic_grid/
+  → cp assets/build/*.js /usr/src/redmine/public/plugin_assets/redmine_epic_ladder/
 
         ↓
 
 [4. Redmine Helper 経由で配信]
-  app/helpers/epic_grid_helper.rb
+  app/helpers/epic_ladder_helper.rb
   → asset-manifest.json を読み込み
   → ハッシュ付きファイル名解決
 
         ↓
 
 [5. ブラウザ配信]
-  /plugin_assets/redmine_epic_grid/kanban_bundle.js
+  /plugin_assets/redmine_epic_ladder/kanban_bundle.js
 ```
 
 ## npm スクリプト一覧
@@ -110,24 +110,24 @@ optimization: {
 
 ### Helper によるパス解決
 
-`app/helpers/epic_grid_helper.rb` が `asset-manifest.json` を読み込み、正しいファイル名を解決します。
+`app/helpers/epic_ladder_helper.rb` が `asset-manifest.json` を読み込み、正しいファイル名を解決します。
 
 ```ruby
-def epic_grid_asset_path(asset_name)
-  manifest_path = File.join(Rails.public_path, 'plugin_assets', 'redmine_epic_grid', 'asset-manifest.json')
+def epic_ladder_asset_path(asset_name)
+  manifest_path = File.join(Rails.public_path, 'plugin_assets', 'redmine_epic_ladder', 'asset-manifest.json')
 
   # manifest.json からハッシュ付きファイル名取得
   manifest = JSON.parse(File.read(manifest_path))
   hashed_name = manifest[asset_name]
 
-  "#{Redmine::Utils.relative_url_root}/plugin_assets/redmine_epic_grid/#{hashed_name}"
+  "#{Redmine::Utils.relative_url_root}/plugin_assets/redmine_epic_ladder/#{hashed_name}"
 end
 ```
 
 ### View での使用例
 
 ```erb
-<%= javascript_include_tag epic_grid_asset_path('kanban_bundle.js'), defer: true %>
+<%= javascript_include_tag epic_ladder_asset_path('kanban_bundle.js'), defer: true %>
 ```
 
 ## トラブルシューティング
@@ -162,17 +162,17 @@ ls assets/build/asset-manifest.json
 **解決策**:
 ```bash
 # 1. 配信先ディレクトリ確認
-ls /usr/src/redmine/public/plugin_assets/redmine_epic_grid/
+ls /usr/src/redmine/public/plugin_assets/redmine_epic_ladder/
 
 # 2. 手動コピー
-cp assets/build/*.js assets/build/*.json /usr/src/redmine/public/plugin_assets/redmine_epic_grid/
+cp assets/build/*.js assets/build/*.json /usr/src/redmine/public/plugin_assets/redmine_epic_ladder/
 ```
 
 ## 注意事項
 
 ### ⚠️ 削除されたディレクトリ
 
-- **`assets/javascripts/epic_grid/dist/`**: 旧ビルド出力先（2025-10-20 削除）
+- **`assets/javascripts/epic_ladder/dist/`**: 旧ビルド出力先（2025-10-20 削除）
   - webpack.config.js 変更前の遺物
   - 現在は `assets/build/` が正規パス
 
@@ -182,7 +182,7 @@ cp assets/build/*.js assets/build/*.json /usr/src/redmine/public/plugin_assets/r
 
 ```gitignore
 # Build outputs
-assets/javascripts/epic_grid/dist/  # 旧パス（削除済み）
+assets/javascripts/epic_ladder/dist/  # 旧パス（削除済み）
 assets/build/                        # 正規ビルド出力先
 ```
 

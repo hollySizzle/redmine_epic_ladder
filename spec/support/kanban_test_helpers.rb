@@ -198,7 +198,7 @@ module KanbanTestHelpers
 
   # TrackerHierarchy の検証
   def verify_tracker_hierarchy(child_tracker, parent_tracker)
-    EpicGrid::TrackerHierarchy.valid_parent?(child_tracker, parent_tracker)
+    EpicLadder::TrackerHierarchy.valid_parent?(child_tracker, parent_tracker)
   end
 
   # StateTransition の検証

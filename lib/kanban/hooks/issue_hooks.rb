@@ -25,7 +25,7 @@ module Kanban
       private
 
       def trigger_creation_hooks(issue)
-        tracker_names = EpicGrid::TrackerHierarchy.tracker_names
+        tracker_names = EpicLadder::TrackerHierarchy.tracker_names
         case issue.tracker.name
         when tracker_names[:user_story]
           trigger_user_story_creation(issue)
@@ -43,7 +43,7 @@ module Kanban
 
       def trigger_bug_creation(bug)
         # Bug関連付け処理
-        user_story_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
+        user_story_tracker_name = EpicLadder::TrackerHierarchy.tracker_names[:user_story]
         if bug.parent&.tracker&.name == user_story_tracker_name
           create_bug_blocks_relation(bug, bug.parent)
         end
@@ -52,14 +52,14 @@ module Kanban
       end
 
       def handle_status_change(issue)
-        user_story_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
+        user_story_tracker_name = EpicLadder::TrackerHierarchy.tracker_names[:user_story]
         if issue.tracker.name == user_story_tracker_name && moved_to_ready_for_test?(issue)
           TestGenerationService.ensure_test_exists_for_ready_state(issue)
         end
       end
 
       def handle_version_change(issue)
-        user_story_tracker_name = EpicGrid::TrackerHierarchy.tracker_names[:user_story]
+        user_story_tracker_name = EpicLadder::TrackerHierarchy.tracker_names[:user_story]
         if issue.tracker.name == user_story_tracker_name
           version = issue.fixed_version
           # TODO: Implement version propagation to children
@@ -70,7 +70,7 @@ module Kanban
       end
 
       def validate_hierarchy_change(issue)
-        unless EpicGrid::TrackerHierarchy.validate_hierarchy(issue)
+        unless EpicLadder::TrackerHierarchy.validate_hierarchy(issue)
           Rails.logger.warn "階層制約違反: Issue##{issue.id} - #{issue.tracker.name} -> #{issue.parent&.tracker&.name}"
         end
       end

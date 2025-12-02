@@ -1,4 +1,4 @@
-# Redmine Epic Grid Plugin
+# Redmine Epic Ladder Plugin
 ## 拡張機能の目的
 
 Redmine は自由(しかもOSS!!)､だが､その自由さと無骨なUIによって､PMは過労死するだろう(少なくとも腱鞘炎にはなる)｡
@@ -98,7 +98,7 @@ Epic GridビューはReact + Zustandで実装された現代的なUIで、以下
 cd /path/to/redmine/plugins
 
 # 2. プラグインをクローン
-git clone https://github.com/your-repo/redmine_epic_grid.git
+git clone https://github.com/your-repo/redmine_epic_ladder.git
 
 # 3. Redmine再起動
 # Docker環境の場合
@@ -119,13 +119,13 @@ Docker環境では、確実なデプロイのため以下の手順を推奨し�
 
 ```bash
 # 1. プラグインディレクトリに移動
-cd /app/IntranetApps/containers/202501_redmine/app/plugins/redmine_epic_grid
+cd /app/IntranetApps/containers/202501_redmine/app/plugins/redmine_epic_ladder
 
 # 2. 最新コードを取得
 git pull
 
 # 3. アセットを手動デプロイ（確実）
-docker exec redmine bundle exec rake redmine_epic_grid:deploy
+docker exec redmine bundle exec rake redmine_epic_ladder:deploy
 
 # 4. コンテナ再起動
 cd /app/IntranetApps/containers/202501_redmine
@@ -138,11 +138,11 @@ docker compose restart redmine
 
 **なぜ手動デプロイが必要？**
 - 自動デプロイはタイムスタンプ比較で動作するため、Gitの `git pull` 後にタイムスタンプが期待通り更新されない場合があります
-- `rake redmine_epic_grid:deploy` を実行することで、確実に最新のビルドファイルが配信されます
+- `rake redmine_epic_ladder:deploy` を実行することで、確実に最新のビルドファイルが配信されます
 
 ### 📦 自動アセット配信の仕組み
 
-Rails起動時に `assets/build/` から `public/plugin_assets/redmine_epic_grid/` へビルド済みファイルが自動コピーされます。
+Rails起動時に `assets/build/` から `public/plugin_assets/redmine_epic_ladder/` へビルド済みファイルが自動コピーされます。
 
 - ✅ npm環境不要
 - ✅ Docker環境不要
@@ -153,7 +153,7 @@ Rails起動時に `assets/build/` から `public/plugin_assets/redmine_epic_grid
 
 ```bash
 # アセット配信状態を確認
-bundle exec rake redmine_epic_grid:status
+bundle exec rake redmine_epic_ladder:status
 ```
 
 出力例：
@@ -161,14 +161,14 @@ bundle exec rake redmine_epic_grid:status
 === Epic Grid Asset Status ===
 
 Source directory (Git-managed):
-  Path: /usr/src/redmine/plugins/redmine_epic_grid/assets/build
+  Path: /usr/src/redmine/plugins/redmine_epic_ladder/assets/build
   Status: ✅ Exists (5 files)
     - kanban_bundle.8d031bec.js (455 KB, modified: 2025-10-20)
     - asset-manifest.json (0.3 KB)
     ...
 
 Deployment directory (Redmine public):
-  Path: /usr/src/redmine/public/plugin_assets/redmine_epic_grid
+  Path: /usr/src/redmine/public/plugin_assets/redmine_epic_ladder
   Status: ✅ Exists (5 files)
 
 Recommendations:
@@ -179,10 +179,10 @@ Recommendations:
 
 ```bash
 # Docker環境
-docker exec redmine bundle exec rake redmine_epic_grid:deploy
+docker exec redmine bundle exec rake redmine_epic_ladder:deploy
 
 # 通常環境
-bundle exec rake redmine_epic_grid:deploy
+bundle exec rake redmine_epic_ladder:deploy
 ```
 
 ---
@@ -243,10 +243,10 @@ npm run build
 
 ```bash
 # 1. アセット配信状態を確認
-bundle exec rake redmine_epic_grid:status
+bundle exec rake redmine_epic_ladder:status
 
 # 2. 手動デプロイ
-bundle exec rake redmine_epic_grid:deploy
+bundle exec rake redmine_epic_ladder:deploy
 
 # 3. Rails 再起動
 # Docker環境
@@ -264,11 +264,11 @@ bundle exec rails s
 
 ```bash
 # Docker環境の場合
-docker exec redmine bundle exec rake redmine_epic_grid:deploy
+docker exec redmine bundle exec rake redmine_epic_ladder:deploy
 docker compose restart redmine
 
 # 通常環境の場合
-bundle exec rake redmine_epic_grid:deploy
+bundle exec rake redmine_epic_ladder:deploy
 bundle exec rails s
 
 # ブラウザでスーパーリロード
@@ -430,17 +430,17 @@ Claude Desktopと同じ手順でAPIキーを取得してください（上記参
 
 ```bash
 # 基本的な構文
-claude mcp add --transport http redmine_epic_grid \
+claude mcp add --transport http redmine_epic_ladder \
   https://your-redmine.com/mcp/rpc \
   --header "X-Redmine-API-Key: YOUR_API_KEY"
 
 # 実際の例
-claude mcp add --transport http redmine_epic_grid \
+claude mcp add --transport http redmine_epic_ladder \
   https://redmine.example.com/mcp/rpc \
   --header "X-Redmine-API-Key: a1b2c3d4e5f6789abcdef0123456789abcdef012"
 
 # ローカル開発環境（HTTP）の例
-claude mcp add --transport http redmine_epic_grid \
+claude mcp add --transport http redmine_epic_ladder \
   http://localhost:3000/mcp/rpc \
   --header "X-Redmine-API-Key: YOUR_API_KEY"
 ```
@@ -483,7 +483,7 @@ Claude Code内で以下のように使います:
 
 **解決策:**
 - Redmineで新しいAPIキーを生成
-- `claude mcp remove redmine_epic_grid` で削除してから再設定
+- `claude mcp remove redmine_epic_ladder` で削除してから再設定
 
 ---
 
@@ -771,7 +771,7 @@ MCPサーバーの動作は環境変数でカスタマイズできます。`.mcp
 ```jsonc
 {
   "mcpServers": {
-    "redmine_epic_grid": {
+    "redmine_epic_ladder": {
       "type": "http",
       "url": "http://localhost:8500/mcp/rpc",
       "headers": {

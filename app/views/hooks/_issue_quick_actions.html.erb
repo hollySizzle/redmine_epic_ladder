@@ -1,13 +1,13 @@
 <div class="epic-grid-quick-actions contextual" style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; background-color: #f8f8f8;">
   <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
-    <%= l(:label_epic_grid_quick_actions) %>
+    <%= l(:label_epic_ladder_quick_actions) %>
   </h3>
   <p style="margin: 0 0 10px 0; font-size: 12px; color: #666;">
-    <%= l(:text_epic_grid_create_under_user_story, user_story: link_to("##{user_story.id} #{user_story.subject}", issue_path(user_story))).html_safe %>
+    <%= l(:text_epic_ladder_create_under_user_story, user_story: link_to("##{user_story.id} #{user_story.subject}", issue_path(user_story))).html_safe %>
   </p>
   <div class="epic-grid-action-buttons">
     <%
-      tracker_names = EpicGrid::TrackerHierarchy.tracker_names
+      tracker_names = EpicLadder::TrackerHierarchy.tracker_names
 
       # トラッカーIDを取得
       task_tracker = Tracker.find_by(name: tracker_names[:task])
@@ -25,7 +25,7 @@
 
     <% if task_tracker %>
       <%= link_to(
-        l(:label_epic_grid_create_task),
+        l(:label_epic_ladder_create_task),
         common_params.merge(issue: {
           parent_issue_id: user_story.id,
           tracker_id: task_tracker.id,
@@ -40,7 +40,7 @@
 
     <% if test_tracker %>
       <%= link_to(
-        l(:label_epic_grid_create_test),
+        l(:label_epic_ladder_create_test),
         common_params.merge(issue: {
           parent_issue_id: user_story.id,
           tracker_id: test_tracker.id,
@@ -55,7 +55,7 @@
 
     <% if bug_tracker %>
       <%= link_to(
-        l(:label_epic_grid_create_bug),
+        l(:label_epic_ladder_create_bug),
         common_params.merge(issue: {
           parent_issue_id: user_story.id,
           tracker_id: bug_tracker.id,

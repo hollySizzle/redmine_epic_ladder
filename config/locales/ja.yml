@@ -1,42 +1,42 @@
 # Japanese strings for Rails i18n
 ja:
-  label_epic_grid_quick_actions: "クイックアクション"
-  label_epic_grid_create_task: "タスクを作成"
-  label_epic_grid_create_test: "テストを作成"
-  label_epic_grid_create_bug: "バグを作成"
-  label_epic_grid_create_user_story: "UserStoryを作成"
-  label_epic_grid_create_feature: "Featureを作成"
-  text_epic_grid_create_under_user_story: "UserStory %{user_story} の直下に作成"
-  text_epic_grid_create_under_this_user_story: "このUserStory %{issue} の直下に作成"
-  text_epic_grid_create_under_this_feature: "このFeature %{issue} の直下に作成"
-  text_epic_grid_create_under_this_epic: "このEpic %{issue} の直下に作成"
+  label_epic_ladder_quick_actions: "クイックアクション"
+  label_epic_ladder_create_task: "タスクを作成"
+  label_epic_ladder_create_test: "テストを作成"
+  label_epic_ladder_create_bug: "バグを作成"
+  label_epic_ladder_create_user_story: "UserStoryを作成"
+  label_epic_ladder_create_feature: "Featureを作成"
+  text_epic_ladder_create_under_user_story: "UserStory %{user_story} の直下に作成"
+  text_epic_ladder_create_under_this_user_story: "このUserStory %{issue} の直下に作成"
+  text_epic_ladder_create_under_this_feature: "このFeature %{issue} の直下に作成"
+  text_epic_ladder_create_under_this_epic: "このEpic %{issue} の直下に作成"
 
   # Version変更クイックアクション
-  label_epic_grid_version_change: "バージョン変更"
-  label_epic_grid_update_parent_version: "親%{parent}も変更"
-  notice_epic_grid_version_updated: "バージョンを変更しました"
-  notice_epic_grid_version_updated_with_parent: "%{issue} と親%{parent} のバージョンを %{version} に変更しました（計%{total}件）"
-  notice_epic_grid_siblings_updated: "兄弟issue %{count}件も更新されました"
-  warning_epic_grid_version_mismatch_with_parent: "⚠️ 親%{parent} は %{parent_version} のままです"
-  error_epic_grid_version_update_failed: "バージョンの変更に失敗しました: %{error}"
+  label_epic_ladder_version_change: "バージョン変更"
+  label_epic_ladder_update_parent_version: "親%{parent}も変更"
+  notice_epic_ladder_version_updated: "バージョンを変更しました"
+  notice_epic_ladder_version_updated_with_parent: "%{issue} と親%{parent} のバージョンを %{version} に変更しました（計%{total}件）"
+  notice_epic_ladder_siblings_updated: "兄弟issue %{count}件も更新されました"
+  warning_epic_ladder_version_mismatch_with_parent: "⚠️ 親%{parent} は %{parent_version} のままです"
+  error_epic_ladder_version_update_failed: "バージョンの変更に失敗しました: %{error}"
 
   # プロジェクト設定タブ
-  label_epic_grid_settings: "Epic Grid"
-  label_epic_grid_mcp_settings: "MCP API設定"
-  label_epic_grid_mcp_enable: "このプロジェクトでMCP APIを許可する"
-  label_epic_grid_mcp_description: "Claude Code等のAIツールからこのプロジェクトへのアクセスを許可します"
-  error_epic_grid_settings_save_failed: "Epic Grid設定の保存に失敗しました: %{errors}"
+  label_epic_ladder_settings: "Epic Grid"
+  label_epic_ladder_mcp_settings: "MCP API設定"
+  label_epic_ladder_mcp_enable: "このプロジェクトでMCP APIを許可する"
+  label_epic_ladder_mcp_description: "Claude Code等のAIツールからこのプロジェクトへのアクセスを許可します"
+  error_epic_ladder_settings_save_failed: "Epic Grid設定の保存に失敗しました: %{errors}"
 
   # MCPツールヒント設定
-  label_epic_grid_mcp_tool_hints: "MCPツール プロジェクト固有ルール"
-  label_epic_grid_mcp_tool_hints_description: "AIがツールを使用する際に参照するプロジェクト固有のルールを設定します（最大500文字）"
-  label_epic_grid_mcp_tool_hint_enabled: "有効"
-  label_epic_grid_mcp_tool_hint_placeholder: "例: レビュー依頼時は@hollyをメンション、緊急時は件名に【緊急】を付与"
-  notice_epic_grid_mcp_tool_hints_saved: "MCPツールヒント設定を保存しました"
-  error_epic_grid_mcp_tool_hints_save_failed: "MCPツールヒント設定の保存に失敗しました: %{errors}"
+  label_epic_ladder_mcp_tool_hints: "MCPツール プロジェクト固有ルール"
+  label_epic_ladder_mcp_tool_hints_description: "AIがツールを使用する際に参照するプロジェクト固有のルールを設定します（最大500文字）"
+  label_epic_ladder_mcp_tool_hint_enabled: "有効"
+  label_epic_ladder_mcp_tool_hint_placeholder: "例: レビュー依頼時は@hollyをメンション、緊急時は件名に【緊急】を付与"
+  notice_epic_ladder_mcp_tool_hints_saved: "MCPツールヒント設定を保存しました"
+  error_epic_ladder_mcp_tool_hints_save_failed: "MCPツールヒント設定の保存に失敗しました: %{errors}"
 
   # MCPツール名・カテゴリ
-  epic_grid:
+  epic_ladder:
     mcp_tool_categories:
       create_issues: "📝 チケット作成"
       version_management: "📅 Version管理"

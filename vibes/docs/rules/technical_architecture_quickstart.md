@@ -59,7 +59,7 @@ Epic (エピック)
 
 ## 📖 API仕様 (Single Source of Truth)
 
-**型定義ファイル**: `assets/javascripts/epic_grid/src/types/normalized-api.ts`
+**型定義ファイル**: `assets/javascripts/epic_ladder/src/types/normalized-api.ts`
 
 全API仕様はTypeScript型定義として管理されています。
 ドキュメントではなく、コードが仕様です。

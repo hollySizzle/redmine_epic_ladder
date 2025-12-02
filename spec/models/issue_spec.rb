@@ -136,7 +136,7 @@ RSpec.describe Issue, type: :model do
     it 'moves feature to target epic and version' do
       # Fat Modelメソッドを使用
       feature.reload # lock_versionを最新化
-      feature.epic_grid_move_to_cell(target_epic.id, version_v2.id)
+      feature.epic_ladder_move_to_cell(target_epic.id, version_v2.id)
 
       feature.reload
       expect(feature.parent).to eq(target_epic)
@@ -146,7 +146,7 @@ RSpec.describe Issue, type: :model do
     it 'propagates version to child user stories and tasks' do
       # Fat Modelメソッドを使用（自動的に子要素に伝播）
       feature.reload # lock_versionを最新化
-      feature.epic_grid_move_to_cell(target_epic.id, version_v2.id)
+      feature.epic_ladder_move_to_cell(target_epic.id, version_v2.id)
 
       user_story.reload
       task.reload
@@ -180,7 +180,7 @@ RSpec.describe Issue, type: :model do
     it 'updates version for all descendants' do
       # Fat Modelメソッドでバージョンを伝播
       feature.reload # lock_versionを最新化
-      feature.epic_grid_propagate_version_to_children(version_v2.id)
+      feature.epic_ladder_propagate_version_to_children(version_v2.id)
 
       feature.reload
       feature.children.each do |child|
@@ -195,7 +195,7 @@ RSpec.describe Issue, type: :model do
 
       # Fat Modelメソッドで再帰的に更新
       feature.reload
-      feature.epic_grid_propagate_version_to_children(version_v2.id)
+      feature.epic_ladder_propagate_version_to_children(version_v2.id)
 
       story.reload
       task.reload
@@ -366,25 +366,25 @@ RSpec.describe Issue, type: :model do
     describe '#hierarchy_level' do
       it 'returns 0 for Epic' do
         epic = create(:epic, project: project, author: user)
-        level = EpicGrid::TrackerHierarchy.level(epic.tracker.name)
+        level = EpicLadder::TrackerHierarchy.level(epic.tracker.name)
         expect(level).to eq(0)
       end
 
       it 'returns 1 for Feature' do
         feature = create(:feature, project: project, author: user)
-        level = EpicGrid::TrackerHierarchy.level(feature.tracker.name)
+        level = EpicLadder::TrackerHierarchy.level(feature.tracker.name)
         expect(level).to eq(1)
       end
 
       it 'returns 2 for UserStory' do
         user_story = create(:user_story, project: project, author: user)
-        level = EpicGrid::TrackerHierarchy.level(user_story.tracker.name)
+        level = EpicLadder::TrackerHierarchy.level(user_story.tracker.name)
         expect(level).to eq(2)
       end
 
       it 'returns 3 for Task/Test/Bug' do
         task = create(:task, project: project, author: user)
-        level = EpicGrid::TrackerHierarchy.level(task.tracker.name)
+        level = EpicLadder::TrackerHierarchy.level(task.tracker.name)
         expect(level).to eq(3)
       end
     end
@@ -420,10 +420,10 @@ RSpec.describe Issue, type: :model do
   # 追加Fat Modelメソッド: JSON変換・階層判定・親探索
   # ========================================
 
-  describe '#epic_grid_build_issue_json' do
+  describe '#epic_ladder_build_issue_json' do
     it 'builds issue JSON with kanban column information' do
       epic = create(:epic, project: project, author: user)
-      json = epic.epic_grid_build_issue_json
+      json = epic.epic_ladder_build_issue_json
 
       expect(json[:id]).to eq(epic.id)
       expect(json[:subject]).to eq(epic.subject)
@@ -434,33 +434,33 @@ RSpec.describe Issue, type: :model do
     end
   end
 
-  describe '#epic_grid_determine_hierarchy_level' do
+  describe '#epic_ladder_determine_hierarchy_level' do
     it 'returns 1 for Epic' do
       epic = create(:epic, project: project, author: user)
-      expect(epic.epic_grid_determine_hierarchy_level).to eq(1)
+      expect(epic.epic_ladder_determine_hierarchy_level).to eq(1)
     end
 
     it 'returns 2 for Feature' do
       feature = create(:feature, project: project, author: user)
-      expect(feature.epic_grid_determine_hierarchy_level).to eq(2)
+      expect(feature.epic_ladder_determine_hierarchy_level).to eq(2)
     end
 
     it 'returns 3 for UserStory' do
       user_story = create(:user_story, project: project, author: user)
-      expect(user_story.epic_grid_determine_hierarchy_level).to eq(3)
+      expect(user_story.epic_ladder_determine_hierarchy_level).to eq(3)
     end
 
     it 'returns 4 for Task' do
       task = create(:task, project: project, author: user)
-      expect(task.epic_grid_determine_hierarchy_level).to eq(4)
+      expect(task.epic_ladder_determine_hierarchy_level).to eq(4)
     end
   end
 
-  describe '#epic_grid_determine_column_for_status' do
+  describe '#epic_ladder_determine_column_for_status' do
     it 'returns "todo" for New status' do
       issue = create(:epic, project: project, author: user)
       issue.status = IssueStatus.find_or_create_by(name: 'New', is_closed: false)
-      expect(issue.epic_grid_determine_column_for_status).to eq('todo')
+      expect(issue.epic_ladder_determine_column_for_status).to eq('todo')
     end
 
     it 'returns "in_progress" for In Progress status' do
@@ -468,7 +468,7 @@ RSpec.describe Issue, type: :model do
       in_progress = IssueStatus.find_or_create_by(name: 'In Progress', is_closed: false)
       issue.reload
       issue.update!(status: in_progress)
-      expect(issue.epic_grid_determine_column_for_status).to eq('in_progress')
+      expect(issue.epic_ladder_determine_column_for_status).to eq('in_progress')
     end
 
     it 'returns "released" for Closed status' do
@@ -476,16 +476,16 @@ RSpec.describe Issue, type: :model do
       issue = create(:epic, project: project, author: user)
       issue.reload
       issue.update!(status: closed_status)
-      expect(issue.epic_grid_determine_column_for_status).to eq('released')
+      expect(issue.epic_ladder_determine_column_for_status).to eq('released')
     end
   end
 
-  describe '#epic_grid_find_epic_name' do
+  describe '#epic_ladder_find_epic_name' do
     it 'returns Epic name when parent is Epic' do
       epic = create(:epic, project: project, author: user)
       feature = create(:feature, project: project, parent: epic, author: user)
 
-      expect(feature.epic_grid_find_epic_name).to eq(epic.subject)
+      expect(feature.epic_ladder_find_epic_name).to eq(epic.subject)
     end
 
     it 'returns Epic name when parent is Feature (nested hierarchy)' do
@@ -493,12 +493,12 @@ RSpec.describe Issue, type: :model do
       feature = create(:feature, project: project, parent: epic, author: user)
       user_story = create(:user_story, project: project, parent: feature, author: user)
 
-      expect(user_story.epic_grid_find_epic_name).to eq(epic.subject)
+      expect(user_story.epic_ladder_find_epic_name).to eq(epic.subject)
     end
 
     it 'returns nil when no Epic parent exists' do
       feature = create(:feature, project: project, author: user)
-      expect(feature.epic_grid_find_epic_name).to be_nil
+      expect(feature.epic_ladder_find_epic_name).to be_nil
     end
   end
 
@@ -506,10 +506,10 @@ RSpec.describe Issue, type: :model do
   # 追加Fat Modelメソッド: 統計・完了率・リスク評価
   # ========================================
 
-  describe '#epic_grid_calculate_epic_statistics' do
+  describe '#epic_ladder_calculate_epic_statistics' do
     it 'calculates Epic statistics' do
       epic = create(:epic, :with_features, project: project, author: user)
-      stats = epic.epic_grid_calculate_epic_statistics
+      stats = epic.epic_ladder_calculate_epic_statistics
 
       expect(stats[:total_features]).to eq(3)
       expect(stats[:completed_features]).to eq(0)
@@ -524,35 +524,35 @@ RSpec.describe Issue, type: :model do
       feature.reload
       feature.update!(status: closed_status)
 
-      stats = epic.epic_grid_calculate_epic_statistics
+      stats = epic.epic_ladder_calculate_epic_statistics
       expect(stats[:completed_features]).to eq(1)
       expect(stats[:completion_ratio]).to eq(33.3)
     end
   end
 
-  describe '#epic_grid_calculate_feature_completion' do
+  describe '#epic_ladder_calculate_feature_completion' do
     it 'returns 0.0 when no user stories exist' do
       feature = create(:feature, project: project, author: user)
-      expect(feature.epic_grid_calculate_feature_completion).to eq(0.0)
+      expect(feature.epic_ladder_calculate_feature_completion).to eq(0.0)
     end
 
     it 'calculates Feature completion based on user stories' do
       feature = create(:feature, :with_user_stories, project: project, author: user)
-      expect(feature.epic_grid_calculate_feature_completion).to eq(0.0)
+      expect(feature.epic_ladder_calculate_feature_completion).to eq(0.0)
 
       closed_status = create(:closed_status)
       user_story = feature.children.first
       user_story.reload
       user_story.update!(status: closed_status)
 
-      expect(feature.epic_grid_calculate_feature_completion).to eq(50.0)
+      expect(feature.epic_ladder_calculate_feature_completion).to eq(50.0)
     end
   end
 
-  describe '#epic_grid_calculate_user_story_completion' do
+  describe '#epic_ladder_calculate_user_story_completion' do
     it 'returns 0.0 when no tasks/tests exist' do
       user_story = create(:user_story, project: project, author: user)
-      expect(user_story.epic_grid_calculate_user_story_completion).to eq(0.0)
+      expect(user_story.epic_ladder_calculate_user_story_completion).to eq(0.0)
     end
 
     it 'calculates UserStory completion based on tasks and tests' do
@@ -561,20 +561,20 @@ RSpec.describe Issue, type: :model do
       task2 = create(:task, project: project, parent: user_story, author: user)
       test1 = create(:test, project: project, parent: user_story, author: user)
 
-      expect(user_story.epic_grid_calculate_user_story_completion).to eq(0.0)
+      expect(user_story.epic_ladder_calculate_user_story_completion).to eq(0.0)
 
       closed_status = create(:closed_status)
       task1.reload
       task1.update!(status: closed_status)
 
-      expect(user_story.epic_grid_calculate_user_story_completion).to eq(33.3)
+      expect(user_story.epic_ladder_calculate_user_story_completion).to eq(33.3)
     end
   end
 
-  describe '#epic_grid_assess_feature_risk' do
+  describe '#epic_ladder_assess_feature_risk' do
     it 'returns low risk when no risk factors exist' do
       feature = create(:feature, project: project, author: user, fixed_version: version_v1)
-      risk = feature.epic_grid_assess_feature_risk
+      risk = feature.epic_ladder_assess_feature_risk
 
       expect(risk[:level]).to eq('low')
       expect(risk[:factors]).to be_empty
@@ -584,7 +584,7 @@ RSpec.describe Issue, type: :model do
       past_version = create(:version, project: project, name: 'Past v1.0', effective_date: Date.current - 7.days)
       feature = create(:feature, project: project, author: user, fixed_version: past_version)
 
-      risk = feature.epic_grid_assess_feature_risk
+      risk = feature.epic_ladder_assess_feature_risk
       expect(risk[:factors]).to include('overdue_version')
       expect(risk[:level]).to eq('medium')
     end
@@ -593,7 +593,7 @@ RSpec.describe Issue, type: :model do
       feature = create(:feature, project: project, author: user)
       create(:user_story, project: project, parent: feature, author: user, assigned_to: nil)
 
-      risk = feature.epic_grid_assess_feature_risk
+      risk = feature.epic_ladder_assess_feature_risk
       expect(risk[:factors]).to include('unassigned_user_stories')
     end
 
@@ -602,7 +602,7 @@ RSpec.describe Issue, type: :model do
       user_story = create(:user_story, project: project, parent: feature, author: user)
       # テストがない状態
 
-      risk = feature.epic_grid_assess_feature_risk
+      risk = feature.epic_ladder_assess_feature_risk
       expect(risk[:factors]).to include('missing_tests')
     end
 
@@ -611,7 +611,7 @@ RSpec.describe Issue, type: :model do
       feature = create(:feature, project: project, author: user, fixed_version: past_version)
       user_story = create(:user_story, project: project, parent: feature, author: user, assigned_to: nil)
 
-      risk = feature.epic_grid_assess_feature_risk
+      risk = feature.epic_ladder_assess_feature_risk
       expect(risk[:level]).to eq('high')
       expect(risk[:factors].count).to be >= 2
     end

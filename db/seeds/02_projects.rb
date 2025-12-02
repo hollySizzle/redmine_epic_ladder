@@ -90,14 +90,14 @@ if created_projects['sakura-ec']
     'boards',
     'calendar',
     'gantt',
-    'epic_grid'
+    'epic_ladder'
   ]
 
   sakura_ec.enabled_module_names = enabled_modules
 
   if sakura_ec.save
     puts "  ✅ 桜商店ECサイト: #{enabled_modules.size}個のモジュールを有効化"
-    puts "    - epic_grid モジュールを含む"
+    puts "    - epic_ladder モジュールを含む"
   else
     puts "  ❌ 桜商店ECサイトのモジュール有効化に失敗: #{sakura_ec.errors.full_messages.join(', ')}"
   end
@@ -184,7 +184,7 @@ plugin_settings = {
 }
 
 # Settingモデルを使用してプラグイン設定を保存
-Setting.plugin_redmine_epic_grid = plugin_settings
+Setting.plugin_redmine_epic_ladder = plugin_settings
 puts "  ✅ カンバントラッカー設定完了"
 plugin_settings.each do |key, value|
   puts "    - #{key}: #{value}"
@@ -195,7 +195,7 @@ puts "\n🔌 プロジェクト単位のMCP設定を投入中..."
 
 # sakura-ecプロジェクトでMCPを有効化
 if created_projects['sakura-ec']
-  setting = EpicGrid::ProjectSetting.find_or_initialize_by(project: created_projects['sakura-ec'])
+  setting = EpicLadder::ProjectSetting.find_or_initialize_by(project: created_projects['sakura-ec'])
   setting.mcp_enabled = true
   if setting.save
     puts "  ✅ 桜商店ECサイト: MCP API有効化"
@@ -206,7 +206,7 @@ end
 
 # ai-recommendプロジェクトでもMCPを有効化
 if created_projects['ai-recommend']
-  setting = EpicGrid::ProjectSetting.find_or_initialize_by(project: created_projects['ai-recommend'])
+  setting = EpicLadder::ProjectSetting.find_or_initialize_by(project: created_projects['ai-recommend'])
   setting.mcp_enabled = true
   if setting.save
     puts "  ✅ AIレコメンド機能開発: MCP API有効化"

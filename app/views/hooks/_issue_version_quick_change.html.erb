@@ -1,10 +1,10 @@
 <div class="epic-grid-version-quick-change contextual" style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; background-color: #f8f8f8;">
   <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
-    <%= l(:label_epic_grid_version_change) %>
+    <%= l(:label_epic_ladder_version_change) %>
   </h3>
 
-  <%= form_tag(epic_grid_update_version_path(issue), method: :patch, style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;') do %>
-    <select name="fixed_version_id" id="epic_grid_version_select" style="min-width: 150px;">
+  <%= form_tag(epic_ladder_update_version_path(issue), method: :patch, style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;') do %>
+    <select name="fixed_version_id" id="epic_ladder_version_select" style="min-width: 150px;">
       <option value="" data-due-date=""><%= l(:label_none) %></option>
       <% project.versions.open.each do |version| %>
         <option value="<%= version.id %>"
@@ -15,7 +15,7 @@
       <% end %>
     </select>
 
-    <span id="epic_grid_version_due_date" style="font-size: 12px; color: #666;">
+    <span id="epic_ladder_version_due_date" style="font-size: 12px; color: #666;">
       <% if issue.fixed_version&.effective_date %>
         (<%= l(:field_due_date) %>: <%= format_date(issue.fixed_version.effective_date) %>)
       <% end %>
@@ -24,7 +24,7 @@
     <% if issue.parent %>
       <label style="display: flex; align-items: center; gap: 5px; font-size: 12px;">
         <input type="checkbox" name="update_parent_version" value="1" checked>
-        <%= l(:label_epic_grid_update_parent_version, parent: issue.parent.tracker.name) %>
+        <%= l(:label_epic_ladder_update_parent_version, parent: issue.parent.tracker.name) %>
         (#<%= issue.parent.id %>)
       </label>
     <% end %>
@@ -35,8 +35,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const selectElement = document.getElementById('epic_grid_version_select');
-  const dueDateSpan = document.getElementById('epic_grid_version_due_date');
+  const selectElement = document.getElementById('epic_ladder_version_select');
+  const dueDateSpan = document.getElementById('epic_ladder_version_due_date');
 
   if (selectElement && dueDateSpan) {
     selectElement.addEventListener('change', function() {

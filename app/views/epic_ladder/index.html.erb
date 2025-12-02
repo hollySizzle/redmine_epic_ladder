@@ -1,0 +1,25 @@
+<%# app/views/epic_ladder/index.html.erb %>
+<% content_for :header_tags do %>
+  <script src="<%= epic_ladder_asset_path('main.js') %>" defer></script>
+  <%# MSW Service Worker registration %>
+  <script>
+    // MSW Service Worker のパスを設定（ルートディレクトリから配信）
+    window.MSW_SERVICE_WORKER_URL = '/mockServiceWorker.js';
+  </script>
+<% end %>
+
+<div class="contextual">
+  <%# <%= link_to '設定', '#', class: 'icon icon-settings', title: 'カンバン設定' %>
+</div>
+
+<h2>Epic Grid - <%= @project.name %></h2>
+
+<div id="kanban-root"
+     data-project-id="<%= @project.id %>"
+     data-current-user='<%= @current_user_data.to_json.html_safe %>'
+     data-api-base-url="/kanban/projects/<%= @project.id %>">
+  <!-- React Kanban アプリがここにマウントされます -->
+  <div class="loading-spinner">
+    <p>カンバンを読み込み中...</p>
+  </div>
+</div>

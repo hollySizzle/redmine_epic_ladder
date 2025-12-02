@@ -7,7 +7,7 @@
 ### 初回セットアップ
 
 ```bash
-cd /usr/src/redmine/plugins/redmine_epic_grid
+cd /usr/src/redmine/plugins/redmine_epic_ladder
 bash bin/setup_test_env.sh
 ```
 
@@ -54,9 +54,9 @@ production:
 
 ```
 spec/
-├── models/epic_grid/        # Model（ビジネスロジック）
-├── controllers/epic_grid/   # Controller（HTTP層のみ）
-├── system/epic_grid/        # E2E (Playwright)
+├── models/epic_ladder/        # Model（ビジネスロジック）
+├── controllers/epic_ladder/   # Controller（HTTP層のみ）
+├── system/epic_ladder/        # E2E (Playwright)
 ├── factories/               # FactoryBot定義
 ├── support/                 # ヘルパー
 ├── rails_helper.rb          # RSpec設定
@@ -93,10 +93,10 @@ spec/
 **場所**: `spec/models/`
 
 ```ruby
-# spec/models/epic_grid/tracker_hierarchy_spec.rb
+# spec/models/epic_ladder/tracker_hierarchy_spec.rb
 require_relative '../../rails_helper'
 
-RSpec.describe EpicGrid::TrackerHierarchy, type: :model do
+RSpec.describe EpicLadder::TrackerHierarchy, type: :model do
   describe '.level' do
     it { expect(described_class.level('Epic')).to eq(0) }
     it { expect(described_class.level('Unknown')).to be_nil }
@@ -128,10 +128,10 @@ end
 **場所**: `spec/controllers/`
 
 ```ruby
-# spec/controllers/epic_grid/grid_controller_spec.rb
+# spec/controllers/epic_ladder/grid_controller_spec.rb
 require_relative '../../rails_helper'
 
-RSpec.describe EpicGrid::GridController, type: :controller do
+RSpec.describe EpicLadder::GridController, type: :controller do
   before do
     allow(User).to receive(:current).and_return(user)
     @request.session[:user_id] = user.id
@@ -165,23 +165,23 @@ end
 **場所**: `spec/system/`
 **ツール**: RSpec + FactoryBot + Playwright
 
-**参照実装**: `spec/system/epic_grid/simple_e2e_spec.rb`
+**参照実装**: `spec/system/epic_ladder/simple_e2e_spec.rb`
 
 ## 3. テスト実行方法
 
 ### ✅ 推奨: プラグインディレクトリから実行
 
 ```bash
-cd /usr/src/redmine/plugins/redmine_epic_grid
+cd /usr/src/redmine/plugins/redmine_epic_ladder
 
 # Model テスト
 RAILS_ENV=test bundle exec rspec spec/models --format documentation
 
 # 特定のファイル
-RAILS_ENV=test bundle exec rspec spec/models/epic_grid/tracker_hierarchy_spec.rb
+RAILS_ENV=test bundle exec rspec spec/models/epic_ladder/tracker_hierarchy_spec.rb
 
 # 特定の行
-RAILS_ENV=test bundle exec rspec spec/models/epic_grid/tracker_hierarchy_spec.rb:22
+RAILS_ENV=test bundle exec rspec spec/models/epic_ladder/tracker_hierarchy_spec.rb:22
 
 # Controller テスト
 RAILS_ENV=test bundle exec rspec spec/controllers --format documentation
@@ -196,7 +196,7 @@ RAILS_ENV=test bundle exec rspec spec/system --format documentation
 cd /usr/src/redmine
 
 # Model テスト
-RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models --format documentation
+RAILS_ENV=test bundle exec rspec plugins/redmine_epic_ladder/spec/models --format documentation
 ```
 
 **どちらのディレクトリからでも実行可能:**
@@ -208,7 +208,7 @@ RAILS_ENV=test bundle exec rspec plugins/redmine_epic_grid/spec/models --format 
 
 ## 4. FactoryBot テストデータ
 
-**場所**: `spec/factories/epic_grid_issues.rb`
+**場所**: `spec/factories/epic_ladder_issues.rb`
 
 ```ruby
 FactoryBot.define do
@@ -356,17 +356,17 @@ end
 
 **テンプレートをコピー:**
 ```bash
-cp spec/system/epic_grid/simple_e2e_spec.rb spec/system/epic_grid/my_feature_spec.rb
+cp spec/system/epic_ladder/simple_e2e_spec.rb spec/system/epic_ladder/my_feature_spec.rb
 ```
 
 **ヘルパーメソッド使用（推奨）:**
 ```ruby
-let!(:project) { setup_epic_grid_project(identifier: 'test-project') }
+let!(:project) { setup_epic_ladder_project(identifier: 'test-project') }
 let!(:user) { setup_admin_user(login: 'test_user') }
 
 before(:each) do
   # プロジェクトに紐づくトラッカーを取得（重複作成回避）
-  epic_tracker = project.trackers.find { |t| t.name == EpicGridTestConfig::TRACKER_NAMES[:epic] }
+  epic_tracker = project.trackers.find { |t| t.name == EpicLadderTestConfig::TRACKER_NAMES[:epic] }
 
   # テストデータ作成（トラッカーを明示的に渡す）
   @epic = create(:issue, project: project, tracker: epic_tracker, subject: 'Test Epic')
@@ -379,8 +379,8 @@ it 'displays data' do
 end
 ```
 
-**利用可能なヘルパー** (`spec/support/epic_grid_e2e_helpers.rb`):
-- `setup_epic_grid_project(identifier:, name:)` - プロジェクト+トラッカー+モジュール作成
+**利用可能なヘルパー** (`spec/support/epic_ladder_e2e_helpers.rb`):
+- `setup_epic_ladder_project(identifier:, name:)` - プロジェクト+トラッカー+モジュール作成
 - `setup_admin_user(login:)` - 管理者ユーザー作成
 - `login_as(user)` - Playwrightでログイン
 - `goto_kanban(project)` - カンバンページ遷移+読み込み待機
@@ -398,7 +398,7 @@ end
 **✅ 推奨パターン:**
 ```ruby
 # プロジェクトに既存のトラッカーを明示的に指定
-tracker = project.trackers.find { |t| t.name == EpicGridTestConfig::TRACKER_NAMES[:epic] }
+tracker = project.trackers.find { |t| t.name == EpicLadderTestConfig::TRACKER_NAMES[:epic] }
 @epic = create(:issue, project: project, tracker: tracker, subject: 'Test Epic')
 ```
 
@@ -406,7 +406,7 @@ tracker = project.trackers.find { |t| t.name == EpicGridTestConfig::TRACKER_NAME
 
 **Phase 1: Reference Test実行**
 ```bash
-RAILS_ENV=test bundle exec rspec spec/system/epic_grid/simple_e2e_spec.rb
+RAILS_ENV=test bundle exec rspec spec/system/epic_ladder/simple_e2e_spec.rb
 ```
 - ✅ 成功 → コードに問題
 - ❌ 失敗 → 環境に問題（default dataロード、組み込みグループ確認）
@@ -435,7 +435,7 @@ RAILS_ENV=test bundle exec rails runner "
 ## 10. 参考
 
 - `bin/setup_test_env.sh` - セットアップスクリプト
-- `spec/system/epic_grid/simple_e2e_spec.rb` - E2Eテンプレート
+- `spec/system/epic_ladder/simple_e2e_spec.rb` - E2Eテンプレート
 - `spec/rails_helper.rb` - RSpec設定
 - `spec/factories/` - FactoryBot定義
 - `vibes/docs/rules/backend_standards.md` - Backend規約

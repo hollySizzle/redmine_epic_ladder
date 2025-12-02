@@ -24,7 +24,7 @@ RSpec.describe Project, type: :model do
   # Fat Model: グリッドデータ構築（MSW準拠）
   # ========================================
 
-  describe '#epic_grid_data (Fat Model - MSW準拠)' do
+  describe '#epic_ladder_data (Fat Model - MSW準拠)' do
     let!(:epic) { create(:epic, :with_features, project: project, author: user, fixed_version: version) }
 
     it 'returns normalized API response structure (MSW準拠)' do
@@ -146,7 +146,7 @@ RSpec.describe Project, type: :model do
 
       it 'filters by fixed_version_id_in (バージョン絞込)' do
         filters = { fixed_version_id_in: [version1.id] }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         expect(epic_ids).to include(epic1.id)
@@ -156,7 +156,7 @@ RSpec.describe Project, type: :model do
 
       it 'filters by multiple versions (複数バージョン絞込)' do
         filters = { fixed_version_id_in: [version1.id, version2.id] }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         expect(epic_ids).to include(epic1.id)
@@ -166,7 +166,7 @@ RSpec.describe Project, type: :model do
 
       it 'filters by fixed_version_id_null (バージョン未設定絞込)' do
         filters = { fixed_version_id_null: true }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         expect(epic_ids).to include(epic_no_version.id)
@@ -176,7 +176,7 @@ RSpec.describe Project, type: :model do
 
       it 'filters by assigned_to_id_in (担当者絞込)' do
         filters = { assigned_to_id_in: [user.id] }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         feature_ids = grid_data[:entities][:features].keys.map(&:to_i)
         expect(feature_ids).to include(feature1.id)
@@ -187,7 +187,7 @@ RSpec.describe Project, type: :model do
         feature_no_assignee = create(:feature, project: project, parent: epic1, author: user, assigned_to: nil)
 
         filters = { assigned_to_id_null: true }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         feature_ids = grid_data[:entities][:features].keys.map(&:to_i)
         expect(feature_ids).to include(feature_no_assignee.id)
@@ -208,7 +208,7 @@ RSpec.describe Project, type: :model do
           fixed_version_id_in: [version1.id],
           assigned_to_id_in: [user.id]
         }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         # Epic: version1 AND user担当のみ
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
@@ -224,14 +224,14 @@ RSpec.describe Project, type: :model do
       it 'returns empty entities when no results match filter (フィルタ結果ゼロ)' do
         filters = { fixed_version_id_in: [99999] } # 存在しないバージョンID
 
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         expect(grid_data[:entities][:epics]).to be_empty
         expect(grid_data[:entities][:features]).to be_empty
       end
 
       it 'works without filters (フィルタなし)' do
-        grid_data = project.epic_grid_data(include_closed: true, filters: {})
+        grid_data = project.epic_ladder_data(include_closed: true, filters: {})
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         expect(epic_ids).to include(epic1.id)
@@ -240,11 +240,11 @@ RSpec.describe Project, type: :model do
       end
 
       it 'filters by tracker_id_in (トラッカー絞込)' do
-        epic_tracker = project.trackers.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:epic])
-        feature_tracker = project.trackers.find_by(name: EpicGrid::TrackerHierarchy.tracker_names[:feature])
+        epic_tracker = project.trackers.find_by(name: EpicLadder::TrackerHierarchy.tracker_names[:epic])
+        feature_tracker = project.trackers.find_by(name: EpicLadder::TrackerHierarchy.tracker_names[:feature])
 
         filters = { tracker_id_in: [epic_tracker.id] }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         # Epicのみ取得されること
         expect(grid_data[:entities][:epics].keys.size).to be > 0
@@ -256,7 +256,7 @@ RSpec.describe Project, type: :model do
         feature_special = create(:feature, project: project, parent: epic1, author: user, subject: 'Another SPECIAL_KEYWORD here')
 
         filters = { subject_cont: 'SPECIAL_KEYWORD' }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         feature_ids = grid_data[:entities][:features].keys.map(&:to_i)
@@ -281,7 +281,7 @@ RSpec.describe Project, type: :model do
           created_on_gteq: Time.zone.now.beginning_of_day.iso8601,
           created_on_lteq: Time.zone.now.end_of_day.iso8601
         }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         expect(epic_ids).to include(epic_today.id)
@@ -298,7 +298,7 @@ RSpec.describe Project, type: :model do
         epic_low = create(:epic, project: project, author: user, priority: low_priority)
 
         filters = { priority_id_in: [high_priority.id] }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         expect(epic_ids).to include(epic_high.id)
@@ -307,7 +307,7 @@ RSpec.describe Project, type: :model do
 
       it 'handles empty array filters gracefully (空配列フィルタ)' do
         filters = { fixed_version_id_in: [] }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         # 空配列の場合は全件取得（Ransackの仕様）
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
@@ -320,7 +320,7 @@ RSpec.describe Project, type: :model do
           assigned_to_id_in: nil # nilは無視される
         }
 
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         # version1でフィルタされ、assigned_to_idは無視される
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
@@ -336,7 +336,7 @@ RSpec.describe Project, type: :model do
           done_ratio_gteq: 50,
           done_ratio_lteq: 80
         }
-        grid_data = project.epic_grid_data(include_closed: true, filters: filters)
+        grid_data = project.epic_ladder_data(include_closed: true, filters: filters)
 
         epic_ids = grid_data[:entities][:epics].keys.map(&:to_i)
         expect(epic_ids).to include(epic_50.id)
@@ -431,10 +431,10 @@ RSpec.describe Project, type: :model do
         end
       end
 
-      describe '#epic_grid_data with sort_options' do
+      describe '#epic_ladder_data with sort_options' do
         context 'Epic sorting by subject (自然順)' do
           it 'sorts epics in natural ascending order by default' do
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :subject, sort_direction: :asc } }
             )
 
@@ -456,7 +456,7 @@ RSpec.describe Project, type: :model do
           end
 
           it 'sorts epics in natural descending order' do
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :subject, sort_direction: :desc } }
             )
 
@@ -476,7 +476,7 @@ RSpec.describe Project, type: :model do
 
           it 'uses natural sort as default when sort_by is subject' do
             # sort_direction指定なし（デフォルトはasc）
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :subject } }
             )
 
@@ -492,7 +492,7 @@ RSpec.describe Project, type: :model do
 
         context 'Feature sorting (Epic配下のFeature)' do
           it 'sorts features in natural ascending order' do
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :subject, sort_direction: :asc } }
             )
 
@@ -508,7 +508,7 @@ RSpec.describe Project, type: :model do
           end
 
           it 'sorts features in natural descending order' do
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :subject, sort_direction: :desc } }
             )
 
@@ -525,7 +525,7 @@ RSpec.describe Project, type: :model do
 
         context 'Other sort modes (ID/Date) still work' do
           it 'sorts by ID when sort_by is :id' do
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :id, sort_direction: :asc } }
             )
 
@@ -537,7 +537,7 @@ RSpec.describe Project, type: :model do
           end
 
           it 'sorts by ID in descending order' do
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :id, sort_direction: :desc } }
             )
 
@@ -554,7 +554,7 @@ RSpec.describe Project, type: :model do
             epic_10.update_column(:start_date, Date.today + 1)
             epic_100.update_column(:start_date, Date.today + 2)
 
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :date, sort_direction: :asc } }
             )
 
@@ -571,7 +571,7 @@ RSpec.describe Project, type: :model do
           let!(:epic_same_2) { create(:epic, project: project, author: user, subject: '10_ZZZ') }
 
           it 'handles subjects with same numeric prefix (同一数値プレフィックス)' do
-            grid_data = project.epic_grid_data(
+            grid_data = project.epic_ladder_data(
               sort_options: { epic: { sort_by: :subject, sort_direction: :asc } }
             )
 
@@ -589,7 +589,7 @@ RSpec.describe Project, type: :model do
           end
 
           it 'handles empty sort_options (デフォルト動作)' do
-            grid_data = project.epic_grid_data(sort_options: {})
+            grid_data = project.epic_ladder_data(sort_options: {})
 
             # デフォルトはsubject昇順
             epic_order = grid_data[:grid][:epic_order]
@@ -634,15 +634,15 @@ RSpec.describe Project, type: :model do
     end
   end
 
-  describe '#epic_grid_enabled?' do
-    it 'returns true when epic_grid module is enabled' do
-      project.enabled_modules.create!(name: 'epic_grid')
+  describe '#epic_ladder_enabled?' do
+    it 'returns true when epic_ladder module is enabled' do
+      project.enabled_modules.create!(name: 'epic_ladder')
 
-      expect(project.enabled_modules.exists?(name: 'epic_grid')).to be true
+      expect(project.enabled_modules.exists?(name: 'epic_ladder')).to be true
     end
 
-    it 'returns false when epic_grid module is not enabled' do
-      expect(project.enabled_modules.exists?(name: 'epic_grid')).to be false
+    it 'returns false when epic_ladder module is not enabled' do
+      expect(project.enabled_modules.exists?(name: 'epic_ladder')).to be false
     end
   end
 
@@ -704,13 +704,13 @@ RSpec.describe Project, type: :model do
   # 追加Fat Modelメソッド: 統計計算
   # ========================================
 
-  describe '#epic_grid_build_statistics' do
+  describe '#epic_ladder_build_statistics' do
     it 'builds project-wide statistics' do
       # プロジェクトにIssueを追加
       epic = create(:epic, project: project, author: user)
       feature = create(:feature, project: project, parent: epic, author: user)
 
-      stats = project.epic_grid_build_statistics
+      stats = project.epic_ladder_build_statistics
 
       expect(stats).to have_key(:by_tracker)
       expect(stats).to have_key(:by_status)
@@ -722,7 +722,7 @@ RSpec.describe Project, type: :model do
       feature1 = create(:feature, project: project, parent: epic, author: user)
       feature2 = create(:feature, project: project, parent: epic, author: user)
 
-      stats = project.epic_grid_build_statistics
+      stats = project.epic_ladder_build_statistics
 
       expect(stats[:by_tracker][epic_tracker_name]).to eq(1)
       expect(stats[:by_tracker][feature_tracker_name]).to eq(2)
@@ -732,7 +732,7 @@ RSpec.describe Project, type: :model do
       epic = create(:epic, project: project, author: user)
       feature = create(:feature, project: project, parent: epic, author: user)
 
-      stats = project.epic_grid_build_statistics
+      stats = project.epic_ladder_build_statistics
 
       # デフォルトステータスでカウント
       default_status_name = epic.status.name
@@ -743,31 +743,31 @@ RSpec.describe Project, type: :model do
       epic = create(:epic, project: project, author: user, assigned_to: user)
       feature = create(:feature, project: project, parent: epic, author: user, assigned_to: nil)
 
-      stats = project.epic_grid_build_statistics
+      stats = project.epic_ladder_build_statistics
 
       expect(stats[:by_assignee][user.name]).to eq(1)
       expect(stats[:by_assignee]['未割当']).to eq(1)
     end
   end
 
-  describe '#epic_grid_statistics_by_tracker' do
+  describe '#epic_ladder_statistics_by_tracker' do
     it 'returns tracker name as key' do
       epic = create(:epic, project: project, author: user)
       issues = project.issues.includes(:tracker, :status, :assigned_to)
 
-      stats = project.epic_grid_statistics_by_tracker(issues)
+      stats = project.epic_ladder_statistics_by_tracker(issues)
 
       expect(stats.keys).to include(epic_tracker_name)
       expect(stats[epic_tracker_name]).to eq(1)
     end
   end
 
-  describe '#epic_grid_statistics_by_status' do
+  describe '#epic_ladder_statistics_by_status' do
     it 'returns status name as key' do
       epic = create(:epic, project: project, author: user)
       issues = project.issues.includes(:tracker, :status, :assigned_to)
 
-      stats = project.epic_grid_statistics_by_status(issues)
+      stats = project.epic_ladder_statistics_by_status(issues)
 
       status_name = epic.status.name
       expect(stats.keys).to include(status_name)
@@ -775,12 +775,12 @@ RSpec.describe Project, type: :model do
     end
   end
 
-  describe '#epic_grid_statistics_by_assignee' do
+  describe '#epic_ladder_statistics_by_assignee' do
     it 'returns assignee name as key' do
       epic = create(:epic, project: project, author: user, assigned_to: user)
       issues = project.issues.includes(:tracker, :status, :assigned_to)
 
-      stats = project.epic_grid_statistics_by_assignee(issues)
+      stats = project.epic_ladder_statistics_by_assignee(issues)
 
       expect(stats.keys).to include(user.name)
       expect(stats[user.name]).to eq(1)
@@ -790,7 +790,7 @@ RSpec.describe Project, type: :model do
       epic = create(:epic, project: project, author: user, assigned_to: nil)
       issues = project.issues.includes(:tracker, :status, :assigned_to)
 
-      stats = project.epic_grid_statistics_by_assignee(issues)
+      stats = project.epic_ladder_statistics_by_assignee(issues)
 
       expect(stats['未割当']).to eq(1)
     end
@@ -821,21 +821,21 @@ RSpec.describe Project, type: :model do
       let!(:user_story3) { create(:user_story, project: project, author: user, parent_issue_id: feature3.id, assigned_to: assignee1) }
 
       it 'Epic直接該当の場合、そのEpicのみ取得される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         expect(result[:entities][:epics].keys).to include(epic1.id.to_s)
         expect(result[:entities][:epics].keys).not_to include(epic2.id.to_s)
       end
 
       it '子孫（Feature）に該当担当者がいる場合、祖先Epicも取得される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         # Epic3は直接はassignee1でないが、子孫（Feature3）がassignee1
         expect(result[:entities][:epics].keys).to include(epic3.id.to_s)
       end
 
       it '子孫（UserStory）に該当担当者がいる場合、祖先Epic/Featureも取得される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         # Epic3は直接はassignee1でないが、孫（UserStory3）がassignee1
         expect(result[:entities][:epics].keys).to include(epic3.id.to_s)
@@ -845,7 +845,7 @@ RSpec.describe Project, type: :model do
 
       it '該当なしの場合、0件' do
         other_user = create(:user)
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [other_user.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [other_user.id.to_s] })
 
         expect(result[:entities][:epics]).to be_empty
         expect(result[:entities][:features]).to be_empty
@@ -853,7 +853,7 @@ RSpec.describe Project, type: :model do
       end
 
       it '担当者フィルタなしの場合、全件取得される' do
-        result = project.epic_grid_data(filters: {})
+        result = project.epic_ladder_data(filters: {})
 
         expect(result[:entities][:epics].keys).to include(epic1.id.to_s, epic2.id.to_s, epic3.id.to_s)
       end
@@ -870,14 +870,14 @@ RSpec.describe Project, type: :model do
       let!(:user_story2) { create(:user_story, project: project, author: user, parent_issue_id: feature2.id, assigned_to: assignee1) }
 
       it 'grid.epic_orderに階層的フィルタが適用される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         # Epic1は直接該当、Epic2は子孫（Feature2）経由で該当
         expect(result[:grid][:epic_order]).to include(epic1.id.to_s, epic2.id.to_s)
       end
 
       it 'grid.feature_order_by_epicに階層的フィルタが適用される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         # Epic1配下のFeature1、Epic2配下のFeature2が取得される
         expect(result[:grid][:feature_order_by_epic][epic1.id.to_s]).to include(feature1.id.to_s)
@@ -885,7 +885,7 @@ RSpec.describe Project, type: :model do
       end
 
       it 'grid.indexに正しいセルが構築される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         # Epic1:Feature1セルとEpic2:Feature2セルが存在する
         epic1_feature1_keys = result[:grid][:index].keys.select { |k| k.start_with?("#{epic1.id}:#{feature1.id}:") }
@@ -903,7 +903,7 @@ RSpec.describe Project, type: :model do
       let!(:task1) { create(:task, project: project, author: user, parent_issue_id: user_story1.id, assigned_to: assignee1) }
 
       it 'Task担当者でフィルタすると、祖先のUserStory/Feature/Epicも取得される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         # Taskのみ直接該当だが、祖先も階層的に取得される
         expect(result[:entities][:epics].keys).to include(epic1.id.to_s)
@@ -913,14 +913,14 @@ RSpec.describe Project, type: :model do
       end
 
       it 'grid構造も正しく構築される' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         expect(result[:grid][:epic_order]).to include(epic1.id.to_s)
         expect(result[:grid][:feature_order_by_epic][epic1.id.to_s]).to include(feature1.id.to_s)
       end
 
       it 'UserStoryに直接担当者がいなくてもグリッドが壊れない' do
-        result = project.epic_grid_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
+        result = project.epic_ladder_data(filters: { assigned_to_id_in: [assignee1.id.to_s] })
 
         # UserStoryが取得されるため、グリッドセルが構築される
         cell_keys = result[:grid][:index].keys.select { |k| k.include?("#{feature1.id}:") }
