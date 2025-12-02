@@ -48,7 +48,7 @@ install_serena() {
 # 引数チェックと関数呼び出し
 if [ $# -eq 0 ]; then
     echo "使用方法: bash $0 <プロジェクトディレクトリパス>"
-    echo "例: bash $0 /usr/src/redmine/plugins/redmine_epic_grid"
+    echo "例: bash $0 /usr/src/redmine/plugins/redmine_epic_ladder"
     exit 1
 fi
 
