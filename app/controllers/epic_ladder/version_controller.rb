@@ -19,8 +19,12 @@ module EpicLadder
       )
 
       # フラッシュメッセージの構築
-      # update_parent=true かつ 親または兄弟に実際の変更があった場合
-      if update_parent && (result[:parent_changed] || result[:siblings].any?)
+      if result[:parent_update_skipped]
+        # 親がFeature/Epicのため更新がスキップされた場合
+        flash[:notice] = l(:notice_epic_ladder_version_updated)
+        # 親とバージョンが異なる場合も警告しない（Feature/Epicは別管理が正常）
+      elsif update_parent && (result[:parent_changed] || result[:siblings].any?)
+        # update_parent=true かつ 親または兄弟に実際の変更があった場合
         # 実際に変更があったissueの総数を表示
         total_count = 0
         total_count += 1 if result[:issue_changed]      # 対象issue
@@ -47,8 +51,10 @@ module EpicLadder
           flash[:notice] = l(:notice_epic_ladder_version_updated) + sibling_info
         end
       else
-        # 親とズレている場合は警告
-        if @issue.parent && @issue.parent.fixed_version_id != new_version_id.to_i
+        # 親とズレている場合は警告（親がUserStoryの場合のみ）
+        if @issue.parent &&
+           EpicLadder::VersionDateManager.should_update_parent_and_siblings?(@issue) &&
+           @issue.parent.fixed_version_id != new_version_id.to_i
           flash[:warning] = l(
             :warning_epic_ladder_version_mismatch_with_parent,
             parent: "##{@issue.parent.id}",

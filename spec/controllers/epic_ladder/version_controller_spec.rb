@@ -160,6 +160,79 @@ RSpec.describe EpicLadder::VersionController, type: :controller do
       end
     end
 
+    context '親がFeature/Epicの場合は親・兄弟を更新しない' do
+      let(:epic_tracker) { FactoryBot.create(:epic_tracker) }
+      let(:epic) { FactoryBot.create(:epic, project: project, fixed_version: version_v1) }
+      let(:feature) { FactoryBot.create(:feature, project: project, parent: epic, fixed_version: version_v1) }
+      let(:user_story1) { FactoryBot.create(:user_story, project: project, parent: feature, fixed_version: version_v1, subject: 'Story1') }
+      let(:user_story2) { FactoryBot.create(:user_story, project: project, parent: feature, fixed_version: version_v1, subject: 'Story2') }
+
+      before do
+        project.trackers << epic_tracker
+        epic
+        feature
+        user_story1
+        user_story2
+      end
+
+      it 'UserStoryを変更してもFeature（親）は変更されない' do
+        patch :update, params: {
+          id: user_story1.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        user_story1.reload
+        user_story2.reload
+        feature.reload
+
+        # UserStory1のみ変更される
+        expect(user_story1.fixed_version_id).to eq(version_v2.id)
+        expect(user_story1.start_date).to eq(Date.new(2025, 10, 10))
+        expect(user_story1.due_date).to eq(Date.new(2025, 10, 20))
+
+        # 親Feature は変更されない（グルーピング用トラッカーのため）
+        expect(feature.fixed_version_id).to eq(version_v1.id)
+
+        # 兄弟UserStory も変更されない
+        expect(user_story2.fixed_version_id).to eq(version_v1.id)
+
+        # 警告なし（Feature/Epicは別管理が正常なため）
+        expect(flash[:warning]).to be_nil
+        expect(flash[:notice]).to be_present
+        expect(response).to redirect_to(issue_path(user_story1))
+      end
+
+      it 'FeatureのバージョンとUserStoryのバージョンが異なっても警告が出ない' do
+        patch :update, params: { id: user_story1.id, fixed_version_id: version_v2.id }
+
+        # 親がFeatureなので、バージョンが異なっても警告は出ない
+        expect(flash[:warning]).to be_nil
+        expect(flash[:notice]).to be_present
+      end
+
+      it 'Featureを変更してもEpic（親）は変更されない' do
+        patch :update, params: {
+          id: feature.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        feature.reload
+        epic.reload
+
+        # Featureは変更される
+        expect(feature.fixed_version_id).to eq(version_v2.id)
+
+        # 親Epic は変更されない
+        expect(epic.fixed_version_id).to eq(version_v1.id)
+
+        # 警告なし
+        expect(flash[:warning]).to be_nil
+        expect(flash[:notice]).to be_present
+      end
+    end
+
     context '親や兄弟が既に同じバージョンの場合' do
       let(:user_story) { FactoryBot.create(:user_story, project: project, fixed_version: version_v2) }
       let(:task1) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, subject: 'Task1') }

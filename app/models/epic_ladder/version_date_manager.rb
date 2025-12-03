@@ -5,6 +5,21 @@ module EpicLadder
   # Epic Ladder上でチケットをバージョン間で移動した際に、
   # バージョンの期日に基づいて開始日・終了日を自動設定する
   class VersionDateManager
+    # 親・兄弟を更新すべきかを判定
+    # 親がUserStory（作業単位の親）の場合のみtrue
+    # 親がFeature/Epic（グルーピング用）の場合はfalse
+    #
+    # @param issue [Issue] 対象のチケット
+    # @return [Boolean] 親・兄弟を更新すべきか
+    def self.should_update_parent_and_siblings?(issue)
+      return false unless issue.parent
+
+      parent_level = TrackerHierarchy.level(issue.parent.tracker.name)
+      # UserStory (level 2) の場合のみ親・兄弟を更新
+      # Feature (level 1) / Epic (level 0) の場合はスキップ
+      parent_level == 2
+    end
+
     # バージョン変更時に影響を受けるissueの数を計算
     #
     # @param issue [Issue] 対象のチケット
@@ -22,10 +37,19 @@ module EpicLadder
         total: 1,
         issue_ids: [issue.id],
         parent_id: nil,
-        sibling_ids: []
+        sibling_ids: [],
+        parent_update_skipped: false,
+        skip_reason: nil
       }
 
       if update_parent && issue.parent
+        # 親がFeature/Epicの場合は親・兄弟の更新をスキップ
+        unless should_update_parent_and_siblings?(issue)
+          impact[:parent_update_skipped] = true
+          impact[:skip_reason] = :parent_is_grouping_tracker
+          return impact
+        end
+
         impact[:parent_id] = issue.parent.id
         impact[:issue_ids] << issue.parent.id
         impact[:total] += 1
@@ -111,7 +135,9 @@ module EpicLadder
         dates: nil,
         parent_dates: nil,
         issue_changed: false,   # 対象issueが変更されたか
-        parent_changed: false   # 親が変更されたか
+        parent_changed: false,  # 親が変更されたか
+        parent_update_skipped: false,  # 親更新がスキップされたか
+        skip_reason: nil        # スキップ理由
       }
 
       ActiveRecord::Base.transaction do
@@ -137,8 +163,15 @@ module EpicLadder
         # 実際に変更があったかを記録
         result[:issue_changed] = (original_version_id.to_s != new_version_id.to_s)
 
-        # 親も更新
+        # 親も更新（親がUserStoryの場合のみ）
         if update_parent && issue.parent
+          # 親がFeature/Epicの場合は親・兄弟の更新をスキップ
+          unless should_update_parent_and_siblings?(issue)
+            result[:parent_update_skipped] = true
+            result[:skip_reason] = :parent_is_grouping_tracker
+            next # transactionブロック内なのでnextで抜ける
+          end
+
           # 兄弟issue（同じ親の子issue）を先に更新
           # （親の日付が子から自動計算される場合を考慮し、子を先に更新）
           siblings = issue.parent.children.where.not(id: issue.id)
