@@ -12,7 +12,7 @@ ja:
   text_epic_ladder_create_under_this_epic: "このEpic %{issue} の直下に作成"
 
   # 階層ガイド
-  label_epic_ladder_other_operations: "その他の操作..."
+  label_epic_ladder_standard_operations: "標準機能（非推奨）"
   notice_epic_ladder_hierarchy_guide: "💡 Epic Ladderでは「クイックアクション」からの作成を推奨しています。"
   label_epic_ladder_go_back: "← 戻る"
 

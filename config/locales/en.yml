@@ -12,7 +12,7 @@ en:
   text_epic_ladder_create_under_this_epic: "Create under this Epic: %{issue}"
 
   # Hierarchy Guide
-  label_epic_ladder_other_operations: "Other operations..."
+  label_epic_ladder_standard_operations: "Standard Features (Not Recommended)"
   notice_epic_ladder_hierarchy_guide: "💡 Epic Ladder recommends using 'Quick Actions' to create child issues."
   label_epic_ladder_go_back: "← Go back"
 

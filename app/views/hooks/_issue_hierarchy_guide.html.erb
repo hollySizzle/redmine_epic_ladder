@@ -20,19 +20,21 @@
     display: none;
   }
 
-  /* 折り畳みコンテナ */
+  /* 折り畳みコンテナ（非推奨の警告スタイル） */
   .epic-ladder-subtasks-wrapper {
     margin-top: 15px;
-    border: 1px solid #ddd;
+    border: 1px solid #ffcc80;
+    border-left: 3px solid #ff9800;
     border-radius: 4px;
-    background: #fafafa;
+    background: #fff8e1;
   }
 
   .epic-ladder-subtasks-wrapper summary {
     padding: 10px 15px;
     cursor: pointer;
-    color: #666;
+    color: #e65100;
     font-size: 13px;
+    font-weight: bold;
     list-style: none;
   }
 
@@ -41,35 +43,34 @@
   }
 
   .epic-ladder-subtasks-wrapper summary::before {
-    content: '▶ ';
-    font-size: 10px;
+    content: '⚠️ ';
     margin-right: 5px;
   }
 
   .epic-ladder-subtasks-wrapper[open] summary::before {
-    content: '▼ ';
+    content: '⚠️ ';
   }
 
   .epic-ladder-subtasks-wrapper .subtasks-content {
     padding: 10px 15px;
-    border-top: 1px solid #ddd;
-    background: #fff;
+    border-top: 1px solid #ffcc80;
+    background: #fffde7;
   }
 
   .epic-ladder-subtasks-wrapper .standard-subtask-link {
     display: inline-block;
     margin-top: 10px;
     padding: 5px 10px;
-    background: #f0f0f0;
-    border: 1px solid #ccc;
+    background: #fff3e0;
+    border: 1px solid #ffcc80;
     border-radius: 3px;
-    color: #333;
+    color: #e65100;
     text-decoration: none;
     font-size: 12px;
   }
 
   .epic-ladder-subtasks-wrapper .standard-subtask-link:hover {
-    background: #e0e0e0;
+    background: #ffe0b2;
   }
 </style>
 
@@ -87,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
   wrapper.className = 'epic-ladder-subtasks-wrapper';
 
   var summary = document.createElement('summary');
-  summary.textContent = '<%= j l(:label_epic_ladder_other_operations) %>';
+  summary.textContent = '<%= j l(:label_epic_ladder_standard_operations) %>';
   wrapper.appendChild(summary);
 
   var content = document.createElement('div');
@@ -110,6 +111,22 @@ document.addEventListener('DOMContentLoaded', function() {
   // 元のコンテンツを置き換え
   issueTree.innerHTML = '';
   issueTree.appendChild(wrapper);
+
+  // バージョン変更セクションも折り畳みに移動
+  var versionSection = document.querySelector('.issue-fixed-version');
+  if (versionSection) {
+    var versionContextual = versionSection.querySelector('.contextual');
+    if (versionContextual) {
+      var versionLinks = versionContextual.querySelectorAll('a');
+      versionLinks.forEach(function(link) {
+        var linkClone = link.cloneNode(true);
+        linkClone.className = 'standard-subtask-link';
+        linkClone.style.marginRight = '10px';
+        content.appendChild(linkClone);
+      });
+      versionContextual.style.display = 'none';
+    }
+  }
 });
 </script>
 <% end %>
