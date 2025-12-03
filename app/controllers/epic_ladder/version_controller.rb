@@ -19,18 +19,30 @@ module EpicLadder
       )
 
       # フラッシュメッセージの構築
+      # 実際に変更があったissueの総数を計算（子を含む）
+      total_count = 0
+      total_count += 1 if result[:issue_changed]              # 対象issue
+      total_count += 1 if result[:parent_changed]             # 親
+      total_count += result[:siblings].size                   # 兄弟
+      total_count += result[:children].size                   # 子
+
+      # 子の情報（常に追加）
+      children_info = if result[:children].any?
+                       " " + l(:notice_epic_ladder_children_updated, count: result[:children].size)
+                     else
+                       ""
+                     end
+
       if result[:parent_update_skipped]
         # 親がFeature/Epicのため更新がスキップされた場合
-        flash[:notice] = l(:notice_epic_ladder_version_updated)
+        if result[:children].any?
+          flash[:notice] = l(:notice_epic_ladder_version_updated_with_count, count: total_count) + children_info
+        else
+          flash[:notice] = l(:notice_epic_ladder_version_updated)
+        end
         # 親とバージョンが異なる場合も警告しない（Feature/Epicは別管理が正常）
       elsif update_parent && (result[:parent_changed] || result[:siblings].any?)
         # update_parent=true かつ 親または兄弟に実際の変更があった場合
-        # 実際に変更があったissueの総数を表示
-        total_count = 0
-        total_count += 1 if result[:issue_changed]      # 対象issue
-        total_count += 1 if result[:parent_changed]     # 親
-        total_count += result[:siblings].size           # 実際に変更があった兄弟
-
         sibling_info = if result[:siblings].any?
                         " " + l(:notice_epic_ladder_siblings_updated, count: result[:siblings].size)
                       else
@@ -45,10 +57,10 @@ module EpicLadder
             parent: "##{result[:parent].id}",
             version: new_version&.name || l(:label_none),
             total: total_count
-          ) + sibling_info
+          ) + sibling_info + children_info
         else
           # 親は変更なし、兄弟のみ変更があった場合
-          flash[:notice] = l(:notice_epic_ladder_version_updated) + sibling_info
+          flash[:notice] = l(:notice_epic_ladder_version_updated) + sibling_info + children_info
         end
       else
         # 親とズレている場合は警告（親がUserStoryの場合のみ）
@@ -61,7 +73,11 @@ module EpicLadder
             parent_version: @issue.parent.fixed_version&.name || l(:label_none)
           )
         else
-          flash[:notice] = l(:notice_epic_ladder_version_updated)
+          if result[:children].any?
+            flash[:notice] = l(:notice_epic_ladder_version_updated_with_count, count: total_count) + children_info
+          else
+            flash[:notice] = l(:notice_epic_ladder_version_updated)
+          end
         end
       end
 
