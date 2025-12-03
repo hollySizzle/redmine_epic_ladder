@@ -54,3 +54,6 @@ vibes/scripts/hooks/log
 .env.test
 .env.production
 vibes/scripts/secrets.sample.json5
+
+# License-sensitive external documentation (copied from third-party sites)
+vibes/docs/apis/
