@@ -74,6 +74,18 @@ module EpicLadder
     end
 
     # ========================================
+    # バージョン取得（ビュー用）
+    # ========================================
+
+    # Openバージョンを期日昇順で取得（クイックアクション用）
+    # フロントエンドのデフォルトソート（date/asc）と一致
+    # NULLは先頭に来る（build_version_sort_clauseと同じ動作）
+    # @return [ActiveRecord::Relation] 期日昇順でソートされたOpenバージョン
+    def open_versions_by_date
+      versions.open.order(Arel.sql('CASE WHEN effective_date IS NULL THEN 0 ELSE 1 END, effective_date ASC'))
+    end
+
+    # ========================================
     # グリッドインデックス構築（public - Controller から呼び出される）
     # ========================================
 

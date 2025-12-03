@@ -928,4 +928,47 @@ RSpec.describe Project, type: :model do
       end
     end
   end
+
+  describe '#open_versions_by_date' do
+    let(:project) { create(:project) }
+
+    before do
+      # 期日がバラバラの順序でバージョンを作成
+      @version_late = create(:version, project: project, name: 'v3.0', effective_date: Date.new(2026, 3, 31), status: 'open')
+      @version_early = create(:version, project: project, name: 'v1.0', effective_date: Date.new(2025, 6, 30), status: 'open')
+      @version_middle = create(:version, project: project, name: 'v2.0', effective_date: Date.new(2025, 12, 31), status: 'open')
+      @version_closed = create(:version, project: project, name: 'v0.9', effective_date: Date.new(2025, 1, 1), status: 'closed')
+      @version_no_date = create(:version, project: project, name: 'Backlog', effective_date: nil, status: 'open')
+    end
+
+    it 'Openバージョンのみを返す' do
+      versions = project.open_versions_by_date
+      expect(versions).not_to include(@version_closed)
+      expect(versions.count).to eq(4)
+    end
+
+    it '期日昇順でソートされる' do
+      versions = project.open_versions_by_date.to_a
+      names = versions.map(&:name)
+
+      # effective_date: nil → 2025-06-30 → 2025-12-31 → 2026-03-31
+      expect(names).to eq(['Backlog', 'v1.0', 'v2.0', 'v3.0'])
+    end
+
+    it '期日がnilのバージョンは先頭に来る' do
+      versions = project.open_versions_by_date.to_a
+      expect(versions.first.effective_date).to be_nil
+    end
+
+    it 'フロントエンドのデフォルトソート（date/asc）と一致する' do
+      # フロントエンドはdate/ascがデフォルト
+      # このメソッドも同じ順序で返すことを確認
+      versions = project.open_versions_by_date.to_a
+      dates = versions.map(&:effective_date)
+
+      # nilが先頭、その後は日付昇順
+      non_nil_dates = dates.compact
+      expect(non_nil_dates).to eq(non_nil_dates.sort)
+    end
+  end
 end

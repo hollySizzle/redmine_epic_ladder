@@ -7,7 +7,7 @@
   <%= form_tag(epic_ladder_update_version_path(issue), method: :patch, style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;') do %>
     <select name="fixed_version_id" id="epic_ladder_version_select_<%= issue.id %>" style="min-width: 150px; padding: 4px 8px; border: 1px solid #a5d6a7; border-radius: 4px; background: white;">
       <option value="" data-due-date=""><%= l(:label_none) %></option>
-      <% project.versions.open.each do |version| %>
+      <% project.open_versions_by_date.each do |version| %>
         <option value="<%= version.id %>"
                 data-due-date="<%= version.effective_date ? format_date(version.effective_date) : '' %>"
                 <%= 'selected' if issue.fixed_version_id == version.id %>>
