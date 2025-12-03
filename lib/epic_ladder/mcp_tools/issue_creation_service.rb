@@ -55,8 +55,8 @@ module EpicLadder
         tracker_display_name = EpicLadder::TrackerHierarchy.tracker_names[tracker_type]
         return error_result("#{tracker_display_name}トラッカーが設定されていません") unless tracker
 
-        # 6. 親チケット解決
-        parent_issue_result = resolve_parent_issue(parent_issue_id)
+        # 6. 親チケット解決（階層バリデーション付き）
+        parent_issue_result = resolve_parent_issue(parent_issue_id, tracker_type, tracker)
         return parent_issue_result if parent_issue_result.is_a?(Hash) && !parent_issue_result[:success]
         parent_issue = parent_issue_result
 
@@ -115,12 +115,30 @@ module EpicLadder
         tracker
       end
 
-      # 親チケット解決
-      def resolve_parent_issue(parent_issue_id)
+      # 親チケット解決（階層バリデーション付き）
+      # @param parent_issue_id [String, nil] 親チケットID
+      # @param tracker_type [Symbol] 作成するチケットのトラッカー種別
+      # @param child_tracker [Tracker] 作成するチケットのトラッカー
+      # @return [Issue, Hash, nil] 親チケット、エラーハッシュ、またはnil
+      def resolve_parent_issue(parent_issue_id, tracker_type, child_tracker)
         return nil if parent_issue_id.blank?
 
         issue = Issue.find_by(id: parent_issue_id)
         return error_result("親チケットが見つかりません: #{parent_issue_id}") unless issue
+
+        # 階層バリデーション: 親チケットのトラッカーが許可されているかチェック
+        unless EpicLadder::TrackerHierarchy.valid_parent?(child_tracker, issue.tracker)
+          expected_parents = EpicLadder::TrackerHierarchy.rules.dig(child_tracker.name, :parents) || []
+          return error_result(
+            "階層違反: #{child_tracker.name}の親は#{expected_parents.join('または')}である必要があります",
+            {
+              hint: "指定されたチケット##{issue.id}は#{issue.tracker.name}です。正しい親チケットIDを指定してください。",
+              expected_parent_types: expected_parents,
+              actual_parent_type: issue.tracker.name,
+              parent_issue_id: issue.id.to_s
+            }
+          )
+        end
 
         issue
       end
