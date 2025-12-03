@@ -2,7 +2,7 @@
 
 module EpicLadder
   # バージョン変更時の日付自動設定管理
-  # Epic Grid上でチケットをバージョン間で移動した際に、
+  # Epic Ladder上でチケットをバージョン間で移動した際に、
   # バージョンの期日に基づいて開始日・終了日を自動設定する
   class VersionDateManager
     # バージョン変更時に影響を受けるissueの数を計算

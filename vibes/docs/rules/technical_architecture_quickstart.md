@@ -1,8 +1,8 @@
-# Redmine Release Kanban - 技術アーキテクチャクイックスタート
+# Redmine Epic Ladder - 技術アーキテクチャクイックスタート
 
 ## 🎯 システム概要
 
-Release Kanbanは、Redmineプラグインとして動作するアジャイル開発支援ツールです。
+Epic Ladderは、Redmineプラグインとして動作するアジャイル開発支援ツールです。
 Epic→Feature→UserStory→Task/Testの4層階層でプロダクトバックログを管理します。
 
 ## 📐 4層階層定義

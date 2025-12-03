@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/**
 node_modules
-assets/javascripts/epic_grid/node_modules/
+assets/javascripts/epic_ladder/node_modules/
 tmp/
 
 # Build outputs
@@ -21,7 +21,7 @@ tmp/
 #   → デバッグ情報は配布に不要
 #
 # Webpack出力先の無視ルール:
-assets/javascripts/epic_grid/dist/   # 旧出力先 (2025-10-20 削除済み)
+assets/javascripts/epic_ladder/dist/   # 旧出力先 (2025-10-20 削除済み)
 assets/build/*.map                   # ソースマップ
 assets/build/*.LICENSE.txt           # ライセンスファイル
 
@@ -29,7 +29,7 @@ assets/build/*.LICENSE.txt           # ライセンスファイル
 # Note: tmp/ is already ignored by Redmine core .gitignore
 # Including these for clarity:
 tmp/test_artifacts/
-assets/javascripts/epic_grid/coverage
+assets/javascripts/epic_ladder/coverage
 
 # OS files
 .DS_Store

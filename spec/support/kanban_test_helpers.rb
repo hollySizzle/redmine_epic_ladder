@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Release Kanban プラグインのテストヘルパー
+# Epic Ladder プラグインのテストヘルパー
 # 7つのコンポーネントのテスト支援機能を提供
 module KanbanTestHelpers
   # ===== テストデータ生成 =====
@@ -10,7 +10,7 @@ module KanbanTestHelpers
     @project = Project.create!(
       name: 'Test Kanban Project',
       identifier: 'test-kanban',
-      description: 'Test project for Release Kanban'
+      description: 'Test project for Epic Ladder'
     )
 
     @user = User.create!(
@@ -96,7 +96,7 @@ module KanbanTestHelpers
       tracker: @trackers[:epic],
       status: @statuses[:open],
       subject: 'Test Epic',
-      description: 'Test Epic for Release Kanban',
+      description: 'Test Epic for Epic Ladder',
       author: @user,
       priority: IssuePriority.first || create_test_priority
     )
@@ -107,7 +107,7 @@ module KanbanTestHelpers
       tracker: @trackers[:feature],
       status: @statuses[:in_progress],
       subject: 'Test Feature',
-      description: 'Test Feature for Release Kanban',
+      description: 'Test Feature for Epic Ladder',
       author: @user,
       parent: @epic,
       priority: IssuePriority.first || create_test_priority
@@ -119,7 +119,7 @@ module KanbanTestHelpers
       tracker: @trackers[:userstory],
       status: @statuses[:ready],
       subject: 'Test UserStory',
-      description: 'Test UserStory for Release Kanban',
+      description: 'Test UserStory for Epic Ladder',
       author: @user,
       parent: @feature,
       assigned_to: @user,
@@ -132,7 +132,7 @@ module KanbanTestHelpers
       tracker: @trackers[:task],
       status: @statuses[:new],
       subject: 'Test Task',
-      description: 'Test Task for Release Kanban',
+      description: 'Test Task for Epic Ladder',
       author: @user,
       parent: @user_story,
       assigned_to: @user,

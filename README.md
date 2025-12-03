@@ -2,8 +2,8 @@
 ## 拡張機能の目的
 
 Redmine は自由(しかもOSS!!)､だが､その自由さと無骨なUIによって､PMは過労死するだろう(少なくとも腱鞘炎にはなる)｡
-Epic-Gridは､Redmineにちょっとした秩序とちょっとしたモダンUIをもたらし､PMの離職率を下げることを目的としている｡
-そしてEpic-Gridは､スクラム開発､伝統的なウォーターフォール開発にもフィットする｡
+Epic-Ladderは､Redmineにちょっとした秩序とちょっとしたモダンUIをもたらし､PMの離職率を下げることを目的としている｡
+そしてEpic-Ladderは､スクラム開発､伝統的なウォーターフォール開発にもフィットする｡
 
 
 ### こんなプロジェクトになるとPMは過労死する
@@ -65,12 +65,12 @@ Version 1.2(リリース予定: 2026-1-31)
 
 もし申込画面のリリースが間に合わなそうならば､User StoryのVersionを1.2に変更すればよい｡
 
-この"タスクの構造化"と"Versionによるリリース管理"をEpic-Gridは支援する｡
+この"タスクの構造化"と"Versionによるリリース管理"をEpic-Ladderは支援する｡
 
-### Epic Gridビュー
+### Epic Ladderビュー
 まず､どの機能をどのタイミングでリリースするかを視覚的に直感的に､そしてチケットIDを暗記しなくてもよいように管理できるUIが必要だ｡
 
-Epic GridビューはReact + Zustandで実装された現代的なUIで、以下の機能を提供する：
+Epic LadderビューはReact + Zustandで実装された現代的なUIで、以下の機能を提供する：
 
 - **ドラッグ&ドロップ操作** - チケットを直感的に移動・並び替え
 - **階層の可視化** - Epic→Feature→User Story→Task/Testの構造を一目で把握
@@ -158,7 +158,7 @@ bundle exec rake redmine_epic_ladder:status
 
 出力例：
 ```
-=== Epic Grid Asset Status ===
+=== Epic Ladder Asset Status ===
 
 Source directory (Git-managed):
   Path: /usr/src/redmine/plugins/redmine_epic_ladder/assets/build
@@ -370,13 +370,13 @@ Claude Desktop (Pro/Max/Team/Enterprise) からHTTP経由でRedmineに接続し�
 
 | 項目 | 値 |
 |------|---|
-| **Name** | `Redmine Epic Grid` |
+| **Name** | `Redmine Epic Ladder` |
 | **URL** | `https://your-redmine.com/mcp/rpc` |
 | **Authorization Header** | `X-Redmine-API-Key: [Your API Key]` |
 
 **例:**
 ```
-Name: Redmine Epic Grid
+Name: Redmine Epic Ladder
 URL: https://redmine.example.com/mcp/rpc
 Authorization Header: X-Redmine-API-Key: a1b2c3d4e5f6789abcdef0123456789abcdef012
 ```
@@ -489,7 +489,7 @@ Claude Code内で以下のように使います:
 
 ### 🛠️ 利用可能なツール（全16ツール）
 
-Epic-Grid MCP Serverは、PMの過労死を防ぐための16のツールを提供します。
+Epic-Ladder MCP Serverは、PMの過労死を防ぐための16のツールを提供します。
 
 #### カテゴリ1: チケット作成ツール（6個）
 

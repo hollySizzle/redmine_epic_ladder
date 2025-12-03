@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Redmine Epic Grid プラグイン初期化
+# Redmine Epic Ladder プラグイン初期化
 # Concern の確実なロードを保証
 
 module RedmineEpicLadder

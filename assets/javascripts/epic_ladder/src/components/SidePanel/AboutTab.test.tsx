@@ -15,7 +15,7 @@ describe('AboutTab', () => {
     it('should render the plugin title', () => {
       render(<AboutTab />);
 
-      expect(screen.getByText('Epic Grid Plugin')).toBeInTheDocument();
+      expect(screen.getByText('Epic Ladder Plugin')).toBeInTheDocument();
     });
 
     it('should render the version information', () => {
@@ -53,7 +53,7 @@ describe('AboutTab', () => {
     it('should render the copyright footer', () => {
       render(<AboutTab />);
 
-      expect(screen.getByText('© 2025 Redmine Epic Grid Plugin')).toBeInTheDocument();
+      expect(screen.getByText('© 2025 Redmine Epic Ladder Plugin')).toBeInTheDocument();
     });
   });
 

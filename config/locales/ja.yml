@@ -21,11 +21,11 @@ ja:
   error_epic_ladder_version_update_failed: "バージョンの変更に失敗しました: %{error}"
 
   # プロジェクト設定タブ
-  label_epic_ladder_settings: "Epic Grid"
+  label_epic_ladder_settings: "Epic Ladder"
   label_epic_ladder_mcp_settings: "MCP API設定"
   label_epic_ladder_mcp_enable: "このプロジェクトでMCP APIを許可する"
   label_epic_ladder_mcp_description: "Claude Code等のAIツールからこのプロジェクトへのアクセスを許可します"
-  error_epic_ladder_settings_save_failed: "Epic Grid設定の保存に失敗しました: %{errors}"
+  error_epic_ladder_settings_save_failed: "Epic Ladder設定の保存に失敗しました: %{errors}"
 
   # MCPツールヒント設定
   label_epic_ladder_mcp_tool_hints: "MCPツール プロジェクト固有ルール"

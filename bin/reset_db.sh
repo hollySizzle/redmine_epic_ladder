@@ -129,7 +129,7 @@ print_success "データベース接続プロセスの終了処理完了"
 
 # ステップ1: データベース削除
 print_step "1. データベース削除 (db:drop)"
-if RAILS_ENV=development rake db:drop; then
+if RAILS_ENV=development bundle exec rake db:drop; then
     print_success "データベース削除完了"
 else
     print_error "データベース削除に失敗しました"
@@ -138,7 +138,7 @@ fi
 
 # ステップ2: データベース作成
 print_step "2. データベース作成 (db:create)"
-if RAILS_ENV=development rake db:create; then
+if RAILS_ENV=development bundle exec rake db:create; then
     print_success "データベース作成完了"
 else
     print_error "データベース作成に失敗しました"
@@ -147,7 +147,7 @@ fi
 
 # ステップ3: マイグレーション実行
 print_step "3. マイグレーション実行 (db:migrate)"
-if RAILS_ENV=development rake db:migrate; then
+if RAILS_ENV=development bundle exec rake db:migrate; then
     print_success "基本マイグレーション実行完了"
 else
     print_error "基本マイグレーション実行に失敗しました"
@@ -156,7 +156,7 @@ fi
 
 # ステップ3.5: プラグインマイグレーション実行
 print_step "3.5. プラグインマイグレーション実行 (redmine:plugins:migrate)"
-if RAILS_ENV=development rake redmine:plugins:migrate; then
+if RAILS_ENV=development bundle exec rake redmine:plugins:migrate; then
     print_success "プラグインマイグレーション実行完了"
 else
     print_error "プラグインマイグレーション実行に失敗しました"
@@ -166,7 +166,7 @@ fi
 # ステップ4: 基本シードデータ投入
 print_step "4. 基本シードデータ投入 (db:seed)"
 if [ -f "db/seeds.rb" ]; then
-    if RAILS_ENV=development rake db:seed; then
+    if RAILS_ENV=development bundle exec rake db:seed; then
         print_success "基本シードデータ投入完了"
     else
         print_warning "基本シードデータ投入に失敗しましたが、処理を続行します"

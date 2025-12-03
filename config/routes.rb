@@ -1,6 +1,6 @@
 # plugins/redmine_epic_ladder/config/routes.rb
 RedmineApp::Application.routes.draw do
-  # MSW準拠のEpic Grid API設計
+  # MSW準拠のEpic Ladder API設計
   # エンドポイント: /api/epic_ladder/projects/:projectId/...
   scope 'api/epic_ladder/projects/:project_id', defaults: { format: 'json' } do
     # ===== Grid Data API (MSW handlers.ts準拠) =====
@@ -48,10 +48,10 @@ RedmineApp::Application.routes.draw do
     post 'cards/user_stories/:user_story_id/bugs', to: 'epic_ladder/cards#create_bug'
   end
 
-  # メインEpic Grid画面
+  # メインEpic Ladder画面
   get 'projects/:project_id/epic_ladder', to: 'epic_ladder#index', as: 'project_epic_ladder'
 
-  # プロジェクト設定タブ用（Epic Gridタブからのフォーム送信）
+  # プロジェクト設定タブ用（Epic Ladderタブからのフォーム送信）
   patch 'projects/:project_id/epic_ladder/settings', to: 'epic_ladder/project_settings#update', as: 'project_epic_ladder_settings'
 
   # MCPツールヒント設定用

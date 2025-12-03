@@ -15,7 +15,7 @@ priority: medium
 status: pending
 
 overview: |
-  lib/epic_grid/mcp_tools/ 配下の17個のMCPツールクラスをSSoTとして、
+  lib/epic_ladder/mcp_tools/ 配下の17個のMCPツールクラスをSSoTとして、
   以下を自動生成する仕組みを構築する：
   1. Markdownリファレンスドキュメント（人間可読）
   2. JSONマニフェスト（機械可読）
@@ -28,7 +28,7 @@ estimated_total_time: "7-14 hours"
 
 prerequisites:
   - Ruby 3.x環境（Redmine開発環境）
-  - 17個のMCPツールクラスが存在（lib/epic_grid/mcp_tools/*_tool.rb）
+  - 17個のMCPツールクラスが存在（lib/epic_ladder/mcp_tools/*_tool.rb）
   - MCP Gem v0.4.0 がインストール済み
   - vibes/docs/ ディレクトリ構造が存在
 
@@ -53,13 +53,13 @@ phases:
         title: "DocumentationGenerator クラス実装"
         estimated_time: "4 hours"
         actions:
-          - lib/epic_grid/mcp_tools/documentation_generator.rb を新規作成
+          - lib/epic_ladder/mcp_tools/documentation_generator.rb を新規作成
           - Ruby ASTパーサー（Parser gem）または正規表現でツールクラスを解析
           - クラス名、description、@example、input_schemaを抽出
           - Markdown形式のリファレンスドキュメントを生成
           - JSON形式のマニフェストを生成（MCP仕様準拠）
         deliverables:
-          - lib/epic_grid/mcp_tools/documentation_generator.rb
+          - lib/epic_ladder/mcp_tools/documentation_generator.rb
           - テスト用サンプル出力（Markdown/JSON）
         checkpoint: "CreateTaskTool.rb を入力として正しくMarkdown/JSON出力できるか確認"
 
@@ -67,12 +67,12 @@ phases:
         title: "Registry クラス実装（自動登録機構）"
         estimated_time: "2 hours"
         actions:
-          - lib/epic_grid/mcp_tools/registry.rb を新規作成
+          - lib/epic_ladder/mcp_tools/registry.rb を新規作成
           - Dir.glob で *_tool.rb をスキャン
           - constantize でクラスオブジェクトを取得
           - MCP::Tool を継承しているクラスのみをフィルタ
         deliverables:
-          - lib/epic_grid/mcp_tools/registry.rb
+          - lib/epic_ladder/mcp_tools/registry.rb
           - Registry.all_tools が17個のツールクラスを返す
         checkpoint: "Registry.all_tools.count == 17 であることを確認"
 
@@ -112,12 +112,12 @@ phases:
         actions:
           - TypeScriptGenerator クラスを実装
           - Ruby Hash → TypeScript interface 変換ロジック
-          - assets/javascripts/epic_grid/src/types/mcp-tools.d.ts 生成
+          - assets/javascripts/epic_ladder/src/types/mcp-tools.d.ts 生成
           - Request/Response型を定義
           - MSWモック用の型エクスポート
         deliverables:
-          - lib/epic_grid/mcp_tools/typescript_generator.rb
-          - assets/javascripts/epic_grid/src/types/mcp-tools.d.ts
+          - lib/epic_ladder/mcp_tools/typescript_generator.rb
+          - assets/javascripts/epic_ladder/src/types/mcp-tools.d.ts
         checkpoint: "生成された.d.tsファイルがTypeScriptコンパイラでエラーなし"
 
       - task: 2.2

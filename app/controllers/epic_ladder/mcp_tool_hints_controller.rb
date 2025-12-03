@@ -2,7 +2,7 @@
 
 module EpicLadder
   # MCPツールヒント設定コントローラー
-  # プロジェクト設定の「Epic Grid」タブからヒント設定を保存する
+  # プロジェクト設定の「Epic Ladder」タブからヒント設定を保存する
   class McpToolHintsController < ApplicationController
     before_action :find_project_by_project_id
     before_action :authorize

@@ -1,7 +1,7 @@
 {
   "name": "redmine_epic_ladder",
   "version": "1.0.0",
-  "description": "Release Kanban with Epic→Feature→UserStory→Task/Test hierarchy for Redmine",
+  "description": "Epic Ladder with Epic→Feature→UserStory→Task/Test hierarchy for Redmine",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",

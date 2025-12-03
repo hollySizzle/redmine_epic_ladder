@@ -6,7 +6,7 @@ import { naturalSortKey, compareNaturalSort } from '../utils/naturalSort';
 /**
  * FilterPanel Component
  *
- * Epic Gridのフィルタリング機能を提供するUIコンポーネント
+ * Epic Ladderのフィルタリング機能を提供するUIコンポーネント
  * - バージョン絞込（複数選択可能）
  * - 担当者絞込（複数選択可能）
  * - トラッカー絞込（複数選択可能）

@@ -21,8 +21,8 @@ en:
   error_epic_ladder_version_update_failed: "Failed to update version: %{error}"
 
   # Project Settings Tab
-  label_epic_ladder_settings: "Epic Grid"
+  label_epic_ladder_settings: "Epic Ladder"
   label_epic_ladder_mcp_settings: "MCP API Settings"
   label_epic_ladder_mcp_enable: "Enable MCP API for this project"
   label_epic_ladder_mcp_description: "Allow AI tools like Claude Code to access this project"
-  error_epic_ladder_settings_save_failed: "Failed to save Epic Grid settings: %{errors}"
+  error_epic_ladder_settings_save_failed: "Failed to save Epic Ladder settings: %{errors}"

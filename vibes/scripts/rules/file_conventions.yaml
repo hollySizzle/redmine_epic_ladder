@@ -25,21 +25,21 @@ rules:
   # バックエンド実装規約 (Fat Model, Skinny Controller)
   # ===========================================
 
-  # epic_grid専用Model規約 (最優先)
-  - name: "epic_gridModel実装規約 (Fat Model)"
+  # epic_ladder専用Model規約 (最優先)
+  - name: "epic_ladderModel実装規約 (Fat Model)"
     patterns:
-      - "**/app/models/epic_grid/**/*.rb"
-      - "**/app/models/concerns/epic_grid/**/*.rb"
+      - "**/app/models/epic_ladder/**/*.rb"
+      - "**/app/models/concerns/epic_ladder/**/*.rb"
       - "**/app/models/issue.rb"
       - "**/app/models/project.rb"
       - "**/app/models/tracker_hierarchy.rb"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 epic_gridModel実装前に規約とFat Model原則を確認してください
+      📋 epic_ladderModel実装前に規約とFat Model原則を確認してください
       必読: @vibes/rules/backend_standards.md (Fat Model原則)
       必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
-      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
 
       ✅ Modelに実装すべきもの:
       - ビジネスロジック (Epic作成、カード移動、統計計算など)
@@ -49,18 +49,18 @@ rules:
       ❌ Modelに書いてはいけないもの:
       - HTTP処理・JSON変換 (Controller責務)
 
-  # epic_grid専用Controller規約
-  - name: "epic_gridController実装規約 (Skinny Controller)"
+  # epic_ladder専用Controller規約
+  - name: "epic_ladderController実装規約 (Skinny Controller)"
     patterns:
-      - "**/app/controllers/epic_grid/**/*.rb"
-      - "**/app/controllers/concerns/epic_grid_api_concern.rb"
+      - "**/app/controllers/epic_ladder/**/*.rb"
+      - "**/app/controllers/concerns/epic_ladder_api_concern.rb"
     severity: "block"
     token_threshold: 15000
     message: |
-      📋 epic_gridController実装前に規約とSkinny Controller原則を確認してください
+      📋 epic_ladderController実装前に規約とSkinny Controller原則を確認してください
       必読: @vibes/rules/backend_standards.md (Skinny Controller原則)
       必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
-      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
 
       ✅ Controllerに実装すべきもの:
       - HTTP要求/応答制御・権限検証
@@ -73,10 +73,10 @@ rules:
 
       目標: 10-30行程度に収める
 
-  # epic_grid専用Service規約 (原則禁止)
-  - name: "epic_gridService実装規約 (外部API連携のみ)"
+  # epic_ladder専用Service規約 (原則禁止)
+  - name: "epic_ladderService実装規約 (外部API連携のみ)"
     patterns:
-      - "**/app/services/epic_grid/**/*.rb"
+      - "**/app/services/epic_ladder/**/*.rb"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -95,8 +95,8 @@ rules:
       既存Service削除対象:
       - CardMoveService → Issue#move_to_cell
       - EpicCreationService → Issue.create_epic
-      - StatisticsCalculator → Project#epic_grid_statistics
-      - GridDataBuilder → Project#epic_grid_grid_data
+      - StatisticsCalculator → Project#epic_ladder_statistics
+      - GridDataBuilder → Project#epic_ladder_grid_data
 
   # ===========================================
   # フロントエンド実装規約
@@ -105,8 +105,8 @@ rules:
   # CSS/SCSS実装規約
   - name: "CSS/SCSS実装規約"
     patterns:
-      - "**/assets/javascripts/epic_grid/src/**/*.css"
-      - "**/assets/javascripts/epic_grid/src/**/*.scss"
+      - "**/assets/javascripts/epic_ladder/src/**/*.css"
+      - "**/assets/javascripts/epic_ladder/src/**/*.scss"
       - "**/assets/stylesheets/**/*.css"
       - "**/assets/stylesheets/**/*.scss"
     severity: "block"
@@ -121,17 +121,17 @@ rules:
       - margin非推奨 → paddingを優先して使用
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_grid
+      1. cd assets/javascripts/epic_ladder
       2. npm test  # 全テスト実行（168 tests）
       3. テスト全通過を確認してから完了報告
 
   # フロントエンド全体（包括的テスト要求）
   - name: "フロントエンド実装規約（包括的）"
     patterns:
-      - "**/assets/javascripts/epic_grid/src/**/*.ts"
-      - "**/assets/javascripts/epic_grid/src/**/*.tsx"
-      - "**/assets/javascripts/epic_grid/src/**/*.js"
-      - "**/assets/javascripts/epic_grid/src/**/*.jsx"
+      - "**/assets/javascripts/epic_ladder/src/**/*.ts"
+      - "**/assets/javascripts/epic_ladder/src/**/*.tsx"
+      - "**/assets/javascripts/epic_ladder/src/**/*.js"
+      - "**/assets/javascripts/epic_ladder/src/**/*.jsx"
     severity: "block"
     token_threshold: 15000
     message: |
@@ -141,7 +141,7 @@ rules:
       テストなしでの完了報告は禁止です。
 
       ✅ 必須作業（変更完了後すぐに実行）:
-      1. cd assets/javascripts/epic_grid
+      1. cd assets/javascripts/epic_ladder
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認
       4. 失敗がある場合は修正してから完了報告
@@ -153,9 +153,9 @@ rules:
   # TypeScript型定義（SSoT）
   - name: "TypeScript型定義（SSoT）"
     patterns:
-      - "**/assets/javascripts/epic_grid/src/types/**/*.ts"
-      - "**/assets/javascripts/epic_grid/src/types/normalized-api.ts"
-      - "**/assets/javascripts/epic_grid/src/types/api-endpoints.ts"
+      - "**/assets/javascripts/epic_ladder/src/types/**/*.ts"
+      - "**/assets/javascripts/epic_ladder/src/types/normalized-api.ts"
+      - "**/assets/javascripts/epic_ladder/src/types/api-endpoints.ts"
     severity: "block"
     token_threshold: 12000
     message: |
@@ -167,66 +167,66 @@ rules:
       型定義変更は全システムに影響します。必ずプロジェクトオーナーに確認してから作業を続けてください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_grid
+      1. cd assets/javascripts/epic_ladder
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
   # Reactコンポーネント実装
   - name: "Reactコンポーネント実装規約"
     patterns:
-      - "**/assets/javascripts/epic_grid/src/components/**/*.tsx"
-      - "**/assets/javascripts/epic_grid/src/components/**/*.jsx"
+      - "**/assets/javascripts/epic_ladder/src/components/**/*.tsx"
+      - "**/assets/javascripts/epic_ladder/src/components/**/*.jsx"
     severity: "block"
     token_threshold: 15000
     message: |
       📋 Reactコンポーネント実装前にSSoTを確認してください
-      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
       必読: @vibes/rules/technical_architecture_quickstart.md (技術スタック)
-      参考: @vibes/specs/ui/epic_grid_ui_design_spec.md (UI設計)
+      参考: @vibes/specs/ui/epic_ladder_ui_design_spec.md (UI設計)
 
       React 18、Zustand、Pragmatic D&Dの使用を推奨します
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_grid
+      1. cd assets/javascripts/epic_ladder
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
   # Zustandストア実装
   - name: "Zustandストア実装規約"
     patterns:
-      - "**/assets/javascripts/epic_grid/src/store/**/*.ts"
-      - "**/assets/javascripts/epic_grid/src/store/useStore.ts"
+      - "**/assets/javascripts/epic_ladder/src/store/**/*.ts"
+      - "**/assets/javascripts/epic_ladder/src/store/useStore.ts"
     severity: "block"
     token_threshold: 15000
     message: |
       📋 Zustandストア実装前にSSoTを確認してください
-      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
       必読: @vibes/rules/technical_architecture_quickstart.md (State管理)
 
       Normalized State構造（entities + grid index）を維持してから作業を続けてください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_grid
+      1. cd assets/javascripts/epic_ladder
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
   # MSWモックハンドラ
   - name: "MSWモックハンドラ実装規約"
     patterns:
-      - "**/assets/javascripts/epic_grid/src/mocks/**/*.ts"
-      - "**/assets/javascripts/epic_grid/src/mocks/handlers.ts"
+      - "**/assets/javascripts/epic_ladder/src/mocks/**/*.ts"
+      - "**/assets/javascripts/epic_ladder/src/mocks/handlers.ts"
     severity: "block"
     token_threshold: 15000
     message: |
       📋 MSWモックハンドラ実装前にSSoTを確認してください
-      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
-      必読: @epic_grid/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
+      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_ladder/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
       必読: @vibes/rules/testing_strategy.md (MSW + Vitest戦略)
 
       モックレスポンスは型定義に完全準拠させてください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_grid
+      1. cd assets/javascripts/epic_ladder
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
@@ -237,21 +237,21 @@ rules:
   # フロントエンドテスト（Vitest）
   - name: "フロントエンドテスト実装規約（Vitest）"
     patterns:
-      - "**/assets/javascripts/epic_grid/src/**/*.test.tsx"
-      - "**/assets/javascripts/epic_grid/src/**/*.test.ts"
-      - "**/assets/javascripts/epic_grid/vitest.config.ts"
+      - "**/assets/javascripts/epic_ladder/src/**/*.test.tsx"
+      - "**/assets/javascripts/epic_ladder/src/**/*.test.ts"
+      - "**/assets/javascripts/epic_ladder/vitest.config.ts"
     severity: "block"
     token_threshold: 15000
     message: |
       📋 フロントエンドテスト実装前に規約を確認してください
       必読: @vibes/rules/testing_strategy.md (Vitest + MSW戦略)
       必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
-      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
 
       テストコードが仕様書です。カバレッジ要件（Critical 100%, 全体85%）を維持してください
 
       ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_grid
+      1. cd assets/javascripts/epic_ladder
       2. npm test  # 全テスト実行（38 tests）
       3. テスト全通過を確認してから完了報告
 
@@ -259,11 +259,11 @@ rules:
   - name: "バックエンドテスト実装規約（RSpec）"
     patterns:
       - "**/spec/**/*_spec.rb"
-      - "**/spec/models/epic_grid/**/*.rb"
-      - "**/spec/services/epic_grid/**/*.rb"
-      - "**/spec/requests/epic_grid/**/*.rb"
-      - "**/spec/integration/epic_grid/**/*.rb"
-      - "**/spec/system/epic_grid/**/*.rb"
+      - "**/spec/models/epic_ladder/**/*.rb"
+      - "**/spec/services/epic_ladder/**/*.rb"
+      - "**/spec/requests/epic_ladder/**/*.rb"
+      - "**/spec/integration/epic_ladder/**/*.rb"
+      - "**/spec/system/epic_ladder/**/*.rb"
       - "**/spec/rails_helper.rb"
       - "**/spec/spec_helper.rb"
     severity: "block"
@@ -272,7 +272,7 @@ rules:
       📋 バックエンドテスト実装前に規約を確認してください
       必読: @vibes/rules/testing_strategy.md (Pure Playwright + RSpec戦略)
       必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
-      必読: @epic_grid/src/types/normalized-api.ts (API型定義 SSoT)
+      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
       Pure Playwright方式（Capybara不使用）、FactoryBot、DatabaseCleanerの使用を徹底してください
 
   # E2Eテスト（Playwright）
@@ -288,7 +288,7 @@ rules:
       必読: @vibes/docs/rules/backend_testing.md (E2Eテスト詳細ガイド)
       必読: @vibes/rules/testing_strategy.md (Pure Playwright戦略)
       参考: @vibes/specs/technical/grid_measurement_strategy.md (Grid測定)
-      参考: spec/system/epic_grid/simple_e2e_spec.rb (Reference Test)
+      参考: spec/system/epic_ladder/simple_e2e_spec.rb (Reference Test)
 
       🎯 新規テスト作成: simple_e2e_spec.rb をコピーして編集
       🔍 テスト失敗時: backend_testing.md の「デバッグ手順」参照
@@ -348,7 +348,7 @@ rules:
   # ===========================================
 
   # 以下の規約は Code as Document 移行により廃止されました：
-  # - logics/ 配下のAPI仕様書 → @epic_grid/src/types/normalized-api.ts (SSoT) に統合
+  # - logics/ 配下のAPI仕様書 → @epic_ladder/src/types/normalized-api.ts (SSoT) に統合
   # - logics/ 配下の機能設計書 → テストコード (*.test.tsx, *_spec.rb) に統合
   # - 個別機能のドキュメント規約 → backend_standards.md に統合
 
@@ -376,13 +376,13 @@ meta:
     - データ構造統計システム → backend_standards.md (Service原則) に統合
     - VersionManagement実装規約 → backend_standards.md (Service原則) に統合
     - AutoGeneration実装規約 → backend_standards.md (Service原則) に統合
-    - epic_gridUI実装規約 → 削除（実装済みコード参照）
+    - epic_ladderUI実装規約 → 削除（実装済みコード参照）
     - StateTransition実装規約 → backend_standards.md (Service原則) に統合
     - ValidationGuard実装規約 → backend_standards.md (Service原則) に統合
     - APIIntegration実装規約 → backend_standards.md (Controller原則) に統合
-    - epic_gridHook実装規約 → 削除（実装済みコード参照）
+    - epic_ladderHook実装規約 → 削除（実装済みコード参照）
     - Feature Card関連 → 削除（実装済みコード参照）
-    - epic_grid Grid関連 → 削除（実装済みコード参照）
+    - epic_ladder Grid関連 → 削除（実装済みコード参照）
     - 共通コンポーネント関連 → 削除（実装済みコード参照）
     - ハイブリッド詳細設計書 → 削除（logics/ ディレクトリ廃止）
 

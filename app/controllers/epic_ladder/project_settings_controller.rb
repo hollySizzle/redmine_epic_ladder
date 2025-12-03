@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module EpicLadder
-  # プロジェクト単位のEpic Grid設定コントローラー
-  # プロジェクト設定の「Epic Grid」タブから呼び出される
+  # プロジェクト単位のEpic Ladder設定コントローラー
+  # プロジェクト設定の「Epic Ladder」タブから呼び出される
   class ProjectSettingsController < ApplicationController
     before_action :find_project_by_project_id
     before_action :authorize

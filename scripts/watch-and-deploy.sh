@@ -1,7 +1,7 @@
 #!/bin/bash
 # webpackのwatch結果を自動でplugin_assetsにデプロイ
 
-TARGET_DIR="/usr/src/redmine/public/plugin_assets/redmine_epic_grid"
+TARGET_DIR="/usr/src/redmine/public/plugin_assets/redmine_epic_ladder"
 SOURCE_DIR="assets/build"
 
 echo "👀 Watching $SOURCE_DIR for changes..."

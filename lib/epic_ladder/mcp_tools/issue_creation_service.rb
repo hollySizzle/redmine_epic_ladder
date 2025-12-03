@@ -41,7 +41,7 @@ module EpicLadder
         unless ProjectValidator.project_allowed?(project)
           return error_result(
             "プロジェクト '#{project.identifier}' でMCP APIが許可されていません",
-            { hint: "プロジェクト設定 → Epic Grid タブでMCP APIを有効にしてください" }
+            { hint: "プロジェクト設定 → Epic Ladder タブでMCP APIを有効にしてください" }
           )
         end
 

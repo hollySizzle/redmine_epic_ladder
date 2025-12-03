@@ -283,7 +283,7 @@ end
 # ===== プロジェクトモジュール有効化 =====
 puts "\n🔌 プロジェクトモジュールを有効化中..."
 
-# 桜商店ECサイトプロジェクトにrelease_kanbanモジュールを有効化
+# 桜商店ECサイトプロジェクトにepic_ladderモジュールを有効化
 if created_projects['sakura-ec']
   sakura_ec = created_projects['sakura-ec']
 
@@ -299,7 +299,7 @@ if created_projects['sakura-ec']
     'boards',
     'calendar',
     'gantt',
-    'epic_ladder'  # Epic Grid モジュール追加
+    'epic_ladder'  # Epic Ladder モジュール追加
   ]
 
   sakura_ec.enabled_module_names = enabled_modules
@@ -1875,7 +1875,7 @@ puts "💡 使い方:"
 puts "  1. ブラウザで http://localhost:3000 にアクセス"
 puts "  2. ログイン: admin / admin"
 puts "  3. プロジェクト「桜商店ECサイト開発」を選択"
-puts "  4. Epic Grid タブをクリック"
+puts "  4. Epic Ladder タブをクリック"
 puts ""
 puts "🎨 確認ポイント:"
 puts "  - 6つのEpicが横軸に配置されているか"

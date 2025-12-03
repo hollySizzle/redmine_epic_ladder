@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Epic Grid メインコントローラー
+# Epic Ladder メインコントローラー
 # ReactアプリとRedmine統合のエントリーポイント
 class EpicLadderController < ApplicationController
   helper EpicLadderHelper
@@ -31,7 +31,7 @@ class EpicLadderController < ApplicationController
     @initial_kanban_data = build_initial_data if params[:preload] == 'true'
 
     # ページタイトルとメタ情報
-    @page_title = "Epic Grid - #{@project.name}"
+    @page_title = "Epic Ladder - #{@project.name}"
 
     # React アプリケーション用の設定
     @react_config = {
@@ -70,7 +70,7 @@ class EpicLadderController < ApplicationController
     end
 
     # TODO: カスタム権限の実装
-    # unless User.current.allowed_to?(:view_release_kanban, @project)
+    # unless User.current.allowed_to?(:view_epic_ladder, @project)
     #   deny_access
     #   return false
     # end

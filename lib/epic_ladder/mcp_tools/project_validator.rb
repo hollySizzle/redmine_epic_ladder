@@ -51,7 +51,7 @@ module EpicLadder
             error: "プロジェクト '#{project.identifier}' でMCP APIが許可されていません",
             details: {
               project_id: project.identifier,
-              hint: "プロジェクト設定 → Epic Grid タブでMCP APIを有効にしてください"
+              hint: "プロジェクト設定 → Epic Ladder タブでMCP APIを有効にしてください"
             }
           })
         }])

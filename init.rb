@@ -43,9 +43,9 @@ Rails.application.config.after_initialize do
 end
 
 Redmine::Plugin.register :redmine_epic_ladder do
-  name 'Redmine Epic Grid Plugin'
+  name 'Redmine Epic Ladder Plugin'
   author 'holly'
-  description 'Epic→Feature→UserStory→Task/Test階層制約とVersion管理を統合したEpic Gridシステム'
+  description 'Epic→Feature→UserStory→Task/Test階層制約とVersion管理を統合したEpic Ladderシステム'
   version '1.0.0'
   url 'https://github.com/your-repo/redmine_epic_ladder'
   author_url 'https://github.com/your-team'
@@ -72,7 +72,7 @@ Redmine::Plugin.register :redmine_epic_ladder do
   menu :project_menu,
        :epic_ladder,
        { controller: 'epic_ladder', action: 'index' },
-       caption: 'Epic Grid',
+       caption: 'Epic Ladder',
        param: :project_id,
        if: Proc.new { |p| User.current.allowed_to?(:view_epic_ladder, p) }
 

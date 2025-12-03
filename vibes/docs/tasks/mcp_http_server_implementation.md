@@ -1,7 +1,7 @@
 # MCP HTTPサーバー実装計画
 
 ## 概要
-- **目的**: Claude DesktopからHTTP経由でRedmine Epic Gridを操作可能にする
+- **目的**: Claude DesktopからHTTP経由でRedmine Epic Ladderを操作可能にする
 - **方式**: Streamable HTTP Transport（MCP公式仕様準拠）
 - **認証**: Redmine APIキー認証（既存インフラ活用）
 - **工数**: 2日
@@ -120,7 +120,7 @@ MCP::Server.new(
 ```
 Claude Desktop → Settings → Connectors → Add Connector
   URL: https://your-redmine.com/mcp/rpc
-  Name: Redmine Epic Grid
+  Name: Redmine Epic Ladder
   Authorization Token: [Your Redmine API Key]
 ```
 

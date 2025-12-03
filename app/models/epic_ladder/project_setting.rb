@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module EpicLadder
-  # プロジェクト単位のEpic Grid設定
+  # プロジェクト単位のEpic Ladder設定
   # MCP APIアクセス許可などを管理
   class ProjectSetting < ActiveRecord::Base
     self.table_name = 'epic_ladder_project_settings'

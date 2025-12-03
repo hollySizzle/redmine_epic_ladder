@@ -75,7 +75,7 @@ RSpec.describe EpicLadder::ProjectsHelperPatch do
 
         # 権限に応じてフィルタリングされるが、少なくとも何かのタブは返る
         expect(tabs).to be_an(Array)
-        # Epic Grid以外のタブが存在することを確認
+        # Epic Ladder以外のタブが存在することを確認
         tab_names = tabs.map { |t| t[:name] }
         expect(tab_names).not_to include('epic_ladder')
       end

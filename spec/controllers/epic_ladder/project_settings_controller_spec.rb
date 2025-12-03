@@ -10,7 +10,7 @@ RSpec.describe EpicLadder::ProjectSettingsController, type: :controller do
 
   before do
     member # ensure member exists
-    # Epic Gridモジュールを有効化
+    # Epic Ladderモジュールを有効化
     project.enable_module!(:epic_ladder)
     allow(User).to receive(:current).and_return(user)
     @request.session[:user_id] = user.id

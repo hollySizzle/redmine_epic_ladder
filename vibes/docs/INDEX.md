@@ -14,7 +14,7 @@
 - [Backend実装規約 (Fat Model, Skinny Controller)](@vibes/rules/backend_standards.md)
 - [Backend Testing Guide](@vibes/rules/backend_testing.md)
 - [CSS規約](@vibes/rules/css_standards.md)
-- [Redmine Release Kanban - 技術アーキテクチャクイックスタート](@vibes/rules/technical_architecture_quickstart.md)
+- [Redmine Epic Ladder - 技術アーキテクチャクイックスタート](@vibes/rules/technical_architecture_quickstart.md)
 - [カンバンテスト戦略](@vibes/rules/testing_strategy.md)
 - [Vibesドキュメント規約](@vibes/rules/vibes_documentation_standards.md)
 

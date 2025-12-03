@@ -9,7 +9,7 @@ export const AboutTab: React.FC = () => {
   return (
     <div className="about-tab">
       <div className="about-tab__section">
-        <h3 className="about-tab__title">Epic Grid Plugin</h3>
+        <h3 className="about-tab__title">Epic Ladder Plugin</h3>
         <p className="about-tab__version">Version 0.8.1</p>
       </div>
 
@@ -34,7 +34,7 @@ export const AboutTab: React.FC = () => {
 
       <div className="about-tab__section about-tab__section--footer">
         <p className="about-tab__copyright">
-          © 2025 Redmine Epic Grid Plugin
+          © 2025 Redmine Epic Ladder Plugin
         </p>
       </div>
     </div>

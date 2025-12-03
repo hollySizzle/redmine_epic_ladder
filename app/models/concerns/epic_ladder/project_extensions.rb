@@ -8,7 +8,7 @@ module EpicLadder
     # グリッドデータ構築（MSW準拠）
     # ========================================
 
-    # Epic Gridのデータを正規化APIレスポンス形式で取得
+    # Epic Ladderのデータを正規化APIレスポンス形式で取得
     # @param include_closed [Boolean] closedステータスを含めるか
     # @param exclude_closed_versions [Boolean] クローズ済みバージョンを除外するか（デフォルト: true）
     # @param filters [Hash] Ransackフィルタパラメータ (例: { status_id_in: [1,2], fixed_version_id_eq: 3, fixed_version_effective_date_gteq: '2025-01-01' })

@@ -1,7 +1,7 @@
 #!/bin/bash
 # frozen_string_literal: true
 
-# Release Kanban テスト環境セットアップスクリプト
+# Epic Ladder テスト環境セットアップスクリプト
 # RSpec + Playwright 環境を一発でセットアップ
 
 set -e
@@ -41,7 +41,7 @@ PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REDMINE_ROOT="$(cd "$PLUGIN_DIR/../.." && pwd)"
 
 echo "=========================================="
-echo "🧪 Release Kanban テスト環境セットアップ"
+echo "🧪 Epic Ladder テスト環境セットアップ"
 echo "=========================================="
 echo "プラグインディレクトリ: $PLUGIN_DIR"
 echo "Redmineルート: $REDMINE_ROOT"
@@ -365,7 +365,7 @@ echo "  RAILS_ENV=test bundle exec rspec plugins/redmine_epic_ladder/spec/system
 echo ""
 echo "🔍 特定のテスト実行:"
 echo "  cd $REDMINE_ROOT"
-echo "  RAILS_ENV=test bundle exec rspec plugins/redmine_epic_ladder/spec/models/epic_grid/tracker_hierarchy_spec.rb:7"
+echo "  RAILS_ENV=test bundle exec rspec plugins/redmine_epic_ladder/spec/models/epic_ladder/tracker_hierarchy_spec.rb:7"
 echo ""
 echo "🧹 ポートクリーンアップ（テスト失敗時）:"
 echo "  lsof -ti:3001 | xargs kill -9"

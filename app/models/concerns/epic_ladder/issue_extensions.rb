@@ -50,7 +50,7 @@ module EpicLadder
     end
 
     # バージョン変更時に開始日・終了日を自動設定
-    # Epic Grid上でバージョン間を移動した際に呼び出すことを想定
+    # Epic Ladder上でバージョン間を移動した際に呼び出すことを想定
     # 子issueにも同じ日付を伝播する（属性設定のみ、保存は呼び出し側が行う）
     # @return [Boolean] 日付が設定された場合true、それ以外はfalse
     def epic_ladder_apply_version_dates!

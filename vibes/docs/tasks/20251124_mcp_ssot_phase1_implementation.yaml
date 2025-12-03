@@ -64,7 +64,7 @@ event_chain:
     result: "success"
     outcome: |
       ✅ YARD parsing successful
-      - Class path: EpicGrid::McpTools::CreateTaskTool
+      - Class path: EpicLadder::McpTools::CreateTaskTool
       - Docstring: 取得成功
       - @example tags: 正常に抽出
     learning: "YARD APIは期待通り動作、基本パース機構として使用可能"
@@ -490,7 +490,7 @@ preventive_measures:
     prevention: "description抽出を改善（引用符の種類を区別）"
     status: "implemented"
     implementation:
-      file: "lib/epic_grid/mcp_tools/documentation_generator.rb"
+      file: "lib/epic_ladder/mcp_tools/documentation_generator.rb"
       change: "extract_descriptionメソッドの正規表現を改善（ダブル/シングル別々に処理）"
     result: "全17ツールのdescriptionが完全に抽出可能になった"
 
@@ -500,7 +500,7 @@ preventive_measures:
 related_files:
   plan: "/vibes/docs/plans/20251124_mcp_tools_ssot_plan.yaml"
   implementation:
-    - "lib/epic_grid/mcp_tools/documentation_generator.rb"
+    - "lib/epic_ladder/mcp_tools/documentation_generator.rb"
   generated_test_files:
     - "/tmp/mcp_tools_reference_test.md"
     - "/tmp/mcp_tools_manifest_test.json"

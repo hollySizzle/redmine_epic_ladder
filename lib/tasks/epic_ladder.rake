@@ -67,7 +67,7 @@ namespace :redmine_epic_ladder do
     source = Rails.root.join('plugins', 'redmine_epic_ladder', 'assets', 'build')
     dest = Rails.public_path.join('plugin_assets', 'redmine_epic_ladder')
 
-    puts "=== Epic Grid Asset Status ==="
+    puts "=== Epic Ladder Asset Status ==="
     puts ""
     puts "Source directory (Git-managed):"
     puts "  Path: #{source}"

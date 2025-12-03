@@ -99,7 +99,7 @@ describe('SidePanel', () => {
 
     render(<SidePanel />);
 
-    expect(screen.getByText('Epic Grid Plugin')).toBeInTheDocument();
+    expect(screen.getByText('Epic Ladder Plugin')).toBeInTheDocument();
     expect(screen.getByText('Version 0.8.1')).toBeInTheDocument();
   });
 

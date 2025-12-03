@@ -1,4 +1,4 @@
-# PluginGemfile for redmine_release_kanban plugin
+# PluginGemfile for redmine_epic_ladder plugin
 # Redmine 4.2+ recommended practice - using PluginGemfile instead of Gemfile
 
 # Ransack - Flexible filtering for ActiveRecord

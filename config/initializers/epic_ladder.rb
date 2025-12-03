@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Epic Grid Plugin Initializer
+# Epic Ladder Plugin Initializer
 #
 # このinitializerはRails起動時に以下を実行します:
 # 1. assets/build/ から public/plugin_assets/ へビルド済みファイルを自動配信

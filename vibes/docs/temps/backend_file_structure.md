@@ -1,4 +1,4 @@
-# Backend File Structure - Epic Grid Plugin
+# Backend File Structure - Epic Ladder Plugin
 
 **作成日**: 2025-10-04
 **ステータス**: リファクタリング完了 (Kanban → EpicLadder 名前空間変更済み)
