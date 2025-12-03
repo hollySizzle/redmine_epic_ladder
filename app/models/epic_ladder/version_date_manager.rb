@@ -103,7 +103,16 @@ module EpicLadder
       new_version_id = nil if new_version_id.blank?
       new_version = new_version_id ? Version.find(new_version_id) : nil
 
-      result = { issue: issue, parent: nil, siblings: [], dates: nil, parent_dates: nil }
+      # 実際に変更があったかを追跡するために changed フラグを追加
+      result = {
+        issue: issue,
+        parent: nil,
+        siblings: [],           # 実際に変更があった兄弟のみ
+        dates: nil,
+        parent_dates: nil,
+        issue_changed: false,   # 対象issueが変更されたか
+        parent_changed: false   # 親が変更されたか
+      }
 
       ActiveRecord::Base.transaction do
         # Issue本体の日付計算（reloadする前に計算）
@@ -112,6 +121,9 @@ module EpicLadder
 
         # lock_versionを最新にするためリロード（init_journalの前に実行）
         issue.reload
+
+        # 変更前のバージョンIDを保存
+        original_version_id = issue.fixed_version_id
 
         # Issue更新
         issue.init_journal(User.current)
@@ -122,6 +134,9 @@ module EpicLadder
         }
         issue.save!
 
+        # 実際に変更があったかを記録
+        result[:issue_changed] = (original_version_id.to_s != new_version_id.to_s)
+
         # 親も更新
         if update_parent && issue.parent
           # 兄弟issue（同じ親の子issue）を先に更新
@@ -131,6 +146,10 @@ module EpicLadder
             sibling_dates = update_dates_for_version_change(sibling, new_version)
 
             sibling.reload
+
+            # 変更前のバージョンIDを保存
+            sibling_original_version_id = sibling.fixed_version_id
+
             sibling.init_journal(User.current)
             sibling.safe_attributes = {
               'fixed_version_id' => new_version_id,
@@ -139,15 +158,20 @@ module EpicLadder
             }
             sibling.save!
 
-            result[:siblings] << sibling
+            # 実際に変更があった兄弟のみを追加
+            if sibling_original_version_id.to_s != new_version_id.to_s
+              result[:siblings] << sibling
+            end
           end
 
           # 親を最後に更新
           parent_dates = update_dates_for_version_change(issue.parent, new_version)
-          result[:parent] = issue.parent
           result[:parent_dates] = parent_dates
 
           issue.parent.reload # 親もリロード（init_journalの前に実行）
+
+          # 変更前のバージョンIDを保存
+          parent_original_version_id = issue.parent.fixed_version_id
 
           issue.parent.init_journal(User.current)
           # 親の日付更新設定を考慮
@@ -161,6 +185,12 @@ module EpicLadder
 
           issue.parent.safe_attributes = parent_attributes
           issue.parent.save!
+
+          # 実際に変更があった場合のみ parent を設定
+          if parent_original_version_id.to_s != new_version_id.to_s
+            result[:parent] = issue.parent
+            result[:parent_changed] = true
+          end
         end
       end
 

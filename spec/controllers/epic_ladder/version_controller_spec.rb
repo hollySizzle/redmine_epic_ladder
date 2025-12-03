@@ -160,6 +160,96 @@ RSpec.describe EpicLadder::VersionController, type: :controller do
       end
     end
 
+    context '親や兄弟が既に同じバージョンの場合' do
+      let(:user_story) { FactoryBot.create(:user_story, project: project, fixed_version: version_v2) }
+      let(:task1) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1, subject: 'Task1') }
+      let(:task2) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v2, subject: 'Task2') }
+      let(:task3) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v2, subject: 'Task3') }
+
+      before do
+        task1
+        task2
+        task3
+      end
+
+      it '実際に変更があったissueのみがカウントされる' do
+        # task1 (v1→v2) のみ変更、task2,task3,user_story は既にv2なので変更なし
+        patch :update, params: {
+          id: task1.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        task1.reload
+        task2.reload
+        task3.reload
+        user_story.reload
+
+        # 全てv2になっている
+        expect(task1.fixed_version_id).to eq(version_v2.id)
+        expect(task2.fixed_version_id).to eq(version_v2.id)
+        expect(task3.fixed_version_id).to eq(version_v2.id)
+        expect(user_story.fixed_version_id).to eq(version_v2.id)
+
+        # フラッシュメッセージには実際に変更があった件数のみ表示される
+        # task1のみ変更（親・兄弟は既にv2なので変更なし）
+        # 親も兄弟も変更なしの場合、通常のメッセージになる
+        expect(flash[:notice]).to be_present
+        expect(flash[:notice]).not_to include('計') # 親が変更されていないので「計X件」は表示されない
+      end
+
+      it '一部の兄弟のみ変更がある場合、その件数のみ表示される' do
+        # task2をv1に変更しておく（task3は既にv2のまま）
+        task2.update!(fixed_version_id: version_v1.id)
+
+        patch :update, params: {
+          id: task1.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        task1.reload
+        task2.reload
+        task3.reload
+        user_story.reload
+
+        # 全てv2になっている
+        expect(task1.fixed_version_id).to eq(version_v2.id)
+        expect(task2.fixed_version_id).to eq(version_v2.id)
+        expect(task3.fixed_version_id).to eq(version_v2.id)
+        expect(user_story.fixed_version_id).to eq(version_v2.id)
+
+        # フラッシュメッセージ: task1 + task2 のみ変更（task3, user_storyは既にv2）
+        # 親が変更なしなので「計X件」は表示されず、兄弟の件数のみ
+        expect(flash[:notice]).to be_present
+        expect(flash[:notice]).to include('1') # 兄弟1件（task2のみ）
+      end
+    end
+
+    context '対象issueが既に同じバージョンの場合' do
+      let(:user_story) { FactoryBot.create(:user_story, project: project, fixed_version: version_v1) }
+      let(:task) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v2) }
+
+      it '対象issueは変更なしでも、親は変更される' do
+        # taskは既にv2、user_storyはv1
+        patch :update, params: {
+          id: task.id,
+          fixed_version_id: version_v2.id,
+          update_parent_version: '1'
+        }
+
+        task.reload
+        user_story.reload
+
+        expect(task.fixed_version_id).to eq(version_v2.id)
+        expect(user_story.fixed_version_id).to eq(version_v2.id)
+
+        # 親のみ変更があるので「計1件」（親のみ）
+        expect(flash[:notice]).to include('#')
+        expect(flash[:notice]).to include('1') # 計1件（親のみ）
+      end
+    end
+
     context '親が存在しない場合' do
       let(:task) { FactoryBot.create(:task, project: project, fixed_version: version_v1) }
 
