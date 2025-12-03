@@ -19,6 +19,21 @@ module EpicLadder
         )
       end
 
+      # issues/form（new/edit共通）でバージョンフィールドに警告を表示
+      def view_issues_form_details_bottom(context = {})
+        project = context[:issue]&.project
+        return '' unless hierarchy_guide_enabled?(project)
+
+        context[:controller].send(
+          :render_to_string,
+          partial: 'hooks/issue_form_version_warning',
+          locals: {
+            issue: context[:issue],
+            project: project
+          }
+        )
+      end
+
       # issues/new画面の上部に階層ガイド通知を表示
       def view_issues_new_top(context = {})
         project = context[:issue]&.project
@@ -57,17 +72,8 @@ module EpicLadder
           end
         end
 
-        # Version変更クイックアクション
-        if should_show_version_changer?(issue)
-          html_parts << context[:controller].send(
-            :render_to_string,
-            partial: 'hooks/issue_version_quick_change',
-            locals: {
-              issue: issue,
-              project: project
-            }
-          )
-        end
+        # Note: Version変更はクイックアクション内に統合されたため、
+        # 別途レンダリングは不要
 
         html_parts.join("\n").html_safe
       end
@@ -126,20 +132,6 @@ module EpicLadder
         else
           ['', {}]
         end
-      end
-
-      # Version変更UIを表示すべきか判定
-      # Task/Test/Bug + UserStory に表示
-      def should_show_version_changer?(issue)
-        tracker_names = EpicLadder::TrackerHierarchy.tracker_names
-        current_tracker = issue.tracker.name
-
-        [
-          tracker_names[:task],
-          tracker_names[:test],
-          tracker_names[:bug],
-          tracker_names[:user_story]
-        ].include?(current_tracker)
       end
 
       # 所属するUserStoryを取得

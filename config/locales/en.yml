@@ -14,6 +14,7 @@ en:
   # Hierarchy Guide
   label_epic_ladder_standard_operations: "Standard Features (Not Recommended)"
   notice_epic_ladder_hierarchy_guide: "💡 Epic Ladder recommends using 'Quick Actions' to create child issues."
+  notice_epic_ladder_version_form_warning: "We recommend changing version via 'Quick Actions' on the issue detail page"
   label_epic_ladder_go_back: "← Go back"
 
   # Version Quick Change

@@ -1,0 +1,55 @@
+<%# クイックアクション内に埋め込まれるバージョン変更フォーム %>
+<div class="epic-ladder-version-change-section" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #81c784;">
+  <h4 style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold; color: #2e7d32;">
+    📅 <%= l(:label_epic_ladder_version_change) %>
+  </h4>
+
+  <%= form_tag(epic_ladder_update_version_path(issue), method: :patch, style: 'display: flex; align-items: center; gap: 10px; flex-wrap: wrap;') do %>
+    <select name="fixed_version_id" id="epic_ladder_version_select_<%= issue.id %>" style="min-width: 150px; padding: 4px 8px; border: 1px solid #a5d6a7; border-radius: 4px; background: white;">
+      <option value="" data-due-date=""><%= l(:label_none) %></option>
+      <% project.versions.open.each do |version| %>
+        <option value="<%= version.id %>"
+                data-due-date="<%= version.effective_date ? format_date(version.effective_date) : '' %>"
+                <%= 'selected' if issue.fixed_version_id == version.id %>>
+          <%= version.name %>
+        </option>
+      <% end %>
+    </select>
+
+    <span id="epic_ladder_version_due_date_<%= issue.id %>" style="font-size: 12px; color: #558b2f;">
+      <% if issue.fixed_version&.effective_date %>
+        (<%= l(:field_due_date) %>: <%= format_date(issue.fixed_version.effective_date) %>)
+      <% end %>
+    </span>
+
+    <% if issue.parent %>
+      <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: #2e7d32;">
+        <input type="checkbox" name="update_parent_version" value="1" checked style="accent-color: #4CAF50;">
+        <%= l(:label_epic_ladder_update_parent_version, parent: issue.parent.tracker.name) %>
+        (#<%= issue.parent.id %>)
+      </label>
+    <% end %>
+
+    <%= submit_tag l(:button_change), class: 'button-small', style: 'background: #4CAF50; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer;' %>
+  <% end %>
+</div>
+
+<script>
+(function() {
+  const selectElement = document.getElementById('epic_ladder_version_select_<%= issue.id %>');
+  const dueDateSpan = document.getElementById('epic_ladder_version_due_date_<%= issue.id %>');
+
+  if (selectElement && dueDateSpan) {
+    selectElement.addEventListener('change', function() {
+      const selectedOption = this.options[this.selectedIndex];
+      const dueDate = selectedOption.getAttribute('data-due-date');
+
+      if (dueDate) {
+        dueDateSpan.textContent = '(<%= l(:field_due_date) %>: ' + dueDate + ')';
+      } else {
+        dueDateSpan.textContent = '';
+      }
+    });
+  }
+})();
+</script>

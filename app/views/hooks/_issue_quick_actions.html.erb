@@ -67,4 +67,7 @@
       ) %>
     <% end %>
   </div>
+
+  <%# バージョン変更フォームを統合（現在のissueのバージョンを変更） %>
+  <%= render partial: 'hooks/issue_version_change_inline', locals: { issue: issue, project: project } %>
 </div>

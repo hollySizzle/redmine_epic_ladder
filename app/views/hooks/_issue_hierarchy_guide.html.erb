@@ -20,6 +20,18 @@
     display: none;
   }
 
+  /* バージョン変更リンクを非表示 */
+  .attributes .issue-fixed-version .contextual,
+  .attributes [data-attribute="fixed_version"] .contextual {
+    display: none !important;
+  }
+
+  /* インラインエディットのバージョンフィールドにスタイル追加 */
+  .attributes .issue-fixed-version .value,
+  .attributes [data-attribute="fixed_version"] .value {
+    position: relative;
+  }
+
   /* 折り畳みコンテナ（非推奨の警告スタイル） */
   .epic-ladder-subtasks-wrapper {
     margin-top: 15px;

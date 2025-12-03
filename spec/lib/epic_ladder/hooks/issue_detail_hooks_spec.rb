@@ -453,5 +453,54 @@ RSpec.describe EpicLadder::Hooks::IssueDetailHooks, type: :view do
         end
       end
     end
+
+    describe '#view_issues_form_details_bottom' do
+      before do
+        project.enable_module!(:epic_ladder)
+      end
+
+      context '階層ガイドが有効な場合' do
+        before do
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '1'
+          )
+        end
+
+        it 'パーシャルをレンダリングする' do
+          issue = FactoryBot.create(:user_story, project: project)
+          context = {
+            issue: issue,
+            project: project,
+            controller: controller
+          }
+
+          allow(controller).to receive(:render_to_string).and_return('<script>version warning</script>')
+
+          result = hook.view_issues_form_details_bottom(context)
+
+          expect(result).to include('version warning')
+        end
+      end
+
+      context '階層ガイドが無効な場合' do
+        before do
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '0'
+          )
+        end
+
+        it '空文字列を返す' do
+          issue = FactoryBot.create(:user_story, project: project)
+          context = {
+            issue: issue,
+            project: project
+          }
+
+          result = hook.view_issues_form_details_bottom(context)
+
+          expect(result).to eq('')
+        end
+      end
+    end
   end
 end
