@@ -291,4 +291,167 @@ RSpec.describe EpicLadder::Hooks::IssueDetailHooks, type: :view do
       end
     end
   end
+
+  describe '階層ガイド機能' do
+    let(:hook) { described_class.send(:new) }
+
+    describe '#hierarchy_guide_enabled?' do
+      context '設定が有効で、epic_ladderモジュールが有効な場合' do
+        before do
+          project.enable_module!(:epic_ladder)
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '1'
+          )
+        end
+
+        it 'trueを返す' do
+          result = hook.send(:hierarchy_guide_enabled?, project)
+          expect(result).to be true
+        end
+      end
+
+      context '設定が無効な場合' do
+        before do
+          project.enable_module!(:epic_ladder)
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '0'
+          )
+        end
+
+        it 'falseを返す' do
+          result = hook.send(:hierarchy_guide_enabled?, project)
+          expect(result).to be false
+        end
+      end
+
+      context 'epic_ladderモジュールが無効な場合' do
+        before do
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '1'
+          )
+        end
+
+        it 'falseを返す' do
+          result = hook.send(:hierarchy_guide_enabled?, project)
+          expect(result).to be false
+        end
+      end
+
+      context 'プロジェクトがnilの場合' do
+        it 'falseを返す' do
+          result = hook.send(:hierarchy_guide_enabled?, nil)
+          expect(result).to be false
+        end
+      end
+    end
+
+    describe '#view_issues_show_description_bottom' do
+      before do
+        project.enable_module!(:epic_ladder)
+      end
+
+      context '階層ガイドが有効な場合' do
+        before do
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '1'
+          )
+        end
+
+        it 'パーシャルをレンダリングする' do
+          issue = FactoryBot.create(:user_story, project: project)
+          context = {
+            issue: issue,
+            project: project,
+            controller: controller
+          }
+
+          allow(controller).to receive(:render_to_string).and_return('<div class="hierarchy-guide">Guide</div>')
+
+          result = hook.view_issues_show_description_bottom(context)
+
+          expect(result).to include('hierarchy-guide')
+        end
+      end
+
+      context '階層ガイドが無効な場合' do
+        before do
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '0'
+          )
+        end
+
+        it '空文字列を返す' do
+          issue = FactoryBot.create(:user_story, project: project)
+          context = {
+            issue: issue,
+            project: project
+          }
+
+          result = hook.view_issues_show_description_bottom(context)
+
+          expect(result).to eq('')
+        end
+      end
+    end
+
+    describe '#view_issues_new_top' do
+      before do
+        project.enable_module!(:epic_ladder)
+      end
+
+      context '階層ガイドが有効な場合' do
+        before do
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '1'
+          )
+        end
+
+        it 'パーシャルをレンダリングする' do
+          issue = FactoryBot.build(:user_story, project: project)
+          context = {
+            issue: issue,
+            controller: controller
+          }
+
+          allow(controller).to receive(:render_to_string).and_return('<div class="hierarchy-notice">Notice</div>')
+
+          result = hook.view_issues_new_top(context)
+
+          expect(result).to include('hierarchy-notice')
+        end
+      end
+
+      context '階層ガイドが無効な場合' do
+        before do
+          allow(Setting).to receive(:plugin_redmine_epic_ladder).and_return(
+            'hierarchy_guide_enabled' => '0'
+          )
+        end
+
+        it '空文字列を返す' do
+          issue = FactoryBot.build(:user_story, project: project)
+          context = {
+            issue: issue
+          }
+
+          result = hook.view_issues_new_top(context)
+
+          expect(result).to eq('')
+        end
+      end
+
+      context 'プロジェクトがnilの場合' do
+        it '空文字列を返す' do
+          issue = double('Issue', project: nil)
+          context = {
+            issue: issue
+          }
+
+          result = hook.view_issues_new_top(context)
+
+          expect(result).to eq('')
+        end
+      end
+    end
+  end
 end

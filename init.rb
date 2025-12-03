@@ -85,6 +85,8 @@ Redmine::Plugin.register :redmine_epic_ladder do
     'test_tracker' => 'Test',
     'bug_tracker' => 'Bug',
     # MCP API設定（グローバル有効/無効のみ）
-    'mcp_enabled' => '1'
+    'mcp_enabled' => '1',
+    # 階層ガイド設定
+    'hierarchy_guide_enabled' => '1'
   }, partial: 'settings/kanban_tracker_settings'
 end

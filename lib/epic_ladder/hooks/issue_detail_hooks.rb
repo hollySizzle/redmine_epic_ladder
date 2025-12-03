@@ -5,6 +5,35 @@ module EpicLadder
     # Issue詳細画面へのView Hook
     # 各トラッカーに応じたクイックアクションボタンを追加
     class IssueDetailHooks < Redmine::Hook::ViewListener
+      # 説明セクションの下部に階層ガイド（子チケット折り畳み）を表示
+      def view_issues_show_description_bottom(context = {})
+        return '' unless hierarchy_guide_enabled?(context[:project])
+
+        context[:controller].send(
+          :render_to_string,
+          partial: 'hooks/issue_hierarchy_guide',
+          locals: {
+            issue: context[:issue],
+            project: context[:project]
+          }
+        )
+      end
+
+      # issues/new画面の上部に階層ガイド通知を表示
+      def view_issues_new_top(context = {})
+        project = context[:issue]&.project
+        return '' unless hierarchy_guide_enabled?(project)
+
+        context[:controller].send(
+          :render_to_string,
+          partial: 'hooks/issue_new_hierarchy_notice',
+          locals: {
+            issue: context[:issue],
+            project: project
+          }
+        )
+      end
+
       # チケット詳細画面の下部にボタンを表示
       def view_issues_show_details_bottom(context = {})
         issue = context[:issue]
@@ -132,6 +161,13 @@ module EpicLadder
         end
 
         nil
+      end
+
+      # 階層ガイドが有効かチェック
+      def hierarchy_guide_enabled?(project)
+        return false unless project&.module_enabled?(:epic_ladder)
+
+        Setting.plugin_redmine_epic_ladder['hierarchy_guide_enabled'] == '1'
       end
     end
   end

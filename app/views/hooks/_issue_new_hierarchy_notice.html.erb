@@ -1,0 +1,40 @@
+<%# issues/new 画面での階層ガイド通知 %>
+<%
+  # 設定が有効で、親チケットが指定されている場合のみ表示
+  hierarchy_guide_enabled = Setting.plugin_redmine_epic_ladder['hierarchy_guide_enabled'] == '1'
+  epic_ladder_enabled = @project&.module_enabled?(:epic_ladder)
+  has_parent = params[:issue].present? && params[:issue][:parent_issue_id].present?
+
+  # 親チケットがEpic Ladder対象トラッカーかチェック
+  parent_issue = nil
+  is_epic_ladder_parent = false
+  if has_parent
+    parent_issue = Issue.find_by(id: params[:issue][:parent_issue_id])
+    if parent_issue
+      tracker_names = EpicLadder::TrackerHierarchy.tracker_names rescue {}
+      is_epic_ladder_parent = tracker_names.values.include?(parent_issue.tracker.name)
+    end
+  end
+
+  show_notice = hierarchy_guide_enabled && epic_ladder_enabled && has_parent && is_epic_ladder_parent
+%>
+
+<% if show_notice %>
+<div class="flash notice epic-ladder-hierarchy-notice" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 1px solid #ff9800; border-left: 4px solid #ff9800; padding: 12px 15px; margin-bottom: 15px; border-radius: 4px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <span style="font-size: 18px;">💡</span>
+    <div>
+      <strong style="color: #e65100;"><%= l(:notice_epic_ladder_hierarchy_guide) %></strong>
+      <% if parent_issue %>
+        <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">
+          親チケット: <%= link_to "##{parent_issue.id} #{parent_issue.subject}", issue_path(parent_issue) %>
+        </p>
+      <% end %>
+    </div>
+    <div style="margin-left: auto;">
+      <%= link_to l(:label_epic_ladder_go_back), 'javascript:history.back()',
+          style: 'display: inline-block; padding: 5px 12px; background: #fff; border: 1px solid #ff9800; border-radius: 3px; color: #e65100; text-decoration: none; font-size: 12px;' %>
+    </div>
+  </div>
+</div>
+<% end %>

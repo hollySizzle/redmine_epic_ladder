@@ -116,6 +116,31 @@ document.addEventListener('DOMContentLoaded', function() {
 <hr style="margin: 30px 0;">
 
 <div class="box tabular settings">
+  <h3>階層ガイド設定</h3>
+  <p class="description">
+    チケット詳細画面での階層操作ガイドを制御します。<br>
+    有効にすると、標準の子チケット作成ボタンを折り畳み、クイックアクションを推奨します。
+  </p>
+
+  <fieldset class="box">
+    <legend>表示設定</legend>
+    <p>
+      <label for="settings_hierarchy_guide_enabled">
+        <%= check_box_tag 'settings[hierarchy_guide_enabled]', '1', @settings['hierarchy_guide_enabled'] == '1',
+            id: 'settings_hierarchy_guide_enabled' %>
+        階層ガイドを有効にする
+      </label>
+      <em class="info">
+        有効時: 標準の「子チケット作成」を折り畳み、クイックアクションを強調表示します<br>
+        無効時: 標準のRedmine動作のままになります
+      </em>
+    </p>
+  </fieldset>
+</div>
+
+<hr style="margin: 30px 0;">
+
+<div class="box tabular settings">
   <h3>MCP API設定</h3>
   <p class="description">
     MCP (Model Context Protocol) 経由でのAPI アクセスを制御します。<br>

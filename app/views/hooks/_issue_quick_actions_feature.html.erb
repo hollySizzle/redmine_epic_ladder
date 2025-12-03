@@ -1,6 +1,6 @@
-<div class="epic-grid-quick-actions contextual" style="margin-top: 15px; padding: 10px; border: 1px solid #e0e0e0; background-color: #f8f8f8;">
-  <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">
-    <%= l(:label_epic_ladder_quick_actions) %>
+<div class="epic-ladder-quick-actions" style="margin-top: 15px; padding: 12px 15px; border: 2px solid #4CAF50; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-radius: 8px; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.15);">
+  <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold; color: #2e7d32;">
+    ✨ <%= l(:label_epic_ladder_quick_actions) %> <span style="font-size: 11px; font-weight: normal; color: #558b2f;">（推奨）</span>
   </h3>
   <p style="margin: 0 0 10px 0; font-size: 12px; color: #666;">
     <%= l(:text_epic_ladder_create_under_this_feature, issue: link_to("##{issue.id} #{issue.subject}", issue_path(issue))).html_safe %>

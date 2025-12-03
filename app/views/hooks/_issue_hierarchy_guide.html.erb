@@ -1,0 +1,115 @@
+<%# 階層ガイド: 標準の子チケット作成セクションを折り畳み風にするCSS/JS %>
+<%
+  # 設定が有効で、Epic Ladderモジュールが有効な場合のみ表示
+  hierarchy_guide_enabled = Setting.plugin_redmine_epic_ladder['hierarchy_guide_enabled'] == '1'
+  epic_ladder_enabled = @project&.module_enabled?(:epic_ladder)
+
+  # トラッカーがEpic Ladder対象かチェック
+  tracker_names = EpicLadder::TrackerHierarchy.tracker_names rescue {}
+  is_epic_ladder_tracker = tracker_names.values.include?(@issue.tracker.name) if @issue && tracker_names.present?
+%>
+
+<% if hierarchy_guide_enabled && epic_ladder_enabled && is_epic_ladder_tracker %>
+<style>
+  /* 標準の子チケット作成セクションを折り畳み風に */
+  #issue_tree {
+    margin-top: 10px;
+  }
+
+  #issue_tree > .contextual {
+    display: none;
+  }
+
+  /* 折り畳みコンテナ */
+  .epic-ladder-subtasks-wrapper {
+    margin-top: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+
+  .epic-ladder-subtasks-wrapper summary {
+    padding: 10px 15px;
+    cursor: pointer;
+    color: #666;
+    font-size: 13px;
+    list-style: none;
+  }
+
+  .epic-ladder-subtasks-wrapper summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .epic-ladder-subtasks-wrapper summary::before {
+    content: '▶ ';
+    font-size: 10px;
+    margin-right: 5px;
+  }
+
+  .epic-ladder-subtasks-wrapper[open] summary::before {
+    content: '▼ ';
+  }
+
+  .epic-ladder-subtasks-wrapper .subtasks-content {
+    padding: 10px 15px;
+    border-top: 1px solid #ddd;
+    background: #fff;
+  }
+
+  .epic-ladder-subtasks-wrapper .standard-subtask-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 5px 10px;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    color: #333;
+    text-decoration: none;
+    font-size: 12px;
+  }
+
+  .epic-ladder-subtasks-wrapper .standard-subtask-link:hover {
+    background: #e0e0e0;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var issueTree = document.getElementById('issue_tree');
+  if (!issueTree) return;
+
+  // 元のsubtaskリンクを取得
+  var contextual = issueTree.querySelector('.contextual');
+  var subtaskLink = contextual ? contextual.querySelector('a') : null;
+
+  // 折り畳みラッパーを作成
+  var wrapper = document.createElement('details');
+  wrapper.className = 'epic-ladder-subtasks-wrapper';
+
+  var summary = document.createElement('summary');
+  summary.textContent = '<%= j l(:label_epic_ladder_other_operations) %>';
+  wrapper.appendChild(summary);
+
+  var content = document.createElement('div');
+  content.className = 'subtasks-content';
+
+  // 既存の子チケット一覧をコピー
+  var existingContent = issueTree.innerHTML;
+  content.innerHTML = existingContent;
+
+  // 標準の子チケット作成リンクを追加（あれば）
+  if (subtaskLink) {
+    var linkClone = subtaskLink.cloneNode(true);
+    linkClone.className = 'standard-subtask-link icon icon-add';
+    content.appendChild(document.createElement('br'));
+    content.appendChild(linkClone);
+  }
+
+  wrapper.appendChild(content);
+
+  // 元のコンテンツを置き換え
+  issueTree.innerHTML = '';
+  issueTree.appendChild(wrapper);
+});
+</script>
+<% end %>
