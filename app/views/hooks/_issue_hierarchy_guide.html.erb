@@ -2,6 +2,7 @@
 <%
   # 設定が有効で、Epic Ladderモジュールが有効な場合のみ表示
   hierarchy_guide_enabled = Setting.plugin_redmine_epic_ladder['hierarchy_guide_enabled'] == '1'
+  dynamic_edit_integration_enabled = Setting.plugin_redmine_epic_ladder['dynamic_edit_integration_enabled'] == '1'
   epic_ladder_enabled = @project&.module_enabled?(:epic_ladder)
 
   # トラッカーがEpic Ladder対象かチェック
@@ -140,5 +141,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
+</script>
+<% end %>
+
+<%# Dynamic Edit プラグイン統合（独立設定） %>
+<% if dynamic_edit_integration_enabled && epic_ladder_enabled && is_epic_ladder_tracker %>
+<script>
+// Dynamic Edit プラグイン統合: fixed_version の編集をクイックアクションに統一
+(function() {
+  // 方法1: 設定変数が存在すれば追加（プラグイン読み込み前なら効果あり）
+  if (typeof _CONF_EXCLUDED_FIELD_ID !== 'undefined' && Array.isArray(_CONF_EXCLUDED_FIELD_ID)) {
+    if (!_CONF_EXCLUDED_FIELD_ID.includes('fixed_version')) {
+      _CONF_EXCLUDED_FIELD_ID.push('fixed_version');
+    }
+  } else {
+    // プラグインより先に読み込まれた場合、変数を先に定義
+    window._CONF_EXCLUDED_FIELD_ID = ['fixed_version'];
+  }
+
+  // 方法2: MutationObserverで動的に追加されるインラインエディットUIを無効化
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      mutation.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1) { // Element node
+          // fixed_version の dynamicEditField を探して削除
+          var versionEditFields = node.querySelectorAll ?
+            node.querySelectorAll('.attribute.fixed-version .dynamicEditField, .attribute[class*="fixed-version"] .dynamicEditField') : [];
+          versionEditFields.forEach(function(field) {
+            field.remove();
+          });
+          // iconEdit も削除
+          var versionIcons = node.querySelectorAll ?
+            node.querySelectorAll('.attribute.fixed-version .iconEdit, .attribute[class*="fixed-version"] .iconEdit') : [];
+          versionIcons.forEach(function(icon) {
+            icon.remove();
+          });
+        }
+      });
+    });
+  });
+
+  // issue details セクションを監視
+  var detailsSection = document.querySelector('.issue.details');
+  if (detailsSection) {
+    observer.observe(detailsSection, { childList: true, subtree: true });
+  }
+
+  // 既に追加されている場合は即座に削除
+  document.querySelectorAll('.attribute.fixed-version .dynamicEditField, .attribute.fixed-version .iconEdit').forEach(function(el) {
+    el.remove();
+  });
+
+  // DOMContentLoaded時点で再度削除
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.attribute.fixed-version .dynamicEditField, .attribute.fixed-version .iconEdit').forEach(function(el) {
+      el.remove();
+    });
+  });
+})();
 </script>
 <% end %>

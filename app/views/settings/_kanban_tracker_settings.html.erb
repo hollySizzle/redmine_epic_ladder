@@ -136,6 +136,21 @@ document.addEventListener('DOMContentLoaded', function() {
       </em>
     </p>
   </fieldset>
+
+  <fieldset class="box">
+    <legend>プラグイン統合設定</legend>
+    <p>
+      <label for="settings_dynamic_edit_integration_enabled">
+        <%= check_box_tag 'settings[dynamic_edit_integration_enabled]', '1', @settings['dynamic_edit_integration_enabled'] == '1',
+            id: 'settings_dynamic_edit_integration_enabled' %>
+        Dynamic Editプラグイン統合を有効にする
+      </label>
+      <em class="info">
+        有効時: redmine_issue_dynamic_edit プラグインと連携し、対象バージョンの編集をクイックアクションに統一します<br>
+        無効時: Dynamic Editプラグインの標準動作のままになります
+      </em>
+    </p>
+  </fieldset>
 </div>
 
 <hr style="margin: 30px 0;">

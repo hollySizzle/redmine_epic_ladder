@@ -87,6 +87,8 @@ Redmine::Plugin.register :redmine_epic_ladder do
     # MCP API設定（グローバル有効/無効のみ）
     'mcp_enabled' => '1',
     # 階層ガイド設定
-    'hierarchy_guide_enabled' => '1'
+    'hierarchy_guide_enabled' => '1',
+    # Dynamic Editプラグイン統合
+    'dynamic_edit_integration_enabled' => '1'
   }, partial: 'settings/kanban_tracker_settings'
 end
