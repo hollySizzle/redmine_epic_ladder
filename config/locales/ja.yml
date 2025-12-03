@@ -39,7 +39,7 @@ ja:
   label_epic_ladder_mcp_tool_hints: "MCPツール プロジェクト固有ルール"
   label_epic_ladder_mcp_tool_hints_description: "AIがツールを使用する際に参照するプロジェクト固有のルールを設定します（最大500文字）"
   label_epic_ladder_mcp_tool_hint_enabled: "有効"
-  label_epic_ladder_mcp_tool_hint_placeholder: "例: レビュー依頼時は@hollyをメンション、緊急時は件名に【緊急】を付与"
+  label_epic_ladder_mcp_tool_hint_placeholder: "例: ## ルール\n- PR必須\n- 見積もり記載"
   notice_epic_ladder_mcp_tool_hints_saved: "MCPツールヒント設定を保存しました"
   error_epic_ladder_mcp_tool_hints_save_failed: "MCPツールヒント設定の保存に失敗しました: %{errors}"
 
@@ -63,3 +63,5 @@ ja:
       update_issue_progress: "進捗率更新"
       update_issue_assignee: "担当者変更"
       add_issue_comment: "コメント追加"
+    mcp_hint_examples:
+      task_review: "## ルール\n- PR必須\n- 見積もり記載"

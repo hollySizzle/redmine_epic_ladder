@@ -93,25 +93,29 @@ RSpec.describe EpicLadder::McpToolHint, type: :model do
 
   describe '.hint_for' do
     context 'when enabled hint exists with text' do
+      let(:hint_text) { I18n.t('epic_ladder.mcp_hint_examples.task_review') }
+
       before do
         create(:mcp_tool_hint,
                project: project,
                tool_key: 'create_task',
-               hint_text: 'レビュー時は@hollyメンション',
+               hint_text: hint_text,
                enabled: true)
       end
 
       it 'returns hint text' do
-        expect(described_class.hint_for(project, 'create_task')).to eq('レビュー時は@hollyメンション')
+        expect(described_class.hint_for(project, 'create_task')).to eq(hint_text)
       end
     end
 
     context 'when hint is disabled' do
+      let(:hint_text) { I18n.t('epic_ladder.mcp_hint_examples.task_review') }
+
       before do
         create(:mcp_tool_hint,
                project: project,
                tool_key: 'create_task',
-               hint_text: 'レビュー時は@hollyメンション',
+               hint_text: hint_text,
                enabled: false)
       end
 
@@ -143,19 +147,20 @@ RSpec.describe EpicLadder::McpToolHint, type: :model do
 
   describe '.build_description' do
     let(:base_description) { 'Taskチケットを作成します' }
+    let(:hint_text) { I18n.t('epic_ladder.mcp_hint_examples.task_review') }
 
     context 'when project has enabled hint' do
       before do
         create(:mcp_tool_hint,
                project: project,
                tool_key: 'create_task',
-               hint_text: 'レビュー時は@hollyメンション',
+               hint_text: hint_text,
                enabled: true)
       end
 
       it 'appends hint to description' do
         result = described_class.build_description(project, 'create_task', base_description)
-        expect(result).to eq('Taskチケットを作成します【プロジェクト固有ルール】レビュー時は@hollyメンション')
+        expect(result).to eq("Taskチケットを作成します【プロジェクト固有ルール】#{hint_text}")
       end
     end
 
@@ -171,7 +176,7 @@ RSpec.describe EpicLadder::McpToolHint, type: :model do
         create(:mcp_tool_hint,
                project: project,
                tool_key: 'create_task',
-               hint_text: 'レビュー時は@hollyメンション',
+               hint_text: hint_text,
                enabled: false)
       end
 

@@ -34,3 +34,34 @@ en:
   label_epic_ladder_mcp_enable: "Enable MCP API for this project"
   label_epic_ladder_mcp_description: "Allow AI tools like Claude Code to access this project"
   error_epic_ladder_settings_save_failed: "Failed to save Epic Ladder settings: %{errors}"
+
+  # MCP Tool Hints
+  label_epic_ladder_mcp_tool_hints: "MCP Tool Project-Specific Rules"
+  label_epic_ladder_mcp_tool_hints_description: "Set project-specific rules for AI tool usage (max 500 chars)"
+  label_epic_ladder_mcp_tool_hint_enabled: "Enabled"
+  label_epic_ladder_mcp_tool_hint_placeholder: "e.g. ## Rules\n- PR required\n- Add estimate"
+  notice_epic_ladder_mcp_tool_hints_saved: "MCP Tool hint settings saved"
+  error_epic_ladder_mcp_tool_hints_save_failed: "Failed to save MCP Tool hint settings: %{errors}"
+
+  # MCP Tool Names and Categories
+  epic_ladder:
+    mcp_tool_categories:
+      create_issues: "📝 Create Issues"
+      version_management: "📅 Version Management"
+      issue_operations: "⚙️ Issue Operations"
+    mcp_tools:
+      create_epic: "Create Epic"
+      create_feature: "Create Feature"
+      create_user_story: "Create User Story"
+      create_task: "Create Task"
+      create_bug: "Create Bug"
+      create_test: "Create Test"
+      create_version: "Create Version"
+      assign_to_version: "Assign to Version"
+      move_to_next_version: "Move to Next Version"
+      update_issue_status: "Update Status"
+      update_issue_progress: "Update Progress"
+      update_issue_assignee: "Change Assignee"
+      add_issue_comment: "Add Comment"
+    mcp_hint_examples:
+      task_review: "## Rules\n- PR required\n- Add estimate"
