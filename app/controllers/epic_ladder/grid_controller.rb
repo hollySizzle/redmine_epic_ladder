@@ -134,36 +134,24 @@ module EpicLadder
       old_feature = user_story.parent
       old_version_id = user_story.fixed_version_id
 
-      # UserStory移動実行
-      user_story.parent_issue_id = target_feature_id
-      user_story.fixed_version_id = target_version_id
-
-      # バージョン変更時の日付計算
-      dates = nil
-      if user_story.fixed_version_id_changed? && target_version_id
-        version = Version.find(target_version_id)
-        dates = EpicLadder::VersionDateManager.update_dates_for_version_change(user_story, version)
+      # 親（Feature）の変更を先に保存（VersionDateManagerはreloadするため）
+      if user_story.parent_issue_id != target_feature_id.to_i
+        user_story.parent_issue_id = target_feature_id
+        user_story.save!
       end
 
-      # 日付を設定（epic_ladder_apply_version_dates!を呼ぶと同じ日付が設定される）
-      if dates
-        user_story.start_date = dates[:start_date]
-        user_story.due_date = dates[:due_date]
-      end
-
-      user_story.save!
-
-      # 子要素（Task/Test/Bug）のVersion伝播と日付設定
+      # 影響を受けたIssue IDを収集
       affected_issue_ids = [user_story.id]
-      user_story.children.each do |child|
-        child.fixed_version_id = target_version_id
-        # 日付も同時に設定
-        if dates
-          child.start_date = dates[:start_date]
-          child.due_date = dates[:due_date]
-        end
-        child.save!
-        affected_issue_ids << child.id
+
+      # バージョンが実際に変更された場合のみ、バージョン変更＋子への伝播を実行
+      version_changed = old_version_id.to_s != target_version_id.to_s
+      if version_changed
+        result = EpicLadder::VersionDateManager.change_version_with_dates(
+          user_story,
+          target_version_id,
+          propagate_to_children: true
+        )
+        affected_issue_ids.concat(result[:children].map(&:id))
       end
 
       # MSW準拠レスポンス構築

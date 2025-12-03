@@ -21,8 +21,10 @@ en:
   label_epic_ladder_version_change: "Change Version"
   label_epic_ladder_update_parent_version: "Also update parent %{parent}"
   notice_epic_ladder_version_updated: "Version updated successfully"
+  notice_epic_ladder_version_updated_with_count: "Version updated successfully (total: %{count} issues)"
   notice_epic_ladder_version_updated_with_parent: "Updated version to %{version} for %{issue} and parent %{parent} (total: %{total} issues)"
   notice_epic_ladder_siblings_updated: "%{count} sibling issues were also updated"
+  notice_epic_ladder_children_updated: "(including %{count} child issues)"
   warning_epic_ladder_version_mismatch_with_parent: "⚠️ Parent %{parent} remains at %{parent_version}"
   error_epic_ladder_version_update_failed: "Failed to update version: %{error}"
 

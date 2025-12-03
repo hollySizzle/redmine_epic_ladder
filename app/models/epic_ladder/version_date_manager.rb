@@ -107,13 +107,15 @@ module EpicLadder
     # @param issue [Issue] 対象のチケット
     # @param new_version_id [String, Integer, nil] 新しいバージョンID（空文字列の場合はnil扱い）
     # @param update_parent [Boolean] 親Issueも同時に更新するか（デフォルト: false）
-    # @return [Hash] { issue: Issue, parent: Issue|nil, siblings: Array<Issue>, dates: Hash|nil, parent_dates: Hash|nil }
+    # @param propagate_to_children [Boolean] 子Issueにもバージョンを伝播するか（デフォルト: false）
+    # @return [Hash] { issue: Issue, parent: Issue|nil, siblings: Array<Issue>, children: Array<Issue>, dates: Hash|nil, parent_dates: Hash|nil }
     #
     # @example
     #   result = VersionDateManager.change_version_with_dates(task, '2', update_parent: true)
     #   result[:issue]        # 更新されたIssue
     #   result[:parent]       # 更新された親Issue（存在する場合）
     #   result[:siblings]     # 更新された兄弟Issue（update_parent=trueの場合）
+    #   result[:children]     # 更新された子Issue（propagate_to_children=trueの場合）
     #   result[:dates]        # 計算された日付 { start_date:, due_date: }
     #   result[:parent_dates] # 親の日付（存在する場合）
     #
@@ -122,8 +124,10 @@ module EpicLadder
     # 2. update_parent=trueの場合:
     #    - 兄弟Issue（同じ親の子issue）を先に更新
     #    - 親Issueを最後に更新（子の日付更新後に親を更新することで、Redmineの自動計算を考慮）
-    # 3. Redmine標準のJournal記録を生成
-    def self.change_version_with_dates(issue, new_version_id, update_parent: false)
+    # 3. propagate_to_children=trueの場合:
+    #    - 子Issue（Task/Test/Bug）にバージョンと日付を伝播
+    # 4. Redmine標準のJournal記録を生成
+    def self.change_version_with_dates(issue, new_version_id, update_parent: false, propagate_to_children: false)
       new_version_id = nil if new_version_id.blank?
       new_version = new_version_id ? Version.find(new_version_id) : nil
 
@@ -132,6 +136,7 @@ module EpicLadder
         issue: issue,
         parent: nil,
         siblings: [],           # 実際に変更があった兄弟のみ
+        children: [],           # 実際に変更があった子のみ
         dates: nil,
         parent_dates: nil,
         issue_changed: false,   # 対象issueが変更されたか
@@ -166,63 +171,89 @@ module EpicLadder
         # 親も更新（親がUserStoryの場合のみ）
         if update_parent && issue.parent
           # 親がFeature/Epicの場合は親・兄弟の更新をスキップ
-          unless should_update_parent_and_siblings?(issue)
-            result[:parent_update_skipped] = true
-            result[:skip_reason] = :parent_is_grouping_tracker
-            next # transactionブロック内なのでnextで抜ける
-          end
+          # ただし、子への伝播は続行する（nextは使わない）
+          if should_update_parent_and_siblings?(issue)
+            # 兄弟issue（同じ親の子issue）を先に更新
+            # （親の日付が子から自動計算される場合を考慮し、子を先に更新）
+            siblings = issue.parent.children.where.not(id: issue.id)
+            siblings.each do |sibling|
+              sibling_dates = update_dates_for_version_change(sibling, new_version)
 
-          # 兄弟issue（同じ親の子issue）を先に更新
-          # （親の日付が子から自動計算される場合を考慮し、子を先に更新）
-          siblings = issue.parent.children.where.not(id: issue.id)
-          siblings.each do |sibling|
-            sibling_dates = update_dates_for_version_change(sibling, new_version)
+              sibling.reload
 
-            sibling.reload
+              # 変更前のバージョンIDを保存
+              sibling_original_version_id = sibling.fixed_version_id
+
+              sibling.init_journal(User.current)
+              sibling.safe_attributes = {
+                'fixed_version_id' => new_version_id,
+                'start_date' => sibling_dates&.dig(:start_date),
+                'due_date' => sibling_dates&.dig(:due_date)
+              }
+              sibling.save!
+
+              # 実際に変更があった兄弟のみを追加
+              if sibling_original_version_id.to_s != new_version_id.to_s
+                result[:siblings] << sibling
+              end
+            end
+
+            # 親を最後に更新
+            parent_dates = update_dates_for_version_change(issue.parent, new_version)
+            result[:parent_dates] = parent_dates
+
+            issue.parent.reload # 親もリロード（init_journalの前に実行）
 
             # 変更前のバージョンIDを保存
-            sibling_original_version_id = sibling.fixed_version_id
+            parent_original_version_id = issue.parent.fixed_version_id
 
-            sibling.init_journal(User.current)
-            sibling.safe_attributes = {
-              'fixed_version_id' => new_version_id,
-              'start_date' => sibling_dates&.dig(:start_date),
-              'due_date' => sibling_dates&.dig(:due_date)
-            }
-            sibling.save!
-
-            # 実際に変更があった兄弟のみを追加
-            if sibling_original_version_id.to_s != new_version_id.to_s
-              result[:siblings] << sibling
+            issue.parent.init_journal(User.current)
+            # 親の日付更新設定を考慮
+            # dates_derived? = true の場合、日付は子から自動計算されるため設定しない
+            # dates_derived? = false の場合、独立した日付を設定可能
+            parent_attributes = { 'fixed_version_id' => new_version_id }
+            unless issue.parent.dates_derived?
+              parent_attributes['start_date'] = parent_dates&.dig(:start_date)
+              parent_attributes['due_date'] = parent_dates&.dig(:due_date)
             end
+
+            issue.parent.safe_attributes = parent_attributes
+            issue.parent.save!
+
+            # 実際に変更があった場合のみ parent を設定
+            if parent_original_version_id.to_s != new_version_id.to_s
+              result[:parent] = issue.parent
+              result[:parent_changed] = true
+            end
+          else
+            # 親がFeature/Epicのため親・兄弟の更新をスキップ
+            result[:parent_update_skipped] = true
+            result[:skip_reason] = :parent_is_grouping_tracker
           end
+        end
 
-          # 親を最後に更新
-          parent_dates = update_dates_for_version_change(issue.parent, new_version)
-          result[:parent_dates] = parent_dates
+        # 子Issueへの伝播（Task/Test/Bug）
+        # children.reloadで最新のAssociationを取得（キャッシュ回避）
+        children = issue.children.reload
+        if propagate_to_children && children.any?
+          children.each do |child|
+            child.reload
+            child_original_version_id = child.fixed_version_id
 
-          issue.parent.reload # 親もリロード（init_journalの前に実行）
+            # 日付計算
+            child_dates = update_dates_for_version_change(child, new_version)
 
-          # 変更前のバージョンIDを保存
-          parent_original_version_id = issue.parent.fixed_version_id
+            child.init_journal(User.current)
+            # safe_attributesではなく直接属性を設定（権限チェックをバイパス）
+            child.fixed_version_id = new_version_id
+            child.start_date = child_dates&.dig(:start_date)
+            child.due_date = child_dates&.dig(:due_date)
+            child.save!
 
-          issue.parent.init_journal(User.current)
-          # 親の日付更新設定を考慮
-          # dates_derived? = true の場合、日付は子から自動計算されるため設定しない
-          # dates_derived? = false の場合、独立した日付を設定可能
-          parent_attributes = { 'fixed_version_id' => new_version_id }
-          unless issue.parent.dates_derived?
-            parent_attributes['start_date'] = parent_dates&.dig(:start_date)
-            parent_attributes['due_date'] = parent_dates&.dig(:due_date)
-          end
-
-          issue.parent.safe_attributes = parent_attributes
-          issue.parent.save!
-
-          # 実際に変更があった場合のみ parent を設定
-          if parent_original_version_id.to_s != new_version_id.to_s
-            result[:parent] = issue.parent
-            result[:parent_changed] = true
+            # 実際に変更があった子のみを追加
+            if child_original_version_id.to_s != new_version_id.to_s
+              result[:children] << child
+            end
           end
         end
       end

@@ -21,8 +21,10 @@ ja:
   label_epic_ladder_version_change: "バージョン変更"
   label_epic_ladder_update_parent_version: "親%{parent}も変更"
   notice_epic_ladder_version_updated: "バージョンを変更しました"
+  notice_epic_ladder_version_updated_with_count: "バージョンを変更しました（計%{count}件）"
   notice_epic_ladder_version_updated_with_parent: "%{issue} と親%{parent} のバージョンを %{version} に変更しました（計%{total}件）"
   notice_epic_ladder_siblings_updated: "兄弟issue %{count}件も更新されました"
+  notice_epic_ladder_children_updated: "（子issue %{count}件を含む）"
   warning_epic_ladder_version_mismatch_with_parent: "⚠️ 親%{parent} は %{parent_version} のままです"
   error_epic_ladder_version_update_failed: "バージョンの変更に失敗しました: %{error}"
 

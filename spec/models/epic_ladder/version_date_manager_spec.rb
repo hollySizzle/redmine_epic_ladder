@@ -172,5 +172,107 @@ RSpec.describe EpicLadder::VersionDateManager do
     it 'メソッドが定義されている' do
       expect(described_class).to respond_to(:change_version_with_dates)
     end
+
+    context 'propagate_to_children オプション' do
+      let(:user_story_tracker) { create(:user_story_tracker) }
+      let(:task_tracker) { create(:task_tracker) }
+      let(:bug_tracker) { create(:bug_tracker) }
+
+      let(:project_with_trackers) do
+        proj = project
+        proj.trackers << user_story_tracker unless proj.trackers.include?(user_story_tracker)
+        proj.trackers << task_tracker unless proj.trackers.include?(task_tracker)
+        proj.trackers << bug_tracker unless proj.trackers.include?(bug_tracker)
+        proj
+      end
+
+      let!(:version_a) { create(:version, project: project_with_trackers, name: 'v1.0', effective_date: Date.new(2025, 10, 5)) }
+      let!(:version_b) { create(:version, project: project_with_trackers, name: 'v1.1', effective_date: Date.new(2025, 10, 15)) }
+
+      let(:user_story) do
+        create(:user_story, project: project_with_trackers, author: user, fixed_version: version_a)
+      end
+      let!(:task1) do
+        create(:task, project: project_with_trackers, parent: user_story, author: user, subject: 'Task1', fixed_version: version_a)
+      end
+      let!(:task2) do
+        create(:task, project: project_with_trackers, parent: user_story, author: user, subject: 'Task2', fixed_version: version_a)
+      end
+      let!(:bug) do
+        create(:bug, project: project_with_trackers, parent: user_story, author: user, subject: 'Bug1', fixed_version: version_a)
+      end
+
+      before do
+        User.current = user
+      end
+
+      context 'propagate_to_children: false（デフォルト）の場合' do
+        it '子Issueは変更されない' do
+          result = described_class.change_version_with_dates(user_story, version_b.id)
+
+          expect(result[:children]).to eq([])
+          expect(task1.reload.fixed_version_id).to eq(version_a.id)
+          expect(task2.reload.fixed_version_id).to eq(version_a.id)
+          expect(bug.reload.fixed_version_id).to eq(version_a.id)
+        end
+      end
+
+      context 'propagate_to_children: true の場合' do
+        it '子Issueにバージョンが伝播される' do
+          result = described_class.change_version_with_dates(
+            user_story,
+            version_b.id,
+            propagate_to_children: true
+          )
+
+          expect(result[:children].map(&:id)).to contain_exactly(task1.id, task2.id, bug.id)
+          expect(task1.reload.fixed_version_id).to eq(version_b.id)
+          expect(task2.reload.fixed_version_id).to eq(version_b.id)
+          expect(bug.reload.fixed_version_id).to eq(version_b.id)
+        end
+
+        it '子Issueに日付も伝播される' do
+          described_class.change_version_with_dates(
+            user_story,
+            version_b.id,
+            propagate_to_children: true
+          )
+
+          # version_b (10/15) の開始日は version_a (10/5) の期日
+          expect(task1.reload.start_date).to eq(Date.new(2025, 10, 5))
+          expect(task1.reload.due_date).to eq(Date.new(2025, 10, 15))
+        end
+
+        it '既に同じバージョンの子は結果に含まれない' do
+          # task1を先にversion_bに変更
+          task1.update!(fixed_version: version_b)
+
+          result = described_class.change_version_with_dates(
+            user_story,
+            version_b.id,
+            propagate_to_children: true
+          )
+
+          # task1は既に同じバージョンなので結果に含まれない
+          expect(result[:children].map(&:id)).to contain_exactly(task2.id, bug.id)
+        end
+      end
+
+      context '子Issueが存在しない場合' do
+        let(:user_story_without_children) do
+          create(:user_story, project: project_with_trackers, author: user, fixed_version: version_a)
+        end
+
+        it 'childrenは空配列を返す' do
+          result = described_class.change_version_with_dates(
+            user_story_without_children,
+            version_b.id,
+            propagate_to_children: true
+          )
+
+          expect(result[:children]).to eq([])
+        end
+      end
+    end
   end
 end

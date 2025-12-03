@@ -11,11 +11,12 @@ module EpicLadder
       new_version_id = params[:fixed_version_id].presence
       update_parent = params[:update_parent_version] == '1'
 
-      # VersionDateManagerで一括更新（バージョン＋開始日＋期日）
+      # VersionDateManagerで一括更新（バージョン＋開始日＋期日＋子への伝播）
       result = EpicLadder::VersionDateManager.change_version_with_dates(
         @issue,
         new_version_id,
-        update_parent: update_parent
+        update_parent: update_parent,
+        propagate_to_children: true
       )
 
       # フラッシュメッセージの構築
