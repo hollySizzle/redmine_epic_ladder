@@ -136,8 +136,8 @@ RSpec.describe Mcp::ServerController, type: :controller do
         expect(tool_names).to include('get_project_structure_tool')
         expect(tool_names).to include('get_issue_detail_tool')
 
-        # 合計18ツール
-        expect(tool_names.size).to eq(18)
+        # 合計22ツール（Registryから自動取得）
+        expect(tool_names.size).to eq(22)
       end
 
       it 'includes tool schema information' do

@@ -33,7 +33,67 @@ module EpicLadder
           all_tools.map { |klass| klass.name.demodulize }
         end
 
+        # ツールキーの一覧を返す（snake_case、_tool接尾辞なし）
+        # @return [Array<String>] ツールキーの配列
+        # @example
+        #   Registry.tool_keys
+        #   # => ["create_epic", "create_feature", "update_issue_status", ...]
+        def tool_keys
+          all_tools.map { |klass| class_to_tool_key(klass) }
+        end
+
+        # カテゴリ別にグループ化されたツールキーを返す
+        # @return [Hash<Symbol, Array<String>>] カテゴリ => ツールキー配列
+        # @example
+        #   Registry.tools_by_category
+        #   # => { create_issues: ["create_epic", ...], issue_operations: ["update_issue_status", ...], ... }
+        def tools_by_category
+          tool_keys.each_with_object({}) do |key, categories|
+            category = categorize_tool(key)
+            categories[category] ||= []
+            categories[category] << key
+          end
+        end
+
+        # カテゴリの順序（表示用）
+        # @return [Array<Symbol>] カテゴリシンボルの配列
+        def category_order
+          %i[create_issues version_management issue_operations query_tools]
+        end
+
+        # 順序付きでカテゴリ別ツールを返す
+        # @return [Array<Array>] [カテゴリ, ツールキー配列] の配列
+        def tools_by_category_ordered
+          by_category = tools_by_category
+          category_order.filter_map do |cat|
+            [cat, by_category[cat]] if by_category[cat]&.any?
+          end
+        end
+
         private
+
+        # クラスからツールキーを生成
+        # @param klass [Class] ツールクラス
+        # @return [String] ツールキー（例: "create_epic"）
+        def class_to_tool_key(klass)
+          klass.name.demodulize.underscore.sub(/_tool$/, '')
+        end
+
+        # ツールキーからカテゴリを判定
+        # @param key [String] ツールキー
+        # @return [Symbol] カテゴリシンボル
+        def categorize_tool(key)
+          case key
+          when /^create_(?!version)/
+            :create_issues
+          when /version/
+            :version_management
+          when /^(list_|get_)/
+            :query_tools
+          else
+            :issue_operations
+          end
+        end
 
         # ツールディレクトリ
         def tools_dir

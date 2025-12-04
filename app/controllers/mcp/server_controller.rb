@@ -134,31 +134,9 @@ module Mcp
     end
 
     # 全MCPツールクラス一覧
+    # Registryから自動取得することで、新規ツール追加時の手動更新が不要
     def all_mcp_tools
-      [
-        # カテゴリ1: チケット作成ツール
-        EpicLadder::McpTools::CreateEpicTool,
-        EpicLadder::McpTools::CreateFeatureTool,
-        EpicLadder::McpTools::CreateUserStoryTool,
-        EpicLadder::McpTools::CreateTaskTool,
-        EpicLadder::McpTools::CreateBugTool,
-        EpicLadder::McpTools::CreateTestTool,
-        # カテゴリ2: Version管理ツール
-        EpicLadder::McpTools::CreateVersionTool,
-        EpicLadder::McpTools::AssignToVersionTool,
-        EpicLadder::McpTools::MoveToNextVersionTool,
-        EpicLadder::McpTools::ListVersionsTool,
-        # カテゴリ3: チケット操作ツール
-        EpicLadder::McpTools::UpdateIssueStatusTool,
-        EpicLadder::McpTools::AddIssueCommentTool,
-        EpicLadder::McpTools::UpdateIssueProgressTool,
-        EpicLadder::McpTools::UpdateIssueAssigneeTool,
-        # カテゴリ4: 検索・参照ツール
-        EpicLadder::McpTools::ListUserStoriesTool,
-        EpicLadder::McpTools::ListEpicsTool,
-        EpicLadder::McpTools::GetProjectStructureTool,
-        EpicLadder::McpTools::GetIssueDetailTool
-      ]
+      EpicLadder::McpTools::Registry.all_tools
     end
 
     # X-Default-Projectヘッダーからプロジェクトを取得（ヒント用）
