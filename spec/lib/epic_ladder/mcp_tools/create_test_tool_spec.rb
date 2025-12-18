@@ -25,6 +25,19 @@ RSpec.describe EpicLadder::McpTools::CreateTestTool, type: :model do
     member # ensure member exists
     project.trackers << test_tracker unless project.trackers.include?(test_tracker)
     project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+
+    # MCP API有効化（プラグイン設定）
+    Setting.plugin_redmine_epic_ladder = {
+      'test_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:test],
+      'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+      'mcp_enabled' => '1'
+    }
+    EpicLadder::TrackerHierarchy.clear_cache!
+
+    # プロジェクト単位のMCP許可設定
+    setting = EpicLadder::ProjectSetting.for_project(project)
+    setting.mcp_enabled = true
+    setting.save!
   end
 
   describe '.call' do
@@ -94,16 +107,6 @@ RSpec.describe EpicLadder::McpTools::CreateTestTool, type: :model do
         expect(test.fixed_version).to eq(version)
       end
 
-      it 'creates Test without parent_user_story_id (auto-inference)' do
-        result = described_class.call(
-          project_id: project.identifier,
-          description: 'テストTest',
-          server_context: server_context
-        )
-
-        response_text = JSON.parse(result.content.first[:text])
-        expect(response_text['success']).to be true
-      end
     end
 
     context 'with invalid parameters' do
@@ -111,6 +114,7 @@ RSpec.describe EpicLadder::McpTools::CreateTestTool, type: :model do
         result = described_class.call(
           project_id: 'invalid-project',
           description: 'テストTest',
+          parent_user_story_id: parent_user_story.id.to_s,
           server_context: server_context
         )
 
@@ -126,6 +130,7 @@ RSpec.describe EpicLadder::McpTools::CreateTestTool, type: :model do
         result = described_class.call(
           project_id: project.identifier,
           description: 'テストTest',
+          parent_user_story_id: parent_user_story.id.to_s,
           server_context: unauthorized_context
         )
 
@@ -141,12 +146,26 @@ RSpec.describe EpicLadder::McpTools::CreateTestTool, type: :model do
         result = described_class.call(
           project_id: project.identifier,
           description: 'テストTest',
+          parent_user_story_id: parent_user_story.id.to_s,
           server_context: server_context
         )
 
         response_text = JSON.parse(result.content.first[:text])
         expect(response_text['success']).to be false
         expect(response_text['error']).to include('トラッカーが設定されていません')
+      end
+
+      it 'returns error when parent_user_story_id is missing' do
+        result = described_class.call(
+          project_id: project.identifier,
+          description: 'テストTest',
+          parent_user_story_id: nil,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be false
+        expect(response_text['error']).to include('親チケット')
       end
     end
   end
@@ -159,8 +178,11 @@ RSpec.describe EpicLadder::McpTools::CreateTestTool, type: :model do
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema.properties).to include(:project_id, :description)
-      expect(schema.instance_variable_get(:@required)).to include(:description)
+      expect(schema.properties).to include(:project_id, :description, :parent_user_story_id)
+      required_fields = schema.instance_variable_get(:@required)
+      expect(required_fields).to include(:description)
+      expect(required_fields).to include(:parent_user_story_id)
+      expect(required_fields).not_to include(:project_id)
     end
   end
 end

@@ -3,7 +3,7 @@
 This document is **auto-generated** from Ruby source code.
 Do not edit manually. Run `rake mcp:generate_docs` to regenerate.
 
-**Total Tools**: 17
+**Total Tools**: 22
 
 ---
 
@@ -35,7 +35,7 @@ AI: AddIssueCommentToolを呼び出し
 
 ## AssignToVersionTool
 
-**Description**: チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。
+**Description**: チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。バージョンの期日に基づいて開始日・終了日も自動設定されます。
 
 **Class**: `EpicLadder::McpTools::AssignToVersionTool`
 
@@ -43,19 +43,23 @@ AI: AddIssueCommentToolを呼び出し
 
 チケットをVersionに割り当てるMCPツール
 UserStoryをVersionに割り当て、配下のTask/Bug/Testも自動的に同じVersionに設定する
+バージョンの期日に基づいて開始日・終了日も自動設定する
 
 **Examples**:
 
 ```
 ユーザー: 「UserStory #123をVersion 1.2に割り当てて」
 AI: AssignToVersionToolを呼び出し
-結果: UserStory #123とその配下のTask/Bug/Testが全てVersion 1.2に設定される
+結果: UserStory #123とその配下のTask/Bug/Testが全てVersion 1.2に設定され、
+      開始日・終了日も自動設定される
 ```
 
 **Parameters**:
 
 - `issue_id` (string, **required**): チケットID
 - `version_id` (string, **required**): Version ID
+- `update_parent` (boolean, optional): 親チケットも同時に更新するか（デフォルト: false）
+- `propagate_to_children` (boolean, optional): 子チケットにもバージョンと日付を伝播するか（デフォルト: true）
 
 ---
 
@@ -82,7 +86,7 @@ AI: CreateBugToolを呼び出し
 
 - `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
 - `description` (string, **required**): Bugの説明（自然言語OK）
-- `parent_user_story_id` (string, optional): 親UserStory ID（省略可）
+- `parent_user_story_id` (string, **required**): 親UserStory ID（階層構造維持のため必須）
 - `version_id` (string, optional): Version ID（省略時は親から継承）
 - `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
 
@@ -168,7 +172,7 @@ AI: CreateTaskToolを呼び出し
 
 - `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
 - `description` (string, **required**): タスクの説明（自然言語OK）
-- `parent_user_story_id` (string, optional): 親UserStory ID（省略可）
+- `parent_user_story_id` (string, **required**): 親UserStory ID（階層構造維持のため必須）
 - `version_id` (string, optional): Version ID（省略時は親から継承）
 - `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
 
@@ -197,7 +201,7 @@ AI: CreateTestToolを呼び出し
 
 - `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
 - `description` (string, **required**): Testの説明（自然言語OK）
-- `parent_user_story_id` (string, optional): 親UserStory ID（省略可）
+- `parent_user_story_id` (string, **required**): 親UserStory ID（階層構造維持のため必須）
 - `version_id` (string, optional): Version ID（省略時は親から継承）
 - `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
 
@@ -254,7 +258,7 @@ AI: CreateVersionToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, **required**): プロジェクトID（識別子または数値ID）
+- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
 - `name` (string, **required**): Version名
 - `effective_date` (string, **required**): リリース予定日（YYYY-MM-DD形式）
 - `description` (string, optional): Versionの説明（省略可）
@@ -308,9 +312,11 @@ AI: GetProjectStructureToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, **required**): プロジェクトID（識別子または数値ID）
+- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
 - `version_id` (string, optional): Version IDでフィルタ（省略可）
-- `status` (string, optional): ステータスでフィルタ（open/closed、省略可）
+- `status` (string, optional): ステータスでフィルタ（open/closed、省略可）※include_closed推奨
+- `max_depth` (integer, optional): 取得階層の深さ: 1=Epic, 2=+Feature, 3=+UserStory, 4=+Task/Bug/Test（デフォルト3）
+- `include_closed` (boolean, optional): クローズ済みチケットを含むか（デフォルトfalse=openのみ）
 
 ---
 
@@ -335,7 +341,7 @@ AI: ListEpicsToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, **required**): プロジェクトID（識別子または数値ID）
+- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
 - `assigned_to_id` (string, optional): 担当者IDでフィルタ（省略可）
 - `status` (string, optional): ステータスでフィルタ（open/closed、省略可）
 - `limit` (number, optional): 取得件数上限（デフォルト: 50）
@@ -363,10 +369,38 @@ AI: ListUserStoriesToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, **required**): プロジェクトID（識別子または数値ID）
+- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
 - `version_id` (string, optional): Version IDでフィルタ（省略可）
 - `assigned_to_id` (string, optional): 担当者IDでフィルタ（省略可）
 - `status` (string, optional): ステータスでフィルタ（open/closed、省略可）
+- `limit` (number, optional): 取得件数上限（デフォルト: 50）
+
+---
+
+## ListVersionsTool
+
+**Description**: プロジェクト内のバージョン一覧を取得します。デフォルトはopen状態のみ、期日が近い順でソートされます。
+
+**Class**: `EpicLadder::McpTools::ListVersionsTool`
+
+**Overview**:
+
+バージョン一覧取得MCPツール
+プロジェクト内のバージョンを一覧取得する
+
+**Examples**:
+
+```
+ユーザー: 「sakura-ecプロジェクトのバージョン一覧を見せて」
+AI: ListVersionsToolを呼び出し
+結果: バージョン一覧が返却される（デフォルトはopen、期日近い順）
+```
+
+**Parameters**:
+
+- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
+- `status` (string, optional): ステータスでフィルタ（open/locked/closed/all、デフォルト: open）
+- `sort` (string, optional): ソート順（effective_date_asc/effective_date_desc/name_asc/name_desc、デフォルト: effective_date_asc）
 - `limit` (number, optional): 取得件数上限（デフォルト: 50）
 
 ---
@@ -397,6 +431,32 @@ AI: MoveToNextVersionToolを呼び出し
 
 ---
 
+## UpdateCustomFieldsTool
+
+**Description**: チケットのカスタムフィールドを更新します。フィールドはID（数値）または名前（文字列）で指定できます。
+
+**Class**: `EpicLadder::McpTools::UpdateCustomFieldsTool`
+
+**Overview**:
+
+カスタムフィールド更新MCPツール
+チケットのカスタムフィールドを更新する
+
+**Examples**:
+
+```
+ユーザー: 「Task #9999のカスタムフィールド『見積時間』を8に更新して」
+AI: UpdateCustomFieldsToolを呼び出し
+結果: Task #9999のカスタムフィールドが更新される
+```
+
+**Parameters**:
+
+- `issue_id` (string, **required**): チケットID
+- `custom_fields` (object, **required**): カスタムフィールドの値。キーはフィールドIDまたはフィールド名、値は設定する値。例: {"見積時間": "8", "優先順位": "高"}
+
+---
+
 ## UpdateIssueAssigneeTool
 
 **Description**: チケットの担当者を変更します。
@@ -420,6 +480,58 @@ AI: UpdateIssueAssigneeToolを呼び出し
 
 - `issue_id` (string, **required**): チケットID
 - `assigned_to_id` (string, **required**): 担当者ID（nullで担当者解除）
+
+---
+
+## UpdateIssueDescriptionTool
+
+**Description**: チケットの説明（description）を更新します。
+
+**Class**: `EpicLadder::McpTools::UpdateIssueDescriptionTool`
+
+**Overview**:
+
+チケット説明更新MCPツール
+チケットのdescriptionを更新する
+
+**Examples**:
+
+```
+ユーザー: 「Task #9999の説明を更新して」
+AI: UpdateIssueDescriptionToolを呼び出し
+結果: Task #9999の説明が更新される
+```
+
+**Parameters**:
+
+- `issue_id` (string, **required**): チケットID
+- `description` (string, **required**): 新しい説明文
+
+---
+
+## UpdateIssueParentTool
+
+**Description**: チケットの親子関係を変更します。親チケットIDにnullを指定すると親を解除します。
+
+**Class**: `EpicLadder::McpTools::UpdateIssueParentTool`
+
+**Overview**:
+
+チケット親子関係更新MCPツール
+チケットの親チケットを変更する
+
+**Examples**:
+
+```
+ユーザー: 「Task #9999を UserStory #8888 の配下に移動して」
+AI: UpdateIssueParentToolを呼び出し
+結果: Task #9999の親がUserStory #8888になる
+```
+
+**Parameters**:
+
+- `issue_id` (string, **required**): 移動するチケットID
+- `parent_issue_id` (string, **required**): 新しい親チケットID（nullまたは空文字で親を解除）
 
 ---
 
@@ -473,6 +585,32 @@ AI: UpdateIssueStatusToolを呼び出し
 - `issue_id` (string, **required**): チケットID
 - `status_name` (string, **required**): ステータス名（例: 'Open', 'In Progress', 'Closed'）
 - `confirmed` (boolean, optional): 確認済みフラグ（危険な操作の場合に必要）
+
+---
+
+## UpdateIssueSubjectTool
+
+**Description**: チケットの件名（subject）を更新します。
+
+**Class**: `EpicLadder::McpTools::UpdateIssueSubjectTool`
+
+**Overview**:
+
+チケット件名更新MCPツール
+チケットのsubjectを更新する
+
+**Examples**:
+
+```
+ユーザー: 「Task #9999の件名を変更して」
+AI: UpdateIssueSubjectToolを呼び出し
+結果: Task #9999の件名が更新される
+```
+
+**Parameters**:
+
+- `issue_id` (string, **required**): チケットID
+- `subject` (string, **required**): 新しい件名
 
 ---
 

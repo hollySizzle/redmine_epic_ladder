@@ -115,12 +115,27 @@ module EpicLadder
         tracker
       end
 
+      # 親チケット必須のトラッカー種別
+      PARENT_REQUIRED_TRACKER_TYPES = [:task, :bug, :test].freeze
+
       # 親チケット解決（階層バリデーション付き）
       # @param parent_issue_id [String, nil] 親チケットID
       # @param tracker_type [Symbol] 作成するチケットのトラッカー種別
       # @param child_tracker [Tracker] 作成するチケットのトラッカー
       # @return [Issue, Hash, nil] 親チケット、エラーハッシュ、またはnil
       def resolve_parent_issue(parent_issue_id, tracker_type, child_tracker)
+        # 親チケット必須チェック（Task/Bug/Testは親UserStoryが必須）
+        if parent_issue_id.blank? && PARENT_REQUIRED_TRACKER_TYPES.include?(tracker_type)
+          expected_parents = EpicLadder::TrackerHierarchy.rules.dig(child_tracker.name, :parents) || []
+          return error_result(
+            "親チケットが必須です: #{child_tracker.name}は#{expected_parents.join('または')}の配下に作成する必要があります",
+            {
+              hint: "parent_user_story_idパラメータに親UserStoryのIDを指定してください。",
+              expected_parent_types: expected_parents
+            }
+          )
+        end
+
         return nil if parent_issue_id.blank?
 
         issue = Issue.find_by(id: parent_issue_id)

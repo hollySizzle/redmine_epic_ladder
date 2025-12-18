@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2025-11-25T05:35:12Z",
+  "generated_at": "2025-12-18T13:53:28Z",
   "tools": [
     {
       "name": "AddIssueCommentTool",
@@ -24,7 +24,7 @@
     },
     {
       "name": "AssignToVersionTool",
-      "description": "チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。",
+      "description": "チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。バージョンの期日に基づいて開始日・終了日も自動設定されます。",
       "inputSchema": {
         "properties": {
           "issue_id": {
@@ -34,6 +34,14 @@
           "version_id": {
             "type": "string",
             "description": "Version ID"
+          },
+          "update_parent": {
+            "type": "boolean",
+            "description": "親チケットも同時に更新するか（デフォルト: false）"
+          },
+          "propagate_to_children": {
+            "type": "boolean",
+            "description": "子チケットにもバージョンと日付を伝播するか（デフォルト: true）"
           }
         },
         "required": [
@@ -57,7 +65,7 @@
           },
           "parent_user_story_id": {
             "type": "string",
-            "description": "親UserStory ID（省略可）"
+            "description": "親UserStory ID（階層構造維持のため必須）"
           },
           "version_id": {
             "type": "string",
@@ -69,7 +77,8 @@
           }
         },
         "required": [
-          "description"
+          "description",
+          "parent_user_story_id"
         ]
       }
     },
@@ -147,7 +156,7 @@
           },
           "parent_user_story_id": {
             "type": "string",
-            "description": "親UserStory ID（省略可）"
+            "description": "親UserStory ID（階層構造維持のため必須）"
           },
           "version_id": {
             "type": "string",
@@ -159,7 +168,8 @@
           }
         },
         "required": [
-          "description"
+          "description",
+          "parent_user_story_id"
         ]
       }
     },
@@ -178,7 +188,7 @@
           },
           "parent_user_story_id": {
             "type": "string",
-            "description": "親UserStory ID（省略可）"
+            "description": "親UserStory ID（階層構造維持のため必須）"
           },
           "version_id": {
             "type": "string",
@@ -190,7 +200,8 @@
           }
         },
         "required": [
-          "description"
+          "description",
+          "parent_user_story_id"
         ]
       }
     },
@@ -237,7 +248,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "プロジェクトID（識別子または数値ID）"
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
           },
           "name": {
             "type": "string",
@@ -257,7 +268,6 @@
           }
         },
         "required": [
-          "project_id",
           "name",
           "effective_date"
         ]
@@ -285,7 +295,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "プロジェクトID（識別子または数値ID）"
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
           },
           "version_id": {
             "type": "string",
@@ -293,12 +303,18 @@
           },
           "status": {
             "type": "string",
-            "description": "ステータスでフィルタ（open/closed、省略可）"
+            "description": "ステータスでフィルタ（open/closed、省略可）※include_closed推奨"
+          },
+          "max_depth": {
+            "type": "integer",
+            "description": "取得階層の深さ: 1=Epic, 2=+Feature, 3=+UserStory, 4=+Task/Bug/Test（デフォルト3）"
+          },
+          "include_closed": {
+            "type": "boolean",
+            "description": "クローズ済みチケットを含むか（デフォルトfalse=openのみ）"
           }
         },
-        "required": [
-          "project_id"
-        ]
+        "required": []
       }
     },
     {
@@ -308,7 +324,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "プロジェクトID（識別子または数値ID）"
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
           },
           "assigned_to_id": {
             "type": "string",
@@ -323,9 +339,7 @@
             "description": "取得件数上限（デフォルト: 50）"
           }
         },
-        "required": [
-          "project_id"
-        ]
+        "required": []
       }
     },
     {
@@ -335,7 +349,7 @@
         "properties": {
           "project_id": {
             "type": "string",
-            "description": "プロジェクトID（識別子または数値ID）"
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
           },
           "version_id": {
             "type": "string",
@@ -354,9 +368,32 @@
             "description": "取得件数上限（デフォルト: 50）"
           }
         },
-        "required": [
-          "project_id"
-        ]
+        "required": []
+      }
+    },
+    {
+      "name": "ListVersionsTool",
+      "description": "プロジェクト内のバージョン一覧を取得します。デフォルトはopen状態のみ、期日が近い順でソートされます。",
+      "inputSchema": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）"
+          },
+          "status": {
+            "type": "string",
+            "description": "ステータスでフィルタ（open/locked/closed/all、デフォルト: open）"
+          },
+          "sort": {
+            "type": "string",
+            "description": "ソート順（effective_date_asc/effective_date_desc/name_asc/name_desc、デフォルト: effective_date_asc）"
+          },
+          "limit": {
+            "type": "number",
+            "description": "取得件数上限（デフォルト: 50）"
+          }
+        },
+        "required": []
       }
     },
     {
@@ -380,6 +417,26 @@
       }
     },
     {
+      "name": "UpdateCustomFieldsTool",
+      "description": "チケットのカスタムフィールドを更新します。フィールドはID（数値）または名前（文字列）で指定できます。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "custom_fields": {
+            "type": "object",
+            "description": "カスタムフィールドの値。キーはフィールドIDまたはフィールド名、値は設定する値。例: {\"見積時間\": \"8\", \"優先順位\": \"高\"}"
+          }
+        },
+        "required": [
+          "issue_id",
+          "custom_fields"
+        ]
+      }
+    },
+    {
       "name": "UpdateIssueAssigneeTool",
       "description": "チケットの担当者を変更します。",
       "inputSchema": {
@@ -396,6 +453,46 @@
         "required": [
           "issue_id",
           "assigned_to_id"
+        ]
+      }
+    },
+    {
+      "name": "UpdateIssueDescriptionTool",
+      "description": "チケットの説明（description）を更新します。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "description": {
+            "type": "string",
+            "description": "新しい説明文"
+          }
+        },
+        "required": [
+          "issue_id",
+          "description"
+        ]
+      }
+    },
+    {
+      "name": "UpdateIssueParentTool",
+      "description": "チケットの親子関係を変更します。親チケットIDにnullを指定すると親を解除します。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "移動するチケットID"
+          },
+          "parent_issue_id": {
+            "type": "string",
+            "description": "新しい親チケットID（nullまたは空文字で親を解除）"
+          }
+        },
+        "required": [
+          "issue_id",
+          "parent_issue_id"
         ]
       }
     },
@@ -441,6 +538,26 @@
         "required": [
           "issue_id",
           "status_name"
+        ]
+      }
+    },
+    {
+      "name": "UpdateIssueSubjectTool",
+      "description": "チケットの件名（subject）を更新します。",
+      "inputSchema": {
+        "properties": {
+          "issue_id": {
+            "type": "string",
+            "description": "チケットID"
+          },
+          "subject": {
+            "type": "string",
+            "description": "新しい件名"
+          }
+        },
+        "required": [
+          "issue_id",
+          "subject"
         ]
       }
     }
