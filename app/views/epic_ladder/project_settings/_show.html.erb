@@ -97,7 +97,7 @@
     <legend><%= l(:label_epic_ladder_mcp_tool_hints) %></legend>
     <em class="info" style="margin-bottom: 10px;"><%= l(:label_epic_ladder_mcp_tool_hints_description) %></em>
 
-    <% EpicLadder::McpTools::Registry.tools_by_category_ordered.each do |category, tools| %>
+    <% EpicLadder::McpTools::Registry.modifying_tools_by_category_ordered.each do |category, tools| %>
       <div class="mcp-tool-category">
         <h4 class="category-header"><%= l("epic_ladder.mcp_tool_categories.#{category}") %></h4>
         <% tools.each do |tool_key| %>

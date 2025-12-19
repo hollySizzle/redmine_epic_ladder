@@ -21,30 +21,29 @@ module EpicLadder
 
     HINT_TEXT_MAX_LENGTH = 500
 
-    # データ変更系ツール（ヒント設定対象）
-    MODIFYING_TOOLS = %w[
-      create_epic
-      create_feature
-      create_user_story
-      create_task
-      create_bug
-      create_test
-      create_version
-      assign_to_version
-      move_to_next_version
-      update_issue_status
-      update_issue_progress
-      update_issue_assignee
-      add_issue_comment
-    ].freeze
-
     belongs_to :project
 
     validates :project_id, presence: true
     validates :tool_key, presence: true, length: { maximum: 50 }
     validates :tool_key, uniqueness: { scope: :project_id }
-    validates :tool_key, inclusion: { in: MODIFYING_TOOLS, message: '無効なツールキーです' }
+    validate :tool_key_must_be_modifying_tool
     validates :hint_text, length: { maximum: HINT_TEXT_MAX_LENGTH }
+
+    # データ変更系ツールのキー一覧（Registryから取得）
+    # @return [Array<String>] ツールキーの配列
+    def self.modifying_tools
+      McpTools::Registry.modifying_tool_keys
+    end
+
+    # 後方互換性のため MODIFYING_TOOLS 定数風のアクセスを提供
+    # @deprecated modifying_tools を使用してください
+    def self.const_missing(name)
+      if name == :MODIFYING_TOOLS
+        modifying_tools
+      else
+        super
+      end
+    end
 
     scope :enabled, -> { where(enabled: true) }
     scope :for_project, ->(project) { where(project: project) }
@@ -100,6 +99,15 @@ module EpicLadder
     # @return [String] ツールの表示名
     def tool_display_name
       I18n.t("epic_ladder.mcp_tools.#{tool_key}", default: tool_key.titleize)
+    end
+
+    private
+
+    def tool_key_must_be_modifying_tool
+      return if tool_key.blank?
+      return if self.class.modifying_tools.include?(tool_key)
+
+      errors.add(:tool_key, '無効なツールキーです')
     end
   end
 end

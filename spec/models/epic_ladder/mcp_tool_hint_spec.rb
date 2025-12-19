@@ -58,15 +58,22 @@ RSpec.describe EpicLadder::McpToolHint, type: :model do
     end
   end
 
-  describe 'MODIFYING_TOOLS' do
-    it 'includes expected tools' do
-      expected_tools = %w[
-        create_epic create_feature create_user_story create_task
-        create_bug create_test create_version assign_to_version
-        move_to_next_version update_issue_status update_issue_progress
-        update_issue_assignee add_issue_comment
-      ]
-      expect(described_class::MODIFYING_TOOLS).to match_array(expected_tools)
+  describe '.modifying_tools' do
+    it 'returns tools from Registry' do
+      tools = described_class.modifying_tools
+      # Registryからデータ変更系ツールを取得することを確認
+      expect(tools).to be_an(Array)
+      expect(tools).not_to be_empty
+      # query_tools (list_*, get_*) は含まれない
+      expect(tools).not_to include(a_string_matching(/^list_/))
+      expect(tools).not_to include(a_string_matching(/^get_/))
+      # データ変更系ツールが含まれる
+      expect(tools).to include('create_task')
+      expect(tools).to include('update_issue_status')
+    end
+
+    it 'is accessible via MODIFYING_TOOLS for backward compatibility' do
+      expect(described_class::MODIFYING_TOOLS).to eq(described_class.modifying_tools)
     end
   end
 

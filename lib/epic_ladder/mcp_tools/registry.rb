@@ -70,6 +70,23 @@ module EpicLadder
           end
         end
 
+        # データ変更系ツールのキー一覧を返す（ヒント設定対象）
+        # query_tools（list_*, get_*）以外のツール
+        # @return [Array<String>] データ変更系ツールキーの配列
+        def modifying_tool_keys
+          by_category = tools_by_category
+          (category_order - [:query_tools]).flat_map { |cat| by_category[cat] || [] }
+        end
+
+        # データ変更系ツールをカテゴリ別で返す（ヒント設定UI用）
+        # @return [Array<Array>] [カテゴリ, ツールキー配列] の配列
+        def modifying_tools_by_category_ordered
+          by_category = tools_by_category
+          (category_order - [:query_tools]).filter_map do |cat|
+            [cat, by_category[cat]] if by_category[cat]&.any?
+          end
+        end
+
         private
 
         # クラスからツールキーを生成
@@ -86,10 +103,10 @@ module EpicLadder
           case key
           when /^create_(?!version)/
             :create_issues
-          when /version/
-            :version_management
           when /^(list_|get_)/
             :query_tools
+          when /version/
+            :version_management
           else
             :issue_operations
           end

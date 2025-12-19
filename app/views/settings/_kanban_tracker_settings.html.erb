@@ -195,27 +195,34 @@ document.addEventListener('DOMContentLoaded', function() {
     </p>
 
     <% mcp_tool_hints = @settings['mcp_tool_hints'] || {} %>
-    <% EpicLadder::McpToolHint::MODIFYING_TOOLS.each do |tool_key| %>
-      <% hint = mcp_tool_hints[tool_key] || {} %>
-      <div class="mcp-tool-hint-row" style="margin-bottom: 15px; padding: 10px; background: #fafafa; border: 1px solid #eee; border-radius: 4px; text-align: left;">
-        <div style="margin-bottom: 8px;">
-          <p style="width: 100%; padding-left: 0;">
-            <%= hidden_field_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '0' %>
-            <%= check_box_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '1',
-                hint['enabled'] == '1' || hint['enabled'] == true,
-                id: "settings_mcp_tool_hint_#{tool_key}_enabled" %>
-            <strong><%= I18n.t("epic_ladder.mcp_tools.#{tool_key}", default: tool_key.titleize) %></strong>
-          </p>
-        </div>
-        <div>
-          <%= text_area_tag "settings[mcp_tool_hints][#{tool_key}][hint_text]",
-              hint['hint_text'],
-              rows: 2,
-              style: 'width: 100%; font-size: 12px;',
-              placeholder: '例: PR必須、見積もり記載など',
-              maxlength: 500,
-              id: "settings_mcp_tool_hint_#{tool_key}_text" %>
-        </div>
+    <% EpicLadder::McpTools::Registry.modifying_tools_by_category_ordered.each do |category, tools| %>
+      <div class="mcp-tool-category" style="margin: 15px 0;">
+        <h4 style="background: #4a7298; color: #fff; padding: 8px 12px; margin: 0; font-size: 0.95em; border-radius: 4px 4px 0 0;">
+          <%= I18n.t("epic_ladder.mcp_tool_categories.#{category}", default: category.to_s.titleize) %>
+        </h4>
+        <% tools.each do |tool_key| %>
+          <% hint = mcp_tool_hints[tool_key] || {} %>
+          <div class="mcp-tool-hint-row" style="border: 1px solid #ddd; border-top: none; padding: 10px 12px; background: #fafafa;">
+            <div style="margin-bottom: 8px;">
+              <label style="display: block;">
+                <%= hidden_field_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '0' %>
+                <%= check_box_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '1',
+                    hint['enabled'] == '1' || hint['enabled'] == true,
+                    id: "settings_mcp_tool_hint_#{tool_key}_enabled" %>
+                <strong><%= I18n.t("epic_ladder.mcp_tools.#{tool_key}", default: tool_key.titleize) %></strong>
+              </label>
+            </div>
+            <div>
+              <%= text_area_tag "settings[mcp_tool_hints][#{tool_key}][hint_text]",
+                  hint['hint_text'],
+                  rows: 2,
+                  style: 'width: 100%; font-size: 12px;',
+                  placeholder: '例: PR必須、見積もり記載など',
+                  maxlength: 500,
+                  id: "settings_mcp_tool_hint_#{tool_key}_text" %>
+            </div>
+          </div>
+        <% end %>
       </div>
     <% end %>
   </fieldset>
