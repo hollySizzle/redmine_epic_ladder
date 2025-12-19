@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <% hint = mcp_tool_hints[tool_key] || {} %>
           <div class="mcp-tool-hint-row" style="border: 1px solid #ddd; border-top: none; padding: 10px 12px; background: #fafafa;">
             <div style="margin-bottom: 8px;">
-              <label style="display: block;">
+              <label style="display: block; margin: 0; text-align: left;">
                 <%= hidden_field_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '0' %>
                 <%= check_box_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '1',
                     hint['enabled'] == '1' || hint['enabled'] == true,
