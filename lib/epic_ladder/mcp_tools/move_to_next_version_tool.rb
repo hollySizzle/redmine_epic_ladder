@@ -12,12 +12,12 @@ module EpicLadder
     #   結果: UserStory #123とその配下が次のVersionに移動される
     class MoveToNextVersionTool < MCP::Tool
       extend BaseHelper
-      description "チケット（UserStory推奨）を次のVersionに移動します（リスケ）。配下のTask/Bug/Testも自動的に移動されます。"
+      description "Moves an issue (UserStory recommended) to the next Version (reschedule). Child Task/Bug/Test issues are also moved."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          confirmed: { type: "boolean", description: "確認済みフラグ（危険な操作の場合に必要）", default: false }
+          issue_id: { type: "string", description: "Issue ID" },
+          confirmed: { type: "boolean", description: "Confirmation flag (required for dangerous operations)", default: false }
         },
         required: ["issue_id"]
       )

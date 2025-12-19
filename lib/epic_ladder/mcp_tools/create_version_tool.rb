@@ -14,15 +14,15 @@ module EpicLadder
     class CreateVersionTool < MCP::Tool
       extend BaseHelper
 
-      description "Version（リリース予定）を作成します。例: 'Sprint 2025-02（2025-02-28まで）'"
+      description "Creates a Version (release milestone). Example: 'Sprint 2025-02 (due 2025-02-28)'"
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          name: { type: "string", description: "Version名" },
-          effective_date: { type: "string", description: "リリース予定日（YYYY-MM-DD形式）" },
-          description: { type: "string", description: "Versionの説明（省略可）" },
-          status: { type: "string", description: "ステータス（open/locked/closed、デフォルト: open）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          name: { type: "string", description: "Version name" },
+          effective_date: { type: "string", description: "Release date (YYYY-MM-DD format)" },
+          description: { type: "string", description: "Version description (optional)" },
+          status: { type: "string", description: "Status (open/locked/closed, default: open)" }
         },
         required: ["name", "effective_date"]
       )

@@ -12,12 +12,12 @@ module EpicLadder
     #   結果: Task #9999の進捗率が50%になる
     class UpdateIssueProgressTool < MCP::Tool
       extend BaseHelper
-      description "チケットの進捗率を更新します。0〜100の整数で指定してください。"
+      description "Updates issue progress (done ratio). Specify an integer from 0 to 100."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          progress: { type: "number", description: "進捗率（0〜100の整数）" }
+          issue_id: { type: "string", description: "Issue ID" },
+          progress: { type: "number", description: "Progress percentage (0-100 integer)" }
         },
         required: ["issue_id", "progress"]
       )

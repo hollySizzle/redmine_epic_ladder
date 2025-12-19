@@ -12,15 +12,15 @@ module EpicLadder
     #   AI: CreateTestToolを呼び出し
     #   結果: Test #1004が作成される
     class CreateTestTool < MCP::Tool
-      description "Test（やるべきテストや検証）チケットを作成します。例: '申込完了までのE2Eテスト'"
+      description "Creates a Test (verification/QA) issue. Example: 'E2E test for registration flow'"
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          description: { type: "string", description: "Testの説明（自然言語OK）" },
-          parent_user_story_id: { type: "string", description: "親UserStory ID（階層構造維持のため必須）" },
-          version_id: { type: "string", description: "Version ID（省略時は親から継承）" },
-          assigned_to_id: { type: "string", description: "担当者ID（省略時は現在のユーザー）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          description: { type: "string", description: "Test description (natural language OK)" },
+          parent_user_story_id: { type: "string", description: "Parent UserStory ID (required for hierarchy)" },
+          version_id: { type: "string", description: "Version ID (inherits from parent if omitted)" },
+          assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" }
         },
         required: ["description", "parent_user_story_id"]
       )

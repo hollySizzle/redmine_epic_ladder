@@ -12,13 +12,13 @@ module EpicLadder
     #   結果: Task #9999がClosedになる
     class UpdateIssueStatusTool < MCP::Tool
       extend BaseHelper
-      description "チケットのステータスを更新します。例: 'Open', 'In Progress', 'Closed'"
+      description "Updates issue status. Example: 'Open', 'In Progress', 'Closed'"
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          status_name: { type: "string", description: "ステータス名（例: 'Open', 'In Progress', 'Closed'）" },
-          confirmed: { type: "boolean", description: "確認済みフラグ（危険な操作の場合に必要）", default: false }
+          issue_id: { type: "string", description: "Issue ID" },
+          status_name: { type: "string", description: "Status name (e.g., 'Open', 'In Progress', 'Closed')" },
+          confirmed: { type: "boolean", description: "Confirmation flag (required for dangerous operations)", default: false }
         },
         required: ["issue_id", "status_name"]
       )

@@ -12,11 +12,11 @@ module EpicLadder
     #   結果: チケット詳細+コメント+子チケット情報が返却される
     class GetIssueDetailTool < MCP::Tool
       extend BaseHelper
-      description "チケットの詳細情報、コメント（更新履歴）、子チケットを取得します。"
+      description "Gets issue details, comments (update history), and child issues."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" }
+          issue_id: { type: "string", description: "Issue ID" }
         },
         required: ["issue_id"]
       )

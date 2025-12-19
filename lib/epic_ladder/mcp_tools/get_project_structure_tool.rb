@@ -13,15 +13,15 @@ module EpicLadder
     #   結果: Epic→Feature→UserStoryの階層構造が返却される
     class GetProjectStructureTool < MCP::Tool
       extend BaseHelper
-      description "プロジェクトのEpic階層構造（Epic→Feature→UserStory）を可視化します。PMがプロジェクト全体を把握するのに便利です。"
+      description "Visualizes project hierarchy (Epic->Feature->UserStory). Useful for PMs to understand project structure."
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          version_id: { type: "string", description: "Version IDでフィルタ（省略可）" },
-          status: { type: "string", description: "ステータスでフィルタ（open/closed、省略可）※include_closed推奨" },
-          max_depth: { type: "integer", description: "取得階層の深さ: 1=Epic, 2=+Feature, 3=+UserStory, 4=+Task/Bug/Test（デフォルト3）" },
-          include_closed: { type: "boolean", description: "クローズ済みチケットを含むか（デフォルトfalse=openのみ）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          version_id: { type: "string", description: "Filter by Version ID (optional)" },
+          status: { type: "string", description: "Filter by status (open/closed, optional; include_closed recommended)" },
+          max_depth: { type: "integer", description: "Hierarchy depth: 1=Epic, 2=+Feature, 3=+UserStory, 4=+Task/Bug/Test (default: 3)" },
+          include_closed: { type: "boolean", description: "Include closed issues (default: false, open only)" }
         },
         required: []
       )

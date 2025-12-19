@@ -12,15 +12,15 @@ module EpicLadder
     #   AI: CreateFeatureToolを呼び出し
     #   結果: Feature #1001が作成される
     class CreateFeatureTool < MCP::Tool
-      description "Feature（分類を行うための中間層）チケットを作成します。例: 'CTA'"
+      description "Creates a Feature (intermediate category) issue under an Epic. Example: 'CTA Button'"
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          subject: { type: "string", description: "Featureの件名" },
-          parent_epic_id: { type: "string", description: "親Epic ID" },
-          description: { type: "string", description: "Featureの説明（省略可）" },
-          assigned_to_id: { type: "string", description: "担当者ID（省略時は現在のユーザー）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          subject: { type: "string", description: "Feature subject/title" },
+          parent_epic_id: { type: "string", description: "Parent Epic issue ID" },
+          description: { type: "string", description: "Feature description (optional)" },
+          assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" }
         },
         required: ["subject", "parent_epic_id"]
       )

@@ -19,12 +19,12 @@ module EpicLadder
     class ListStatusesTool < MCP::Tool
       extend BaseHelper
 
-      description "ステータス一覧を取得します。プロジェクトIDを指定すると、そのプロジェクトのワークフローで使用可能なステータスに絞り込みます（未設定時は全ステータス）。"
+      description "Lists available statuses. When project_id is specified, returns statuses available in that project's workflow."
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時は全ステータス）" },
-          include_closed: { type: "boolean", description: "クローズ済みステータスを含むか（デフォルト: true）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, returns all statuses if omitted)" },
+          include_closed: { type: "boolean", description: "Include closed statuses (default: true)" }
         },
         required: []
       )

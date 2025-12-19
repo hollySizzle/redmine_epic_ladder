@@ -13,12 +13,12 @@ module EpicLadder
     #   結果: Task #9999の件名が更新される
     class UpdateIssueSubjectTool < MCP::Tool
       extend BaseHelper
-      description "チケットの件名（subject）を更新します。"
+      description "Updates the subject (title) of an issue."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          subject: { type: "string", description: "新しい件名" }
+          issue_id: { type: "string", description: "Issue ID" },
+          subject: { type: "string", description: "New subject/title" }
         },
         required: %w[issue_id subject]
       )

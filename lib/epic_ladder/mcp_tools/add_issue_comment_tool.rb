@@ -12,12 +12,12 @@ module EpicLadder
     #   結果: Task #9999にコメントが追加される
     class AddIssueCommentTool < MCP::Tool
       extend BaseHelper
-      description "チケットにコメント（ノート）を追加します。"
+      description "Adds a comment (note) to an issue."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          comment: { type: "string", description: "コメント内容" }
+          issue_id: { type: "string", description: "Issue ID" },
+          comment: { type: "string", description: "Comment content" }
         },
         required: ["issue_id", "comment"]
       )

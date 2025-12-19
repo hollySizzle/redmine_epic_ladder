@@ -14,14 +14,14 @@ module EpicLadder
     #         開始日・終了日も自動設定される
     class AssignToVersionTool < MCP::Tool
       extend BaseHelper
-      description "チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。バージョンの期日に基づいて開始日・終了日も自動設定されます。"
+      description "Assigns an issue (UserStory recommended) to a Version. For UserStory, child Task/Bug/Test issues are also assigned. Start/due dates are auto-set based on version."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          version_id: { type: "string", description: "Version ID" },
-          update_parent: { type: "boolean", description: "親チケットも同時に更新するか（デフォルト: false）" },
-          propagate_to_children: { type: "boolean", description: "子チケットにもバージョンと日付を伝播するか（デフォルト: true）" }
+          issue_id: { type: "string", description: "Issue ID" },
+          version_id: { type: "string", description: "Target Version ID" },
+          update_parent: { type: "boolean", description: "Also update parent issue (default: false)" },
+          propagate_to_children: { type: "boolean", description: "Propagate version and dates to children (default: true)" }
         },
         required: ["issue_id", "version_id"]
       )

@@ -12,14 +12,14 @@ module EpicLadder
     #   AI: CreateEpicToolを呼び出し
     #   結果: Epic #1000が作成される
     class CreateEpicTool < MCP::Tool
-      description "Epic（大分類）チケットを作成します。例: 'ユーザー動線'"
+      description "Creates an Epic (top-level category) issue. Example: 'User Journey'"
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          subject: { type: "string", description: "Epicの件名" },
-          description: { type: "string", description: "Epicの説明（省略可）" },
-          assigned_to_id: { type: "string", description: "担当者ID（省略時は現在のユーザー）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          subject: { type: "string", description: "Epic subject/title" },
+          description: { type: "string", description: "Epic description (optional)" },
+          assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" }
         },
         required: ["subject"]
       )

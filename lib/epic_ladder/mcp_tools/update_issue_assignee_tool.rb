@@ -12,12 +12,12 @@ module EpicLadder
     #   結果: Task #9999の担当者が田中さんになる
     class UpdateIssueAssigneeTool < MCP::Tool
       extend BaseHelper
-      description "チケットの担当者を変更します。"
+      description "Changes the assignee of an issue."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          assigned_to_id: { type: "string", description: "担当者ID（nullで担当者解除）" }
+          issue_id: { type: "string", description: "Issue ID" },
+          assigned_to_id: { type: "string", description: "Assignee user ID (null to unassign)" }
         },
         required: ["issue_id", "assigned_to_id"]
       )

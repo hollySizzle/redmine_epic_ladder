@@ -20,13 +20,13 @@ module EpicLadder
     class ListProjectMembersTool < MCP::Tool
       extend BaseHelper
 
-      description "プロジェクトのメンバー一覧を取得します。担当者を探す際に使用します。"
+      description "Lists project members. Use this to find assignee candidates."
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          role_name: { type: "string", description: "ロール名でフィルタ（省略可）" },
-          limit: { type: "number", description: "取得件数上限（デフォルト: 100）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          role_name: { type: "string", description: "Filter by role name (optional)" },
+          limit: { type: "number", description: "Max results (default: 100)" }
         },
         required: []
       )

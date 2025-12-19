@@ -14,14 +14,14 @@ module EpicLadder
     class ListVersionsTool < MCP::Tool
       extend BaseHelper
 
-      description "プロジェクト内のバージョン一覧を取得します。デフォルトはopen状態のみ、期日が近い順でソートされます。"
+      description "Lists versions in a project. Default: open status only, sorted by due date ascending."
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          status: { type: "string", description: "ステータスでフィルタ（open/locked/closed/all、デフォルト: open）" },
-          sort: { type: "string", description: "ソート順（effective_date_asc/effective_date_desc/name_asc/name_desc、デフォルト: effective_date_asc）" },
-          limit: { type: "number", description: "取得件数上限（デフォルト: 50）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          status: { type: "string", description: "Filter by status (open/locked/closed/all, default: open)" },
+          sort: { type: "string", description: "Sort order (effective_date_asc/effective_date_desc/name_asc/name_desc, default: effective_date_asc)" },
+          limit: { type: "number", description: "Max results (default: 50)" }
         },
         required: []
       )

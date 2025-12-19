@@ -13,14 +13,14 @@ module EpicLadder
     #   結果: Task #9999のカスタムフィールドが更新される
     class UpdateCustomFieldsTool < MCP::Tool
       extend BaseHelper
-      description "チケットのカスタムフィールドを更新します。フィールドはID（数値）または名前（文字列）で指定できます。"
+      description "Updates custom fields of an issue. Fields can be specified by ID (number) or name (string)."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
+          issue_id: { type: "string", description: "Issue ID" },
           custom_fields: {
             type: "object",
-            description: "カスタムフィールドの値。キーはフィールドIDまたはフィールド名、値は設定する値。例: {\"見積時間\": \"8\", \"優先順位\": \"高\"}"
+            description: "Custom field values. Key is field ID or name, value is the new value. Example: {\"Estimated Hours\": \"8\", \"Priority Level\": \"High\"}"
           }
         },
         required: %w[issue_id custom_fields]

@@ -14,15 +14,15 @@ module EpicLadder
     class ListUserStoriesTool < MCP::Tool
       extend BaseHelper
 
-      description "プロジェクト内のUserStory一覧を取得します。Version、担当者でフィルタリング可能です。"
+      description "Lists UserStory issues in a project. Can filter by version, assignee, and status."
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          version_id: { type: "string", description: "Version IDでフィルタ（省略可）" },
-          assigned_to_id: { type: "string", description: "担当者IDでフィルタ（省略可）" },
-          status: { type: "string", description: "ステータスでフィルタ（open/closed、省略可）" },
-          limit: { type: "number", description: "取得件数上限（デフォルト: 50）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          version_id: { type: "string", description: "Filter by Version ID (optional)" },
+          assigned_to_id: { type: "string", description: "Filter by assignee ID (optional)" },
+          status: { type: "string", description: "Filter by status (open/closed, optional)" },
+          limit: { type: "number", description: "Max results (default: 50)" }
         },
         required: []
       )

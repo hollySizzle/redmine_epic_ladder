@@ -13,12 +13,12 @@ module EpicLadder
     #   結果: Task #9999の説明が更新される
     class UpdateIssueDescriptionTool < MCP::Tool
       extend BaseHelper
-      description "チケットの説明（description）を更新します。"
+      description "Updates the description of an issue."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "チケットID" },
-          description: { type: "string", description: "新しい説明文" }
+          issue_id: { type: "string", description: "Issue ID" },
+          description: { type: "string", description: "New description text" }
         },
         required: %w[issue_id description]
       )

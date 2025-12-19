@@ -13,12 +13,12 @@ module EpicLadder
     #   結果: Task #9999の親がUserStory #8888になる
     class UpdateIssueParentTool < MCP::Tool
       extend BaseHelper
-      description "チケットの親子関係を変更します。親チケットIDにnullを指定すると親を解除します。"
+      description "Changes the parent-child relationship of an issue. Set parent_issue_id to null to remove parent."
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "移動するチケットID" },
-          parent_issue_id: { type: "string", description: "新しい親チケットID（nullまたは空文字で親を解除）" }
+          issue_id: { type: "string", description: "Issue ID to move" },
+          parent_issue_id: { type: "string", description: "New parent issue ID (null or empty to remove parent)" }
         },
         required: %w[issue_id parent_issue_id]
       )

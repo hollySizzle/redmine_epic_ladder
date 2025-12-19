@@ -12,16 +12,16 @@ module EpicLadder
     #   AI: CreateUserStoryToolを呼び出し
     #   結果: UserStory #1002が作成される
     class CreateUserStoryTool < MCP::Tool
-      description "UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: '申込画面を作る'"
+      description "Creates a UserStory (user requirement/goal) issue under a Feature. Example: 'Build registration form'"
 
       input_schema(
         properties: {
-          project_id: { type: "string", description: "プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）" },
-          subject: { type: "string", description: "UserStoryの件名" },
-          parent_feature_id: { type: "string", description: "親Feature ID" },
-          version_id: { type: "string", description: "Version ID（リリース予定）" },
-          description: { type: "string", description: "UserStoryの説明（省略可）" },
-          assigned_to_id: { type: "string", description: "担当者ID（省略時は現在のユーザー）" }
+          project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
+          subject: { type: "string", description: "UserStory subject/title" },
+          parent_feature_id: { type: "string", description: "Parent Feature issue ID" },
+          version_id: { type: "string", description: "Target Version ID (release milestone)" },
+          description: { type: "string", description: "UserStory description (optional)" },
+          assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" }
         },
         required: ["subject", "parent_feature_id"]
       )
