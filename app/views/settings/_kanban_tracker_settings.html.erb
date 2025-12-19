@@ -186,6 +186,39 @@ document.addEventListener('DOMContentLoaded', function() {
       2. 各プロジェクトの設定で「このプロジェクトでMCP APIを許可する」を有効にする
     </p>
   </fieldset>
+
+  <fieldset class="box">
+    <legend>MCPツールヒント（グローバルデフォルト）</legend>
+    <p class="description">
+      各MCPツール使用時にAIに伝えるルールを設定します。<br>
+      プロジェクトで個別設定がない場合、この設定が使用されます。
+    </p>
+
+    <% mcp_tool_hints = @settings['mcp_tool_hints'] || {} %>
+    <% EpicLadder::McpToolHint::MODIFYING_TOOLS.each do |tool_key| %>
+      <% hint = mcp_tool_hints[tool_key] || {} %>
+      <div class="mcp-tool-hint-row" style="margin-bottom: 15px; padding: 10px; background: #fafafa; border: 1px solid #eee; border-radius: 4px; text-align: left;">
+        <div style="margin-bottom: 8px;">
+          <p style="width: 100%; padding-left: 0;">
+            <%= hidden_field_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '0' %>
+            <%= check_box_tag "settings[mcp_tool_hints][#{tool_key}][enabled]", '1',
+                hint['enabled'] == '1' || hint['enabled'] == true,
+                id: "settings_mcp_tool_hint_#{tool_key}_enabled" %>
+            <strong><%= I18n.t("epic_ladder.mcp_tools.#{tool_key}", default: tool_key.titleize) %></strong>
+          </p>
+        </div>
+        <div>
+          <%= text_area_tag "settings[mcp_tool_hints][#{tool_key}][hint_text]",
+              hint['hint_text'],
+              rows: 2,
+              style: 'width: 100%; font-size: 12px;',
+              placeholder: '例: PR必須、見積もり記載など',
+              maxlength: 500,
+              id: "settings_mcp_tool_hint_#{tool_key}_text" %>
+        </div>
+      </div>
+    <% end %>
+  </fieldset>
 </div>
 
 <style>

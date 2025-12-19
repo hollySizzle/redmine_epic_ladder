@@ -86,6 +86,9 @@ Redmine::Plugin.register :redmine_epic_ladder do
     'bug_tracker' => 'Bug',
     # MCP API設定（グローバル有効/無効のみ）
     'mcp_enabled' => '1',
+    # MCPツールヒント（グローバルデフォルト）
+    # 例: { 'create_task' => { 'enabled' => true, 'hint_text' => 'PR必須' } }
+    'mcp_tool_hints' => {},
     # 階層ガイド設定
     'hierarchy_guide_enabled' => '1',
     # Dynamic Editプラグイン統合

@@ -30,9 +30,20 @@ en:
 
   # Project Settings Tab
   label_epic_ladder_settings: "Epic Ladder"
+  label_epic_ladder_tracker_settings: "Tracker Mapping"
+  label_epic_ladder_tracker_settings_description: "Select the tracker for each hierarchy level. Leave blank to use global settings."
+  label_epic_ladder_hierarchy_level: "Hierarchy Level"
+  label_epic_ladder_tracker_name: "Tracker"
+  label_epic_ladder_global_setting: "Global Setting"
+  label_epic_ladder_use_global_setting: "Use global setting (%{value})"
+  label_epic_ladder_feature_settings: "Feature Settings"
+  label_epic_ladder_hierarchy_guide: "Hierarchy Guide"
+  label_epic_ladder_hierarchy_guide_description: "Show hierarchy structure guide when creating issues"
   label_epic_ladder_mcp_settings: "MCP API Settings"
-  label_epic_ladder_mcp_enable: "Enable MCP API for this project"
+  label_epic_ladder_mcp_enable: "Enable MCP API"
   label_epic_ladder_mcp_description: "Allow AI tools like Claude Code to access this project"
+  label_epic_ladder_reset_to_global: "Reset to Global Settings"
+  label_epic_ladder_reset_to_global_confirm: "Reset all settings to global defaults?"
   error_epic_ladder_settings_save_failed: "Failed to save Epic Ladder settings: %{errors}"
 
   # MCP Tool Hints
@@ -40,6 +51,8 @@ en:
   label_epic_ladder_mcp_tool_hints_description: "Set project-specific rules for AI tool usage (max 500 chars)"
   label_epic_ladder_mcp_tool_hint_enabled: "Enabled"
   label_epic_ladder_mcp_tool_hint_placeholder: "e.g. ## Rules\n- PR required\n- Add estimate"
+  label_epic_ladder_use_project_setting: "Use project-specific setting"
+  label_epic_ladder_not_set: "Not set"
   notice_epic_ladder_mcp_tool_hints_saved: "MCP Tool hint settings saved"
   error_epic_ladder_mcp_tool_hints_save_failed: "Failed to save MCP Tool hint settings: %{errors}"
 

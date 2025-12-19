@@ -1,22 +1,93 @@
 <%# Epic Ladder プロジェクト設定タブ %>
 <% setting = EpicLadder::ProjectSetting.for_project(@project) %>
+<% global_settings = Setting.plugin_redmine_epic_ladder || {} %>
+<% trackers = Tracker.sorted.pluck(:name) %>
 
 <%= form_tag(project_epic_ladder_settings_path(@project), method: :patch, class: 'tabular') do %>
+
+  <%# トラッカー名マッピング設定 %>
+  <fieldset class="box">
+    <legend><%= l(:label_epic_ladder_tracker_settings) %></legend>
+    <em class="info" style="margin-bottom: 10px; display: block;">
+      <%= l(:label_epic_ladder_tracker_settings_description) %>
+    </em>
+
+    <table class="tracker-mapping-table">
+      <thead>
+        <tr>
+          <th><%= l(:label_epic_ladder_hierarchy_level) %></th>
+          <th><%= l(:label_epic_ladder_tracker_name) %></th>
+          <th><%= l(:label_epic_ladder_global_setting) %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% [
+          [:epic_tracker, 'Epic (レベル1)', global_settings['epic_tracker'] || 'Epic'],
+          [:feature_tracker, 'Feature (レベル2)', global_settings['feature_tracker'] || 'Feature'],
+          [:user_story_tracker, 'UserStory (レベル3)', global_settings['user_story_tracker'] || 'UserStory'],
+          [:task_tracker, 'Task (レベル4)', global_settings['task_tracker'] || 'Task'],
+          [:test_tracker, 'Test (レベル4)', global_settings['test_tracker'] || 'Test'],
+          [:bug_tracker, 'Bug (レベル4)', global_settings['bug_tracker'] || 'Bug']
+        ].each do |key, label, global_value| %>
+          <tr>
+            <td><%= label %></td>
+            <td>
+              <%= select_tag "epic_ladder_project_setting[#{key}]",
+                  options_for_select(
+                    [[l(:label_epic_ladder_use_global_setting, value: global_value), '']] + trackers.map { |t| [t, t] },
+                    setting.send(key) || ''
+                  ),
+                  class: 'tracker-select' %>
+            </td>
+            <td class="global-value"><code><%= global_value %></code></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </fieldset>
+
+  <%# 機能設定 %>
+  <fieldset class="box">
+    <legend><%= l(:label_epic_ladder_feature_settings) %></legend>
+
+    <p>
+      <label>
+        <%= select_tag 'epic_ladder_project_setting[hierarchy_guide_enabled]',
+            options_for_select([
+              [l(:label_epic_ladder_use_global_setting, value: global_settings['hierarchy_guide_enabled'] == '1' ? 'ON' : 'OFF'), ''],
+              [l(:general_text_Yes), '1'],
+              [l(:general_text_No), '0']
+            ], setting.hierarchy_guide_enabled.nil? ? '' : (setting.hierarchy_guide_enabled ? '1' : '0')),
+            class: 'feature-select' %>
+        <strong><%= l(:label_epic_ladder_hierarchy_guide) %></strong>
+      </label>
+      <em class="info"><%= l(:label_epic_ladder_hierarchy_guide_description) %></em>
+    </p>
+  </fieldset>
+
+  <%# MCP設定 %>
   <fieldset class="box">
     <legend><%= l(:label_epic_ladder_mcp_settings) %></legend>
 
     <p>
       <label>
-        <%= hidden_field_tag 'epic_ladder_project_setting[mcp_enabled]', '0' %>
-        <%= check_box_tag 'epic_ladder_project_setting[mcp_enabled]', '1', setting.mcp_enabled,
-            id: 'epic_ladder_mcp_enabled' %>
+        <%= select_tag 'epic_ladder_project_setting[mcp_enabled]',
+            options_for_select([
+              [l(:label_epic_ladder_use_global_setting, value: global_settings['mcp_enabled'] == '1' ? 'ON' : 'OFF'), ''],
+              [l(:general_text_Yes), '1'],
+              [l(:general_text_No), '0']
+            ], setting.mcp_enabled.nil? ? '' : (setting.mcp_enabled ? '1' : '0')),
+            class: 'feature-select' %>
         <strong><%= l(:label_epic_ladder_mcp_enable) %></strong>
       </label>
       <em class="info"><%= l(:label_epic_ladder_mcp_description) %></em>
     </p>
   </fieldset>
 
-  <p><%= submit_tag l(:button_save) %></p>
+  <p>
+    <%= submit_tag l(:button_save) %>
+    <%= link_to l(:label_epic_ladder_reset_to_global), '#', id: 'reset-to-global-link', class: 'icon icon-reload' %>
+  </p>
 <% end %>
 
 <%# MCPツールヒント設定（Registryから動的取得） %>
@@ -31,18 +102,37 @@
         <h4 class="category-header"><%= l("epic_ladder.mcp_tool_categories.#{category}") %></h4>
         <% tools.each do |tool_key| %>
           <% hint = EpicLadder::McpToolHint.for_tool(@project, tool_key) %>
+          <% global_hint = EpicLadder::McpToolHint.global_hint_for(tool_key) %>
+          <% use_project_setting = hint.persisted? && hint.enabled && hint.hint_text.present? %>
           <div class="mcp-tool-hint-item">
             <div class="tool-header">
               <span class="tool-name"><%= l("epic_ladder.mcp_tools.#{tool_key}") %></span>
               <code class="tool-key"><%= tool_key %></code>
-              <label class="enabled-toggle">
-                <%= hidden_field_tag "mcp_tool_hints[#{tool_key}][enabled]", '0' %>
-                <%= check_box_tag "mcp_tool_hints[#{tool_key}][enabled]", '1', hint.enabled,
-                    id: "mcp_tool_hint_#{tool_key}_enabled" %>
-                <%= l(:label_epic_ladder_mcp_tool_hint_enabled) %>
+            </div>
+            <div class="tool-hint-options">
+              <label class="hint-option">
+                <%= radio_button_tag "mcp_tool_hints[#{tool_key}][use_global]", '1', !use_project_setting,
+                    id: "mcp_tool_hint_#{tool_key}_use_global",
+                    class: 'use-global-radio',
+                    data: { tool: tool_key } %>
+                <span class="option-label">
+                  <%= l(:label_epic_ladder_use_global_setting, value: '') %>
+                  <% if global_hint.present? %>
+                    <span class="global-value">"<%= truncate(global_hint, length: 30) %>"</span>
+                  <% else %>
+                    <span class="global-value empty">（<%= l(:label_epic_ladder_not_set) %>）</span>
+                  <% end %>
+                </span>
+              </label>
+              <label class="hint-option">
+                <%= radio_button_tag "mcp_tool_hints[#{tool_key}][use_global]", '0', use_project_setting,
+                    id: "mcp_tool_hint_#{tool_key}_use_project",
+                    class: 'use-project-radio',
+                    data: { tool: tool_key } %>
+                <span class="option-label"><%= l(:label_epic_ladder_use_project_setting) %></span>
               </label>
             </div>
-            <div class="tool-hint-input">
+            <div class="tool-hint-input" id="hint_input_<%= tool_key %>" style="<%= use_project_setting ? '' : 'display: none;' %>">
               <%= text_area_tag "mcp_tool_hints[#{tool_key}][hint_text]", hint.hint_text,
                   rows: 2,
                   maxlength: EpicLadder::McpToolHint::HINT_TEXT_MAX_LENGTH,
@@ -77,6 +167,41 @@
   margin-top: 3px;
   margin-left: 20px;
 }
+.tracker-mapping-table {
+  width: 100%;
+  max-width: 700px;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+.tracker-mapping-table th,
+.tracker-mapping-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+.tracker-mapping-table th {
+  background: #f5f5f5;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #555;
+}
+.tracker-mapping-table .global-value {
+  color: #888;
+  font-size: 0.9em;
+}
+.tracker-mapping-table .global-value code {
+  background: #e8e8e8;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.tracker-select,
+.feature-select {
+  min-width: 200px;
+}
+#reset-to-global-link {
+  margin-left: 10px;
+  font-size: 0.9em;
+}
 .mcp-tool-category {
   margin: 15px 0;
 }
@@ -89,10 +214,10 @@
   border-radius: 4px 4px 0 0;
 }
 .mcp-tool-hint-item {
-  border: 1px solid #ddd;
-  border-top: none;
-  padding: 10px 12px;
-  background: #fafafa;
+	display: flex;
+	justify-content: left;
+	flex-direction: column;
+	flex-wrap: wrap;
 }
 .mcp-tool-hint-item:last-child {
   border-radius: 0 0 4px 4px;
@@ -114,13 +239,31 @@
   font-size: 0.8em;
   color: #666;
 }
-.mcp-tool-hint-item .enabled-toggle {
-  margin-left: auto;
-  font-size: 0.9em;
-  color: #555;
+.mcp-tool-hint-item .tool-hint-options {
+  margin: 8px 0;
+}
+.mcp-tool-hint-item .hint-option {
+  display: block;
+  margin: 4px 0;
+  cursor: pointer;
+}
+.mcp-tool-hint-item .hint-option input[type="radio"] {
+  margin-right: 6px;
+}
+.mcp-tool-hint-item .option-label .global-value {
+  color: #4a7298;
+  font-style: italic;
+}
+.mcp-tool-hint-item .option-label .global-value.empty {
+  color: #999;
 }
 .mcp-tool-hint-item .tool-hint-input {
-  margin-top: 5px;
+  margin-top: 8px;
+  margin-left: 20px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 .mcp-tool-hint-textarea {
   width: 100%;
@@ -149,6 +292,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // 文字数カウント
   document.querySelectorAll('.mcp-tool-hint-textarea').forEach(function(textarea) {
     var countSpan = document.querySelector('.char-count[data-for="' + textarea.id + '"] .current');
     if (countSpan) {
@@ -164,6 +308,31 @@ document.addEventListener('DOMContentLoaded', function() {
       textarea.addEventListener('input', updateCount);
       updateCount();
     }
+  });
+
+  // グローバル設定にリセット
+  document.getElementById('reset-to-global-link').addEventListener('click', function(e) {
+    e.preventDefault();
+    if (confirm('<%= j l(:label_epic_ladder_reset_to_global_confirm) %>')) {
+      document.querySelectorAll('.tracker-select, .feature-select').forEach(function(select) {
+        select.value = '';
+      });
+    }
+  });
+
+  // MCPツールヒント: ラジオボタン切り替えでテキストエリア表示/非表示
+  document.querySelectorAll('.use-global-radio, .use-project-radio').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var toolKey = this.dataset.tool;
+      var hintInput = document.getElementById('hint_input_' + toolKey);
+      if (hintInput) {
+        if (this.classList.contains('use-project-radio') && this.checked) {
+          hintInput.style.display = '';
+        } else if (this.classList.contains('use-global-radio') && this.checked) {
+          hintInput.style.display = 'none';
+        }
+      }
+    });
   });
 });
 </script>

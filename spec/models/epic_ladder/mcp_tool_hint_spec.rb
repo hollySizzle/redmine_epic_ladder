@@ -139,8 +139,119 @@ RSpec.describe EpicLadder::McpToolHint, type: :model do
     end
 
     context 'when hint does not exist' do
+      context 'and global hint exists' do
+        before do
+          Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+            'mcp_tool_hints' => {
+              'create_task' => { 'enabled' => '1', 'hint_text' => 'グローバルルール' }
+            }
+          )
+        end
+
+        it 'falls back to global hint' do
+          expect(described_class.hint_for(project, 'create_task')).to eq('グローバルルール')
+        end
+      end
+
+      context 'and global hint does not exist' do
+        before do
+          Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+            'mcp_tool_hints' => {}
+          )
+        end
+
+        it 'returns nil' do
+          expect(described_class.hint_for(project, 'create_task')).to be_nil
+        end
+      end
+
+      context 'and global hint is disabled' do
+        before do
+          Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+            'mcp_tool_hints' => {
+              'create_task' => { 'enabled' => '0', 'hint_text' => 'グローバルルール' }
+            }
+          )
+        end
+
+        it 'returns nil' do
+          expect(described_class.hint_for(project, 'create_task')).to be_nil
+        end
+      end
+    end
+
+    context 'when project hint exists but is disabled' do
+      before do
+        create(:mcp_tool_hint,
+               project: project,
+               tool_key: 'create_task',
+               hint_text: 'プロジェクトルール',
+               enabled: false)
+        Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+          'mcp_tool_hints' => {
+            'create_task' => { 'enabled' => '1', 'hint_text' => 'グローバルルール' }
+          }
+        )
+      end
+
+      it 'falls back to global hint' do
+        expect(described_class.hint_for(project, 'create_task')).to eq('グローバルルール')
+      end
+    end
+  end
+
+  describe '.global_hint_for' do
+    context 'when global hint is enabled with text' do
+      before do
+        Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+          'mcp_tool_hints' => {
+            'create_task' => { 'enabled' => '1', 'hint_text' => 'グローバルルール' }
+          }
+        )
+      end
+
+      it 'returns hint text' do
+        expect(described_class.global_hint_for('create_task')).to eq('グローバルルール')
+      end
+    end
+
+    context 'when global hint is disabled' do
+      before do
+        Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+          'mcp_tool_hints' => {
+            'create_task' => { 'enabled' => '0', 'hint_text' => 'グローバルルール' }
+          }
+        )
+      end
+
       it 'returns nil' do
-        expect(described_class.hint_for(project, 'create_task')).to be_nil
+        expect(described_class.global_hint_for('create_task')).to be_nil
+      end
+    end
+
+    context 'when global hint text is blank' do
+      before do
+        Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+          'mcp_tool_hints' => {
+            'create_task' => { 'enabled' => '1', 'hint_text' => '' }
+          }
+        )
+      end
+
+      it 'returns nil' do
+        expect(described_class.global_hint_for('create_task')).to be_nil
+      end
+    end
+
+    context 'when global hint does not exist' do
+      before do
+        Setting.plugin_redmine_epic_ladder = Setting.plugin_redmine_epic_ladder.merge(
+          'mcp_tool_hints' => {}
+        )
+      end
+
+      it 'returns nil' do
+        expect(described_class.global_hint_for('create_task')).to be_nil
       end
     end
   end
@@ -160,7 +271,7 @@ RSpec.describe EpicLadder::McpToolHint, type: :model do
 
       it 'appends hint to description' do
         result = described_class.build_description(project, 'create_task', base_description)
-        expect(result).to eq("Taskチケットを作成します【プロジェクト固有ルール】#{hint_text}")
+        expect(result).to eq("Taskチケットを作成します【ルール】#{hint_text}")
       end
     end
 

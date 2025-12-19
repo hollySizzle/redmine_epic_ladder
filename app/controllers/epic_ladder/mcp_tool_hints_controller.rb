@@ -14,8 +14,15 @@ module EpicLadder
         next unless McpToolHint::MODIFYING_TOOLS.include?(tool_key)
 
         hint = McpToolHint.for_tool(@project, tool_key)
-        hint.enabled = hint_params[:enabled] == '1'
-        hint.hint_text = hint_params[:hint_text].presence
+
+        # use_global == '1' の場合はグローバル設定を使用（enabled=false, hint_text=nil）
+        if hint_params[:use_global] == '1'
+          hint.enabled = false
+          hint.hint_text = nil
+        else
+          hint.enabled = true
+          hint.hint_text = hint_params[:hint_text].presence
+        end
 
         unless hint.save
           errors << "#{tool_key}: #{hint.errors.full_messages.join(', ')}"

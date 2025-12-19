@@ -30,9 +30,20 @@ ja:
 
   # プロジェクト設定タブ
   label_epic_ladder_settings: "Epic Ladder"
+  label_epic_ladder_tracker_settings: "トラッカー名マッピング"
+  label_epic_ladder_tracker_settings_description: "階層レベルごとに使用するトラッカーを選択します。空欄の場合はグローバル設定が適用されます。"
+  label_epic_ladder_hierarchy_level: "階層レベル"
+  label_epic_ladder_tracker_name: "トラッカー"
+  label_epic_ladder_global_setting: "グローバル設定"
+  label_epic_ladder_use_global_setting: "グローバル設定を使用 (%{value})"
+  label_epic_ladder_feature_settings: "機能設定"
+  label_epic_ladder_hierarchy_guide: "階層ガイド表示"
+  label_epic_ladder_hierarchy_guide_description: "チケット作成時に階層構造のガイドを表示します"
   label_epic_ladder_mcp_settings: "MCP API設定"
-  label_epic_ladder_mcp_enable: "このプロジェクトでMCP APIを許可する"
+  label_epic_ladder_mcp_enable: "MCP APIを許可"
   label_epic_ladder_mcp_description: "Claude Code等のAIツールからこのプロジェクトへのアクセスを許可します"
+  label_epic_ladder_reset_to_global: "グローバル設定にリセット"
+  label_epic_ladder_reset_to_global_confirm: "すべての設定をグローバル設定にリセットしますか？"
   error_epic_ladder_settings_save_failed: "Epic Ladder設定の保存に失敗しました: %{errors}"
 
   # MCPツールヒント設定
@@ -40,6 +51,8 @@ ja:
   label_epic_ladder_mcp_tool_hints_description: "AIがツールを使用する際に参照するプロジェクト固有のルールを設定します（最大500文字）"
   label_epic_ladder_mcp_tool_hint_enabled: "有効"
   label_epic_ladder_mcp_tool_hint_placeholder: "例: ## ルール\n- PR必須\n- 見積もり記載"
+  label_epic_ladder_use_project_setting: "プロジェクト固有設定を使用"
+  label_epic_ladder_not_set: "未設定"
   notice_epic_ladder_mcp_tool_hints_saved: "MCPツールヒント設定を保存しました"
   error_epic_ladder_mcp_tool_hints_save_failed: "MCPツールヒント設定の保存に失敗しました: %{errors}"
 

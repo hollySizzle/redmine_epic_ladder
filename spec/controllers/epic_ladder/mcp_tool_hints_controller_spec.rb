@@ -25,8 +25,8 @@ RSpec.describe EpicLadder::McpToolHintsController, type: :controller do
         patch :update, params: {
           project_id: project.identifier,
           mcp_tool_hints: {
-            'create_task' => { enabled: '1', hint_text: 'タスク作成時のヒント' },
-            'add_issue_comment' => { enabled: '1', hint_text: 'コメント追加時のヒント' }
+            'create_task' => { use_global: '0', hint_text: 'タスク作成時のヒント' },
+            'add_issue_comment' => { use_global: '0', hint_text: 'コメント追加時のヒント' }
           }
         }
 
@@ -42,33 +42,51 @@ RSpec.describe EpicLadder::McpToolHintsController, type: :controller do
         expect(hint2.hint_text).to eq('コメント追加時のヒント')
       end
 
-      it 'updates existing hints' do
-        existing = create(:mcp_tool_hint, project: project, tool_key: 'create_task', hint_text: '旧ヒント')
+      it 'updates to use global setting' do
+        existing = create(:mcp_tool_hint, project: project, tool_key: 'create_task',
+                         hint_text: '旧ヒント', enabled: true)
 
         patch :update, params: {
           project_id: project.identifier,
           mcp_tool_hints: {
-            'create_task' => { enabled: '0', hint_text: '新ヒント' }
+            'create_task' => { use_global: '1' }
           }
         }
 
         expect(response).to redirect_to(settings_project_path(project, tab: 'epic_ladder'))
         existing.reload
         expect(existing.enabled).to be false
+        expect(existing.hint_text).to be_nil
+      end
+
+      it 'updates existing hints with project-specific setting' do
+        existing = create(:mcp_tool_hint, project: project, tool_key: 'create_task',
+                         hint_text: '旧ヒント', enabled: false)
+
+        patch :update, params: {
+          project_id: project.identifier,
+          mcp_tool_hints: {
+            'create_task' => { use_global: '0', hint_text: '新ヒント' }
+          }
+        }
+
+        existing.reload
+        expect(existing.enabled).to be true
         expect(existing.hint_text).to eq('新ヒント')
       end
 
-      it 'clears hint text when empty' do
+      it 'clears hint text when empty but project setting selected' do
         existing = create(:mcp_tool_hint, project: project, tool_key: 'create_task', hint_text: '既存ヒント')
 
         patch :update, params: {
           project_id: project.identifier,
           mcp_tool_hints: {
-            'create_task' => { enabled: '1', hint_text: '' }
+            'create_task' => { use_global: '0', hint_text: '' }
           }
         }
 
         existing.reload
+        expect(existing.enabled).to be true
         expect(existing.hint_text).to be_nil
       end
     end

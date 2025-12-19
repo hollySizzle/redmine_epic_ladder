@@ -68,11 +68,27 @@ rescue LoadError
   require 'rspec/rails'
 end
 
+# CRITICAL: Rails環境ロード直後にスキーマキャッシュをリセット
+# EpicLadder::ProjectSettingを明示的にロードし、スキーマを更新
+if defined?(EpicLadder::ProjectSetting)
+  EpicLadder::ProjectSetting.reset_column_information
+else
+  # モジュールがまだロードされていない場合、明示的にロード
+  require_dependency 'epic_ladder/project_setting'
+  EpicLadder::ProjectSetting.reset_column_information
+end
+
 # FactoryBot ファクトリー読み込み（Redmine rails_helper の後）
 FactoryBot.definition_file_paths = [
   File.expand_path('factories', __dir__)
 ]
 FactoryBot.reload
+
+# スキーマキャッシュをリセット（マイグレーション後のカラムを認識させる）
+# Rails環境ロード後、テスト開始前に実行する必要がある
+ActiveRecord::Base.descendants.each do |model|
+  model.reset_column_information if model.respond_to?(:reset_column_information)
+end
 
 # プラグイン固有の設定
 RSpec.configure do |config|
@@ -83,6 +99,9 @@ RSpec.configure do |config|
   config.before(:suite) do
     ActionMailer::Base.perform_deliveries = false
     ActionMailer::Base.raise_delivery_errors = false
+
+    # スキーマキャッシュをリセット（マイグレーション後のカラムを認識させる）
+    EpicLadder::ProjectSetting.reset_column_information if defined?(EpicLadder::ProjectSetting)
   end
 
   config.before(:each) do

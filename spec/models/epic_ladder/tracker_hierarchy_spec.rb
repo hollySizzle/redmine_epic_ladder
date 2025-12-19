@@ -4,17 +4,42 @@ require_relative '../../rails_helper'
 
 RSpec.describe EpicLadder::TrackerHierarchy, type: :model do
   describe '.tracker_names' do
-    it 'returns tracker name mappings' do
-      names = described_class.tracker_names
+    context 'without project argument (global settings)' do
+      it 'returns global tracker name mappings' do
+        names = described_class.tracker_names
 
-      expect(names).to include(
-        epic: epic_tracker_name,
-        feature: feature_tracker_name,
-        user_story: user_story_tracker_name,
-        task: task_tracker_name,
-        test: test_tracker_name,
-        bug: bug_tracker_name
-      )
+        expect(names).to include(
+          epic: epic_tracker_name,
+          feature: feature_tracker_name,
+          user_story: user_story_tracker_name,
+          task: task_tracker_name,
+          test: test_tracker_name,
+          bug: bug_tracker_name
+        )
+      end
+    end
+
+    context 'with project argument' do
+      let(:project) { create(:project) }
+
+      it 'returns global settings when project has no overrides' do
+        names = described_class.tracker_names(project)
+        expect(names[:epic]).to eq(epic_tracker_name)
+      end
+
+      it 'returns project-specific settings when overridden' do
+        EpicLadder::ProjectSetting.create!(
+          project: project,
+          epic_tracker: 'CustomEpic',
+          feature_tracker: 'CustomFeature'
+        )
+
+        names = described_class.tracker_names(project)
+        expect(names[:epic]).to eq('CustomEpic')
+        expect(names[:feature]).to eq('CustomFeature')
+        # Non-overridden values fall back to global
+        expect(names[:user_story]).to eq(user_story_tracker_name)
+      end
     end
   end
 

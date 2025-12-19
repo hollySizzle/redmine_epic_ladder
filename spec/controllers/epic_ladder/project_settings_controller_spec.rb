@@ -57,7 +57,8 @@ RSpec.describe EpicLadder::ProjectSettingsController, type: :controller do
         expect(response).to redirect_to(settings_project_path(project, tab: 'epic_ladder'))
 
         setting = EpicLadder::ProjectSetting.for_project(project)
-        expect(setting.mcp_enabled).to be false
+        # nil means "use global setting" (fallback behavior)
+        expect(setting.mcp_enabled).to be_nil
       end
 
       it 'handles completely missing epic_ladder_project_setting parameter' do
@@ -66,7 +67,8 @@ RSpec.describe EpicLadder::ProjectSettingsController, type: :controller do
         expect(response).to redirect_to(settings_project_path(project, tab: 'epic_ladder'))
 
         setting = EpicLadder::ProjectSetting.for_project(project)
-        expect(setting.mcp_enabled).to be false
+        # nil means "use global setting" (fallback behavior)
+        expect(setting.mcp_enabled).to be_nil
       end
     end
 

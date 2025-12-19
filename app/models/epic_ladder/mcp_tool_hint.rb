@@ -57,16 +57,34 @@ module EpicLadder
       find_or_initialize_by(project: project, tool_key: tool_key)
     end
 
-    # プロジェクトの有効なヒントを取得
+    # プロジェクトの有効なヒントを取得（グローバル設定へのフォールバック付き）
     # @param project [Project] プロジェクト
     # @param tool_key [String] ツールキー
     # @return [String, nil] ヒントテキスト（無効または未設定の場合nil）
     def self.hint_for(project, tool_key)
-      hint = enabled.find_by(project: project, tool_key: tool_key)
-      hint&.hint_text.presence
+      # 1. プロジェクト固有の設定を確認
+      project_hint = enabled.find_by(project: project, tool_key: tool_key)
+      return project_hint.hint_text.presence if project_hint&.hint_text.present?
+
+      # 2. グローバル設定にフォールバック
+      global_hint_for(tool_key)
     end
 
-    # ベースのdescriptionにプロジェクト固有ヒントを付与
+    # グローバル設定からヒントを取得
+    # @param tool_key [String] ツールキー
+    # @return [String, nil] ヒントテキスト（無効または未設定の場合nil）
+    def self.global_hint_for(tool_key)
+      settings = Setting.plugin_redmine_epic_ladder || {}
+      hints = settings['mcp_tool_hints'] || {}
+      hint = hints[tool_key]
+
+      return nil unless hint.is_a?(Hash)
+      return nil unless hint['enabled'] == '1' || hint['enabled'] == true
+
+      hint['hint_text'].presence
+    end
+
+    # ベースのdescriptionにヒントを付与
     # @param project [Project] プロジェクト
     # @param tool_key [String] ツールキー
     # @param base_description [String] ベースの説明文
@@ -75,7 +93,7 @@ module EpicLadder
       hint = hint_for(project, tool_key)
       return base_description if hint.blank?
 
-      "#{base_description}【プロジェクト固有ルール】#{hint}"
+      "#{base_description}【ルール】#{hint}"
     end
 
     # ツールキーの表示名を取得
