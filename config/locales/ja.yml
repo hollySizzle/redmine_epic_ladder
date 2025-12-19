@@ -87,5 +87,6 @@ ja:
       get_project_structure: "プロジェクト構造取得"
       get_issue_detail: "チケット詳細取得"
       list_project_members: "メンバー一覧"
+      list_statuses: "ステータス一覧"
     mcp_hint_examples:
       task_review: "## ルール\n- PR必須\n- 見積もり記載"
