@@ -86,5 +86,6 @@ en:
       list_epics: "List Epics"
       get_project_structure: "Get Project Structure"
       get_issue_detail: "Get Issue Detail"
+      list_project_members: "List Project Members"
     mcp_hint_examples:
       task_review: "## Rules\n- PR required\n- Add estimate"
