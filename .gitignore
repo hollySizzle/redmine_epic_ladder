@@ -53,7 +53,10 @@ vibes/scripts/hooks/log
 .env.development
 .env.test
 .env.production
-vibes/scripts/secrets.sample.json5
+
+# Secrets (機密情報 - 絶対にコミットしない)
+vibes/scripts/secrets.json5
+vibes/temps/
 
 # License-sensitive external documentation (copied from third-party sites)
 vibes/docs/apis/
