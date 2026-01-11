@@ -1,11 +1,29 @@
 {
   "mcpServers": {
-    "redmine_epic_ladder": {
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git"
+      ]
+    },
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server"
+      ],
+      "env": {},
+      "disabled": false
+    },
+    "redmine_epic_grid": {
       "type": "http",
-      "url": "http://localhost:8500/mcp/rpc",
+      "url": "${READMINE_PROJECT_URL}",
       "headers": {
-        "X-Redmine-API-Key": "testapikeyadminkanban1234567890",
-        "X-Default-Project": "sakura-ec"
+        "X-Redmine-API-Key": "${REDMINE_API_KEY}",
+        "X-Default-Project": "${REDMINE_X_DEFAULT_PROJECT}"
       }
     }
   }

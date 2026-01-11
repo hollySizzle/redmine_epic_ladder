@@ -283,6 +283,9 @@
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "redmine_epic_ladder"
+    "redmine_epic_ladder",
+    "git",
+    "serena",
+    "redmine_epic_grid"
   ]
 }
