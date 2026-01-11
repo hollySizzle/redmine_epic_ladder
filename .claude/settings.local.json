@@ -273,7 +273,13 @@
       "Bash(PGPASSWORD=example psql -h db -U postgres -c \"CREATE DATABASE redmine_test;\")",
       "Bash(RAILS_ENV=test bundle exec rake db:migrate)",
       "Bash(RAILS_ENV=development rails runner \"puts ''=== 優先度一覧 ===''; IssuePriority.all.each { |p| puts \"\"ID: #{p.id}, 名前: #{p.name}\"\" }; puts \"\"Total: #{IssuePriority.count}件\"\"\")",
-      "Bash(RAILS_ENV=development rails runner \"\npriority_low = IssuePriority.find_by(name: ''Low'')\npriority_normal = IssuePriority.find_by(name: ''Normal'')\npriority_high = IssuePriority.find_by(name: ''High'')\npriority_urgent = IssuePriority.find_by(name: ''Urgent'')\n\nputs ''=== 優先度取得確認 ===''\nputs \"\"Low: #{priority_low&.id || ''nil''}\"\"\nputs \"\"Normal: #{priority_normal&.id || ''nil''}\"\"\nputs \"\"High: #{priority_high&.id || ''nil''}\"\"\nputs \"\"Urgent: #{priority_urgent&.id || ''nil''}\"\"\n\")"
+      "Bash(RAILS_ENV=development rails runner \"\npriority_low = IssuePriority.find_by(name: ''Low'')\npriority_normal = IssuePriority.find_by(name: ''Normal'')\npriority_high = IssuePriority.find_by(name: ''High'')\npriority_urgent = IssuePriority.find_by(name: ''Urgent'')\n\nputs ''=== 優先度取得確認 ===''\nputs \"\"Low: #{priority_low&.id || ''nil''}\"\"\nputs \"\"Normal: #{priority_normal&.id || ''nil''}\"\"\nputs \"\"High: #{priority_high&.id || ''nil''}\"\"\nputs \"\"Urgent: #{priority_urgent&.id || ''nil''}\"\"\n\")",
+      "mcp__redmine_epic_grid__get_project_structure_tool",
+      "mcp__redmine_epic_grid__create_user_story_tool",
+      "mcp__redmine_epic_grid__create_task_tool",
+      "mcp__redmine_epic_grid__create_test_tool",
+      "mcp__redmine_epic_grid__create_epic_tool",
+      "mcp__redmine_epic_grid__update_issue_parent_tool"
     ],
     "deny": [],
     "ask": [],

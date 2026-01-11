@@ -61,3 +61,4 @@ vibes/temps/
 # License-sensitive external documentation (copied from third-party sites)
 vibes/docs/apis/
 .mcp.json
+.claude/settings.local.json
