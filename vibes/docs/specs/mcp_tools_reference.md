@@ -3,13 +3,13 @@
 This document is **auto-generated** from Ruby source code.
 Do not edit manually. Run `rake mcp:generate_docs` to regenerate.
 
-**Total Tools**: 22
+**Total Tools**: 24
 
 ---
 
 ## AddIssueCommentTool
 
-**Description**: チケットにコメント（ノート）を追加します。
+**Description**: Adds a comment (note) to an issue.
 
 **Class**: `EpicLadder::McpTools::AddIssueCommentTool`
 
@@ -28,14 +28,14 @@ AI: AddIssueCommentToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `comment` (string, **required**): コメント内容
+- `issue_id` (string, **required**): Issue ID
+- `comment` (string, **required**): Comment content
 
 ---
 
 ## AssignToVersionTool
 
-**Description**: チケット（UserStory推奨）をVersionに割り当てます。UserStoryの場合、配下のTask/Bug/Testも自動的に同じVersionに設定されます。バージョンの期日に基づいて開始日・終了日も自動設定されます。
+**Description**: Assigns an issue (UserStory recommended) to a Version. For UserStory, child Task/Bug/Test issues are also assigned. Start/due dates are auto-set based on version.
 
 **Class**: `EpicLadder::McpTools::AssignToVersionTool`
 
@@ -56,16 +56,16 @@ AI: AssignToVersionToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `version_id` (string, **required**): Version ID
-- `update_parent` (boolean, optional): 親チケットも同時に更新するか（デフォルト: false）
-- `propagate_to_children` (boolean, optional): 子チケットにもバージョンと日付を伝播するか（デフォルト: true）
+- `issue_id` (string, **required**): Issue ID
+- `version_id` (string, **required**): Target Version ID
+- `update_parent` (boolean, optional): Also update parent issue (default: false)
+- `propagate_to_children` (boolean, optional): Propagate version and dates to children (default: true)
 
 ---
 
 ## CreateBugTool
 
-**Description**: Bug（発生した不具合）チケットを作成します。例: '申込フォームのバリデーションが効かない'
+**Description**: Creates a Bug (defect) issue. Example: 'Form validation not working'
 
 **Class**: `EpicLadder::McpTools::CreateBugTool`
 
@@ -84,17 +84,17 @@ AI: CreateBugToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `description` (string, **required**): Bugの説明（自然言語OK）
-- `parent_user_story_id` (string, **required**): 親UserStory ID（階層構造維持のため必須）
-- `version_id` (string, optional): Version ID（省略時は親から継承）
-- `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `description` (string, **required**): Bug description (natural language OK)
+- `parent_user_story_id` (string, **required**): Parent UserStory ID (required for hierarchy)
+- `version_id` (string, optional): Version ID (inherits from parent if omitted)
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
 ---
 
 ## CreateEpicTool
 
-**Description**: Epic（大分類）チケットを作成します。例: 'ユーザー動線'
+**Description**: Creates an Epic (top-level category) issue. Example: 'User Journey'
 
 **Class**: `EpicLadder::McpTools::CreateEpicTool`
 
@@ -113,16 +113,16 @@ AI: CreateEpicToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `subject` (string, **required**): Epicの件名
-- `description` (string, optional): Epicの説明（省略可）
-- `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `subject` (string, **required**): Epic subject/title
+- `description` (string, optional): Epic description (optional)
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
 ---
 
 ## CreateFeatureTool
 
-**Description**: Feature（分類を行うための中間層）チケットを作成します。例: 'CTA'
+**Description**: Creates a Feature (intermediate category) issue under an Epic. Example: 'CTA Button'
 
 **Class**: `EpicLadder::McpTools::CreateFeatureTool`
 
@@ -141,17 +141,17 @@ AI: CreateFeatureToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `subject` (string, **required**): Featureの件名
-- `parent_epic_id` (string, **required**): 親Epic ID
-- `description` (string, optional): Featureの説明（省略可）
-- `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `subject` (string, **required**): Feature subject/title
+- `parent_epic_id` (string, **required**): Parent Epic issue ID
+- `description` (string, optional): Feature description (optional)
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
 ---
 
 ## CreateTaskTool
 
-**Description**: 自然言語からTaskチケットを作成します。例: 'カートのリファクタリング'
+**Description**: Creates a Task issue from natural language. Example: 'Refactor shopping cart'
 
 **Class**: `EpicLadder::McpTools::CreateTaskTool`
 
@@ -170,17 +170,17 @@ AI: CreateTaskToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `description` (string, **required**): タスクの説明（自然言語OK）
-- `parent_user_story_id` (string, **required**): 親UserStory ID（階層構造維持のため必須）
-- `version_id` (string, optional): Version ID（省略時は親から継承）
-- `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `description` (string, **required**): Task description (natural language OK)
+- `parent_user_story_id` (string, **required**): Parent UserStory ID (required for hierarchy)
+- `version_id` (string, optional): Version ID (inherits from parent if omitted)
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
 ---
 
 ## CreateTestTool
 
-**Description**: Test（やるべきテストや検証）チケットを作成します。例: '申込完了までのE2Eテスト'
+**Description**: Creates a Test (verification/QA) issue. Example: 'E2E test for registration flow'
 
 **Class**: `EpicLadder::McpTools::CreateTestTool`
 
@@ -199,17 +199,17 @@ AI: CreateTestToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `description` (string, **required**): Testの説明（自然言語OK）
-- `parent_user_story_id` (string, **required**): 親UserStory ID（階層構造維持のため必須）
-- `version_id` (string, optional): Version ID（省略時は親から継承）
-- `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `description` (string, **required**): Test description (natural language OK)
+- `parent_user_story_id` (string, **required**): Parent UserStory ID (required for hierarchy)
+- `version_id` (string, optional): Version ID (inherits from parent if omitted)
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
 ---
 
 ## CreateUserStoryTool
 
-**Description**: UserStory（ユーザの要求など､ざっくりとした目標）チケットを作成します。例: '申込画面を作る'
+**Description**: Creates a UserStory (user requirement/goal) issue under a Feature. Example: 'Build registration form'
 
 **Class**: `EpicLadder::McpTools::CreateUserStoryTool`
 
@@ -228,18 +228,18 @@ AI: CreateUserStoryToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `subject` (string, **required**): UserStoryの件名
-- `parent_feature_id` (string, **required**): 親Feature ID
-- `version_id` (string, optional): Version ID（リリース予定）
-- `description` (string, optional): UserStoryの説明（省略可）
-- `assigned_to_id` (string, optional): 担当者ID（省略時は現在のユーザー）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `subject` (string, **required**): UserStory subject/title
+- `parent_feature_id` (string, **required**): Parent Feature issue ID
+- `version_id` (string, optional): Target Version ID (release milestone)
+- `description` (string, optional): UserStory description (optional)
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
 ---
 
 ## CreateVersionTool
 
-**Description**: Version（リリース予定）を作成します。例: 'Sprint 2025-02（2025-02-28まで）'
+**Description**: Creates a Version (release milestone). Example: 'Sprint 2025-02 (due 2025-02-28)'
 
 **Class**: `EpicLadder::McpTools::CreateVersionTool`
 
@@ -258,17 +258,17 @@ AI: CreateVersionToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `name` (string, **required**): Version名
-- `effective_date` (string, **required**): リリース予定日（YYYY-MM-DD形式）
-- `description` (string, optional): Versionの説明（省略可）
-- `status` (string, optional): ステータス（open/locked/closed、デフォルト: open）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `name` (string, **required**): Version name
+- `effective_date` (string, **required**): Release date (YYYY-MM-DD format)
+- `description` (string, optional): Version description (optional)
+- `status` (string, optional): Status (open/locked/closed, default: open)
 
 ---
 
 ## GetIssueDetailTool
 
-**Description**: チケットの詳細情報、コメント（更新履歴）、子チケットを取得します。
+**Description**: Gets issue details, comments (update history), and child issues.
 
 **Class**: `EpicLadder::McpTools::GetIssueDetailTool`
 
@@ -287,13 +287,13 @@ AI: GetIssueDetailToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
+- `issue_id` (string, **required**): Issue ID
 
 ---
 
 ## GetProjectStructureTool
 
-**Description**: プロジェクトのEpic階層構造（Epic→Feature→UserStory）を可視化します。PMがプロジェクト全体を把握するのに便利です。
+**Description**: Visualizes project hierarchy (Epic->Feature->UserStory). Useful for PMs to understand project structure.
 
 **Class**: `EpicLadder::McpTools::GetProjectStructureTool`
 
@@ -312,17 +312,17 @@ AI: GetProjectStructureToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `version_id` (string, optional): Version IDでフィルタ（省略可）
-- `status` (string, optional): ステータスでフィルタ（open/closed、省略可）※include_closed推奨
-- `max_depth` (integer, optional): 取得階層の深さ: 1=Epic, 2=+Feature, 3=+UserStory, 4=+Task/Bug/Test（デフォルト3）
-- `include_closed` (boolean, optional): クローズ済みチケットを含むか（デフォルトfalse=openのみ）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `version_id` (string, optional): Filter by Version ID (optional)
+- `status` (string, optional): Filter by status (open/closed, optional; include_closed recommended)
+- `max_depth` (integer, optional): Hierarchy depth: 1=Epic, 2=+Feature, 3=+UserStory, 4=+Task/Bug/Test (default: 3)
+- `include_closed` (boolean, optional): Include closed issues (default: false, open only)
 
 ---
 
 ## ListEpicsTool
 
-**Description**: プロジェクト内のEpic一覧を取得します。担当者、ステータスでフィルタリング可能です。
+**Description**: Lists Epic issues in a project. Can filter by assignee and status.
 
 **Class**: `EpicLadder::McpTools::ListEpicsTool`
 
@@ -341,16 +341,82 @@ AI: ListEpicsToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `assigned_to_id` (string, optional): 担当者IDでフィルタ（省略可）
-- `status` (string, optional): ステータスでフィルタ（open/closed、省略可）
-- `limit` (number, optional): 取得件数上限（デフォルト: 50）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `assigned_to_id` (string, optional): Filter by assignee ID (optional)
+- `status` (string, optional): Filter by status (open/closed, optional)
+- `limit` (number, optional): Max results (default: 50)
+
+---
+
+## ListProjectMembersTool
+
+**Description**: Lists project members. Use this to find assignee candidates.
+
+**Class**: `EpicLadder::McpTools::ListProjectMembersTool`
+
+**Overview**:
+
+プロジェクトメンバー一覧取得MCPツール
+プロジェクトに所属するメンバーを一覧取得する
+チケットの担当者を設定する際に、担当可能なユーザーを探すのに使用
+
+**Examples**:
+
+```
+ユーザー: 「sakura-ecプロジェクトのメンバー一覧を見せて」
+AI: ListProjectMembersToolを呼び出し
+結果: メンバー一覧が返却される
+```
+
+```
+ユーザー: 「このタスクを担当できる人は誰？」
+AI: ListProjectMembersToolを呼び出し
+結果: 担当者候補となるメンバー一覧が返却される
+```
+
+**Parameters**:
+
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `role_name` (string, optional): Filter by role name (optional)
+- `limit` (number, optional): Max results (default: 100)
+
+---
+
+## ListStatusesTool
+
+**Description**: Lists available statuses. When project_id is specified, returns statuses available in that project's workflow.
+
+**Class**: `EpicLadder::McpTools::ListStatusesTool`
+
+**Overview**:
+
+ステータス一覧取得MCPツール
+プロジェクトのワークフローで使用可能なステータスを一覧取得する
+
+**Examples**:
+
+```
+ユーザー: 「ステータス一覧を見せて」
+AI: ListStatusesToolを呼び出し
+結果: ステータス一覧が返却される
+```
+
+```
+ユーザー: 「sakura-ecプロジェクトで使えるステータスは？」
+AI: ListStatusesToolをproject_id指定で呼び出し
+結果: プロジェクトのワークフローで使用可能なステータスが返却される
+```
+
+**Parameters**:
+
+- `project_id` (string, optional): Project ID (identifier or numeric, returns all statuses if omitted)
+- `include_closed` (boolean, optional): Include closed statuses (default: true)
 
 ---
 
 ## ListUserStoriesTool
 
-**Description**: プロジェクト内のUserStory一覧を取得します。Version、担当者でフィルタリング可能です。
+**Description**: Lists UserStory issues in a project. Can filter by version, assignee, and status.
 
 **Class**: `EpicLadder::McpTools::ListUserStoriesTool`
 
@@ -369,17 +435,17 @@ AI: ListUserStoriesToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `version_id` (string, optional): Version IDでフィルタ（省略可）
-- `assigned_to_id` (string, optional): 担当者IDでフィルタ（省略可）
-- `status` (string, optional): ステータスでフィルタ（open/closed、省略可）
-- `limit` (number, optional): 取得件数上限（デフォルト: 50）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `version_id` (string, optional): Filter by Version ID (optional)
+- `assigned_to_id` (string, optional): Filter by assignee ID (optional)
+- `status` (string, optional): Filter by status (open/closed, optional)
+- `limit` (number, optional): Max results (default: 50)
 
 ---
 
 ## ListVersionsTool
 
-**Description**: プロジェクト内のバージョン一覧を取得します。デフォルトはopen状態のみ、期日が近い順でソートされます。
+**Description**: Lists versions in a project. Default: open status only, sorted by due date ascending.
 
 **Class**: `EpicLadder::McpTools::ListVersionsTool`
 
@@ -398,16 +464,16 @@ AI: ListVersionsToolを呼び出し
 
 **Parameters**:
 
-- `project_id` (string, optional): プロジェクトID（識別子または数値ID、省略時はDEFAULT_PROJECT）
-- `status` (string, optional): ステータスでフィルタ（open/locked/closed/all、デフォルト: open）
-- `sort` (string, optional): ソート順（effective_date_asc/effective_date_desc/name_asc/name_desc、デフォルト: effective_date_asc）
-- `limit` (number, optional): 取得件数上限（デフォルト: 50）
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `status` (string, optional): Filter by status (open/locked/closed/all, default: open)
+- `sort` (string, optional): Sort order (effective_date_asc/effective_date_desc/name_asc/name_desc, default: effective_date_asc)
+- `limit` (number, optional): Max results (default: 50)
 
 ---
 
 ## MoveToNextVersionTool
 
-**Description**: チケット（UserStory推奨）を次のVersionに移動します（リスケ）。配下のTask/Bug/Testも自動的に移動されます。
+**Description**: Moves an issue (UserStory recommended) to the next Version (reschedule). Child Task/Bug/Test issues are also moved.
 
 **Class**: `EpicLadder::McpTools::MoveToNextVersionTool`
 
@@ -426,14 +492,14 @@ AI: MoveToNextVersionToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `confirmed` (boolean, optional): 確認済みフラグ（危険な操作の場合に必要）
+- `issue_id` (string, **required**): Issue ID
+- `confirmed` (boolean, optional): Confirmation flag (required for dangerous operations)
 
 ---
 
 ## UpdateCustomFieldsTool
 
-**Description**: チケットのカスタムフィールドを更新します。フィールドはID（数値）または名前（文字列）で指定できます。
+**Description**: Updates custom fields of an issue. Fields can be specified by ID (number) or name (string).
 
 **Class**: `EpicLadder::McpTools::UpdateCustomFieldsTool`
 
@@ -452,14 +518,14 @@ AI: UpdateCustomFieldsToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `custom_fields` (object, **required**): カスタムフィールドの値。キーはフィールドIDまたはフィールド名、値は設定する値。例: {"見積時間": "8", "優先順位": "高"}
+- `issue_id` (string, **required**): Issue ID
+- `custom_fields` (object, **required**): Custom field values. Key is field ID or name, value is the new value. Example: {"Estimated Hours": "8", "Priority Level": "High"}
 
 ---
 
 ## UpdateIssueAssigneeTool
 
-**Description**: チケットの担当者を変更します。
+**Description**: Changes the assignee of an issue.
 
 **Class**: `EpicLadder::McpTools::UpdateIssueAssigneeTool`
 
@@ -478,14 +544,14 @@ AI: UpdateIssueAssigneeToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `assigned_to_id` (string, **required**): 担当者ID（nullで担当者解除）
+- `issue_id` (string, **required**): Issue ID
+- `assigned_to_id` (string, **required**): Assignee user ID (null to unassign)
 
 ---
 
 ## UpdateIssueDescriptionTool
 
-**Description**: チケットの説明（description）を更新します。
+**Description**: Updates the description of an issue.
 
 **Class**: `EpicLadder::McpTools::UpdateIssueDescriptionTool`
 
@@ -504,14 +570,14 @@ AI: UpdateIssueDescriptionToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `description` (string, **required**): 新しい説明文
+- `issue_id` (string, **required**): Issue ID
+- `description` (string, **required**): New description text
 
 ---
 
 ## UpdateIssueParentTool
 
-**Description**: チケットの親子関係を変更します。親チケットIDにnullを指定すると親を解除します。
+**Description**: Changes the parent-child relationship of an issue. Set parent_issue_id to null to remove parent.
 
 **Class**: `EpicLadder::McpTools::UpdateIssueParentTool`
 
@@ -530,14 +596,15 @@ AI: UpdateIssueParentToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): 移動するチケットID
-- `parent_issue_id` (string, **required**): 新しい親チケットID（nullまたは空文字で親を解除）
+- `issue_id` (string, **required**): Issue ID to move
+- `parent_issue_id` (string, **required**): New parent issue ID (null or empty to remove parent)
+- `inherit_version_and_dates` (boolean, optional): Inherit version and dates from new parent (default: false)
 
 ---
 
 ## UpdateIssueProgressTool
 
-**Description**: チケットの進捗率を更新します。0〜100の整数で指定してください。
+**Description**: Updates issue progress (done ratio). Specify an integer from 0 to 100.
 
 **Class**: `EpicLadder::McpTools::UpdateIssueProgressTool`
 
@@ -556,14 +623,14 @@ AI: UpdateIssueProgressToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `progress` (number, **required**): 進捗率（0〜100の整数）
+- `issue_id` (string, **required**): Issue ID
+- `progress` (number, **required**): Progress percentage (0-100 integer)
 
 ---
 
 ## UpdateIssueStatusTool
 
-**Description**: チケットのステータスを更新します。例: 'Open', 'In Progress', 'Closed'
+**Description**: Updates issue status. Example: 'Open', 'In Progress', 'Closed'
 
 **Class**: `EpicLadder::McpTools::UpdateIssueStatusTool`
 
@@ -582,15 +649,15 @@ AI: UpdateIssueStatusToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `status_name` (string, **required**): ステータス名（例: 'Open', 'In Progress', 'Closed'）
-- `confirmed` (boolean, optional): 確認済みフラグ（危険な操作の場合に必要）
+- `issue_id` (string, **required**): Issue ID
+- `status_name` (string, **required**): Status name (e.g., 'Open', 'In Progress', 'Closed')
+- `confirmed` (boolean, optional): Confirmation flag (required for dangerous operations)
 
 ---
 
 ## UpdateIssueSubjectTool
 
-**Description**: チケットの件名（subject）を更新します。
+**Description**: Updates the subject (title) of an issue.
 
 **Class**: `EpicLadder::McpTools::UpdateIssueSubjectTool`
 
@@ -609,8 +676,8 @@ AI: UpdateIssueSubjectToolを呼び出し
 
 **Parameters**:
 
-- `issue_id` (string, **required**): チケットID
-- `subject` (string, **required**): 新しい件名
+- `issue_id` (string, **required**): Issue ID
+- `subject` (string, **required**): New subject/title
 
 ---
 

@@ -171,6 +171,128 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueParentTool, type: :model do
       end
     end
 
+    context 'with inherit_version_and_dates option' do
+      let(:version1) do
+        create(:version, project: project, name: 'v1.0', effective_date: Date.new(2026, 1, 10))
+      end
+      let(:version2) do
+        create(:version, project: project, name: 'v2.0', effective_date: Date.new(2026, 1, 20))
+      end
+      let(:user_story_with_version) do
+        create(:issue,
+               project: project,
+               tracker: user_story_tracker,
+               subject: 'UserStory with Version',
+               parent: epic,
+               fixed_version: version2,
+               start_date: Date.new(2026, 1, 11),
+               due_date: Date.new(2026, 1, 20))
+      end
+      let(:task_with_version) do
+        create(:issue,
+               project: project,
+               tracker: task_tracker,
+               subject: 'Task with Version',
+               parent: user_story,
+               fixed_version: version1,
+               start_date: Date.new(2026, 1, 1),
+               due_date: Date.new(2026, 1, 10))
+      end
+
+      before do
+        version1
+        version2
+      end
+
+      it 'inherits version and dates from new parent when inherit_version_and_dates is true' do
+        result = described_class.call(
+          issue_id: task_with_version.id.to_s,
+          parent_issue_id: user_story_with_version.id.to_s,
+          inherit_version_and_dates: true,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['inherited']).not_to be_nil
+        expect(response_text['inherited']['version']['id']).to eq(version2.id.to_s)
+        expect(response_text['inherited']['version']['name']).to eq('v2.0')
+
+        task_with_version.reload
+        expect(task_with_version.parent).to eq(user_story_with_version)
+        expect(task_with_version.fixed_version).to eq(version2)
+        # VersionDateManagerによる日付計算（version1の期日が開始日、version2の期日が終了日）
+        expect(task_with_version.start_date).to eq(Date.new(2026, 1, 10))
+        expect(task_with_version.due_date).to eq(Date.new(2026, 1, 20))
+      end
+
+      it 'does not inherit version when inherit_version_and_dates is false (default)' do
+        result = described_class.call(
+          issue_id: task_with_version.id.to_s,
+          parent_issue_id: user_story_with_version.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['inherited']).to be_nil
+
+        task_with_version.reload
+        expect(task_with_version.parent).to eq(user_story_with_version)
+        # バージョンと日付は変更されない
+        expect(task_with_version.fixed_version).to eq(version1)
+        expect(task_with_version.start_date).to eq(Date.new(2026, 1, 1))
+        expect(task_with_version.due_date).to eq(Date.new(2026, 1, 10))
+      end
+
+      it 'skips inheritance when new parent has no version' do
+        user_story_no_version = create(:issue,
+                                       project: project,
+                                       tracker: user_story_tracker,
+                                       subject: 'UserStory without Version',
+                                       parent: epic)
+
+        result = described_class.call(
+          issue_id: task_with_version.id.to_s,
+          parent_issue_id: user_story_no_version.id.to_s,
+          inherit_version_and_dates: true,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['inherited']['skipped']).to be true
+        expect(response_text['inherited']['reason']).to include('バージョンが設定されていません')
+
+        task_with_version.reload
+        expect(task_with_version.parent).to eq(user_story_no_version)
+        # バージョンは変更されない
+        expect(task_with_version.fixed_version).to eq(version1)
+      end
+
+      it 'does not inherit when removing parent' do
+        result = described_class.call(
+          issue_id: task_with_version.id.to_s,
+          parent_issue_id: 'null',
+          inherit_version_and_dates: true,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['inherited']).to be_nil
+
+        task_with_version.reload
+        expect(task_with_version.parent).to be_nil
+        # バージョンは変更されない
+        expect(task_with_version.fixed_version).to eq(version1)
+      end
+    end
+
     context 'without permission' do
       let(:role_without_permission) { create(:role, permissions: [:view_issues]) }
       let(:member_without_permission) do

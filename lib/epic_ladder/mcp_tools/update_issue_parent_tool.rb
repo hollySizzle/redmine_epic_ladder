@@ -18,13 +18,17 @@ module EpicLadder
       input_schema(
         properties: {
           issue_id: { type: "string", description: "Issue ID to move" },
-          parent_issue_id: { type: "string", description: "New parent issue ID (null or empty to remove parent)" }
+          parent_issue_id: { type: "string", description: "New parent issue ID (null or empty to remove parent)" },
+          inherit_version_and_dates: {
+            type: "boolean",
+            description: "Inherit version and dates from new parent (default: false)"
+          }
         },
         required: %w[issue_id parent_issue_id]
       )
 
-      def self.call(issue_id:, parent_issue_id:, server_context:)
-        Rails.logger.info "UpdateIssueParentTool#call started: issue_id=#{issue_id}, parent_issue_id=#{parent_issue_id}"
+      def self.call(issue_id:, parent_issue_id:, inherit_version_and_dates: false, server_context:)
+        Rails.logger.info "UpdateIssueParentTool#call started: issue_id=#{issue_id}, parent_issue_id=#{parent_issue_id}, inherit_version_and_dates=#{inherit_version_and_dates}"
 
         begin
           # チケット取得
@@ -68,6 +72,12 @@ module EpicLadder
             return error_response("親子関係の更新に失敗しました", { errors: issue.errors.full_messages })
           end
 
+          # バージョン・日付の継承処理
+          inherited_data = nil
+          if inherit_version_and_dates && new_parent
+            inherited_data = inherit_version_and_dates_from_parent(issue, new_parent, user)
+          end
+
           # 成功レスポンス
           success_response(
             issue_id: issue.id.to_s,
@@ -82,7 +92,8 @@ module EpicLadder
               id: new_parent.id.to_s,
               subject: new_parent.subject,
               tracker: new_parent.tracker.name
-            } : nil
+            } : nil,
+            inherited: inherited_data
           )
         rescue StandardError => e
           Rails.logger.error "UpdateIssueParentTool error: #{e.class.name}: #{e.message}"
@@ -93,6 +104,39 @@ module EpicLadder
 
       class << self
         private
+
+        # 新しい親からバージョン・日付を継承
+        # @param issue [Issue] 対象のチケット
+        # @param new_parent [Issue] 新しい親チケット
+        # @param user [User] 実行ユーザー
+        # @return [Hash] 継承されたデータ
+        def inherit_version_and_dates_from_parent(issue, new_parent, user)
+          parent_version = new_parent.fixed_version
+
+          # 親にバージョンがない場合は継承しない
+          return { skipped: true, reason: "親チケットにバージョンが設定されていません" } unless parent_version
+
+          # VersionDateManagerで日付を計算
+          dates = VersionDateManager.update_dates_for_version_change(issue, parent_version)
+
+          # Journal記録のためにリロードしてから更新
+          issue.reload
+          issue.init_journal(user)
+          # 直接属性を設定（権限チェックをバイパス）
+          issue.fixed_version_id = parent_version.id
+          issue.start_date = dates&.dig(:start_date)
+          issue.due_date = dates&.dig(:due_date)
+          issue.save!
+
+          {
+            version: {
+              id: parent_version.id.to_s,
+              name: parent_version.name
+            },
+            start_date: dates&.dig(:start_date)&.to_s,
+            due_date: dates&.dig(:due_date)&.to_s
+          }
+        end
 
         # 循環参照チェック: target が issue の子孫かどうか
         # @param target [Issue] チェック対象
