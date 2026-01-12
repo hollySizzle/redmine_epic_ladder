@@ -7,24 +7,9 @@ RSpec.describe EpicLadder::McpTools::AssignToVersionTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: [:view_issues, :edit_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:user_story_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:user_story],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:task_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:task],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:feature_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:feature],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:user_story_tracker) { find_or_create_user_story_tracker }
+  let(:task_tracker) { find_or_create_task_tracker }
+  let(:feature_tracker) { find_or_create_feature_tracker }
   # バージョンに期日を設定（日付自動計算テスト用）
   let(:version) { create(:version, project: project, name: 'Version 1.0', effective_date: Date.current + 30.days) }
   let(:earlier_version) { create(:version, project: project, name: 'Version 0.9', effective_date: Date.current + 15.days) }
@@ -273,9 +258,8 @@ RSpec.describe EpicLadder::McpTools::AssignToVersionTool, type: :model do
   describe 'tool metadata' do
     it 'has correct description including date setting' do
       expect(described_class.description).to include('Version')
-      expect(described_class.description).to include('割り当て')
-      expect(described_class.description).to include('開始日')
-      expect(described_class.description).to include('終了日')
+      expect(described_class.description).to include('UserStory')
+      expect(described_class.description).to include('date')
     end
 
     it 'has required input schema' do

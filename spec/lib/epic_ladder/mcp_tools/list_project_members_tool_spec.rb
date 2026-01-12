@@ -155,11 +155,36 @@ RSpec.describe EpicLadder::McpTools::ListProjectMembersTool, type: :model do
         expect(response_text['error']).to include('指定されたロールが見つかりません')
       end
     end
+
+    context 'with empty data' do
+      it 'returns only active members when all are inactive' do
+        # 新規プロジェクトを作成し、ユーザーをメンバーとして追加
+        empty_project = create(:project)
+        EpicLadder::ProjectSetting.create!(project: empty_project, mcp_enabled: true)
+        create(:member, project: empty_project, user: user, roles: [role_developer])
+
+        # このユーザー以外にinactiveユーザーのみがいる場合
+        inactive_user = create(:user, status: User::STATUS_LOCKED)
+        create(:member, project: empty_project, user: inactive_user, roles: [role_developer])
+
+        result = described_class.call(
+          project_id: empty_project.identifier,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        # activeなユーザー（自分自身）のみが返される
+        expect(response_text['members'].map { |m| m['user_id'] }).to include(user.id.to_s)
+        expect(response_text['members'].map { |m| m['user_id'] }).not_to include(inactive_user.id.to_s)
+      end
+    end
   end
 
   describe 'tool metadata' do
     it 'has correct description' do
-      expect(described_class.description).to include('メンバー')
+      expect(described_class.description).to include('member')
     end
 
     it 'has input schema with optional parameters' do

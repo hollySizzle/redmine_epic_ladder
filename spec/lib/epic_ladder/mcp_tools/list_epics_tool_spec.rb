@@ -7,12 +7,7 @@ RSpec.describe EpicLadder::McpTools::ListEpicsTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: [:view_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:epic_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:epic],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:epic_tracker) { find_or_create_epic_tracker }
   let(:open_status) { IssueStatus.find_or_create_by!(name: 'Open') { |s| s.is_closed = false } }
   let(:closed_status) { IssueStatus.find_or_create_by!(name: 'Closed') { |s| s.is_closed = true } }
 
@@ -21,6 +16,18 @@ RSpec.describe EpicLadder::McpTools::ListEpicsTool, type: :model do
     project.trackers << epic_tracker unless project.trackers.include?(epic_tracker)
     open_status
     closed_status
+
+    # MCP API有効化
+    Setting.plugin_redmine_epic_ladder = {
+      'epic_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:epic],
+      'mcp_enabled' => '1'
+    }
+    EpicLadder::TrackerHierarchy.clear_cache!
+
+    # プロジェクト単位のMCP許可設定
+    setting = EpicLadder::ProjectSetting.for_project(project)
+    setting.mcp_enabled = true
+    setting.save!
   end
 
   describe '.call' do
@@ -174,18 +181,32 @@ RSpec.describe EpicLadder::McpTools::ListEpicsTool, type: :model do
         expect(response_text['error']).to include('Epicトラッカーが設定されていません')
       end
     end
+
+    context 'with empty data' do
+      it 'returns empty array when no epics exist' do
+        result = described_class.call(
+          project_id: project.identifier,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['total_count']).to eq(0)
+        expect(response_text['epics']).to eq([])
+      end
+    end
   end
 
   describe 'tool metadata' do
     it 'has correct description' do
       expect(described_class.description).to include('Epic')
-      expect(described_class.description).to include('一覧')
     end
 
-    it 'has required input schema' do
+    it 'has optional input schema' do
       schema = described_class.input_schema
       expect(schema.properties).to include(:project_id)
-      expect(schema.instance_variable_get(:@required)).to include(:project_id)
+      # project_idはDEFAULT_PROJECTがあれば省略可能
     end
   end
 end

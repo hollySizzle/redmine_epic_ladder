@@ -7,12 +7,7 @@ RSpec.describe EpicLadder::McpTools::UpdateCustomFieldsTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: %i[view_issues edit_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:task_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:task],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:task_tracker) { find_or_create_task_tracker }
   let(:custom_field) do
     cf = IssueCustomField.create!(
       name: 'TestField',
@@ -303,10 +298,9 @@ RSpec.describe EpicLadder::McpTools::UpdateCustomFieldsTool, type: :model do
 
     context 'with field not enabled for tracker' do
       let(:other_tracker) do
-        Tracker.create!(
-          name: 'OtherTracker',
-          default_status: IssueStatus.first
-        )
+        Tracker.find_or_create_by!(name: 'OtherTracker') do |t|
+          t.default_status = IssueStatus.first
+        end
       end
       let(:tracker_specific_field) do
         IssueCustomField.create!(

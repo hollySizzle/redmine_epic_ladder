@@ -7,12 +7,8 @@ RSpec.describe EpicLadder::McpTools::CreateFeatureTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: [:view_issues, :add_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:epic_tracker) do
-    Tracker.create!(name: EpicLadder::TrackerHierarchy.tracker_names[:epic], default_status: IssueStatus.first)
-  end
-  let(:feature_tracker) do
-    Tracker.create!(name: EpicLadder::TrackerHierarchy.tracker_names[:feature], default_status: IssueStatus.first)
-  end
+  let(:epic_tracker) { find_or_create_epic_tracker }
+  let(:feature_tracker) { find_or_create_feature_tracker }
   let(:epic) { create(:issue, project: project, tracker: epic_tracker, subject: 'テストEpic') }
 
   before do

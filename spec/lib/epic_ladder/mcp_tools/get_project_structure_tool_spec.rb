@@ -7,42 +7,12 @@ RSpec.describe EpicLadder::McpTools::GetProjectStructureTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: [:view_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:epic_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:epic],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:feature_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:feature],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:user_story_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:user_story],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:task_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:task],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:bug_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:bug],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:test_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:test],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:epic_tracker) { find_or_create_epic_tracker }
+  let(:feature_tracker) { find_or_create_feature_tracker }
+  let(:user_story_tracker) { find_or_create_user_story_tracker }
+  let(:task_tracker) { find_or_create_task_tracker }
+  let(:bug_tracker) { find_or_create_bug_tracker }
+  let(:test_tracker) { find_or_create_test_tracker }
   let(:version) { create(:version, project: project, name: 'Version 1.0') }
   let(:open_status) { IssueStatus.find_or_create_by!(name: 'Open') { |s| s.is_closed = false } }
   let(:closed_status) { IssueStatus.find_or_create_by!(name: 'Closed') { |s| s.is_closed = true } }
@@ -492,9 +462,9 @@ RSpec.describe EpicLadder::McpTools::GetProjectStructureTool, type: :model do
 
   describe 'tool metadata' do
     it 'has correct description' do
-      expect(described_class.description).to include('プロジェクト')
-      expect(described_class.description).to include('構造')
-      expect(described_class.description).to include('Epic階層')
+      expect(described_class.description).to include('project')
+      expect(described_class.description).to include('hierarchy')
+      expect(described_class.description).to include('Epic')
     end
 
     it 'has required input schema' do

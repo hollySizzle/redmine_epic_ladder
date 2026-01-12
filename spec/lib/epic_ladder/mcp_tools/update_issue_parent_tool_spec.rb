@@ -7,24 +7,9 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueParentTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: %i[view_issues edit_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:epic_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:epic],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:user_story_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:user_story],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:task_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:task],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:epic_tracker) { find_or_create_epic_tracker }
+  let(:user_story_tracker) { find_or_create_user_story_tracker }
+  let(:task_tracker) { find_or_create_task_tracker }
   let(:epic) { create(:issue, project: project, tracker: epic_tracker, subject: 'Epic') }
   let(:user_story) { create(:issue, project: project, tracker: user_story_tracker, subject: 'UserStory', parent: epic) }
   let(:task) { create(:issue, project: project, tracker: task_tracker, subject: 'Task', parent: user_story) }
@@ -497,12 +482,7 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueParentTool, type: :model do
     end
 
     context 'with hierarchy constraint violation' do
-      let(:feature_tracker) do
-        Tracker.create!(
-          name: EpicLadder::TrackerHierarchy.tracker_names[:feature],
-          default_status: IssueStatus.first
-        )
-      end
+      let(:feature_tracker) { find_or_create_feature_tracker }
       let(:feature) do
         project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
         create(:issue, project: project, tracker: feature_tracker, subject: 'Feature', parent: epic)

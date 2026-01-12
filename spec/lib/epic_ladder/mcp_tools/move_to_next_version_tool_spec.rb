@@ -7,18 +7,8 @@ RSpec.describe EpicLadder::McpTools::MoveToNextVersionTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: [:view_issues, :edit_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:user_story_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:user_story],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:task_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:task],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:user_story_tracker) { find_or_create_user_story_tracker }
+  let(:task_tracker) { find_or_create_task_tracker }
   let(:current_version) { create(:version, project: project, name: 'Version 1.0', effective_date: Date.today) }
   let(:next_version) { create(:version, project: project, name: 'Version 2.0', effective_date: Date.today + 30, status: 'open') }
   let(:user_story) { create(:issue, project: project, tracker: user_story_tracker, fixed_version: current_version) }
@@ -187,12 +177,62 @@ RSpec.describe EpicLadder::McpTools::MoveToNextVersionTool, type: :model do
         expect(response_text['error']).to include('次のVersionが見つかりません')
       end
     end
+
+    context 'next version selection logic' do
+      it 'selects version with open status only' do
+        # closedステータスのVersionは選ばれない
+        create(:version, project: project, name: 'Closed Version', effective_date: Date.today + 15, status: 'closed')
+
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        # closed_versionではなく、openのnext_versionが選ばれる
+        expect(response_text['new_version']['id']).to eq(next_version.id.to_s)
+      end
+
+      it 'selects version with nearest effective_date' do
+        # より近いeffective_dateのVersionを選択
+        nearer_version = create(:version, project: project, name: 'Nearer Version', effective_date: Date.today + 10, status: 'open')
+
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        # nearer_version（Date.today + 10）が選ばれる（next_versionはDate.today + 30）
+        expect(response_text['new_version']['id']).to eq(nearer_version.id.to_s)
+      end
+
+      it 'skips locked versions' do
+        # lockedステータスのVersionも選ばれない
+        create(:version, project: project, name: 'Locked Version', effective_date: Date.today + 5, status: 'locked')
+
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        # locked_versionではなく、openのnext_versionが選ばれる
+        expect(response_text['new_version']['id']).to eq(next_version.id.to_s)
+      end
+    end
   end
 
   describe 'tool metadata' do
     it 'has correct description' do
-      expect(described_class.description).to include('次のVersion')
-      expect(described_class.description).to include('移動')
+      expect(described_class.description).to include('next Version')
+      expect(described_class.description).to include('reschedule')
     end
 
     it 'has required input schema' do

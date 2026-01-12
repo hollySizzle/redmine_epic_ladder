@@ -7,18 +7,8 @@ RSpec.describe EpicLadder::McpTools::GetIssueDetailTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: [:view_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:user_story_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:user_story],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:task_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:task],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:user_story_tracker) { find_or_create_user_story_tracker }
+  let(:task_tracker) { find_or_create_task_tracker }
   let(:version) { create(:version, project: project, name: 'Version 1.0') }
   let(:priority) { IssuePriority.first }
 
@@ -242,12 +232,134 @@ RSpec.describe EpicLadder::McpTools::GetIssueDetailTool, type: :model do
         expect(response_text['error']).to include('チケット閲覧権限がありません')
       end
     end
+
+    context 'with optional fields' do
+      it 'returns issue without assigned_to' do
+        issue_without_assignee = create(:issue,
+                                        project: project,
+                                        tracker: user_story_tracker,
+                                        subject: 'No Assignee Issue',
+                                        author: user,
+                                        assigned_to: nil)
+
+        result = described_class.call(
+          issue_id: issue_without_assignee.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue']['assigned_to']).to be_nil
+      end
+
+      it 'returns issue without version' do
+        issue_without_version = create(:issue,
+                                       project: project,
+                                       tracker: user_story_tracker,
+                                       subject: 'No Version Issue',
+                                       author: user,
+                                       fixed_version: nil)
+
+        result = described_class.call(
+          issue_id: issue_without_version.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue']['fixed_version']).to be_nil
+      end
+
+      it 'returns issue with start_date and due_date' do
+        issue_with_dates = create(:issue,
+                                  project: project,
+                                  tracker: user_story_tracker,
+                                  subject: 'Issue with dates',
+                                  author: user,
+                                  start_date: Date.today,
+                                  due_date: Date.today + 14)
+
+        result = described_class.call(
+          issue_id: issue_with_dates.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue']['start_date']).to eq(Date.today.to_s)
+        expect(response_text['issue']['due_date']).to eq((Date.today + 14).to_s)
+      end
+
+      it 'returns empty journals when no comments' do
+        issue_without_journals = create(:issue,
+                                        project: project,
+                                        tracker: user_story_tracker,
+                                        subject: 'No Comments Issue',
+                                        author: user)
+
+        result = described_class.call(
+          issue_id: issue_without_journals.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['journals']).to eq([])
+        expect(response_text['journals_count']).to eq(0)
+      end
+    end
+
+    context 'journal details' do
+      it 'returns journal with field change details' do
+        # チケット作成
+        test_issue = create(:issue,
+                            project: project,
+                            tracker: user_story_tracker,
+                            subject: 'Original Subject',
+                            author: user,
+                            status: IssueStatus.first)
+
+        # ステータス変更などの履歴を持つJournalを作成
+        journal = Journal.create!(
+          journalized: test_issue,
+          user: user,
+          notes: 'Changed status'
+        )
+
+        # JournalDetailを追加（ステータス変更）
+        JournalDetail.create!(
+          journal: journal,
+          property: 'attr',
+          prop_key: 'status_id',
+          old_value: '1',
+          value: '2'
+        )
+
+        result = described_class.call(
+          issue_id: test_issue.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+
+        journal_data = response_text['journals'].first
+        expect(journal_data['details']).to be_an(Array)
+        expect(journal_data['details'].first['property']).to eq('attr')
+        expect(journal_data['details'].first['name']).to eq('status_id')
+      end
+    end
   end
 
   describe 'tool metadata' do
     it 'has correct description' do
-      expect(described_class.description).to include('チケット')
-      expect(described_class.description).to include('詳細')
+      expect(described_class.description).to include('issue')
+      expect(described_class.description).to include('details')
     end
 
     it 'has required input schema' do

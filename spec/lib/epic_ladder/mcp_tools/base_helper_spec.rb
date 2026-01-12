@@ -163,12 +163,7 @@ RSpec.describe EpicLadder::McpTools::BaseHelper, type: :model do
   end
 
   describe '#find_tracker' do
-    let(:epic_tracker) do
-      Tracker.create!(
-        name: EpicLadder::TrackerHierarchy.tracker_names[:epic],
-        default_status: IssueStatus.first
-      )
-    end
+    let(:epic_tracker) { find_or_create_epic_tracker }
 
     before { epic_tracker }
 
@@ -188,12 +183,7 @@ RSpec.describe EpicLadder::McpTools::BaseHelper, type: :model do
   end
 
   describe '#find_tracker_for_project' do
-    let(:epic_tracker) do
-      Tracker.create!(
-        name: EpicLadder::TrackerHierarchy.tracker_names[:epic],
-        default_status: IssueStatus.first
-      )
-    end
+    let(:epic_tracker) { find_or_create_epic_tracker }
 
     context 'プロジェクトにトラッカーが設定されている場合' do
       before do

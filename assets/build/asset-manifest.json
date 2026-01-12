@@ -1,6 +1,6 @@
 {
-  "main.js": "/plugin_assets/redmine_epic_ladder/kanban_bundle.086864b2.js",
+  "main.js": "/plugin_assets/redmine_epic_ladder/kanban_bundle.js",
+  "src_mocks_browser_noop_ts.kanban_bundle.js": "/plugin_assets/redmine_epic_ladder/src_mocks_browser_noop_ts.kanban_bundle.js",
   "mockServiceWorker.js": "/plugin_assets/redmine_epic_ladder/mockServiceWorker.js",
-  "index.html": "/plugin_assets/redmine_epic_ladder/index.html",
-  "kanban_bundle.086864b2.js.map": "/plugin_assets/redmine_epic_ladder/kanban_bundle.086864b2.js.map"
+  "index.html": "/plugin_assets/redmine_epic_ladder/index.html"
 }

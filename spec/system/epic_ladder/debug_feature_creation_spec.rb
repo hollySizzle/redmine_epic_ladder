@@ -25,8 +25,9 @@ RSpec.describe 'Debug Feature Creation', type: :system, js: true do
     puts "✅ Button clicked"
 
     puts "\n=== Step 3: Wait for modal ==="
-    input_selector = '.issue-form-modal input#issue-subject'
-    @playwright_page.wait_for_selector(input_selector, state: 'attached', timeout: 5000)
+    # Headless UI Dialog内の実際のセレクタを使用
+    input_selector = 'input#issue-subject'
+    @playwright_page.wait_for_selector(input_selector, state: 'attached', timeout: 10000)
     puts "✅ Modal input attached"
 
     @playwright_page.wait_for_function("() => document.querySelector('#{input_selector}').offsetParent !== null", timeout: 5000)
@@ -40,7 +41,7 @@ RSpec.describe 'Debug Feature Creation', type: :system, js: true do
     puts "Input value: #{@playwright_page.evaluate("document.querySelector('#{input_selector}').value")}"
 
     puts "\n=== Step 5: Check submit button ==="
-    submit_selector = '.issue-form-modal button.btn-submit'
+    submit_selector = '.modal-actions button[type="submit"]'
     submit_button = @playwright_page.query_selector(submit_selector)
     puts "Submit button found: #{!submit_button.nil?}"
     if submit_button

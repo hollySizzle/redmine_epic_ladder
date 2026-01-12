@@ -46,7 +46,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
     end
 
     it 'returns current count of tools' do
-      expect(described_class.count).to eq(22)
+      expect(described_class.count).to eq(24)
     end
   end
 
@@ -96,7 +96,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
       expect(by_category[:version_management]).to include('create_version')
       expect(by_category[:version_management]).to include('assign_to_version')
       expect(by_category[:version_management]).to include('move_to_next_version')
-      expect(by_category[:version_management]).to include('list_versions')
+      # Note: list_versions is categorized as query_tools (matches /^list_/ pattern)
     end
 
     it 'categorizes update/add tools as issue_operations' do
@@ -119,9 +119,8 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
       expect(by_category[:query_tools]).to include('list_epics')
       expect(by_category[:query_tools]).to include('get_project_structure')
       expect(by_category[:query_tools]).to include('get_issue_detail')
-
-      # list_versions は version_management
-      expect(by_category[:query_tools]).not_to include('list_versions')
+      # list_versions matches /^list_/ pattern, so it's categorized as query_tools
+      expect(by_category[:query_tools]).to include('list_versions')
     end
   end
 

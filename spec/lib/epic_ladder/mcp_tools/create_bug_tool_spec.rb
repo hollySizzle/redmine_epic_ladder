@@ -7,24 +7,9 @@ RSpec.describe EpicLadder::McpTools::CreateBugTool, type: :model do
   let(:project) { create(:project) }
   let(:role) { create(:role, permissions: [:view_issues, :add_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
-  let(:bug_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:bug],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:user_story_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:user_story],
-      default_status: IssueStatus.first
-    )
-  end
-  let(:feature_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:feature],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:bug_tracker) { find_or_create_bug_tracker }
+  let(:user_story_tracker) { find_or_create_user_story_tracker }
+  let(:feature_tracker) { find_or_create_feature_tracker }
   let(:parent_user_story) { create(:issue, project: project, tracker: user_story_tracker, subject: 'Parent UserStory') }
 
   before do

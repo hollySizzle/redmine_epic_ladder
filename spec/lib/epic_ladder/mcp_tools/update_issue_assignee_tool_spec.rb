@@ -9,12 +9,7 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueAssigneeTool, type: :model do
   let(:role) { create(:role, permissions: [:view_issues, :edit_issues]) }
   let(:member) { create(:member, project: project, user: user, roles: [role]) }
   let(:another_member) { create(:member, project: project, user: another_user, roles: [role]) }
-  let(:task_tracker) do
-    Tracker.create!(
-      name: EpicLadder::TrackerHierarchy.tracker_names[:task],
-      default_status: IssueStatus.first
-    )
-  end
+  let(:task_tracker) { find_or_create_task_tracker }
   let(:task) { create(:issue, project: project, tracker: task_tracker, assigned_to: user) }
 
   before do

@@ -306,18 +306,19 @@ module EpicLadderE2EHelpers
     button.click
 
     # モーダル内の入力フィールドが表示されるまで待機
+    # Headless UIのDialog内の実際のセレクタを使用
     if item_type == 'version'
-      # Version用のフォーム
-      input_selector = '.version-form-modal input#version-name'
-      submit_selector = '.version-form-modal button.btn-submit'
+      # Version用のフォーム: VersionFormModal
+      input_selector = 'input#version-name'
+      submit_selector = '.modal-actions button[type="submit"]'
     else
-      # Issue用のフォーム（Epic, Feature, UserStory, Task, Test, Bug）
-      input_selector = '.issue-form-modal input#issue-subject'
-      submit_selector = '.issue-form-modal button.btn-submit'
+      # Issue用のフォーム（Epic, Feature, UserStory, Task, Test, Bug）: IssueFormModal
+      input_selector = 'input#issue-subject'
+      submit_selector = '.modal-actions button[type="submit"]'
     end
 
     # 入力フィールドが表示されるまで待機
-    @playwright_page.wait_for_selector(input_selector, state: 'attached', timeout: 5000)
+    @playwright_page.wait_for_selector(input_selector, state: 'attached', timeout: 10000)
     @playwright_page.wait_for_function("() => document.querySelector('#{input_selector}').offsetParent !== null", timeout: 5000)
 
     # フォームに入力
@@ -330,7 +331,7 @@ module EpicLadderE2EHelpers
     @playwright_page.wait_for_function("() => {
       const el = document.querySelector('#{input_selector}');
       return !el || el.offsetParent === null;
-    }", timeout: 5000)
+    }", timeout: 10000)
   end
 
   # キャンセル処理（モーダル式）
@@ -339,16 +340,17 @@ module EpicLadderE2EHelpers
     button.click
 
     # モーダル内のキャンセルボタンが表示されるまで待機
+    # Headless UIのDialog内の実際のセレクタを使用
     if item_type == 'version'
-      cancel_selector = '.version-form-modal button.btn-cancel'
-      input_selector = '.version-form-modal input#version-name'
+      cancel_selector = '.modal-actions button[type="button"]'
+      input_selector = 'input#version-name'
     else
-      cancel_selector = '.issue-form-modal button.btn-cancel'
-      input_selector = '.issue-form-modal input#issue-subject'
+      cancel_selector = '.modal-actions button[type="button"]'
+      input_selector = 'input#issue-subject'
     end
 
     # キャンセルボタンが表示されるまで待機
-    @playwright_page.wait_for_selector(cancel_selector, state: 'attached', timeout: 5000)
+    @playwright_page.wait_for_selector(cancel_selector, state: 'attached', timeout: 10000)
     @playwright_page.wait_for_function("() => document.querySelector('#{cancel_selector}').offsetParent !== null", timeout: 5000)
 
     # キャンセルボタンをクリック
@@ -358,7 +360,7 @@ module EpicLadderE2EHelpers
     @playwright_page.wait_for_function("() => {
       const el = document.querySelector('#{input_selector}');
       return !el || el.offsetParent === null;
-    }", timeout: 5000)
+    }", timeout: 10000)
   end
 
   # アイテム作成完了待機

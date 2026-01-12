@@ -243,8 +243,7 @@ RSpec.describe EpicLadder::McpTools::ListVersionsTool, type: :model do
 
   describe 'tool metadata' do
     it 'has correct description' do
-      expect(described_class.description).to include('バージョン')
-      expect(described_class.description).to include('一覧')
+      expect(described_class.description).to include('version')
     end
 
     it 'has optional input schema (no required fields)' do
