@@ -284,7 +284,9 @@
       "mcp__redmine_epic_grid__add_issue_comment_tool",
       "Bash(RAILS_ENV=test bundle exec rails runner:*)",
       "WebFetch(domain:redmine.jp)",
-      "WebFetch(domain:redmine.giken.or.jp)"
+      "WebFetch(domain:redmine.giken.or.jp)",
+      "mcp__redmine_epic_grid__update_issue_status_tool",
+      "mcp__serena__think_about_task_adherence"
     ],
     "deny": [],
     "ask": [],
