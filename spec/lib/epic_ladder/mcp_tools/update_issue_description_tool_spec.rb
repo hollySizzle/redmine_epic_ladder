@@ -79,6 +79,85 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueDescriptionTool, type: :model do
         # Redmineは改行コードを正規化する場合があるため、内容のみ確認
         expect(task.description.gsub("\r\n", "\n")).to eq(multiline_description)
       end
+
+      it 'updates description with Japanese text' do
+        japanese_description = 'これは日本語の説明文です。テスト用の文章。'
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          description: japanese_description,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['new_description']).to eq(japanese_description)
+
+        task.reload
+        expect(task.description).to eq(japanese_description)
+      end
+
+      it 'updates description with Markdown formatting' do
+        markdown_description = "# Heading\n\n- item1\n- item2\n\n**bold**"
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          description: markdown_description,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+
+        task.reload
+        expect(task.description).to include('# Heading')
+        expect(task.description).to include('**bold**')
+      end
+
+      it 'updates description with special characters' do
+        special_description = 'Chars: <html> & "quotes" (c) (R)'
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          description: special_description,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+
+        task.reload
+        expect(task.description).to eq(special_description)
+      end
+
+      it 'updates description with long text (over 10000 characters)' do
+        long_description = 'A' * 15000
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          description: long_description,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+
+        task.reload
+        expect(task.description.length).to eq(15000)
+      end
+
+      it 'returns issue_url in response' do
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          description: 'URL test',
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue_url']).to be_present
+      end
     end
 
     context 'with invalid parameters' do

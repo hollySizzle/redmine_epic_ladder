@@ -61,6 +61,84 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueSubjectTool, type: :model do
         task.reload
         expect(task.subject).to eq('【重要】タスク名 - v2.0')
       end
+
+      it 'updates subject with Japanese text' do
+        japanese_subject = 'ログイン機能の実装'
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          subject: japanese_subject,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['new_subject']).to eq(japanese_subject)
+
+        task.reload
+        expect(task.subject).to eq(japanese_subject)
+      end
+
+      it 'updates subject with HTML-like characters' do
+        html_subject = 'Fix <div> & "quote" handling'
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          subject: html_subject,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+
+        task.reload
+        expect(task.subject).to eq(html_subject)
+      end
+
+      it 'updates subject with emoji characters' do
+        emoji_subject = '🚀 Deploy to production'
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          subject: emoji_subject,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+
+        task.reload
+        expect(task.subject).to eq(emoji_subject)
+      end
+
+      it 'updates subject with maximum length (255 characters)' do
+        long_subject = 'A' * 255
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          subject: long_subject,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+
+        task.reload
+        expect(task.subject.length).to eq(255)
+      end
+
+      it 'returns issue_url in response' do
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          subject: 'URL test subject',
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue_url']).to be_present
+      end
     end
 
     context 'with invalid parameters' do
