@@ -41,6 +41,33 @@ module EpicLadder
           status = find_status(status_name)
           return error_response("ステータスが見つかりません: #{status_name}") unless status
 
+          # クローズ可能かチェック（Redmineコアのclosable?はUIのみで効くため、ここで明示的にチェック）
+          if status.is_closed && !issue.closable?
+            open_subtasks = issue.descendants.open.limit(10).pluck(:id, :subject)
+            return error_response(
+              "未完了の子チケットがあるためクローズできません",
+              {
+                reason: 'open_subtasks',
+                open_subtasks_count: issue.descendants.open.count,
+                open_subtasks: open_subtasks.map { |id, subject| { id: id.to_s, subject: subject } },
+                hint: "先に子チケットをクローズしてください"
+              }
+            )
+          end
+
+          # 再オープン可能かチェック（親チケットがクローズ済みの場合は再オープン不可）
+          if !status.is_closed && issue.status.is_closed && !issue.reopenable?
+            return error_response(
+              "親チケットがクローズ済みのため再オープンできません",
+              {
+                reason: 'closed_parent',
+                parent_id: issue.parent&.id.to_s,
+                parent_subject: issue.parent&.subject,
+                hint: "先に親チケットを再オープンしてください"
+              }
+            )
+          end
+
           # 環境変数チェック: close操作で確認が必要か
           if status.is_closed && check_confirmation_required('close') && !confirmed
             # Epic/Featureの場合は配下のチケット数を取得

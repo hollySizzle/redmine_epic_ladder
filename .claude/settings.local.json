@@ -279,7 +279,11 @@
       "mcp__redmine_epic_grid__create_task_tool",
       "mcp__redmine_epic_grid__create_test_tool",
       "mcp__redmine_epic_grid__create_epic_tool",
-      "mcp__redmine_epic_grid__update_issue_parent_tool"
+      "mcp__redmine_epic_grid__update_issue_parent_tool",
+      "mcp__redmine_epic_grid__get_issue_detail_tool",
+      "mcp__redmine_epic_grid__add_issue_comment_tool",
+      "Bash(RAILS_ENV=test bundle exec rails runner:*)",
+      "WebFetch(domain:redmine.jp)"
     ],
     "deny": [],
     "ask": [],

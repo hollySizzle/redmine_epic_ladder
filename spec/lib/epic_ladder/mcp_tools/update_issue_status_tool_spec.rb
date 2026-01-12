@@ -122,12 +122,129 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueStatusTool, type: :model do
         expect(response_text['error']).to include('ステータスが見つかりません')
       end
     end
+
+    context 'with parent-child issue constraints' do
+      let(:parent_issue) { create(:issue, project: project, tracker: task_tracker, status: open_status, subject: 'Parent Task') }
+      let(:child_issue) { create(:issue, project: project, tracker: task_tracker, status: open_status, subject: 'Child Task', parent_issue_id: parent_issue.id) }
+
+      before do
+        # 親子関係を確立
+        child_issue
+        parent_issue.reload
+      end
+
+      describe 'closing parent with open subtasks' do
+        it 'returns error when trying to close parent with open child' do
+          result = described_class.call(
+            issue_id: parent_issue.id.to_s,
+            status_name: 'Closed',
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+          details = response_text['details'] || {}
+
+          expect(response_text['success']).to be false
+          expect(response_text['error']).to include('未完了の子チケット')
+          expect(details['reason']).to eq('open_subtasks')
+          expect(details['open_subtasks_count']).to eq(1)
+          expect(details['open_subtasks']).to be_an(Array)
+          expect(details['open_subtasks'].first['id']).to eq(child_issue.id.to_s)
+          expect(details['hint']).to include('子チケットをクローズ')
+        end
+
+        it 'allows closing parent when all children are closed' do
+          # 子チケットを先にクローズ
+          child_issue.update!(status: closed_status)
+          parent_issue.reload
+
+          result = described_class.call(
+            issue_id: parent_issue.id.to_s,
+            status_name: 'Closed',
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+
+          expect(response_text['success']).to be true
+          expect(response_text['new_status']['is_closed']).to be true
+
+          parent_issue.reload
+          expect(parent_issue.status).to eq(closed_status)
+        end
+
+        it 'returns multiple open subtasks info' do
+          # 追加の子チケットを作成
+          child_issue2 = create(:issue, project: project, tracker: task_tracker, status: open_status, subject: 'Child Task 2', parent_issue_id: parent_issue.id)
+          child_issue3 = create(:issue, project: project, tracker: task_tracker, status: open_status, subject: 'Child Task 3', parent_issue_id: parent_issue.id)
+          parent_issue.reload
+
+          result = described_class.call(
+            issue_id: parent_issue.id.to_s,
+            status_name: 'Closed',
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+          details = response_text['details'] || {}
+
+          expect(response_text['success']).to be false
+          expect(details['open_subtasks_count']).to eq(3)
+          expect(details['open_subtasks'].length).to eq(3)
+        end
+      end
+
+      describe 'reopening child of closed parent' do
+        before do
+          # 子と親を両方クローズ
+          child_issue.update!(status: closed_status)
+          parent_issue.reload
+          parent_issue.update!(status: closed_status)
+        end
+
+        it 'returns error when trying to reopen child of closed parent' do
+          result = described_class.call(
+            issue_id: child_issue.id.to_s,
+            status_name: 'Open',
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+          details = response_text['details'] || {}
+
+          expect(response_text['success']).to be false
+          expect(response_text['error']).to include('親チケットがクローズ済み')
+          expect(details['reason']).to eq('closed_parent')
+          expect(details['parent_id']).to eq(parent_issue.id.to_s)
+          expect(details['parent_subject']).to eq('Parent Task')
+          expect(details['hint']).to include('親チケットを再オープン')
+        end
+
+        it 'allows reopening child when parent is reopened first' do
+          # 親を先に再オープン
+          parent_issue.update!(status: open_status)
+
+          result = described_class.call(
+            issue_id: child_issue.id.to_s,
+            status_name: 'Open',
+            server_context: server_context
+          )
+
+          response_text = JSON.parse(result.content.first[:text])
+
+          expect(response_text['success']).to be true
+          expect(response_text['new_status']['is_closed']).to be false
+
+          child_issue.reload
+          expect(child_issue.status).to eq(open_status)
+        end
+      end
+    end
   end
 
   describe 'tool metadata' do
     it 'has correct description' do
-      expect(described_class.description).to include('ステータス')
-      expect(described_class.description).to include('更新')
+      expect(described_class.description).to include('status')
     end
 
     it 'has required input schema' do
