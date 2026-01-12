@@ -291,6 +291,79 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueParentTool, type: :model do
         # バージョンは変更されない
         expect(task_with_version.fixed_version).to eq(version1)
       end
+
+      it 'calculates dates correctly when no earlier version exists' do
+        # version2のみ存在する状態を作成
+        version1.destroy
+        project.versions.reload
+
+        user_story_v2_only = create(:issue,
+                                    project: project,
+                                    tracker: user_story_tracker,
+                                    subject: 'UserStory v2 only',
+                                    parent: epic,
+                                    fixed_version: version2)
+
+        orphan_task = create(:issue,
+                             project: project,
+                             tracker: task_tracker,
+                             subject: 'Orphan Task')
+
+        result = described_class.call(
+          issue_id: orphan_task.id.to_s,
+          parent_issue_id: user_story_v2_only.id.to_s,
+          inherit_version_and_dates: true,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['inherited']['version']['id']).to eq(version2.id.to_s)
+
+        orphan_task.reload
+        # 前のバージョンがない場合、開始日=期日となる
+        expect(orphan_task.start_date).to eq(Date.new(2026, 1, 20))
+        expect(orphan_task.due_date).to eq(Date.new(2026, 1, 20))
+      end
+
+      it 'inherits from parent and calculates dates with multiple versions' do
+        # 3つのバージョンがある場合の日付計算を確認
+        version3 = create(:version,
+                          project: project,
+                          name: 'v3.0',
+                          effective_date: Date.new(2026, 1, 30))
+
+        user_story_v3 = create(:issue,
+                               project: project,
+                               tracker: user_story_tracker,
+                               subject: 'UserStory v3',
+                               parent: epic,
+                               fixed_version: version3)
+
+        orphan_task = create(:issue,
+                             project: project,
+                             tracker: task_tracker,
+                             subject: 'Orphan Task')
+
+        result = described_class.call(
+          issue_id: orphan_task.id.to_s,
+          parent_issue_id: user_story_v3.id.to_s,
+          inherit_version_and_dates: true,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['inherited']['version']['name']).to eq('v3.0')
+
+        orphan_task.reload
+        expect(orphan_task.fixed_version).to eq(version3)
+        # 開始日 = v2.0の期日(2026/1/20)、期日 = v3.0の期日(2026/1/30)
+        expect(orphan_task.start_date).to eq(Date.new(2026, 1, 20))
+        expect(orphan_task.due_date).to eq(Date.new(2026, 1, 30))
+      end
     end
 
     context 'without permission' do
