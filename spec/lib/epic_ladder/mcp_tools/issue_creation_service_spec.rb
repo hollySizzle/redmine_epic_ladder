@@ -231,5 +231,150 @@ RSpec.describe EpicLadder::McpTools::IssueCreationService do
         expect(result[:details][:parent_issue_id]).to eq epic.id.to_s
       end
     end
+
+    context 'Epic creation (root level)' do
+      it 'creates Epic without parent (root level allowed)' do
+        result = service.create_issue(
+          tracker_type: :epic,
+          project_id: project.identifier,
+          subject: 'Root Epic',
+          description: 'This Epic has no parent'
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:tracker]).to eq EpicLadderTestConfig::TRACKER_NAMES[:epic]
+        expect(result[:parent_issue]).to be_nil
+      end
+    end
+
+    context 'version inheritance logic' do
+      let(:epic) { create(:epic, project: project, author: user) }
+      let(:feature) { create(:feature, project: project, author: user, parent: epic) }
+      let!(:version) { create(:version, project: project, name: 'v1.0.0', status: 'open', effective_date: Date.today + 30) }
+      let!(:user_story_with_version) { create(:user_story, project: project, author: user, parent: feature, fixed_version: version) }
+
+      it 'inherits version from parent issue when not specified' do
+        result = service.create_issue(
+          tracker_type: :task,
+          project_id: project.identifier,
+          subject: 'Task inheriting version',
+          description: 'Should inherit version from parent',
+          parent_issue_id: user_story_with_version.id.to_s
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:version]).not_to be_nil
+        expect(result[:version][:id]).to eq version.id.to_s
+        expect(result[:version][:name]).to eq 'v1.0.0'
+      end
+
+      it 'uses explicitly specified version over parent version' do
+        other_version = create(:version, project: project, name: 'v2.0.0', status: 'open', effective_date: Date.today + 60)
+
+        result = service.create_issue(
+          tracker_type: :task,
+          project_id: project.identifier,
+          subject: 'Task with explicit version',
+          description: 'Should use specified version',
+          parent_issue_id: user_story_with_version.id.to_s,
+          version_id: other_version.id.to_s
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:version][:id]).to eq other_version.id.to_s
+        expect(result[:version][:name]).to eq 'v2.0.0'
+      end
+    end
+
+    context 'assignee default value' do
+      it 'defaults to current user when assigned_to_id not specified' do
+        result = service.create_issue(
+          tracker_type: :epic,
+          project_id: project.identifier,
+          subject: 'Epic without assignee',
+          description: 'Should default to current user'
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:assigned_to]).not_to be_nil
+        expect(result[:assigned_to][:id]).to eq user.id.to_s
+      end
+
+      it 'uses explicitly specified assignee when user is project member' do
+        other_user = create(:user, status: User::STATUS_ACTIVE)
+        role = Role.find_or_create_by!(name: 'Developer') do |r|
+          r.permissions = [:view_issues, :add_issues, :edit_issues]
+        end
+        Member.create!(project: project, user: other_user, roles: [role])
+
+        result = service.create_issue(
+          tracker_type: :epic,
+          project_id: project.identifier,
+          subject: 'Epic with specific assignee',
+          description: 'Should use specified assignee',
+          assigned_to_id: other_user.id.to_s
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:assigned_to][:id]).to eq other_user.id.to_s
+      end
+    end
+
+    context 'subject extraction from description' do
+      it 'extracts subject from description when subject is nil' do
+        result = service.create_issue(
+          tracker_type: :epic,
+          project_id: project.identifier,
+          subject: nil,
+          description: 'This is the first sentence。Second sentence here.'
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:subject]).to eq 'This is the first sentence'
+      end
+
+      it 'extracts subject from description when subject is empty' do
+        result = service.create_issue(
+          tracker_type: :epic,
+          project_id: project.identifier,
+          subject: '',
+          description: "First line\nSecond line"
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:subject]).to eq 'First line'
+      end
+
+      it 'truncates long description to 255 characters for subject' do
+        long_description = 'A' * 300
+
+        result = service.create_issue(
+          tracker_type: :epic,
+          project_id: project.identifier,
+          subject: nil,
+          description: long_description
+        )
+
+        expect(result[:success]).to be true
+        expect(result[:subject].length).to be <= 255
+      end
+    end
+
+    context 'Redmine core validation errors' do
+      it 'returns validation errors when Redmine save fails' do
+        # subject空でdescriptionも空の場合、抽出されるsubjectも空になる
+        result = service.create_issue(
+          tracker_type: :epic,
+          project_id: project.identifier,
+          subject: nil,
+          description: ''
+        )
+
+        # description空からsubject抽出すると空になるため、Redmineバリデーションエラー
+        expect(result[:success]).to be false
+        expect(result[:error]).to include('チケット作成に失敗しました')
+        expect(result[:details][:errors]).to be_an(Array)
+      end
+    end
   end
 end

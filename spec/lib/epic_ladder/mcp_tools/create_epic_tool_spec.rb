@@ -17,6 +17,18 @@ RSpec.describe EpicLadder::McpTools::CreateEpicTool, type: :model do
   before do
     member # ensure member exists
     project.trackers << epic_tracker unless project.trackers.include?(epic_tracker)
+
+    # MCP API有効化（プラグイン設定）
+    Setting.plugin_redmine_epic_ladder = {
+      'epic_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:epic],
+      'mcp_enabled' => '1'
+    }
+    EpicLadder::TrackerHierarchy.clear_cache!
+
+    # プロジェクト単位のMCP許可設定
+    setting = EpicLadder::ProjectSetting.for_project(project)
+    setting.mcp_enabled = true
+    setting.save!
   end
 
   describe '.call' do
@@ -66,6 +78,70 @@ RSpec.describe EpicLadder::McpTools::CreateEpicTool, type: :model do
         response_text = JSON.parse(result.content.first[:text])
         epic = Issue.find(response_text['epic_id'])
         expect(epic.assigned_to).to eq(user)
+      end
+
+      it 'assigns Epic to version when version_id provided' do
+        version = create(:version, project: project)
+
+        result = described_class.call(
+          project_id: project.identifier,
+          subject: 'テストEpic',
+          version_id: version.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+        epic = Issue.find(response_text['epic_id'])
+        expect(epic.fixed_version).to eq(version)
+      end
+
+      it 'handles special characters in subject and description' do
+        result = described_class.call(
+          project_id: project.identifier,
+          subject: 'Epic with <special> & "characters" + \'quotes\'',
+          description: 'Description with <html>, &amp;, "double", \'single\' quotes',
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+
+        epic = Issue.find(response_text['epic_id'])
+        expect(epic.subject).to eq('Epic with <special> & "characters" + \'quotes\'')
+        expect(epic.description).to include('<html>')
+        expect(epic.description).to include('&amp;')
+      end
+
+      it 'handles Japanese characters and emojis' do
+        result = described_class.call(
+          project_id: project.identifier,
+          subject: 'ユーザー体験改善 🚀✨',
+          description: '日本語の説明文です。絵文字も使えます 👍🎉',
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+
+        epic = Issue.find(response_text['epic_id'])
+        expect(epic.subject).to eq('ユーザー体験改善 🚀✨')
+        expect(epic.description).to include('日本語の説明文')
+        expect(epic.description).to include('👍🎉')
+      end
+
+      it 'uses subject as description when description is omitted' do
+        result = described_class.call(
+          project_id: project.identifier,
+          subject: 'Epic without description',
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+
+        epic = Issue.find(response_text['epic_id'])
+        expect(epic.description).to eq('Epic without description')
       end
     end
 
@@ -117,12 +193,12 @@ RSpec.describe EpicLadder::McpTools::CreateEpicTool, type: :model do
   describe 'tool metadata' do
     it 'has correct description' do
       expect(described_class.description).to include('Epic')
-      expect(described_class.description).to include('大分類')
+      expect(described_class.description).to include('top-level category')
     end
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema.properties).to include(:project_id, :subject)
+      expect(schema.properties).to include(:project_id, :subject, :version_id)
       expect(schema.instance_variable_get(:@required)).to include(:subject)
     end
   end

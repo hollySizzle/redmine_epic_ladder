@@ -19,17 +19,25 @@ RSpec.describe EpicLadder::McpTools::CreateTaskTool, type: :model do
       default_status: IssueStatus.first
     )
   end
+  let(:feature_tracker) do
+    Tracker.create!(
+      name: EpicLadder::TrackerHierarchy.tracker_names[:feature],
+      default_status: IssueStatus.first
+    )
+  end
   let(:parent_user_story) { create(:issue, project: project, tracker: user_story_tracker, subject: 'Parent UserStory') }
 
   before do
     member # ensure member exists
     project.trackers << task_tracker unless project.trackers.include?(task_tracker)
     project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+    project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
 
     # MCP API有効化（プラグイン設定）
     Setting.plugin_redmine_epic_ladder = {
       'task_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:task],
       'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+      'feature_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:feature],
       'mcp_enabled' => '1'
     }
     EpicLadder::TrackerHierarchy.clear_cache!
@@ -106,6 +114,38 @@ RSpec.describe EpicLadder::McpTools::CreateTaskTool, type: :model do
         task = Issue.find(response_text['task_id'])
         expect(task.fixed_version).to eq(version)
       end
+
+      it 'handles special characters in description' do
+        result = described_class.call(
+          project_id: project.identifier,
+          description: 'Task with <special> & "characters" in description',
+          parent_user_story_id: parent_user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+
+        task = Issue.find(response_text['task_id'])
+        expect(task.description).to include('<special>')
+        expect(task.description).to include('&')
+      end
+
+      it 'handles Japanese characters and emojis' do
+        result = described_class.call(
+          project_id: project.identifier,
+          description: 'ショッピングカートのリファクタリング 🛒✨',
+          parent_user_story_id: parent_user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+
+        task = Issue.find(response_text['task_id'])
+        expect(task.description).to include('ショッピングカート')
+        expect(task.description).to include('🛒')
+      end
     end
 
     context 'with invalid parameters' do
@@ -166,18 +206,33 @@ RSpec.describe EpicLadder::McpTools::CreateTaskTool, type: :model do
         expect(response_text['success']).to be false
         expect(response_text['error']).to include('親チケット')
       end
+
+      it 'returns error when parent is Feature instead of UserStory (hierarchy violation)' do
+        feature = create(:issue, project: project, tracker: feature_tracker, subject: 'Parent Feature')
+
+        result = described_class.call(
+          project_id: project.identifier,
+          description: 'テストタスク',
+          parent_user_story_id: feature.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be false
+        expect(response_text['error']).to include('階層違反')
+      end
     end
   end
 
   describe 'tool metadata' do
     it 'has correct description' do
       expect(described_class.description).to include('Task')
-      expect(described_class.description).to include('自然言語')
+      expect(described_class.description).to include('natural language')
     end
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema.properties).to include(:project_id, :description, :parent_user_story_id)
+      expect(schema.properties).to include(:project_id, :description, :parent_user_story_id, :version_id)
       required_fields = schema.instance_variable_get(:@required)
       expect(required_fields).to include(:description)
       expect(required_fields).to include(:parent_user_story_id)

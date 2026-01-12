@@ -19,17 +19,25 @@ RSpec.describe EpicLadder::McpTools::CreateBugTool, type: :model do
       default_status: IssueStatus.first
     )
   end
+  let(:feature_tracker) do
+    Tracker.create!(
+      name: EpicLadder::TrackerHierarchy.tracker_names[:feature],
+      default_status: IssueStatus.first
+    )
+  end
   let(:parent_user_story) { create(:issue, project: project, tracker: user_story_tracker, subject: 'Parent UserStory') }
 
   before do
     member # ensure member exists
     project.trackers << bug_tracker unless project.trackers.include?(bug_tracker)
     project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+    project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
 
     # MCP API有効化（プラグイン設定）
     Setting.plugin_redmine_epic_ladder = {
       'bug_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:bug],
       'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+      'feature_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:feature],
       'mcp_enabled' => '1'
     }
     EpicLadder::TrackerHierarchy.clear_cache!
@@ -107,6 +115,37 @@ RSpec.describe EpicLadder::McpTools::CreateBugTool, type: :model do
         expect(bug.fixed_version).to eq(version)
       end
 
+      it 'handles special characters in description' do
+        result = described_class.call(
+          project_id: project.identifier,
+          description: 'Bug with <special> & "characters" causing issues',
+          parent_user_story_id: parent_user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+
+        bug = Issue.find(response_text['bug_id'])
+        expect(bug.description).to include('<special>')
+        expect(bug.description).to include('&')
+      end
+
+      it 'handles Japanese characters and emojis' do
+        result = described_class.call(
+          project_id: project.identifier,
+          description: 'バリデーションエラーが表示されない 🐛',
+          parent_user_story_id: parent_user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+
+        bug = Issue.find(response_text['bug_id'])
+        expect(bug.description).to include('バリデーションエラー')
+        expect(bug.description).to include('🐛')
+      end
     end
 
     context 'with invalid parameters' do
@@ -167,18 +206,36 @@ RSpec.describe EpicLadder::McpTools::CreateBugTool, type: :model do
         expect(response_text['success']).to be false
         expect(response_text['error']).to include('親チケット')
       end
+
+      it 'allows Bug under Feature (Bug can have UserStory or Feature as parent)' do
+        feature = create(:issue, project: project, tracker: feature_tracker, subject: 'Parent Feature')
+
+        result = described_class.call(
+          project_id: project.identifier,
+          description: 'テストBug under Feature',
+          parent_user_story_id: feature.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        # Bug can be created under Feature (by design - see TrackerHierarchy.rules)
+        expect(response_text['success']).to be true
+
+        bug = Issue.find(response_text['bug_id'])
+        expect(bug.parent).to eq(feature)
+      end
     end
   end
 
   describe 'tool metadata' do
     it 'has correct description' do
       expect(described_class.description).to include('Bug')
-      expect(described_class.description).to include('不具合')
+      expect(described_class.description).to include('defect')
     end
 
     it 'has required input schema' do
       schema = described_class.input_schema
-      expect(schema.properties).to include(:project_id, :description, :parent_user_story_id)
+      expect(schema.properties).to include(:project_id, :description, :parent_user_story_id, :version_id)
       required_fields = schema.instance_variable_get(:@required)
       expect(required_fields).to include(:description)
       expect(required_fields).to include(:parent_user_story_id)

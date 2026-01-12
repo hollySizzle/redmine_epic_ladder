@@ -286,7 +286,15 @@
       "WebFetch(domain:redmine.jp)",
       "WebFetch(domain:redmine.giken.or.jp)",
       "mcp__redmine_epic_grid__update_issue_status_tool",
-      "mcp__serena__think_about_task_adherence"
+      "mcp__serena__think_about_task_adherence",
+      "Bash(sudo chmod:*)",
+      "Bash(chmod:*)",
+      "Bash(plugins/redmine_epic_ladder/spec/lib/epic_ladder/mcp_tools/create_epic_tool_spec.rb )",
+      "Bash(plugins/redmine_epic_ladder/spec/lib/epic_ladder/mcp_tools/create_user_story_tool_spec.rb )",
+      "Bash(plugins/redmine_epic_ladder/spec/lib/epic_ladder/mcp_tools/create_task_tool_spec.rb )",
+      "Bash(plugins/redmine_epic_ladder/spec/lib/epic_ladder/mcp_tools/create_bug_tool_spec.rb )",
+      "Bash(plugins/redmine_epic_ladder/spec/lib/epic_ladder/mcp_tools/create_test_tool_spec.rb )",
+      "Bash(plugins/redmine_epic_ladder/spec/lib/epic_ladder/mcp_tools/issue_creation_service_spec.rb )"
     ],
     "deny": [],
     "ask": [],

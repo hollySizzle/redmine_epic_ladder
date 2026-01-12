@@ -19,12 +19,13 @@ module EpicLadder
           project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
           subject: { type: "string", description: "Epic subject/title" },
           description: { type: "string", description: "Epic description (optional)" },
-          assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" }
+          assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" },
+          version_id: { type: "string", description: "Version ID (release milestone)" }
         },
         required: ["subject"]
       )
 
-      def self.call(project_id: nil, subject:, description: nil, assigned_to_id: nil, server_context:)
+      def self.call(project_id: nil, subject:, description: nil, assigned_to_id: nil, version_id: nil, server_context:)
         Rails.logger.info "CreateEpicTool#call started: project_id=#{project_id}, subject=#{subject}"
 
         begin
@@ -34,7 +35,8 @@ module EpicLadder
             project_id: project_id,
             subject: subject,
             description: description || subject,
-            assigned_to_id: assigned_to_id
+            assigned_to_id: assigned_to_id,
+            version_id: version_id
           )
 
           return error_response(result[:error], result[:details]) unless result[:success]
