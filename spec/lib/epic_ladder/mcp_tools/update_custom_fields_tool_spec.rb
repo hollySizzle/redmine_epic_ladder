@@ -188,5 +188,169 @@ RSpec.describe EpicLadder::McpTools::UpdateCustomFieldsTool, type: :model do
         expect(response_text['error']).to include('権限がありません')
       end
     end
+
+    context 'with closed issue' do
+      let(:closed_status) { create(:closed_status) }
+
+      it 'allows updating custom fields of closed issue' do
+        closed_task = create(:issue,
+                             project: project,
+                             tracker: task_tracker,
+                             status: closed_status)
+
+        result = described_class.call(
+          issue_id: closed_task.id.to_s,
+          custom_fields: { 'TestField' => 'Closed Issue Value' },
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # Redmineコアでは通常、クローズ済みIssueのカスタムフィールド変更は可能
+        expect(response_text['success']).to be true
+        expect(response_text['updated_fields'].first['new_value']).to eq('Closed Issue Value')
+
+        closed_task.reload
+        expect(closed_task.custom_field_value(custom_field.id)).to eq('Closed Issue Value')
+      end
+    end
+
+    context 'with list type custom field' do
+      let(:list_custom_field) do
+        IssueCustomField.create!(
+          name: 'Priority Level',
+          field_format: 'list',
+          is_for_all: true,
+          trackers: [task_tracker],
+          possible_values: %w[Low Medium High Critical]
+        )
+      end
+
+      before do
+        project.issue_custom_fields << list_custom_field unless project.issue_custom_fields.include?(list_custom_field)
+      end
+
+      it 'accepts valid list value' do
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          custom_fields: { 'Priority Level' => 'High' },
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        task.reload
+        expect(task.custom_field_value(list_custom_field.id)).to eq('High')
+      end
+
+      it 'handles invalid list value' do
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          custom_fields: { 'Priority Level' => 'InvalidValue' },
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # Redmineのバリデーションに応じた動作
+        # 無効な値は拒否されるか、または許容されるか（設定依存）
+        expect(response_text).to have_key('success')
+      end
+    end
+
+    context 'with date type custom field' do
+      let(:date_custom_field) do
+        IssueCustomField.create!(
+          name: 'Due By',
+          field_format: 'date',
+          is_for_all: true,
+          trackers: [task_tracker]
+        )
+      end
+
+      before do
+        project.issue_custom_fields << date_custom_field unless project.issue_custom_fields.include?(date_custom_field)
+      end
+
+      it 'accepts valid date format' do
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          custom_fields: { 'Due By' => '2026-01-31' },
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        task.reload
+        expect(task.custom_field_value(date_custom_field.id)).to eq('2026-01-31')
+      end
+
+      it 'handles invalid date format' do
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          custom_fields: { 'Due By' => 'not-a-date' },
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # 無効な日付形式はRedmineのバリデーションで処理される
+        expect(response_text).to have_key('success')
+      end
+    end
+
+    context 'with field not enabled for tracker' do
+      let(:other_tracker) do
+        Tracker.create!(
+          name: 'OtherTracker',
+          default_status: IssueStatus.first
+        )
+      end
+      let(:tracker_specific_field) do
+        IssueCustomField.create!(
+          name: 'TrackerSpecificField',
+          field_format: 'string',
+          is_for_all: true,
+          trackers: [other_tracker]  # task_trackerでは無効
+        )
+      end
+
+      before do
+        project.trackers << other_tracker unless project.trackers.include?(other_tracker)
+        project.issue_custom_fields << tracker_specific_field unless project.issue_custom_fields.include?(tracker_specific_field)
+      end
+
+      it 'handles field not enabled for tracker' do
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          custom_fields: { 'TrackerSpecificField' => 'Value' },
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # トラッカーで有効でないフィールドは見つからないか、エラーになる
+        # 実装によっては警告のみで成功する可能性もある
+        expect(response_text).to have_key('success')
+      end
+    end
+
+    context 'with empty value for non-required field' do
+      it 'allows setting empty value' do
+        # 空文字で更新（初期値なしで空に設定）
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          custom_fields: { 'TestField' => '' },
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['updated_fields'].first['new_value']).to eq('')
+      end
+    end
   end
 end

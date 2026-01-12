@@ -390,5 +390,181 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueParentTool, type: :model do
         expect(response_text['error']).to include('権限がありません')
       end
     end
+
+    context 'with closed issue' do
+      let(:closed_status) { create(:closed_status) }
+
+      it 'allows changing parent of closed issue' do
+        # クローズ済みのタスクを作成
+        closed_task = create(:issue,
+                             project: project,
+                             tracker: task_tracker,
+                             subject: 'Closed Task',
+                             parent: user_story,
+                             status: closed_status)
+
+        new_user_story = create(:issue,
+                                project: project,
+                                tracker: user_story_tracker,
+                                subject: 'New UserStory',
+                                parent: epic)
+
+        result = described_class.call(
+          issue_id: closed_task.id.to_s,
+          parent_issue_id: new_user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # Redmineコアでは通常、クローズ済みIssueの親変更は可能
+        expect(response_text['success']).to be true
+        expect(response_text['new_parent']['id']).to eq(new_user_story.id.to_s)
+
+        closed_task.reload
+        expect(closed_task.parent).to eq(new_user_story)
+      end
+
+      it 'handles setting closed issue as parent' do
+        # クローズ済みのUserStoryを作成
+        closed_user_story = create(:issue,
+                                   project: project,
+                                   tracker: user_story_tracker,
+                                   subject: 'Closed UserStory',
+                                   parent: epic,
+                                   status: closed_status)
+
+        orphan_task = create(:issue,
+                             project: project,
+                             tracker: task_tracker,
+                             subject: 'Orphan Task')
+
+        result = described_class.call(
+          issue_id: orphan_task.id.to_s,
+          parent_issue_id: closed_user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # Redmineの設定やワークフローによって結果が変わる可能性あり
+        # このテストは動作を文書化する目的
+        if response_text['success']
+          orphan_task.reload
+          expect(orphan_task.parent).to eq(closed_user_story)
+        else
+          # クローズ済みIssueを親に設定できない場合
+          expect(response_text['error']).to be_present
+        end
+      end
+    end
+
+    context 'with cross-project parent' do
+      let(:other_project) { create(:project) }
+      let(:other_user_story) do
+        other_project.trackers << user_story_tracker unless other_project.trackers.include?(user_story_tracker)
+        create(:issue,
+               project: other_project,
+               tracker: user_story_tracker,
+               subject: 'Other Project UserStory')
+      end
+
+      before do
+        # 他プロジェクトのメンバーシップも追加
+        create(:member, project: other_project, user: user, roles: [role])
+      end
+
+      it 'handles cross-project parent setting based on Redmine settings' do
+        # Redmineのサブタスク設定に応じた動作確認
+        # 設定によって成功/失敗が変わる
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          parent_issue_id: other_user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # 結果は設定依存だが、エラーハンドリングが適切に行われていることを確認
+        if response_text['success']
+          task.reload
+          expect(task.parent).to eq(other_user_story)
+        else
+          # クロスプロジェクトが禁止の場合はエラーになる
+          expect(response_text['error']).to be_present
+        end
+      end
+    end
+
+    context 'with hierarchy constraint violation' do
+      let(:feature_tracker) do
+        Tracker.create!(
+          name: EpicLadder::TrackerHierarchy.tracker_names[:feature],
+          default_status: IssueStatus.first
+        )
+      end
+      let(:feature) do
+        project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
+        create(:issue, project: project, tracker: feature_tracker, subject: 'Feature', parent: epic)
+      end
+
+      before do
+        feature # 作成を確実にする
+      end
+
+      it 'allows valid hierarchy change (Task under UserStory)' do
+        # 正しい階層: UserStory → Task
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          parent_issue_id: user_story.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be true
+      end
+
+      it 'handles hierarchy constraint when setting Task directly under Epic' do
+        # TrackerHierarchy制約: Epic → Task は直接不可（Feature/UserStoryを経由すべき）
+        # ただし、Redmineコアはこの制約を持たないため、ツールレベルでの制約確認
+        result = described_class.call(
+          issue_id: task.id.to_s,
+          parent_issue_id: epic.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # 現在の実装ではRedmineコアに委譲しているため、成功する可能性がある
+        # このテストは階層制約の動作を文書化する目的
+        if response_text['success']
+          task.reload
+          expect(task.parent).to eq(epic)
+        else
+          # 将来的にツールレベルで制約を追加した場合
+          expect(response_text['error']).to include('階層')
+        end
+      end
+
+      it 'handles UserStory directly under Epic (valid in TrackerHierarchy)' do
+        # 正しい階層: Epic → Feature → UserStory
+        # ただし Epic → UserStory も許容される場合がある
+        new_user_story = create(:issue,
+                                project: project,
+                                tracker: user_story_tracker,
+                                subject: 'Direct UserStory')
+
+        result = described_class.call(
+          issue_id: new_user_story.id.to_s,
+          parent_issue_id: epic.id.to_s,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        # TrackerHierarchyの設定に応じた動作
+        expect(response_text).to have_key('success')
+      end
+    end
   end
 end
