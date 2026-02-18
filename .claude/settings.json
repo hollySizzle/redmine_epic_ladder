@@ -3,7 +3,9 @@
     "type": "command",
     "command": "node /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/others/statusline.js"
   },
-  "env": { "DISABLE_AUTOUPDATER": "1" },
+  "env": {
+    "DISABLE_AUTOUPDATER": "1"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -32,6 +34,87 @@
             "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
           }
         ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook session-startup"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*__write.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook implementation-design"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*replace.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook implementation-design"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*insert.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook implementation-design"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook implementation-design"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook implementation-design"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook implementation-design"
+          }
+        ]
+      },
+      {
+        "matcher": "MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook implementation-design"
+          }
+        ]
+      },
+      {
+        "matcher": "SendMessage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook sendmessage-guard"
+          }
+        ]
       }
     ],
     "Notification": [
@@ -43,6 +126,15 @@
             "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"📢 Claude Code から通知があります\\\""
           }
         ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger notify \"📢 Claude Code から通知があります\""
+          }
+        ]
       }
     ],
     "Stop": [
@@ -52,6 +144,77 @@
           {
             "type": "command",
             "command": "python3 /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"🛑 Claude Code セッションが停止されました\\\""
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger notify \"🛑 Claude Code セッションが停止されました\""
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook suggest-rules-trigger"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook transcript-storage"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook compact-detected"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook subagent-event"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook subagent-event"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__redmine_epic_grid__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-nagger hook redmine-discord"
           }
         ]
       }
