@@ -1,0 +1,315 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useStore } from '../../store/useStore';
+import { highlightIssue, scrollToIssue, expandParentUserStory, enableFocusMode } from '../../utils/domUtils';
+import { searchAllIssues, sortSearchResults, filterClosedIssues, type SortOrder } from '../../utils/searchUtils';
+import type { SearchResult } from '../../types/normalized-api';
+
+/**
+ * SearchTab コンポーネント
+ *
+ * 検索機能とその結果を表示するタブコンテンツ
+ * 複数ヒット時は一覧表示し、クリックでカードへスクロール&ハイライト
+ *
+ * Phase 1対応:
+ * - ID検索（数値のみ入力時、完全一致）
+ * - ID完全一致時は自動的にDetailPaneも表示
+ */
+export const SearchTab: React.FC = () => {
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('hierarchy'); // デフォルトは階層順
+  const [excludeClosed, setExcludeClosed] = useState(false); // クローズ除外フラグ
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // 検索対象トグル
+  const [searchTargets, setSearchTargets] = useState({
+    subject: true,    // タイトル検索（デフォルトON）
+    status: false,    // ステータス検索
+    assignee: false   // 担当者名検索
+  });
+
+  const entities = useStore(state => state.entities);
+  const users = useStore(state => state.entities.users);
+  const setSelectedEntity = useStore(state => state.setSelectedEntity);
+  const toggleDetailPane = useStore(state => state.toggleDetailPane);
+  const isDetailPaneVisible = useStore(state => state.isDetailPaneVisible);
+  const activeSideTab = useStore(state => state.activeSideTab);
+
+  // SearchTabがアクティブになったら入力欄にフォーカス
+  useEffect(() => {
+    if (activeSideTab === 'search' && inputRef.current) {
+      // 少し遅延させてフォーカス（アニメーション完了後）
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSideTab]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!query.trim()) {
+      setSearchResults([]);
+      setHasSearched(false);
+      return;
+    }
+
+    // 全マッチするissueを検索（検索対象トグルを渡す）
+    const results = searchAllIssues(entities, query, searchTargets, users);
+    // クローズissue除外フィルター適用
+    const filteredResults = filterClosedIssues(results, excludeClosed);
+    // ソート適用
+    const sortedResults = sortSearchResults(filteredResults, sortOrder);
+    setSearchResults(sortedResults);
+    setHasSearched(true);
+  };
+
+  const handleResultClick = (result: SearchResult) => {
+    console.log('🔍 [SearchTab] handleResultClick called:', {
+      id: result.id,
+      type: result.type,
+      subject: result.subject,
+      isExactIdMatch: result.isExactIdMatch
+    });
+
+    // 親階層を自動展開（Task/Test/Bugの場合のみ）
+    console.log('🔍 [SearchTab] Expanding parent user story...');
+    const wasExpanded = expandParentUserStory(result.id, result.type, entities);
+
+    // 展開した場合は少し待ってからスクロール（DOM更新を待つ）
+    const scrollDelay = wasExpanded ? 150 : 0;
+
+    setTimeout(() => {
+      // DOM要素までスクロール
+      console.log('🔍 [SearchTab] Scrolling to issue...');
+      const scrolled = scrollToIssue(result.id, result.type);
+      console.log('🔍 [SearchTab] Scroll result:', scrolled);
+
+      if (scrolled) {
+        // フォーカスモード有効化（他のカードを薄くする）
+        console.log('🔍 [SearchTab] Enabling focus mode...');
+        enableFocusMode(result.id, result.type);
+
+        // ハイライト表示
+        console.log('🔍 [SearchTab] Highlighting issue...');
+        highlightIssue(result.id, result.type);
+
+        // Phase 1: ID完全一致の場合のみDetailPaneも自動表示
+        if (result.isExactIdMatch) {
+          console.log('🔍 [SearchTab] Exact ID match, showing detail pane...');
+          if (!isDetailPaneVisible) {
+            toggleDetailPane();
+          }
+          setSelectedEntity('issue', result.id);
+        }
+      } else {
+        console.warn(`⚠️ DOM element not found for issue: ${result.id} (${result.type})`);
+      }
+    }, scrollDelay);
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setSearchResults([]);
+    setHasSearched(false);
+  };
+
+  const getIssueTypeLabel = (type: string): string => {
+    switch (type) {
+      case 'epic': return 'Epic';
+      case 'feature': return 'Feature';
+      case 'user-story': return 'UserStory';
+      case 'task': return 'Task';
+      case 'test': return 'Test';
+      case 'bug': return 'Bug';
+      default: return type;
+    }
+  };
+
+  const getIssueTypeIcon = (type: string): string => {
+    switch (type) {
+      case 'epic': return '📦';
+      case 'feature': return '✨';
+      case 'user-story': return '📝';
+      case 'task': return '✅';
+      case 'test': return '🧪';
+      case 'bug': return '🐛';
+      default: return '📄';
+    }
+  };
+
+  const handleToggleTarget = (target: keyof typeof searchTargets) => {
+    setSearchTargets(prev => ({
+      ...prev,
+      [target]: !prev[target]
+    }));
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newOrder = e.target.value as SortOrder;
+    setSortOrder(newOrder);
+    // 既存の検索結果を再ソート
+    if (searchResults.length > 0) {
+      setSearchResults(sortSearchResults(searchResults, newOrder));
+    }
+  };
+
+  const handleExcludeClosedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newExcludeClosed = e.target.checked;
+    setExcludeClosed(newExcludeClosed);
+    // 既存の検索結果を再実行（フィルター適用）
+    if (hasSearched && query.trim()) {
+      const results = searchAllIssues(entities, query, searchTargets, users);
+      const filteredResults = filterClosedIssues(results, newExcludeClosed);
+      const sortedResults = sortSearchResults(filteredResults, sortOrder);
+      setSearchResults(sortedResults);
+    }
+  };
+
+  const getSortLabel = (order: SortOrder): string => {
+    switch (order) {
+      case 'due-date-asc': return '📅 期限が近い順';
+      case 'due-date-desc': return '📅 期限が遠い順';
+      case 'hierarchy': return '📦 Epic/Feature順';
+      default: return order;
+    }
+  };
+
+  return (
+    <div className="search-tab">
+      <div className="search-tab__control">
+        <form onSubmit={handleSearch} className="search-tab__search">
+          <input
+            ref={inputRef}
+            type="text"
+            className="search-tab__input"
+            placeholder="Epic/Feature/ストーリーを検索..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="search-tab__search-clear"
+              title="検索をクリア"
+            >
+              ✕
+            </button>
+          )}
+        </form>
+        <button
+          type="submit"
+          className="search-tab__button"
+          disabled={!query.trim()}
+          onClick={handleSearch}
+        >
+          🔍 検索
+        </button>
+      </div>
+
+      <div className="search-tab__toggles">
+        <label className="search-tab__toggle">
+          <input
+            type="checkbox"
+            checked={searchTargets.subject}
+            onChange={() => handleToggleTarget('subject')}
+          />
+          <span>タイトルを含む</span>
+        </label>
+        <label className="search-tab__toggle">
+          <input
+            type="checkbox"
+            checked={searchTargets.status}
+            onChange={() => handleToggleTarget('status')}
+          />
+          <span>ステータスを含む</span>
+        </label>
+        <label className="search-tab__toggle">
+          <input
+            type="checkbox"
+            checked={searchTargets.assignee}
+            onChange={() => handleToggleTarget('assignee')}
+          />
+          <span>担当者名を含む</span>
+        </label>
+      </div>
+
+      <div className="search-tab__filters">
+        <label className="search-tab__filter">
+          <input
+            type="checkbox"
+            checked={excludeClosed}
+            onChange={handleExcludeClosedChange}
+          />
+          <span>クローズ済みを除外</span>
+        </label>
+      </div>
+
+      <div className="search-tab__results">
+        {!hasSearched && (
+          <div className="search-tab__placeholder">
+            <p>💡 ID または タイトル（subject）で検索できます</p>
+            <ul className="search-tab__features">
+              <li><strong>ID検索</strong>: 数値のみ入力で完全一致検索（例: 123）</li>
+              <li><strong>タイトル検索</strong>: 部分一致検索（大文字小文字区別なし）</li>
+              <li>Epic/Feature/UserStory/Task/Test/Bug を横断検索</li>
+              <li>クリックでカードへジャンプ&ハイライト</li>
+              <li>ID完全一致時は詳細パネルも自動表示</li>
+            </ul>
+          </div>
+        )}
+
+        {hasSearched && searchResults.length === 0 && (
+          <div className="search-tab__no-results">
+            <p>❌ 「{query}」に該当するissueが見つかりませんでした</p>
+          </div>
+        )}
+
+        {hasSearched && searchResults.length > 0 && (
+          <div className="search-tab__results-list">
+            <div className="search-tab__results-header">
+              <p>✅ {searchResults.length}件見つかりました</p>
+              <div className="search-tab__sort">
+                <label htmlFor="sort-order">並び替え:</label>
+                <select
+                  id="sort-order"
+                  value={sortOrder}
+                  onChange={handleSortChange}
+                  className="search-tab__sort-select"
+                >
+                  <option value="hierarchy">📦 Epic/Feature順</option>
+                  <option value="due-date-asc">📅 期限が近い順</option>
+                  <option value="due-date-desc">📅 期限が遠い順</option>
+                </select>
+              </div>
+            </div>
+            <ul className="search-tab__list">
+              {searchResults.map((result) => (
+                <li
+                  key={`${result.type}-${result.id}`}
+                  className="search-tab__list-item"
+                  onClick={() => handleResultClick(result)}
+                >
+                  <div className="search-tab__item-icon">
+                    {getIssueTypeIcon(result.type)}
+                  </div>
+                  <div className="search-tab__item-content">
+                    <div className="search-tab__item-type">
+                      {getIssueTypeLabel(result.type)}
+                    </div>
+                    <div className="search-tab__item-subject">
+                      {result.subject}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

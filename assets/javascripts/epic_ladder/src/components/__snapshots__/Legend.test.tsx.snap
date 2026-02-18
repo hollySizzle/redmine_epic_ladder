@@ -1,0 +1,7 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Legend > Structure > should match the basic structure 1`] = `
+<div
+  class="legend"
+/>
+`;

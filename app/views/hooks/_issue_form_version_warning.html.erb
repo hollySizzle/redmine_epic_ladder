@@ -1,0 +1,50 @@
+<%# 編集フォームでのバージョン変更警告 %>
+<%
+  # 設定が有効で、Epic Ladderモジュールが有効な場合のみ表示
+  hierarchy_guide_enabled = Setting.plugin_redmine_epic_ladder['hierarchy_guide_enabled'] == '1'
+  project = @issue&.project || @project
+  epic_ladder_enabled = project&.module_enabled?(:epic_ladder)
+
+  # トラッカーがEpic Ladder対象かチェック
+  tracker_names = EpicLadder::TrackerHierarchy.tracker_names rescue {}
+  is_epic_ladder_tracker = @issue && tracker_names.present? && tracker_names.values.include?(@issue.tracker&.name)
+%>
+
+<% if hierarchy_guide_enabled && epic_ladder_enabled && is_epic_ladder_tracker %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 対象バージョンフィールドを探す
+  var versionField = document.getElementById('issue_fixed_version_id');
+  if (!versionField) return;
+
+  // 親要素（pタグ）を取得
+  var parentP = versionField.closest('p');
+  if (!parentP) return;
+
+  // 警告メッセージを追加
+  var warningDiv = document.createElement('div');
+  warningDiv.className = 'epic-ladder-version-warning';
+  warningDiv.style.cssText = 'margin-top: 5px; padding: 8px 12px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 1px solid #ff9800; border-left: 3px solid #ff9800; border-radius: 4px; font-size: 12px; color: #e65100;';
+  warningDiv.innerHTML = '⚠️ <%= j l(:notice_epic_ladder_version_form_warning) %>';
+
+  parentP.appendChild(warningDiv);
+
+  // セレクトボックスの見た目を変更
+  versionField.style.cssText = 'border: 1px solid #ff9800; background-color: #fff8e1;';
+
+  // 変更時に確認ダイアログを表示
+  versionField.addEventListener('change', function() {
+    // 変更を許可するが、警告を強調
+    warningDiv.style.animation = 'pulse 0.5s ease-in-out';
+  });
+});
+</script>
+
+<style>
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+</style>
+<% end %>

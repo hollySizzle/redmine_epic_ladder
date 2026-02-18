@@ -1,0 +1,219 @@
+---
+# ========================================
+# Event Chain Log - 試行錯誤の記録
+# ========================================
+# 用途: Plan通りにいかなかった作業の実際の流れを記録
+# 特徴: 問題→解決→新たな問題→解決 の連鎖を追跡
+# フォーマットバージョン: 2.0 (簡略化版)
+# ========================================
+
+log_id: "YYYYMMDD_HHMMSS"
+title: "作業タイトル（簡潔に）"
+plan_reference: "/Vibes/plans/YYYYMMDD_plan.yaml" # 元のプラン
+date: "YYYY-MM-DD"
+duration: "X hours Y minutes"
+status: completed # completed, in_progress, abandoned
+
+overview: |
+  何をやろうとしたか（3-5行）
+  実際にどうなったか
+  最終的な結果
+
+environment:
+  - "開発環境: k3d / VPS"
+  - "OS: macOS / Ubuntu"
+  - "その他の前提条件"
+
+# ========================================
+# イベントチェーン（時系列の試行錯誤）
+# ========================================
+# event_id: E0, E1, E2... の連番
+# type: trigger, issue, action, resolution
+# parent: どの問題に対する対応か（action の場合）
+# result: success, failed, partial_success
+# learning: この段階で学んだこと
+# next: 次のイベントID
+# ========================================
+
+event_chain:
+  # トリガー（作業開始）
+  - event_id: "E0"
+    type: "trigger"
+    timestamp: "YYYY-MM-DD HH:MM"
+    description: "作業を開始した理由・背景"
+    context:
+      reason: "なぜこの作業が必要になったか"
+      plan_task: "Plan の Phase X, Task X.X に対応"
+    next: ["E1"]
+
+  # 問題発生
+  - event_id: "E1"
+    type: "issue"
+    timestamp: "YYYY-MM-DD HH:MM"
+    title: "問題のタイトル（簡潔に）"
+    symptom: "観察された症状・エラーメッセージ"
+    severity: "critical" # info, warning, critical
+    investigation:
+      - finding: "調査したこと1"
+        result: "わかったこと1"
+      - finding: "調査したこと2"
+        result: "わかったこと2"
+    hypothesis: "推測される原因"
+    next: ["E2"]
+
+  # 対応1（失敗例）
+  - event_id: "E2"
+    type: "action"
+    parent: "E1"
+    timestamp: "YYYY-MM-DD HH:MM"
+    title: "試したこと1"
+    action:
+      description: "何をしたか"
+      command: "実行したコマンド（任意）"
+    result: "failed"
+    error: "エラーメッセージ・失敗の内容"
+    reason: "なぜ失敗したか"
+    learning: "この失敗から学んだこと"
+    duration: "X min"
+    next: ["E3"]
+
+  # 対応2（成功例）
+  - event_id: "E3"
+    type: "action"
+    parent: "E1"
+    timestamp: "YYYY-MM-DD HH:MM"
+    title: "別のアプローチ"
+    action:
+      description: "何をしたか"
+      command: "実行したコマンド（任意）"
+    result: "success"
+    outcome: "成功した結果"
+    learning: "成功の鍵となったポイント"
+    breakthrough: true # ブレークスルーならtrue
+    duration: "X min"
+    next: ["E4"]
+
+  # 新たな問題発生（派生問題）
+  - event_id: "E4"
+    type: "issue"
+    parent: "E3" # E3の成功後に発覚
+    timestamp: "YYYY-MM-DD HH:MM"
+    title: "新たに発見された問題"
+    symptom: "症状"
+    severity: "warning"
+    investigation:
+      - finding: "調査内容"
+        result: "結果"
+    next: ["E5"]
+
+  # 対応3（成功）
+  - event_id: "E5"
+    type: "action"
+    parent: "E4"
+    timestamp: "YYYY-MM-DD HH:MM"
+    title: "派生問題への対応"
+    action:
+      description: "何をしたか"
+    result: "success"
+    learning: "学んだこと"
+    next: ["E6"]
+
+  # 解決（最終状態）
+  - event_id: "E6"
+    type: "resolution"
+    timestamp: "YYYY-MM-DD HH:MM"
+    title: "作業完了"
+    status: "resolved"
+    final_state:
+      - "コンポーネント1: 状態"
+      - "コンポーネント2: 状態"
+    verification:
+      - check: "確認項目1"
+        result: "結果"
+      - check: "確認項目2"
+        result: "結果"
+    next: []
+
+# ========================================
+# フロー（全体像の把握）
+# ========================================
+flow: |
+  E0(trigger: 作業開始)
+    ↓
+  E1(issue: 問題発生)
+    ↓
+  E2(action: 対応1) → failed
+    ↓
+  E3(action: 対応2) → SUCCESS ★breakthrough★
+    ↓ (reveals new issue)
+  E4(issue: 派生問題)
+    ↓
+  E5(action: 対応3) → success
+    ↓
+  E6(resolution: 完了)
+
+# ========================================
+# 主要な学び
+# ========================================
+key_learnings:
+  - event: "E2"
+    lesson: "失敗から学んだこと"
+    category: "troubleshooting"
+    importance: "high"
+
+  - event: "E3"
+    lesson: "成功の鍵となったこと"
+    category: "best_practice"
+    importance: "critical"
+    applies_to: ["適用される技術・コンポーネント"]
+
+  - event: "E5"
+    lesson: "派生問題への対応で学んだこと"
+    category: "operational"
+    importance: "medium"
+
+# ========================================
+# 統計情報（自動集計可能）
+# ========================================
+statistics:
+  total_events: 7
+  issues_encountered: 2 # E1, E4
+  actions_attempted: 3 # E2, E3, E5
+  actions_failed: 1 # E2
+  actions_succeeded: 2 # E3, E5
+  total_duration: "X hours Y min"
+  breakthrough_event: "E3"
+
+# ========================================
+# 予防策（任意）
+# ========================================
+preventive_measures:
+  - target_issue: "E1"
+    prevention: "次回からこうする"
+    status: "proposed" # proposed, implemented
+    implementation:
+      file: "変更するファイル（あれば）"
+      change: "変更内容"
+
+  - target_issue: "E4"
+    prevention: "チェックリストに追加"
+    status: "implemented"
+    details: "具体的な予防策"
+
+# ========================================
+# 関連ファイル・残課題
+# ========================================
+related_files:
+  plan: "/Vibes/plans/YYYYMMDD_plan.yaml"
+  implementation_guide: "/Vibes/実装ガイド/YYYYMMDD_guide.yaml"
+  code_changes:
+    - "変更したファイル1"
+    - "変更したファイル2"
+
+next_steps:
+  - "残っているタスク1"
+  - "今後やるべきこと2"
+
+notes:
+  - "補足事項1"
+  - "補足事項2"

@@ -1,0 +1,57 @@
+# frozen_string_literal: true
+
+  # ===== Issue投入（Epic/Feature/UserStory/Task階層構造） =====
+  puts "\n🎯 大規模Issue階層構造を投入中..."
+  puts "  📊 目標: Epic×6, Feature×25, UserStory×70, Task×50"
+
+  # app_notificationsプラグインの通知を一時無効化
+  begin
+    # Journal作成後の通知を無効化
+    AppNotificationsJournalsPatch.module_eval do
+      alias_method :orig_create_app_notifications_after_create_journal, :create_app_notifications_after_create_journal
+      def create_app_notifications_after_create_journal; end
+    end
+    # Issue作成後の通知を無効化
+    AppNotificationsIssuesPatch.module_eval do
+      alias_method :orig_create_app_notifications_after_create_issue, :create_app_notifications_after_create_issue
+      def create_app_notifications_after_create_issue; end
+    end
+    puts "  ⚙️  app_notifications一時無効化"
+  rescue NameError => e
+    puts "  ⚠️  app_notificationsプラグインパッチ無効化に失敗: #{e.message}"
+  end
+
+  # トラッカー取得
+  epic_tracker = Tracker.find_by(name: 'エピック')
+  feature_tracker = Tracker.find_by(name: '機能')
+  user_story_tracker = Tracker.find_by(name: 'ユーザストーリ')
+  task_tracker = Tracker.find_by(name: '作業')
+  test_tracker = Tracker.find_by(name: '評価')
+  bug_tracker = Tracker.find_by(name: '不具合')
+
+  # ステータス取得
+  status_new = IssueStatus.find_by(name: '新規')
+  status_in_progress = IssueStatus.find_by(name: '進行中')
+  status_resolved = IssueStatus.find_by(name: '解決済み')
+  status_closed = IssueStatus.find_by(name: '終了')
+
+  # ユーザー取得
+  tanaka = User.find_by(login: 'tanaka')
+  suzuki = User.find_by(login: 'suzuki')
+  sato = User.find_by(login: 'sato')
+  watanabe = User.find_by(login: 'watanabe')
+  yamada = User.find_by(login: 'yamada')
+
+  # 優先度取得
+  priority_low = IssuePriority.find_by(name: 'Low')
+  priority_normal = IssuePriority.find_by(name: 'Normal')
+  priority_high = IssuePriority.find_by(name: 'High')
+  priority_urgent = IssuePriority.find_by(name: 'Urgent')
+
+  # カウンター初期化
+  epic_count = 0
+  feature_count = 0
+  us_count = 0
+  task_count = 0
+
+  # ========================================

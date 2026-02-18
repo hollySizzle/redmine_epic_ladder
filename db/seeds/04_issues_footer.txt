@@ -1,0 +1,10 @@
+  puts "      └─ T#{task_count}: #{task.subject}"
+
+  us = Issue.create!(project: sakura_ec, tracker: user_story_tracker, subject: '新着商品バッジが表示される',
+    description: '登録7日以内の商品にNEWマーク', status: status_in_progress, priority: priority_normal,
+    author: watanabe, parent_issue_id: f2_4.id, fixed_version: created_versions['v0.9.0 - ベータ版'], estimated_hours: 4.0)
+  us_count += 1
+  puts "    ├─ US#{us_count}: #{us.subject} (Epic2追加)"
+
+  task = Issue.create!(project: sakura_ec, tracker: task_tracker, subject: 'NEWバッジ条件判定ロジック',
+    status: status_in_progress, priority: priority_normal, author: watanabe, assigned_to: watanabe, parent_issue_id: us.id,
