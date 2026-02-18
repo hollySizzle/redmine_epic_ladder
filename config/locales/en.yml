@@ -28,6 +28,15 @@ en:
   warning_epic_ladder_version_mismatch_with_parent: "⚠️ Parent %{parent} remains at %{parent_version}"
   error_epic_ladder_version_update_failed: "Failed to update version: %{error}"
 
+  # Promote to UserStory Quick Action
+  label_epic_ladder_promote_to_user_story: "Promote to US"
+  confirm_epic_ladder_promote_to_user_story: "Promote this issue to UserStory? The tracker will be changed to UserStory and the parent will be moved under the Feature."
+  notice_epic_ladder_promoted_to_user_story: "Successfully promoted to UserStory"
+  error_epic_ladder_promotion_failed: "Failed to promote to UserStory: %{error}"
+  error_epic_ladder_promotion_invalid_tracker: "This tracker cannot be promoted to UserStory (only Task/Bug/Test)"
+  error_epic_ladder_promotion_no_parent_us: "Cannot promote: no parent UserStory found"
+  error_epic_ladder_promotion_no_parent_feature: "Cannot promote: no Feature found above the parent UserStory"
+
   # Project Settings Tab
   label_epic_ladder_settings: "Epic Ladder"
   label_epic_ladder_tracker_settings: "Tracker Mapping"

@@ -60,6 +60,9 @@ RedmineApp::Application.routes.draw do
   # Version変更クイックアクション
   patch 'epic_ladder/issues/:id/update_version', to: 'epic_ladder/version#update', as: 'epic_ladder_update_version'
 
+  # UserStoryへの昇格クイックアクション
+  patch 'epic_ladder/issues/:id/promote_to_user_story', to: 'epic_ladder/promotion#promote_to_user_story', as: 'epic_ladder_promote_to_user_story'
+
   # ===== MCP Server (Streamable HTTP) =====
   # POST /mcp/rpc - JSON-RPC 2.0エンドポイント
   # OPTIONS /mcp/rpc - CORSプリフライト対応
