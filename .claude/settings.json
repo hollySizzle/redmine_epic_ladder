@@ -4,7 +4,8 @@
     "command": "node /usr/src/redmine/plugins/redmine_epic_ladder/vibes/scripts/others/statusline.js"
   },
   "env": {
-    "DISABLE_AUTOUPDATER": "1"
+    "DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hooks": {
     "PreToolUse": [
