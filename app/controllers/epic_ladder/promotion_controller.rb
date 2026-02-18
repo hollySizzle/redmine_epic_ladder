@@ -31,14 +31,13 @@ module EpicLadder
         return redirect_to issue_path(@issue)
       end
 
-      # トラッカーをUserStoryに変更
+      # トラッカー変更 + 親付け替えをトランザクションで実行
       us_tracker = Tracker.find_by(name: tracker_names[:user_story])
-      @issue.tracker = us_tracker
-
-      # 親をFeature直下に付け替え
-      @issue.parent_id = feature.id
-
-      @issue.save!
+      ActiveRecord::Base.transaction do
+        @issue.tracker = us_tracker
+        @issue.parent_id = feature.id
+        @issue.save!
+      end
 
       flash[:notice] = l(:notice_epic_ladder_promoted_to_user_story)
       redirect_to issue_path(@issue)
