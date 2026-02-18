@@ -28,6 +28,15 @@ ja:
   warning_epic_ladder_version_mismatch_with_parent: "⚠️ 親%{parent} は %{parent_version} のままです"
   error_epic_ladder_version_update_failed: "バージョンの変更に失敗しました: %{error}"
 
+  # UserStoryへの昇格クイックアクション
+  label_epic_ladder_promote_to_user_story: "USに昇格"
+  confirm_epic_ladder_promote_to_user_story: "このチケットをUserStoryに昇格しますか？トラッカーがUserStoryに変更され、親がFeature直下に移動します。"
+  notice_epic_ladder_promoted_to_user_story: "UserStoryに昇格しました"
+  error_epic_ladder_promotion_failed: "UserStoryへの昇格に失敗しました: %{error}"
+  error_epic_ladder_promotion_invalid_tracker: "このトラッカーはUserStoryに昇格できません（Task/Bug/Testのみ対象）"
+  error_epic_ladder_promotion_no_parent_us: "親UserStoryが存在しないため昇格できません"
+  error_epic_ladder_promotion_no_parent_feature: "親UserStoryの上位にFeatureが存在しないため昇格できません"
+
   # プロジェクト設定タブ
   label_epic_ladder_settings: "Epic Ladder"
   label_epic_ladder_tracker_settings: "トラッカー名マッピング"

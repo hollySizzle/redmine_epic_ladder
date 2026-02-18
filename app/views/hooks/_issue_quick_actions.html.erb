@@ -68,6 +68,21 @@
     <% end %>
   </div>
 
+  <%# UserStoryへの昇格アクション %>
+  <div class="epic-ladder-promote-section" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #81c784;">
+    <h4 style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold; color: #2e7d32;">
+      <%= l(:label_epic_ladder_promote_to_user_story) %>
+    </h4>
+    <%= button_to(
+      l(:label_epic_ladder_promote_to_user_story),
+      epic_ladder_promote_to_user_story_path(issue),
+      method: :patch,
+      data: { confirm: l(:confirm_epic_ladder_promote_to_user_story) },
+      class: 'icon icon-move',
+      style: 'background: #ff9800; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;'
+    ) %>
+  </div>
+
   <%# バージョン変更フォームを統合（現在のissueのバージョンを変更） %>
   <%= render partial: 'hooks/issue_version_change_inline', locals: { issue: issue, project: project } %>
 </div>
