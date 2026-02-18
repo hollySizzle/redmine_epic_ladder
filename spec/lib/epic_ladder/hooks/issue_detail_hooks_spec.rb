@@ -124,6 +124,70 @@ RSpec.describe EpicLadder::Hooks::IssueDetailHooks, type: :view do
 
       expect(result).to eq('')
     end
+
+    it 'Bug詳細画面で親USが存在する場合、クイックアクション（昇格ボタン含む）を表示する' do
+      bug_tracker = FactoryBot.create(:bug_tracker)
+      project.trackers << bug_tracker
+      project.enable_module!(:epic_ladder)
+
+      user_story = FactoryBot.create(:user_story, project: project)
+      bug = FactoryBot.create(:bug, project: project, parent: user_story)
+
+      context = {
+        issue: bug,
+        project: project,
+        controller: controller
+      }
+
+      allow(controller).to receive(:render_to_string).and_return('<div class="epic-ladder-quick-actions">Quick Actions</div>')
+
+      hook = described_class.send(:new)
+      result = hook.view_issues_show_details_bottom(context)
+
+      expect(result).to include('Quick Actions')
+    end
+
+    it 'Test詳細画面で親USが存在する場合、クイックアクション（昇格ボタン含む）を表示する' do
+      test_tracker = FactoryBot.create(:test_tracker)
+      project.trackers << test_tracker
+      project.enable_module!(:epic_ladder)
+
+      user_story = FactoryBot.create(:user_story, project: project)
+      test_issue = FactoryBot.create(:test, project: project, parent: user_story)
+
+      context = {
+        issue: test_issue,
+        project: project,
+        controller: controller
+      }
+
+      allow(controller).to receive(:render_to_string).and_return('<div class="epic-ladder-quick-actions">Quick Actions</div>')
+
+      hook = described_class.send(:new)
+      result = hook.view_issues_show_details_bottom(context)
+
+      expect(result).to include('Quick Actions')
+    end
+
+    it 'UserStory詳細画面では昇格ボタンを含まないパーシャルが使用される' do
+      project.enable_module!(:epic_ladder)
+      user_story = FactoryBot.create(:user_story, project: project)
+
+      context = {
+        issue: user_story,
+        project: project,
+        controller: controller
+      }
+
+      allow(controller).to receive(:render_to_string) do |args|
+        # issue_quick_actions_user_storyパーシャルが使用されることを確認
+        expect(args[:partial]).to eq('hooks/issue_quick_actions_user_story')
+        '<div>UserStory Actions</div>'
+      end
+
+      hook = described_class.send(:new)
+      hook.view_issues_show_details_bottom(context)
+    end
   end
 
   describe 'Private Methods (via send)' do
