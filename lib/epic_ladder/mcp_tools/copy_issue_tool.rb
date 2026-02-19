@@ -55,6 +55,12 @@ module EpicLadder
 
           # 権限チェック
           user = server_context[:user] || User.current
+
+          # ソースチケットの閲覧権限チェック
+          unless user.allowed_to?(:view_issues, source_issue.project)
+            return error_response("コピー元チケットの閲覧権限がありません", { project: source_issue.project.identifier })
+          end
+
           unless user.allowed_to?(:add_issues, project)
             return error_response("チケット作成権限がありません", { project: project.identifier })
           end
@@ -77,6 +83,7 @@ module EpicLadder
           new_issue.priority = source_issue.priority
           new_issue.assigned_to = assignee
           new_issue.author = user
+          new_issue.status = IssueStatus.default
           new_issue.done_ratio = 0
 
           unless new_issue.save
