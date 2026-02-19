@@ -83,7 +83,7 @@ module EpicLadder
           new_issue.priority = source_issue.priority
           new_issue.assigned_to = assignee
           new_issue.author = user
-          new_issue.status = IssueStatus.default
+          new_issue.status = IssueStatus.first
           new_issue.done_ratio = 0
 
           unless new_issue.save
