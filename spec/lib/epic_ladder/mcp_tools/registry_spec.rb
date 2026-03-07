@@ -38,6 +38,13 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
       expect(tool_names).to include('UpdateCustomFieldsTool')
       expect(tool_names).to include('AddIssueCommentTool')
 
+      # 関連チケット操作ツール
+      expect(tool_names).to include('AddRelatedIssueTool')
+      expect(tool_names).to include('RemoveRelatedIssueTool')
+
+      # コピーツール
+      expect(tool_names).to include('CopyIssueTool')
+
       # 検索・参照ツール
       expect(tool_names).to include('ListUserStoriesTool')
       expect(tool_names).to include('ListEpicsTool')
@@ -46,7 +53,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
     end
 
     it 'returns current count of tools' do
-      expect(described_class.count).to eq(24)
+      expect(described_class.count).to eq(27)
     end
   end
 
