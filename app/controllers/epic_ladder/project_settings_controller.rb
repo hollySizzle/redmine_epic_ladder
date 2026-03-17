@@ -12,6 +12,7 @@ module EpicLadder
       epic_tracker feature_tracker user_story_tracker
       task_tracker test_tracker bug_tracker
       hierarchy_guide_enabled mcp_enabled
+      inquiry_feature_id
     ].freeze
 
     def update
@@ -47,6 +48,9 @@ module EpicLadder
         elsif %w[hierarchy_guide_enabled mcp_enabled].include?(key)
           # Boolean型の処理
           @setting.send("#{key}=", value == '1')
+        elsif key == 'inquiry_feature_id'
+          # Integer型の処理
+          @setting.send("#{key}=", value.to_i)
         else
           # String型の処理（トラッカー名）
           @setting.send("#{key}=", value)
