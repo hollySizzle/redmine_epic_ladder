@@ -30,7 +30,7 @@ ja:
 
   # UserStoryへの昇格クイックアクション
   label_epic_ladder_promote_to_user_story: "USに昇格"
-  confirm_epic_ladder_promote_to_user_story: "このチケットをUserStoryに昇格しますか？トラッカーがUserStoryに変更され、親がFeature直下に移動します。"
+  confirm_epic_ladder_promote_to_user_story: "このチケットをUserStoryに昇格しますか？新しいUserStoryが作成され、このチケットはその子チケットになります。"
   notice_epic_ladder_promoted_to_user_story: "UserStoryに昇格しました"
   error_epic_ladder_promotion_failed: "UserStoryへの昇格に失敗しました: %{error}"
   error_epic_ladder_promotion_invalid_tracker: "このトラッカーはUserStoryに昇格できません（Task/Bug/Testのみ対象）"
@@ -94,6 +94,7 @@ ja:
       add_related_issue: "関連チケット追加"
       remove_related_issue: "関連チケット削除"
       copy_issue: "チケットコピー"
+      promote_to_us: "USに昇格"
       list_user_stories: "UserStory一覧"
       list_epics: "Epic一覧"
       get_project_structure: "プロジェクト構造取得"

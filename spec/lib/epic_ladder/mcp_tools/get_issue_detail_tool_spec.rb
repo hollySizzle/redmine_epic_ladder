@@ -313,6 +313,198 @@ RSpec.describe EpicLadder::McpTools::GetIssueDetailTool, type: :model do
       end
     end
 
+    context 'with include parameter' do
+      let(:user_story) do
+        create(:issue,
+               project: project,
+               tracker: user_story_tracker,
+               subject: 'Test UserStory',
+               author: user)
+      end
+
+      let!(:child_task) do
+        create(:issue,
+               project: project,
+               tracker: task_tracker,
+               parent_issue_id: user_story.id,
+               subject: 'Child Task',
+               author: user)
+      end
+
+      let!(:journal) do
+        Journal.create!(
+          journalized: user_story,
+          user: user,
+          notes: 'A comment'
+        )
+      end
+
+      let!(:related_issue) do
+        create(:issue,
+               project: project,
+               tracker: user_story_tracker,
+               subject: 'Related Issue',
+               author: user)
+      end
+
+      let!(:relation) do
+        IssueRelation.create!(
+          issue_from: user_story,
+          issue_to: related_issue,
+          relation_type: 'relates'
+        )
+      end
+
+      it 'returns only specified sections (children only)' do
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          include: ['children'],
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue']).to be_present
+        expect(response_text['children']).to be_an(Array)
+        expect(response_text['children_count']).to eq(1)
+        expect(response_text).not_to have_key('journals')
+        expect(response_text).not_to have_key('journals_count')
+        expect(response_text).not_to have_key('relations')
+        expect(response_text).not_to have_key('relations_count')
+      end
+
+      it 'returns only specified sections (journals only)' do
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          include: ['journals'],
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue']).to be_present
+        expect(response_text['journals']).to be_an(Array)
+        expect(response_text['journals_count']).to eq(1)
+        expect(response_text).not_to have_key('children')
+        expect(response_text).not_to have_key('children_count')
+        expect(response_text).not_to have_key('relations')
+        expect(response_text).not_to have_key('relations_count')
+      end
+
+      it 'returns only specified sections (relations only)' do
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          include: ['relations'],
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue']).to be_present
+        expect(response_text['relations']).to be_an(Array)
+        expect(response_text['relations_count']).to eq(1)
+        expect(response_text).not_to have_key('children')
+        expect(response_text).not_to have_key('children_count')
+        expect(response_text).not_to have_key('journals')
+        expect(response_text).not_to have_key('journals_count')
+      end
+
+      it 'returns multiple specified sections' do
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          include: ['children', 'relations'],
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['issue']).to be_present
+        expect(response_text['children']).to be_an(Array)
+        expect(response_text['children_count']).to eq(1)
+        expect(response_text['relations']).to be_an(Array)
+        expect(response_text['relations_count']).to eq(1)
+        expect(response_text).not_to have_key('journals')
+        expect(response_text).not_to have_key('journals_count')
+      end
+
+      it 'returns all sections when include is empty array' do
+        result = described_class.call(
+          issue_id: user_story.id.to_s,
+          include: [],
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['children']).to be_an(Array)
+        expect(response_text['journals']).to be_an(Array)
+        expect(response_text['relations']).to be_an(Array)
+      end
+    end
+
+    context 'with relations' do
+      let(:issue1) do
+        create(:issue,
+               project: project,
+               tracker: user_story_tracker,
+               subject: 'Issue 1',
+               author: user)
+      end
+
+      let(:issue2) do
+        create(:issue,
+               project: project,
+               tracker: user_story_tracker,
+               subject: 'Issue 2',
+               author: user)
+      end
+
+      it 'returns relations data' do
+        relation = IssueRelation.create!(
+          issue_from: issue1,
+          issue_to: issue2,
+          relation_type: 'relates'
+        )
+
+        result = described_class.call(
+          issue_id: issue1.id.to_s,
+          include: ['relations'],
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['relations']).to be_an(Array)
+        expect(response_text['relations_count']).to eq(1)
+
+        relation_data = response_text['relations'].first
+        expect(relation_data['id']).to eq(relation.id.to_s)
+        expect(relation_data['relation_type']).to eq('relates')
+        expect(relation_data['issue_from_id']).to eq(issue1.id.to_s)
+        expect(relation_data['issue_to_id']).to eq(issue2.id.to_s)
+      end
+
+      it 'returns empty relations when no relations exist' do
+        result = described_class.call(
+          issue_id: issue1.id.to_s,
+          include: ['relations'],
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+
+        expect(response_text['success']).to be true
+        expect(response_text['relations']).to eq([])
+        expect(response_text['relations_count']).to eq(0)
+      end
+    end
+
     context 'journal details' do
       it 'returns journal with field change details' do
         # チケット作成
