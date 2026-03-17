@@ -16,12 +16,20 @@ module EpicLadder
 
       input_schema(
         properties: {
-          issue_id: { type: "string", description: "Issue ID" }
+          issue_id: { type: "string", description: "Issue ID" },
+          include: {
+            type: "array",
+            items: {
+              type: "string",
+              enum: ["children", "journals", "relations"]
+            },
+            description: "Sections to include in response. Default: all sections (children, journals, relations) for backward compatibility."
+          }
         },
         required: ["issue_id"]
       )
 
-      def self.call(issue_id:, server_context:)
+      def self.call(issue_id:, include: nil, server_context:)
         Rails.logger.info "GetIssueDetailTool#call started: issue_id=#{issue_id}"
 
         begin
@@ -38,20 +46,31 @@ module EpicLadder
           # チケット詳細情報を構築
           issue_data = build_issue_data(issue)
 
-          # Journals（コメント・更新履歴）を取得
-          journals_data = build_journals_data(issue)
+          # includeパラメータの処理（nilまたは空 = 全取得で後方互換維持）
+          sections = include.nil? || include.empty? ? %w[children journals relations] : include
 
-          # 子チケットを取得
-          children_data = build_children_data(issue)
+          response = { issue: issue_data }
+
+          if sections.include?('journals')
+            journals_data = build_journals_data(issue)
+            response[:journals] = journals_data
+            response[:journals_count] = journals_data.size
+          end
+
+          if sections.include?('children')
+            children_data = build_children_data(issue)
+            response[:children] = children_data
+            response[:children_count] = children_data.size
+          end
+
+          if sections.include?('relations')
+            relations_data = build_relations_data(issue)
+            response[:relations] = relations_data
+            response[:relations_count] = relations_data.size
+          end
 
           # 成功レスポンス
-          success_response(
-            issue: issue_data,
-            journals: journals_data,
-            journals_count: journals_data.size,
-            children: children_data,
-            children_count: children_data.size
-          )
+          success_response(**response)
         rescue StandardError => e
           Rails.logger.error "GetIssueDetailTool error: #{e.class.name}: #{e.message}"
           Rails.logger.error e.backtrace.join("\n")
@@ -147,10 +166,23 @@ module EpicLadder
           end
         end
 
+        # 関連チケットデータを構築
+        def build_relations_data(issue)
+          issue.relations.map do |relation|
+            {
+              id: relation.id.to_s,
+              relation_type: relation.relation_type,
+              issue_from_id: relation.issue_from_id.to_s,
+              issue_to_id: relation.issue_to_id.to_s
+            }
+          end
+        end
+
         # RedmineのIssue URLを生成
         def issue_url(issue_id)
           "#{Setting.protocol}://#{Setting.host_name}/issues/#{issue_id}"
-        end      end
+        end
+      end
     end
   end
 end

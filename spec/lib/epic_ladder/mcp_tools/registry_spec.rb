@@ -53,7 +53,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
     end
 
     it 'returns current count of tools' do
-      expect(described_class.count).to eq(27)
+      expect(described_class.count).to eq(30)
     end
   end
 

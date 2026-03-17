@@ -30,7 +30,7 @@ en:
 
   # Promote to UserStory Quick Action
   label_epic_ladder_promote_to_user_story: "Promote to US"
-  confirm_epic_ladder_promote_to_user_story: "Promote this issue to UserStory? The tracker will be changed to UserStory and the parent will be moved under the Feature."
+  confirm_epic_ladder_promote_to_user_story: "Promote this issue to UserStory? A new UserStory will be created and this issue will become its child."
   notice_epic_ladder_promoted_to_user_story: "Successfully promoted to UserStory"
   error_epic_ladder_promotion_failed: "Failed to promote to UserStory: %{error}"
   error_epic_ladder_promotion_invalid_tracker: "This tracker cannot be promoted to UserStory (only Task/Bug/Test)"
@@ -94,6 +94,7 @@ en:
       add_related_issue: "Add Related Issue"
       remove_related_issue: "Remove Related Issue"
       copy_issue: "Copy Issue"
+      promote_to_us: "Promote to US"
       list_user_stories: "List User Stories"
       list_epics: "List Epics"
       get_project_structure: "Get Project Structure"

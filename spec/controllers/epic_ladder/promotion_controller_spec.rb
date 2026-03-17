@@ -32,37 +32,51 @@ RSpec.describe EpicLadder::PromotionController, type: :controller do
       let(:user_story) { FactoryBot.create(:user_story, project: project, parent: feature, fixed_version: version_v1) }
       let(:task) { FactoryBot.create(:task, project: project, parent: user_story, fixed_version: version_v1) }
 
-      it 'トラッカーがUserStoryに変更される' do
+      it '新USが作成され、元issueの親が新USになる' do
         patch :promote_to_user_story, params: { id: task.id }
 
         task.reload
-        expect(task.tracker.name).to eq(user_story_tracker.name)
+        # トラッカーは変わらない（Task のまま）
+        expect(task.tracker.name).to eq(task_tracker.name)
+        # 親は新US
+        new_us = task.parent
+        expect(new_us.tracker.name).to eq(user_story_tracker.name)
+        expect(new_us.parent_id).to eq(feature.id)
       end
 
-      it '親がFeature直下に付け替えられる' do
+      it '元の親USと新USがrelates関連で紐づく' do
         patch :promote_to_user_story, params: { id: task.id }
 
         task.reload
-        expect(task.parent_id).to eq(feature.id)
+        new_us = task.parent
+        relation = IssueRelation.find_by(issue_from: user_story, issue_to: new_us)
+        expect(relation).to be_present
+        expect(relation.relation_type).to eq('relates')
       end
 
-      it 'バージョンが維持される' do
+      it '新USの件名が元issueの件名' do
         patch :promote_to_user_story, params: { id: task.id }
-
         task.reload
-        expect(task.fixed_version_id).to eq(version_v1.id)
+        expect(task.parent.subject).to eq(task.subject)
+      end
+
+      it '新USにリダイレクトされる' do
+        patch :promote_to_user_story, params: { id: task.id }
+        task.reload
+        expect(response).to redirect_to(issue_path(task.parent))
       end
 
       it 'flash[:notice]が設定される' do
         patch :promote_to_user_story, params: { id: task.id }
-
         expect(flash[:notice]).to be_present
       end
 
-      it 'issue_pathにリダイレクトされる' do
+      it 'バージョンが新USに引き継がれる' do
         patch :promote_to_user_story, params: { id: task.id }
 
-        expect(response).to redirect_to(issue_path(task))
+        task.reload
+        new_us = task.parent
+        expect(new_us.fixed_version_id).to eq(version_v1.id)
       end
     end
 
@@ -72,12 +86,15 @@ RSpec.describe EpicLadder::PromotionController, type: :controller do
       let(:user_story) { FactoryBot.create(:user_story, project: project, parent: feature) }
       let(:bug) { FactoryBot.create(:bug, project: project, parent: user_story) }
 
-      it 'トラッカーがUserStoryに変更され、親がFeature直下になる' do
+      it '新USが作成され、Bugの親が新USになる' do
         patch :promote_to_user_story, params: { id: bug.id }
 
         bug.reload
-        expect(bug.tracker.name).to eq(user_story_tracker.name)
-        expect(bug.parent_id).to eq(feature.id)
+        new_us = bug.parent
+        expect(new_us.tracker.name).to eq(user_story_tracker.name)
+        expect(new_us.parent_id).to eq(feature.id)
+        # Bugのトラッカーは変わらない
+        expect(bug.tracker.name).to eq(bug_tracker.name)
       end
     end
 
@@ -87,12 +104,15 @@ RSpec.describe EpicLadder::PromotionController, type: :controller do
       let(:user_story) { FactoryBot.create(:user_story, project: project, parent: feature) }
       let(:test_issue) { FactoryBot.create(:test, project: project, parent: user_story) }
 
-      it 'トラッカーがUserStoryに変更され、親がFeature直下になる' do
+      it '新USが作成され、Testの親が新USになる' do
         patch :promote_to_user_story, params: { id: test_issue.id }
 
         test_issue.reload
-        expect(test_issue.tracker.name).to eq(user_story_tracker.name)
-        expect(test_issue.parent_id).to eq(feature.id)
+        new_us = test_issue.parent
+        expect(new_us.tracker.name).to eq(user_story_tracker.name)
+        expect(new_us.parent_id).to eq(feature.id)
+        # Testのトラッカーは変わらない
+        expect(test_issue.tracker.name).to eq(test_tracker.name)
       end
     end
 
