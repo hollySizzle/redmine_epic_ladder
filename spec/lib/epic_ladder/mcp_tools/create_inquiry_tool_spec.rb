@@ -97,6 +97,46 @@ RSpec.describe EpicLadder::McpTools::CreateInquiryTool, type: :model do
       end
     end
 
+    context 'ProjectSettingでinquiry_feature_idが設定されている場合' do
+      it '設定されたFeatureを優先的に使用する' do
+        configured_feature = create(:issue, project: project, tracker: feature_tracker, subject: '指定された受付窓口')
+        create(:issue, project: project, tracker: feature_tracker, subject: '問合せ')
+
+        setting = EpicLadder::ProjectSetting.for_project(project)
+        setting.inquiry_feature_id = configured_feature.id
+        setting.save!
+
+        result = described_class.call(
+          project_id: project.identifier,
+          subject: 'テスト',
+          server_context: server_context
+        )
+
+        response = JSON.parse(result.content.first[:text])
+        expect(response['success']).to be true
+        expect(response['inquiry_feature']['id']).to eq(configured_feature.id.to_s)
+        expect(response['inquiry_feature']['subject']).to eq('指定された受付窓口')
+      end
+
+      it '設定されたFeatureが削除済みの場合は命名規則にフォールバックする' do
+        setting = EpicLadder::ProjectSetting.for_project(project)
+        setting.inquiry_feature_id = 99999
+        setting.save!
+
+        fallback_feature = create(:issue, project: project, tracker: feature_tracker, subject: '問合せ')
+
+        result = described_class.call(
+          project_id: project.identifier,
+          subject: 'テスト',
+          server_context: server_context
+        )
+
+        response = JSON.parse(result.content.first[:text])
+        expect(response['success']).to be true
+        expect(response['inquiry_feature']['id']).to eq(fallback_feature.id.to_s)
+      end
+    end
+
     context '問合せFeatureの検出パターン' do
       it '「問合せ」を含むFeatureを検出する' do
         create(:issue, project: project, tracker: feature_tracker, subject: 'PMO問合せ窓口')

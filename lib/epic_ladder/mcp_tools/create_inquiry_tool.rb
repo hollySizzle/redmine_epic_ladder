@@ -16,10 +16,7 @@ module EpicLadder
     class CreateInquiryTool < MCP::Tool
       description "Creates an inquiry (問合せ) UserStory under the project's inquiry Feature. " \
                   "Use when you need to raise a question or consultation to PMO without knowing the Feature ID. " \
-                  "The inquiry Feature is auto-detected by subject containing '問合せ'."
-
-      # 問合せFeature検出用のキーワード
-      INQUIRY_KEYWORDS = %w[問合せ 問い合わせ].freeze
+                  "The inquiry Feature is resolved from project settings, or auto-detected by subject containing '問合せ'."
 
       input_schema(
         properties: {
@@ -46,13 +43,13 @@ module EpicLadder
             return error_response("プロジェクトが見つかりません: #{resolved_project_id}")
           end
 
-          # 2. 問合せFeature自動検出
-          inquiry_feature = detect_inquiry_feature(project)
+          # 2. 問合せFeature解決（ProjectSetting → 命名規則フォールバック）
+          inquiry_feature = EpicLadder::ProjectSetting.inquiry_feature(project)
           unless inquiry_feature
             return error_response(
               "問合せFeatureが見つかりません",
               {
-                hint: "プロジェクト '#{project.identifier}' にsubjectに「問合せ」を含むFeatureを作成してください。",
+                hint: "プロジェクト設定でinquiry_feature_idを設定するか、subjectに「問合せ」を含むFeatureを作成してください。",
                 project: project.identifier
               }
             )
@@ -92,25 +89,6 @@ module EpicLadder
 
       class << self
         private
-
-        # 問合せFeatureを自動検出
-        # プロジェクト内のFeatureトラッカーからsubjectに問合せキーワードを含むものを検索
-        # @param project [Project] プロジェクト
-        # @return [Issue, nil] 問合せFeature（見つからない場合はnil）
-        def detect_inquiry_feature(project)
-          feature_tracker_name = EpicLadder::TrackerHierarchy.tracker_names(project)[:feature]
-          feature_tracker = Tracker.find_by(name: feature_tracker_name)
-          return nil unless feature_tracker
-
-          conditions = INQUIRY_KEYWORDS.map { |kw| "issues.subject LIKE ?" }.join(" OR ")
-          values = INQUIRY_KEYWORDS.map { |kw| "%#{kw}%" }
-
-          project.issues
-                 .where(tracker: feature_tracker)
-                 .where(conditions, *values)
-                 .order(:id)
-                 .first
-        end
 
         # プロジェクト取得（識別子 or ID）
         def find_project(project_id)
