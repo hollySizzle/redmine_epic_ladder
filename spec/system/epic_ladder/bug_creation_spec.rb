@@ -61,7 +61,6 @@ RSpec.describe 'Bug Creation E2E', type: :system, js: true do
       cancel_item_creation_via_ui('bug', parent_info: { user_story_subject: 'Test UserStory' })
 
       # Bugが作成されていないことを確認
-      sleep 1
       expect_text_not_visible('New Bug Report')
 
       puts "\n✅ Bug Creation Cancel Test Passed"

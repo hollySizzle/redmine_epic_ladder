@@ -85,7 +85,7 @@ RSpec.describe 'Batch Save E2E', type: :system, js: true do
       puts "✅ Step 4: UserStory dragged to Feature2/Version2 cell"
 
       # Step 5: D&D後、UIの更新を待つ（バックエンドAPIコール完了待機）
-      sleep 2
+      # Wait handled by D&D helper
 
       # Step 6: DBが即座に更新されていることを確認（E2EではMSW無効なので即座に保存される）
       @user_story1.reload
@@ -124,7 +124,7 @@ RSpec.describe 'Batch Save E2E', type: :system, js: true do
       # Move to Feature2/(未設定)
       target_cell = ".us-cell[data-epic='#{@epic2.id}'][data-feature='#{@feature2.id}'][data-version='none']"
       drag_user_story_to_cell('Story 1', target_cell)
-      sleep 2
+      # Wait handled by D&D helper
 
       # Verify DB update
       @user_story1.reload
@@ -143,11 +143,11 @@ RSpec.describe 'Batch Save E2E', type: :system, js: true do
 
       # Move Story 1
       drag_user_story_to_cell('Story 1', target_cell)
-      sleep 2
+      # Wait handled by D&D helper
 
       # Move Story 2
       drag_user_story_to_cell('Story 2', target_cell)
-      sleep 2
+      # Wait handled by D&D helper
 
       puts "\n✅ Two UserStories dragged sequentially"
 

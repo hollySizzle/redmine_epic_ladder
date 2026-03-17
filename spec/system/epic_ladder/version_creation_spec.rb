@@ -51,7 +51,6 @@ RSpec.describe 'Version Creation E2E', type: :system, js: true do
       cancel_item_creation_via_ui('version')
 
       # Versionが作成されていないことを確認（エラーがないこと）
-      sleep 1
       version_headers = @playwright_page.query_selector_all('.version-header')
       # 初期状態で(未設定)が1つあるはず
       expect(version_headers.length).to eq(1)
