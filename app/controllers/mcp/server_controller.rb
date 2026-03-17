@@ -38,8 +38,10 @@ module Mcp
         return
       end
 
-      # レスポンス返却（既にJSON文字列なのでそのまま返す）
-      render json: JSON.parse(response_json), status: :ok
+      # レスポンス返却（Internal errorの場合はdataの内容をmessageに含める）
+      parsed_response = JSON.parse(response_json)
+      enhance_error_message!(parsed_response)
+      render json: parsed_response, status: :ok
     rescue StandardError => e
       # JSON-RPC 2.0エラーレスポンス形式
       Rails.logger.error "MCP RPC Error: #{e.message}"
@@ -156,6 +158,17 @@ module Mcp
       tool_key = tool_class.name.demodulize.underscore.sub(/_tool$/, '')
 
       EpicLadder::McpToolHint.build_description(project, tool_key, base_description)
+    end
+
+    # JSON-RPCエラーレスポンスのmessageを改善
+    # json_rpc_handler gemが "Internal error" をハードコードし、実際のエラーをdataに入れるため
+    # AIエージェントが原因を把握できない問題を修正
+    def enhance_error_message!(response)
+      error = response["error"]
+      return unless error.is_a?(Hash)
+      return unless error["message"] == "Internal error" && error["data"].present?
+
+      error["message"] = "Internal error: #{error["data"]}"
     end
 
     # X-Default-Projectヘッダーからデフォルトプロジェクトを取得
