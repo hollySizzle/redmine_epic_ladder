@@ -81,7 +81,7 @@ module EpicLadder
     # @return [Issue, nil] 問合せFeature
     def self.inquiry_feature(project)
       setting = find_by(project: project)
-      if setting&.inquiry_feature_id.present?
+      if setting&.respond_to?(:inquiry_feature_id) && setting.inquiry_feature_id.present?
         # 設定されたFeatureが存在しなければ命名規則にフォールバック
         Issue.find_by(id: setting.inquiry_feature_id) || detect_inquiry_feature_by_name(project)
       else
