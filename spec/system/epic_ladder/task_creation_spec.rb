@@ -61,7 +61,6 @@ RSpec.describe 'Task Creation E2E', type: :system, js: true do
       cancel_item_creation_via_ui('task', parent_info: { user_story_subject: 'Test UserStory' })
 
       # Taskが作成されていないことを確認
-      sleep 1
       expect_text_not_visible('New Test Task')
 
       puts "\n✅ Task Creation Cancel Test Passed"

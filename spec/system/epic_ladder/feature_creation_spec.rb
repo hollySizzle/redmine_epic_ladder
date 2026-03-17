@@ -55,7 +55,6 @@ RSpec.describe 'Feature Creation E2E', type: :system, js: true do
       cancel_item_creation_via_ui('feature', parent_info: { epic_id: @epic1.id })
 
       # Featureが作成されていないことを確認
-      sleep 1
       expect_text_not_visible('New Test Feature')
 
       puts "\n✅ Feature Creation Cancel Test Passed"

@@ -77,15 +77,18 @@ module EpicLadderE2EHelpers
   end
 
   # 要素が表示されていることを確認
-  def expect_text_visible(text)
-    element = @playwright_page.query_selector("text='#{text}'")
+  def expect_text_visible(text, timeout: 10000)
+    element = @playwright_page.wait_for_selector("text='#{text}'", state: 'visible', timeout: timeout)
     expect(element).not_to be_nil, "Expected text '#{text}' to be visible"
+  rescue Playwright::TimeoutError
+    raise RSpec::Expectations::ExpectationNotMetError, "Expected text '#{text}' to be visible but it was not found within #{timeout}ms"
   end
 
   # 要素が表示されていないことを確認
-  def expect_text_not_visible(text)
-    element = @playwright_page.query_selector("text='#{text}'")
-    expect(element).to be_nil, "Expected text '#{text}' to not be visible"
+  def expect_text_not_visible(text, timeout: 5000)
+    @playwright_page.wait_for_selector("text='#{text}'", state: 'hidden', timeout: timeout)
+  rescue Playwright::TimeoutError
+    raise RSpec::Expectations::ExpectationNotMetError, "Expected text '#{text}' to not be visible but it was still present after #{timeout}ms"
   end
 
   # ========================================
@@ -152,8 +155,11 @@ module EpicLadderE2EHelpers
     raise "Save button not found" unless save_button
 
     save_button.click
-    # 保存完了のアラート待機
-    sleep 1
+    # 保存完了待機: 保存ボタンが非表示になるか、ボタンテキストが変わるのを待つ
+    @playwright_page.wait_for_function(
+      "() => !document.querySelector('button.save-btn, button:has-text(\"保存\")')",
+      timeout: 10000
+    ) rescue nil
   end
 
   # 破棄ボタンをクリック
@@ -164,7 +170,11 @@ module EpicLadderE2EHelpers
     # confirm dialogを自動でOKにする
     @playwright_page.on('dialog', ->(dialog) { dialog.accept })
     discard_button.click
-    sleep 1
+    # 破棄完了待機: 破棄ボタンが非表示になるのを待つ
+    @playwright_page.wait_for_function(
+      "() => !document.querySelector('button.discard-btn, button:has-text(\"破棄\")')",
+      timeout: 10000
+    ) rescue nil
   end
 
   # 保存ボタンが表示されているか確認
@@ -270,7 +280,8 @@ module EpicLadderE2EHelpers
     expand_button = user_story_card.query_selector('.expand-button')
     expand_button&.click
 
-    sleep 0.5 # 展開アニメーション待機
+    # 展開されたコンテンツが表示されるまで待機
+    @playwright_page.wait_for_selector(".user-story:has-text('#{user_story_subject}') .child-items, .user-story:has-text('#{user_story_subject}') .task-container, .user-story:has-text('#{user_story_subject}') .test-container, .user-story:has-text('#{user_story_subject}') .bug-container, .user-story:has-text('#{user_story_subject}') button[data-add-button]", state: 'visible', timeout: 5000) rescue nil
   end
 
   # キャンセル操作（汎用）
@@ -365,9 +376,6 @@ module EpicLadderE2EHelpers
 
   # アイテム作成完了待機
   def wait_for_item_created(item_type, item_name)
-    # モーダルが閉じてから少し待機（アニメーション完了待ち）
-    sleep 0.5
-
     case item_type
     when 'epic'
       @playwright_page.wait_for_selector(".epic-name:has-text('#{item_name}')", timeout: 15000)

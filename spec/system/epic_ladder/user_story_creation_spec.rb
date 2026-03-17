@@ -58,7 +58,6 @@ RSpec.describe 'UserStory Creation E2E', type: :system, js: true do
       cancel_item_creation_via_ui('user-story', parent_info: { feature_id: @feature1.id })
 
       # UserStoryが作成されていないことを確認
-      sleep 1
       expect_text_not_visible('New Test UserStory')
 
       puts "\n✅ UserStory Creation Cancel Test Passed"

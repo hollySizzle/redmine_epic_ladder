@@ -61,7 +61,6 @@ RSpec.describe 'Test Creation E2E', type: :system, js: true do
       cancel_item_creation_via_ui('test', parent_info: { user_story_subject: 'Test UserStory' })
 
       # Testが作成されていないことを確認
-      sleep 1
       expect_text_not_visible('New Test Case')
 
       puts "\n✅ Test Creation Cancel Test Passed"
