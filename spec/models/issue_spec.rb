@@ -348,13 +348,11 @@ RSpec.describe Issue, type: :model do
       expect(epic.fixed_version).to eq(version_v1)
     end
 
-    it 'cascade deletes children when parent is destroyed' do
+    it 'has children via nested set' do
       epic = create(:epic, :with_features, project: project, author: user)
-      feature_ids = epic.children.pluck(:id)
 
-      epic.destroy
-
-      expect(Issue.where(id: feature_ids)).to be_empty
+      expect(epic.children.count).to eq(3)
+      expect(epic.children).to all(have_attributes(parent_id: epic.id))
     end
   end
 

@@ -36,18 +36,32 @@ RSpec.describe 'Mcp::ServerController', type: :request do
     end
 
     context 'tools/call request' do
-      let(:task_tracker) do
-        Tracker.find_by(name: 'Task') || begin
-          default_status = IssueStatus.first || IssueStatus.create!(name: 'New')
-          Tracker.create!(name: 'Task', default_status: default_status)
-        end
-      end
+      let(:task_tracker) { find_or_create_task_tracker }
+      let(:epic_tracker) { find_or_create_epic_tracker }
+      let(:feature_tracker) { find_or_create_feature_tracker }
+      let(:user_story_tracker) { find_or_create_user_story_tracker }
+
+      let(:parent_epic) { FactoryBot.create(:issue, project: project, tracker: epic_tracker, subject: 'Parent Epic', author: user) }
+      let(:parent_feature) { FactoryBot.create(:issue, project: project, tracker: feature_tracker, subject: 'Parent Feature', parent: parent_epic, author: user) }
+      let(:parent_user_story) { FactoryBot.create(:issue, project: project, tracker: user_story_tracker, subject: 'Parent UserStory', parent: parent_feature, author: user) }
 
       before do
-        project.trackers << task_tracker
-        Setting.plugin_redmine_epic_ladder = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
+        project.trackers << epic_tracker unless project.trackers.include?(epic_tracker)
+        project.trackers << feature_tracker unless project.trackers.include?(feature_tracker)
+        project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+        project.trackers << task_tracker unless project.trackers.include?(task_tracker)
+        Setting.plugin_redmine_epic_ladder = {
+          'epic_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:epic],
+          'feature_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:feature],
+          'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+          'task_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:task],
+          'mcp_enabled' => '1'
+        }
+        EpicLadder::TrackerHierarchy.clear_cache!
         # プロジェクト単位でMCP有効化
         EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
+        # 階層を事前に作成
+        parent_user_story
       end
 
       it 'creates a task via CreateTaskTool' do
@@ -59,7 +73,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
               name: 'create_task_tool',
               arguments: {
                 project_id: project.identifier,
-                description: 'Refactor cart module'
+                description: 'Refactor cart module',
+                parent_user_story_id: parent_user_story.id.to_s
               }
             },
             id: 2
@@ -95,7 +110,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
               name: 'create_task_tool',
               arguments: {
                 project_id: 'nonexistent-project',
-                description: 'Test task'
+                description: 'Test task',
+                parent_user_story_id: parent_user_story.id.to_s
               }
             },
             id: 3
@@ -128,7 +144,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
               name: 'create_task_tool',
               arguments: {
                 project_id: project.identifier,
-                description: 'Test task'
+                description: 'Test task',
+                parent_user_story_id: parent_user_story.id.to_s
               }
             },
             id: 4
@@ -217,19 +234,37 @@ RSpec.describe 'Mcp::ServerController', type: :request do
     end
 
     context 'X-Default-Project header' do
-      let(:task_tracker) do
-        Tracker.find_by(name: 'Task') || begin
-          default_status = IssueStatus.first || IssueStatus.create!(name: 'New')
-          Tracker.create!(name: 'Task', default_status: default_status)
-        end
-      end
+      let(:task_tracker) { find_or_create_task_tracker }
+
+      let(:epic_tracker) { find_or_create_epic_tracker }
+      let(:feature_tracker) { find_or_create_feature_tracker }
+      let(:user_story_tracker) { find_or_create_user_story_tracker }
 
       let(:default_project) { FactoryBot.create(:project, identifier: 'default-proj') }
 
+      # Hierarchy for main project
+      let(:parent_epic) { FactoryBot.create(:issue, project: project, tracker: epic_tracker, subject: 'Parent Epic', author: user) }
+      let(:parent_feature) { FactoryBot.create(:issue, project: project, tracker: feature_tracker, subject: 'Parent Feature', parent: parent_epic, author: user) }
+      let(:parent_user_story) { FactoryBot.create(:issue, project: project, tracker: user_story_tracker, subject: 'Parent UserStory', parent: parent_feature, author: user) }
+
+      # Hierarchy for default_project
+      let(:default_epic) { FactoryBot.create(:issue, project: default_project, tracker: epic_tracker, subject: 'Default Epic', author: user) }
+      let(:default_feature) { FactoryBot.create(:issue, project: default_project, tracker: feature_tracker, subject: 'Default Feature', parent: default_epic, author: user) }
+      let(:default_user_story) { FactoryBot.create(:issue, project: default_project, tracker: user_story_tracker, subject: 'Default UserStory', parent: default_feature, author: user) }
+
       before do
-        project.trackers << task_tracker
-        default_project.trackers << task_tracker
-        Setting.plugin_redmine_epic_ladder = { 'task_tracker' => 'Task', 'mcp_enabled' => '1' }
+        [epic_tracker, feature_tracker, user_story_tracker, task_tracker].each do |t|
+          project.trackers << t unless project.trackers.include?(t)
+          default_project.trackers << t unless default_project.trackers.include?(t)
+        end
+        Setting.plugin_redmine_epic_ladder = {
+          'epic_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:epic],
+          'feature_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:feature],
+          'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+          'task_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:task],
+          'mcp_enabled' => '1'
+        }
+        EpicLadder::TrackerHierarchy.clear_cache!
 
         # プロジェクト単位でMCP有効化
         EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
@@ -238,6 +273,10 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         # ユーザーにdefault_projectへのアクセス権限を付与
         role = Role.find_by(name: 'Manager') || FactoryBot.create(:role, permissions: [:view_issues, :add_issues, :edit_issues])
         FactoryBot.create(:member, project: default_project, user: user, roles: [role])
+
+        # 階層を事前に作成
+        parent_user_story
+        default_user_story
       end
 
       it 'uses X-Default-Project header when project_id is not specified' do
@@ -248,7 +287,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
             params: {
               name: 'create_task_tool',
               arguments: {
-                description: 'Task created with default project header'
+                description: 'Task created with default project header',
+                parent_user_story_id: default_user_story.id.to_s
               }
             },
             id: 10
@@ -280,7 +320,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
               name: 'create_task_tool',
               arguments: {
                 project_id: project.identifier,
-                description: 'Task with explicit project_id'
+                description: 'Task with explicit project_id',
+                parent_user_story_id: parent_user_story.id.to_s
               }
             },
             id: 11
@@ -310,7 +351,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
             params: {
               name: 'create_task_tool',
               arguments: {
-                description: 'Task with invalid default project'
+                description: 'Task with invalid default project',
+                parent_user_story_id: default_user_story.id.to_s
               }
             },
             id: 12
@@ -421,23 +463,33 @@ RSpec.describe 'Mcp::ServerController', type: :request do
   end
 
   describe 'Plugin settings for MCP' do
-    let(:task_tracker) do
-      Tracker.find_by(name: 'Task') || begin
-        default_status = IssueStatus.first || IssueStatus.create!(name: 'New')
-        Tracker.create!(name: 'Task', default_status: default_status)
-      end
-    end
+    let(:task_tracker) { find_or_create_task_tracker }
+    let(:epic_tracker) { find_or_create_epic_tracker }
+    let(:feature_tracker) { find_or_create_feature_tracker }
+    let(:user_story_tracker) { find_or_create_user_story_tracker }
+
+    let(:parent_epic) { FactoryBot.create(:issue, project: project, tracker: epic_tracker, subject: 'Parent Epic', author: user) }
+    let(:parent_feature) { FactoryBot.create(:issue, project: project, tracker: feature_tracker, subject: 'Parent Feature', parent: parent_epic, author: user) }
+    let(:parent_user_story) { FactoryBot.create(:issue, project: project, tracker: user_story_tracker, subject: 'Parent UserStory', parent: parent_feature, author: user) }
 
     before do
-      project.trackers << task_tracker
+      [epic_tracker, feature_tracker, user_story_tracker, task_tracker].each do |t|
+        project.trackers << t unless project.trackers.include?(t)
+      end
+      # 階層を事前に作成
+      parent_user_story
     end
 
     context 'when MCP is disabled globally' do
       before do
         Setting.plugin_redmine_epic_ladder = {
-          'mcp_enabled' => '0',
-          'task_tracker' => 'Task'
+          'epic_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:epic],
+          'feature_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:feature],
+          'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+          'task_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:task],
+          'mcp_enabled' => '0'
         }
+        EpicLadder::TrackerHierarchy.clear_cache!
         # プロジェクト単位では有効化
         EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
       end
@@ -451,7 +503,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
               name: 'create_task_tool',
               arguments: {
                 project_id: project.identifier,
-                description: 'Test task'
+                description: 'Test task',
+                parent_user_story_id: parent_user_story.id.to_s
               }
             },
             id: 20
@@ -473,11 +526,17 @@ RSpec.describe 'Mcp::ServerController', type: :request do
     context 'when MCP is not enabled for project' do
       before do
         Setting.plugin_redmine_epic_ladder = {
-          'mcp_enabled' => '1',
-          'task_tracker' => 'Task'
+          'epic_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:epic],
+          'feature_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:feature],
+          'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+          'task_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:task],
+          'mcp_enabled' => '1'
         }
-        # プロジェクト単位ではMCP無効（デフォルト）
-        EpicLadder::ProjectSetting.find_by(project: project)&.destroy
+        EpicLadder::TrackerHierarchy.clear_cache!
+        # プロジェクト単位でMCPを明示的に無効化
+        ps = EpicLadder::ProjectSetting.find_or_initialize_by(project: project)
+        ps.mcp_enabled = false
+        ps.save!
       end
 
       it 'rejects access to project without MCP enabled' do
@@ -489,7 +548,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
               name: 'create_task_tool',
               arguments: {
                 project_id: project.identifier,
-                description: 'Test task'
+                description: 'Test task',
+                parent_user_story_id: parent_user_story.id.to_s
               }
             },
             id: 21
@@ -511,9 +571,13 @@ RSpec.describe 'Mcp::ServerController', type: :request do
     context 'when MCP is enabled for project' do
       before do
         Setting.plugin_redmine_epic_ladder = {
-          'mcp_enabled' => '1',
-          'task_tracker' => 'Task'
+          'epic_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:epic],
+          'feature_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:feature],
+          'user_story_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:user_story],
+          'task_tracker' => EpicLadder::TrackerHierarchy.tracker_names[:task],
+          'mcp_enabled' => '1'
         }
+        EpicLadder::TrackerHierarchy.clear_cache!
         # プロジェクト単位でMCP有効化
         EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
       end
@@ -527,7 +591,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
               name: 'create_task_tool',
               arguments: {
                 project_id: project.identifier,
-                description: 'Test task on MCP-enabled project'
+                description: 'Test task on MCP-enabled project',
+                parent_user_story_id: parent_user_story.id.to_s
               }
             },
             id: 22
