@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-03-17
+
+### create_inquiry_tool — 問合せ起票MCPツール新規実装
+leaderがPMO相談時にチケットがなくagent_spawn_guardでブロックされる問題が発生していた。create_user_storyは親Feature IDの事前把握が前提だが、問合せフローでは「どのFeatureに起票すべきか」を呼び出し側が知らない。プロジェクトごとに「問合せ」Featureを常設し、そのFeatureを自動検出して配下にUserStoryを起票するMCPツールを新設。IssueCreationServiceに委譲することでcreate_user_storyとDRYを維持し、新ツール固有のコードはFeature自動検出ロジック（約10行）のみ。
+- create_inquiry_tool: 問合せ起票MCPツール新規実装（Feature自動検出+US作成） (issue_8278)
+- Feature検出ロジック: subjectに「問合せ」「問い合わせ」を含むFeatureを自動検出（ID昇順で最初の1件）
+- parent_feature_id不要: 呼び出し側がFeature IDを知らなくても起票可能
+- ticket-tasuki側のfeature_id外部ファイル管理が不要に（epic-ladder側で自動解決）
+
 ## [1.4.0] - 2026-03-17
 
 ### MCP Tools Expansion Phase 1 & 2 — AIエージェントのコンテキスト効率化と操作バッチ化
