@@ -15,7 +15,8 @@ module EpicLadder
     # Redmine標準のsafe_attributes
     safe_attributes 'epic_tracker', 'feature_tracker', 'user_story_tracker',
                     'task_tracker', 'test_tracker', 'bug_tracker',
-                    'hierarchy_guide_enabled', 'mcp_enabled'
+                    'hierarchy_guide_enabled', 'mcp_enabled',
+                    'inquiry_feature_id'
 
     # フォールバック対象の設定キー
     FALLBACK_KEYS = %w[
@@ -72,6 +73,39 @@ module EpicLadder
         test: get(project, :test_tracker) || 'Test',
         bug: get(project, :bug_tracker) || 'Bug'
       }
+    end
+
+    # プロジェクトの問合せFeatureを取得
+    # ProjectSettingに明示設定があればそれを使い、なければ命名規則で自動検出
+    # @param project [Project] プロジェクト
+    # @return [Issue, nil] 問合せFeature
+    def self.inquiry_feature(project)
+      setting = find_by(project: project)
+      if setting&.inquiry_feature_id.present?
+        # 設定されたFeatureが存在しなければ命名規則にフォールバック
+        Issue.find_by(id: setting.inquiry_feature_id) || detect_inquiry_feature_by_name(project)
+      else
+        detect_inquiry_feature_by_name(project)
+      end
+    end
+
+    # 命名規則で問合せFeatureを自動検出
+    # @param project [Project] プロジェクト
+    # @return [Issue, nil] 問合せFeature
+    def self.detect_inquiry_feature_by_name(project)
+      feature_tracker_name = TrackerHierarchy.tracker_names(project)[:feature]
+      feature_tracker = Tracker.find_by(name: feature_tracker_name)
+      return nil unless feature_tracker
+
+      keywords = %w[問合せ 問い合わせ]
+      conditions = keywords.map { "issues.subject LIKE ?" }.join(" OR ")
+      values = keywords.map { |kw| "%#{kw}%" }
+
+      project.issues
+             .where(tracker: feature_tracker)
+             .where(conditions, *values)
+             .order(:id)
+             .first
     end
 
     # グローバル設定を取得
