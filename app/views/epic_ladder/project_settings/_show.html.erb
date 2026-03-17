@@ -82,6 +82,24 @@
       </label>
       <em class="info"><%= l(:label_epic_ladder_mcp_description) %></em>
     </p>
+
+    <% feature_tracker_name = EpicLadder::TrackerHierarchy.tracker_names(@project)[:feature] %>
+    <% feature_tracker = Tracker.find_by(name: feature_tracker_name) %>
+    <% features = feature_tracker ? @project.issues.where(tracker: feature_tracker).order(:id).pluck(:id, :subject) : [] %>
+    <% auto_detected = EpicLadder::ProjectSetting.detect_inquiry_feature_by_name(@project) %>
+    <p>
+      <label>
+        <%= select_tag 'epic_ladder_project_setting[inquiry_feature_id]',
+            options_for_select(
+              [[auto_detected ? "自動検出（#{auto_detected.subject}）" : '自動検出（命名規則）', '']] +
+              features.map { |id, subj| ["##{id} #{subj}", id] },
+              setting.inquiry_feature_id || ''
+            ),
+            class: 'feature-select' %>
+        <strong>問合せFeature</strong>
+      </label>
+      <em class="info">問合せ起票ツール（create_inquiry）が使用するFeature。未指定時はsubjectに「問合せ」を含むFeatureを自動検出します。</em>
+    </p>
   </fieldset>
 
   <p>
