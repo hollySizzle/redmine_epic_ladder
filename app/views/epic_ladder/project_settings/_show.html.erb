@@ -101,6 +101,13 @@
         </label>
         <em class="info">問合せ起票ツール（create_inquiry）が使用するFeature。未指定時はsubjectに「問合せ」を含むFeatureを自動検出します。</em>
       </p>
+    <% else %>
+      <p>
+        <em class="info" style="color: #c00;">
+          ⚠ 問合せFeature設定を使用するにはマイグレーションが必要です:
+          <code>bundle exec rake redmine:plugins:migrate NAME=redmine_epic_ladder</code>
+        </em>
+      </p>
     <% end %>
   </fieldset>
 
