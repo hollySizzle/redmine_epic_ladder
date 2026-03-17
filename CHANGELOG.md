@@ -15,6 +15,8 @@ leaderがPMO相談時にチケットがなくagent_spawn_guardでブロックさ
 - Feature検出ロジック: subjectに「問合せ」「問い合わせ」を含むFeatureを自動検出（ID昇順で最初の1件）
 - parent_feature_id不要: 呼び出し側がFeature IDを知らなくても起票可能
 - ticket-tasuki側のfeature_id外部ファイル管理が不要に（epic-ladder側で自動解決）
+- ProjectSettingにinquiry_feature_idカラム追加: プロジェクト設定画面から問合せFeatureを明示指定可能 (issue_8278)
+- Feature解決の優先順位: ProjectSetting.inquiry_feature_id → 命名規則フォールバック（「問合せ」を含むFeature自動検出）
 
 ## [1.4.0] - 2026-03-17
 
