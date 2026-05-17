@@ -1,0 +1,354 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'net/http'
+require 'uri'
+
+base_url = ARGV[0] || ENV.fetch('MCP_BASE_URL', 'http://localhost:8500')
+endpoint = URI.join(base_url, '/mcp/rpc')
+api_key = ENV['MCP_API_KEY']
+bearer_token = ENV['MCP_BEARER_TOKEN']
+
+if api_key.to_s.empty? && bearer_token.to_s.empty?
+  warn 'Set MCP_API_KEY or MCP_BEARER_TOKEN.'
+  exit 1
+end
+
+@request_id = 0
+@created_issue_ids = []
+@created_version_ids = []
+
+def call_tool(endpoint, api_key, bearer_token, name, arguments)
+  @request_id += 1
+  request = Net::HTTP::Post.new(endpoint)
+  request['Content-Type'] = 'application/json'
+  request['X-Redmine-API-Key'] = api_key if api_key && !api_key.empty?
+  request['Authorization'] = "Bearer #{bearer_token}" if bearer_token && !bearer_token.empty?
+  request.body = JSON.generate(
+    jsonrpc: '2.0',
+    id: @request_id,
+    method: 'tools/call',
+    params: {
+      name: name,
+      arguments: arguments
+    }
+  )
+
+  response = Net::HTTP.start(endpoint.host, endpoint.port, use_ssl: endpoint.scheme == 'https') do |http|
+    http.request(request)
+  end
+
+  unless response.is_a?(Net::HTTPSuccess)
+    raise "#{name}: HTTP #{response.code} #{response.body}"
+  end
+
+  outer = JSON.parse(response.body)
+  raise "#{name}: JSON-RPC error #{outer.fetch('error')}" if outer['error']
+
+  text = outer.dig('result', 'content', 0, 'text')
+  raise "#{name}: missing text content #{outer}" unless text
+
+  result = JSON.parse(text)
+  raise "#{name}: #{result}" unless result['success']
+
+  result
+end
+
+def run_step(label)
+  print "#{label} ... "
+  result = yield
+  puts 'OK'
+  result
+rescue StandardError => e
+  puts 'NG'
+  warn e.message
+  exit 1
+end
+
+stamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
+project_id = ENV.fetch('MCP_TEST_PROJECT', 'sakura-ec')
+
+puts "MCP write smoke test: #{endpoint}"
+puts "Project: #{project_id}"
+
+statuses = run_step('list_statuses_tool') do
+  call_tool(endpoint, api_key, bearer_token, 'list_statuses_tool', project_id: project_id)
+end
+puts "  statuses: #{statuses.fetch('statuses').map { |s| s['name'] }.join(', ')}"
+
+members = run_step('list_project_members_tool') do
+  call_tool(endpoint, api_key, bearer_token, 'list_project_members_tool', project_id: project_id, limit: 10)
+end
+assignee_id = members.fetch('members').first&.fetch('user_id')
+puts "  assignee_id: #{assignee_id || '(none)'}"
+
+version = run_step('create_version_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_version_tool',
+    project_id: project_id,
+    name: "[MCP WRITE TEST #{stamp}] Version",
+    effective_date: '2026-12-31',
+    description: 'Temporary version created by MCP write smoke test'
+  )
+end
+@created_version_ids << version.fetch('version_id')
+
+epic = run_step('create_epic_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_epic_tool',
+    project_id: project_id,
+    subject: "[MCP WRITE TEST #{stamp}] Epic",
+    description: 'Temporary epic created by MCP write smoke test'
+  )
+end
+epic_id = epic.fetch('epic_id')
+@created_issue_ids << epic_id
+
+feature = run_step('create_feature_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_feature_tool',
+    project_id: project_id,
+    parent_epic_id: epic_id,
+    subject: "[MCP WRITE TEST #{stamp}] Feature",
+    description: 'Temporary feature created by MCP write smoke test'
+  )
+end
+feature_id = feature.fetch('feature_id')
+@created_issue_ids << feature_id
+
+user_story = run_step('create_user_story_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_user_story_tool',
+    project_id: project_id,
+    parent_feature_id: feature_id,
+    subject: "[MCP WRITE TEST #{stamp}] UserStory",
+    description: 'Temporary user story created by MCP write smoke test'
+  )
+end
+user_story_id = user_story.fetch('user_story_id')
+@created_issue_ids << user_story_id
+
+task = run_step('create_task_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_task_tool',
+    project_id: project_id,
+    parent_user_story_id: user_story_id,
+    description: "[MCP WRITE TEST #{stamp}] Task"
+  )
+end
+task_id = task.fetch('task_id')
+@created_issue_ids << task_id
+
+bug = run_step('create_bug_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_bug_tool',
+    project_id: project_id,
+    parent_user_story_id: user_story_id,
+    description: "[MCP WRITE TEST #{stamp}] Bug"
+  )
+end
+bug_id = bug.fetch('bug_id')
+@created_issue_ids << bug_id
+
+test_issue = run_step('create_test_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_test_tool',
+    project_id: project_id,
+    parent_user_story_id: user_story_id,
+    description: "[MCP WRITE TEST #{stamp}] Test"
+  )
+end
+test_id = test_issue.fetch('test_id')
+@created_issue_ids << test_id
+
+run_step('add_issue_comment_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'add_issue_comment_tool',
+    issue_id: user_story_id,
+    comment: "MCP write smoke test comment #{stamp}"
+  )
+end
+
+run_step('update_issue_subject_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_subject_tool',
+    issue_id: user_story_id,
+    subject: "[MCP WRITE TEST #{stamp}] UserStory updated"
+  )
+end
+
+run_step('update_issue_description_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_description_tool',
+    issue_id: user_story_id,
+    description: "Updated by MCP write smoke test #{stamp}"
+  )
+end
+
+run_step('update_issue_progress_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_progress_tool',
+    issue_id: task_id,
+    progress: 20
+  )
+end
+
+if assignee_id
+  run_step('update_issue_assignee_tool') do
+    call_tool(
+      endpoint,
+      api_key,
+      bearer_token,
+      'update_issue_assignee_tool',
+      issue_id: user_story_id,
+      assigned_to_id: assignee_id
+    )
+  end
+end
+
+run_step('assign_to_version_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'assign_to_version_tool',
+    issue_id: user_story_id,
+    version_id: version.fetch('version_id'),
+    update_parent: false,
+    propagate_to_children: true
+  )
+end
+
+run_step('bulk_update_issue_status_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'bulk_update_issue_status_tool',
+    issue_ids: [task_id, bug_id, test_id],
+    status_name: '進行中',
+    comment: "MCP write smoke test bulk update #{stamp}"
+  )
+end
+
+run_step('update_issue_status_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_status_tool',
+    issue_id: user_story_id,
+    status_name: '進行中',
+    confirmed: true
+  )
+end
+
+run_step('add_related_issue_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'add_related_issue_tool',
+    issue_id: task_id,
+    related_issue_id: bug_id,
+    relation_type: 'relates'
+  )
+end
+
+run_step('remove_related_issue_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'remove_related_issue_tool',
+    issue_id: task_id,
+    related_issue_id: bug_id
+  )
+end
+
+copy = run_step('copy_issue_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'copy_issue_tool',
+    source_issue_id: task_id,
+    subject: "[MCP WRITE TEST #{stamp}] Copied Task",
+    parent_issue_id: user_story_id
+  )
+end
+copy_id = copy.fetch('issue_id')
+@created_issue_ids << copy_id
+
+run_step('update_issue_parent_tool remove parent') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_parent_tool',
+    issue_id: copy_id,
+    parent_issue_id: 'null'
+  )
+end
+
+run_step('update_issue_parent_tool restore parent') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_parent_tool',
+    issue_id: copy_id,
+    parent_issue_id: user_story_id
+  )
+end
+
+detail = run_step('get_issue_detail_tool') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'get_issue_detail_tool',
+    issue_id: user_story_id,
+    include: %w[children journals]
+  )
+end
+
+puts
+puts 'MCP write smoke test passed.'
+puts "Created issue IDs: #{@created_issue_ids.join(', ')}"
+puts "Created version IDs: #{@created_version_ids.join(', ')}"
+puts "Detail issue: ##{detail.dig('issue', 'id') || user_story_id}"

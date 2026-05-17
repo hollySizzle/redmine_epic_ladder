@@ -59,6 +59,8 @@ vibes/scripts/secrets.json5
 vibes/temps/
 
 # License-sensitive external documentation (copied from third-party sites)
-vibes/docs/apis/
+vibes/docs/apis/*
+!vibes/docs/apis/claudeWeb/
+!vibes/docs/apis/claudeWeb/custom_connector_redmine_oauth_mcp.md
 .mcp.json
 .claude/settings.local.json

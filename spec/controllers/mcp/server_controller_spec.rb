@@ -40,8 +40,9 @@ RSpec.describe Mcp::ServerController, type: :controller do
         post :handle, body: { jsonrpc: '2.0', method: 'tools/list', id: 1 }.to_json
 
         expect(response).to have_http_status(:unauthorized)
+        expect(response.headers['WWW-Authenticate']).to include('/.well-known/oauth-protected-resource/mcp/rpc')
         json = JSON.parse(response.body)
-        expect(json['error']['message']).to include('APIキーが必要です')
+        expect(json['error']['message']).to include('APIキーまたはOAuth Bearer tokenが必要です')
       end
 
       it 'rejects request with invalid API key' do

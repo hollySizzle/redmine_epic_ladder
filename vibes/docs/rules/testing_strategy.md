@@ -132,6 +132,27 @@ bundle exec rspec plugins/redmine_epic_ladder/spec/requests
 
 **パフォーマンス基準**: API応答 200ms以内、クエリ数 3以下
 
+### MCP HTTP 実機寄りテスト
+
+MCPの恒久的な回帰保証はRSpecに置く。
+
+- `spec/requests/mcp/server_controller_spec.rb`
+  - OAuth discovery / auth challenge
+  - API key / Bearer token 認証
+  - `tools/list` の31ツール全件公開
+  - JSON-RPC正常系・代表異常系
+- `spec/lib/epic_ladder/mcp_tools/*_spec.rb`
+  - 各MCP toolの入力、権限、正常系、異常系
+
+`bin/mcp_*` は、起動中のRedmineにHTTP JSON-RPCで接続する手動E2E / release smokeとして扱う。
+CI常用の主軸ではなく、Claude Web実機確認前後に実サーバ・実DB・OAuth/Tunnel境界を検証するために使う。
+
+```bash
+cd /usr/src/redmine/plugins/redmine_epic_ladder
+MCP_API_KEY=redmine_api_key MCP_TEST_PROJECT=ai-recommend \
+  bin/mcp_tool_matrix_test http://localhost:8500
+```
+
 ### Integration テスト (25%)
 
 **対象**: 機能統合・ワークフロー
@@ -262,7 +283,6 @@ bundle exec rspec plugins/redmine_epic_ladder/spec
 
 - **技術アーキテクチャ**: @vibes/rules/technical_architecture_quickstart.md
 - **AI協働規約**: @vibes/rules/ai_collaboration_redmine.md
-- **Grid測定戦略**: @vibes/specs/technical/grid_measurement_strategy.md
 - **rails_helper実装**: `spec/rails_helper.rb`
 - **Vitest設定**: `assets/javascripts/epic_ladder/vitest.config.ts`
 

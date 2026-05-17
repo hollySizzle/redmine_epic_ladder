@@ -33,6 +33,66 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         expect(json['result']['tools']).to be_an(Array)
         expect(json['result']['tools']).not_to be_empty
       end
+
+      it 'exposes the complete MCP tool surface with schemas' do
+        expected_tool_names = %w[
+          add_issue_comment_tool
+          add_related_issue_tool
+          assign_to_version_tool
+          bulk_update_issue_status_tool
+          copy_issue_tool
+          create_bug_tool
+          create_epic_tool
+          create_feature_tool
+          create_inquiry_tool
+          create_task_tool
+          create_test_tool
+          create_user_story_tool
+          create_version_tool
+          get_issue_detail_tool
+          get_project_structure_tool
+          list_epics_tool
+          list_project_members_tool
+          list_recently_updated_issues_tool
+          list_statuses_tool
+          list_user_stories_tool
+          list_versions_tool
+          move_to_next_version_tool
+          promote_to_us_tool
+          remove_related_issue_tool
+          update_custom_fields_tool
+          update_issue_assignee_tool
+          update_issue_description_tool
+          update_issue_parent_tool
+          update_issue_progress_tool
+          update_issue_status_tool
+          update_issue_subject_tool
+        ]
+
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/list',
+            id: 1
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        tools = json.fetch('result').fetch('tools')
+        tool_names = tools.map { |tool| tool.fetch('name') }.sort
+
+        expect(tool_names).to eq(expected_tool_names)
+        expect(tools.size).to eq(31)
+        tools.each do |tool|
+          expect(tool.fetch('description')).to be_present
+          expect(tool.fetch('inputSchema')).to include('type' => 'object')
+        end
+      end
     end
 
     context 'tools/call request' do
@@ -172,6 +232,7 @@ RSpec.describe 'Mcp::ServerController', type: :request do
           headers: { 'Content-Type' => 'application/json' }
 
         expect(response).to have_http_status(:unauthorized)
+        expect(response.headers['WWW-Authenticate']).to include('/.well-known/oauth-protected-resource/mcp/rpc')
         json = JSON.parse(response.body)
         expect(json['jsonrpc']).to eq('2.0')
         expect(json['error']).to be_present
@@ -205,6 +266,48 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         json = JSON.parse(response.body)
         expect(json['jsonrpc']).to eq('2.0')
         expect(json['result']).to be_present
+      end
+
+      it 'accepts valid OAuth bearer token' do
+        access_token = double(
+          'Doorkeeper::AccessToken',
+          accessible?: true,
+          resource_owner_id: user.id,
+          scopes: double('Doorkeeper::OAuth::Scopes', all: ['view_issues'])
+        )
+
+        allow(Doorkeeper).to receive(:authenticate).and_return(access_token)
+
+        post '/mcp/rpc',
+          params: { jsonrpc: '2.0', method: 'tools/list', id: 1 }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer valid-oauth-token'
+          }
+
+        expect(response).to have_http_status(:ok)
+        expect(Doorkeeper).to have_received(:authenticate)
+
+        json = JSON.parse(response.body)
+        expect(json['jsonrpc']).to eq('2.0')
+        expect(json['result']).to be_present
+      end
+
+      it 'rejects invalid OAuth bearer token with OAuth challenge' do
+        allow(Doorkeeper).to receive(:authenticate).and_return(nil)
+
+        post '/mcp/rpc',
+          params: { jsonrpc: '2.0', method: 'tools/list', id: 1 }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer invalid-oauth-token'
+          }
+
+        expect(response).to have_http_status(:unauthorized)
+        expect(response.headers['WWW-Authenticate']).to include('/.well-known/oauth-protected-resource/mcp/rpc')
+
+        json = JSON.parse(response.body)
+        expect(json['error']['message']).to include('OAuth')
       end
     end
 
@@ -459,6 +562,81 @@ RSpec.describe 'Mcp::ServerController', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.headers['Access-Control-Allow-Origin']).to eq('*')
+    end
+  end
+
+  describe 'OAuth discovery for Claude Web custom connector' do
+    it 'returns protected resource metadata for /mcp/rpc' do
+      get '/.well-known/oauth-protected-resource/mcp/rpc'
+
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to include('application/json')
+
+      json = JSON.parse(response.body)
+      expect(json['resource']).to eq('http://www.example.com/mcp/rpc')
+      expect(json['authorization_servers']).to eq([
+        'http://www.example.com/.well-known/oauth-authorization-server'
+      ])
+    end
+
+    it 'returns authorization server metadata backed by Redmine OAuth aliases' do
+      get '/.well-known/oauth-authorization-server'
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['issuer']).to eq('http://www.example.com')
+      expect(json['authorization_endpoint']).to eq('http://www.example.com/authorize')
+      expect(json['token_endpoint']).to eq('http://www.example.com/token')
+      expect(json['response_types_supported']).to include('code')
+      expect(json['grant_types_supported']).to include('authorization_code')
+      expect(json['code_challenge_methods_supported']).to include('S256')
+      expect(json['scopes_supported']).to include(
+        'view_project',
+        'view_issues',
+        'add_issues',
+        'edit_issues',
+        'add_issue_notes',
+        'manage_versions',
+        'manage_issue_relations'
+      )
+    end
+
+    it 'redirects root authorize alias to Redmine Doorkeeper authorize endpoint with default MCP scopes' do
+      get '/authorize',
+        params: {
+          client_id: 'client-123',
+          redirect_uri: 'https://claude.ai/api/mcp/auth_callback',
+          response_type: 'code'
+        }
+
+      expect(response).to have_http_status(:moved_permanently)
+      location = URI.parse(response.location)
+      query = Rack::Utils.parse_query(location.query)
+
+      expect(location.path).to eq('/oauth/authorize')
+      expect(query['client_id']).to eq('client-123')
+      expect(query['redirect_uri']).to eq('https://claude.ai/api/mcp/auth_callback')
+      expect(query['response_type']).to eq('code')
+      expect(query['scope']).to eq(
+        'view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations'
+      )
+    end
+
+    it 'does not overwrite explicit authorize scopes' do
+      get '/authorize',
+        params: {
+          client_id: 'client-123',
+          redirect_uri: 'https://claude.ai/api/mcp/auth_callback',
+          response_type: 'code',
+          scope: 'view_project'
+        }
+
+      location = URI.parse(response.location)
+      query = Rack::Utils.parse_query(location.query)
+
+      expect(location.path).to eq('/oauth/authorize')
+      expect(query['scope']).to eq('view_project')
     end
   end
 

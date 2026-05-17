@@ -189,6 +189,6 @@ git config --global alias.visual '!gitk'
 
 ## 関連ドキュメント
 
-- `@vibes/rules/coding_standards.md`: コード品質基準
-- `@vibes/rules/ai_collaboration_standards.md`: AI協働規約
-- `@vibes/docs/tasks/development_workflow_guide.md`: 開発ワークフロー
+- `@vibes/rules/backend_standards.md`: バックエンド品質基準
+- `@vibes/rules/ai_collaboration_redmine.md`: AI協働規約
+- `@vibes/tasks/api_implementation_workflow.md`: API実装ワークフロー

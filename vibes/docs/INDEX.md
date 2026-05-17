@@ -19,24 +19,11 @@
 - [Vibesドキュメント規約](@vibes/rules/vibes_documentation_standards.md)
 
 ### apis - 外部連携仕様
-- **claudeCode**
-  - [Claudecodebestpracticesanthropic](@vibes/apis/claudeCode/ClaudeCodeBestPracticesAnthropic.md)
-  - [フックリファレンス](@vibes/apis/claudeCode/ClaudeCodeHooks.md)
-- **plantuml**
-  - [Command Line](@vibes/apis/plantuml/command_line.md)
-  - [Component Diagram Syntax And Features](@vibes/apis/plantuml/component_diagram_syntax_and_features.md)
-  - [Deployment Diagram Syntax And Features](@vibes/apis/plantuml/deployment_diagram_syntax_and_features.md)
-  - [Draw Gui Mockup With Salt](@vibes/apis/plantuml/draw_gui_mockup_with_salt.md)
-  - [New Activity Diagram Beta Syntax And Features](@vibes/apis/plantuml/new_activity_diagram_beta_syntax_and_features.md)
-  - [Object Diagram Syntax And Features](@vibes/apis/plantuml/object_diagram_syntax_and_features.md)
-  - [Plantuml Preprocessing](@vibes/apis/plantuml/plantuml_preprocessing.md)
-  - [Sequence Diagram Syntax And Features](@vibes/apis/plantuml/sequence_diagram_syntax_and_features.md)
-  - [State Diagram Syntax And Features](@vibes/apis/plantuml/state_diagram_syntax_and_features.md)
-  - [Timing Diagram Syntax And Features](@vibes/apis/plantuml/timing_diagram_syntax_and_features.md)
-  - [Use Case Diagram Syntax And Features](@vibes/apis/plantuml/use_case_diagram_syntax_and_features.md)
+- **claudeWeb**
+  - [Claude Web Custom Connector + Redmine OAuth2 MCP 調査](@vibes/apis/claudeWeb/custom_connector_redmine_oauth_mcp.md)
 
 ### specs - システム仕様
 
 ### tasks - 開発タスクガイド
 - [API実装ワークフロー](@vibes/tasks/api_implementation_workflow.md)
-
+- [Claude Web MCP 実接続テスト手順](@vibes/tasks/claude_web_mcp_real_test.md)

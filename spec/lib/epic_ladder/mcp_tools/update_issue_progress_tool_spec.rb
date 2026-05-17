@@ -124,6 +124,35 @@ RSpec.describe EpicLadder::McpTools::UpdateIssueProgressTool, type: :model do
         expect(response_text['success']).to be false
         expect(response_text['error']).to include('進捗率は0〜100の範囲で指定してください')
       end
+
+      it 'returns error when issue progress is derived from children' do
+        Setting.parent_issue_done_ratio = 'derived'
+        user_story_tracker = find_or_create_user_story_tracker
+        project.trackers << user_story_tracker unless project.trackers.include?(user_story_tracker)
+
+        parent_issue = create(:issue,
+                              project: project,
+                              tracker: user_story_tracker,
+                              author: user,
+                              done_ratio: 0)
+        create(:issue,
+               project: project,
+               tracker: task_tracker,
+               parent_issue_id: parent_issue.id,
+               author: user,
+               done_ratio: 0)
+
+        result = described_class.call(
+          issue_id: parent_issue.id.to_s,
+          progress: 40,
+          server_context: server_context
+        )
+
+        response_text = JSON.parse(result.content.first[:text])
+        expect(response_text['success']).to be false
+        expect(response_text['error']).to include('子チケットから自動計算')
+        expect(response_text['details']['children_count']).to eq(1)
+      end
     end
 
     context 'with decimal values' do

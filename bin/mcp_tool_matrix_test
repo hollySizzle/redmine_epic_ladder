@@ -1,0 +1,546 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'net/http'
+require 'uri'
+
+base_url = ARGV[0] || ENV.fetch('MCP_BASE_URL', 'http://localhost:8500')
+endpoint = URI.join(base_url, '/mcp/rpc')
+api_key = ENV['MCP_API_KEY']
+bearer_token = ENV['MCP_BEARER_TOKEN']
+
+if api_key.to_s.empty? && bearer_token.to_s.empty?
+  warn 'Set MCP_API_KEY or MCP_BEARER_TOKEN.'
+  exit 1
+end
+
+EXPECTED_TOOLS = %w[
+  add_issue_comment_tool
+  add_related_issue_tool
+  assign_to_version_tool
+  bulk_update_issue_status_tool
+  copy_issue_tool
+  create_bug_tool
+  create_epic_tool
+  create_feature_tool
+  create_inquiry_tool
+  create_task_tool
+  create_test_tool
+  create_user_story_tool
+  create_version_tool
+  get_issue_detail_tool
+  get_project_structure_tool
+  list_epics_tool
+  list_project_members_tool
+  list_recently_updated_issues_tool
+  list_statuses_tool
+  list_user_stories_tool
+  list_versions_tool
+  move_to_next_version_tool
+  promote_to_us_tool
+  remove_related_issue_tool
+  update_custom_fields_tool
+  update_issue_assignee_tool
+  update_issue_description_tool
+  update_issue_parent_tool
+  update_issue_progress_tool
+  update_issue_status_tool
+  update_issue_subject_tool
+].freeze
+
+@request_id = 0
+@created_issue_ids = []
+@created_version_ids = []
+@coverage = {}
+
+def rpc(endpoint, api_key, bearer_token, method, params = {})
+  @request_id += 1
+  request = Net::HTTP::Post.new(endpoint)
+  request['Content-Type'] = 'application/json'
+  request['X-Redmine-API-Key'] = api_key if api_key && !api_key.empty?
+  request['Authorization'] = "Bearer #{bearer_token}" if bearer_token && !bearer_token.empty?
+  request.body = JSON.generate(jsonrpc: '2.0', id: @request_id, method: method, params: params)
+
+  response = Net::HTTP.start(endpoint.host, endpoint.port, use_ssl: endpoint.scheme == 'https') do |http|
+    http.request(request)
+  end
+
+  raise "#{method}: HTTP #{response.code} #{response.body}" unless response.is_a?(Net::HTTPSuccess)
+
+  JSON.parse(response.body)
+end
+
+def parse_tool_result(outer, label)
+  raise "#{label}: JSON-RPC error #{outer.fetch('error')}" if outer['error']
+
+  text = outer.dig('result', 'content', 0, 'text')
+  raise "#{label}: missing text content #{outer}" unless text
+
+  JSON.parse(text)
+end
+
+def call_tool(endpoint, api_key, bearer_token, name, arguments)
+  outer = rpc(endpoint, api_key, bearer_token, 'tools/call', { name: name, arguments: arguments })
+  result = parse_tool_result(outer, name)
+  raise "#{name}: #{result}" unless result['success']
+
+  result
+end
+
+def expect_failure(endpoint, api_key, bearer_token, name, arguments, error_hint = nil)
+  outer = rpc(endpoint, api_key, bearer_token, 'tools/call', { name: name, arguments: arguments })
+  result = parse_tool_result(outer, name)
+  raise "#{name}: expected failure but succeeded #{result}" if result['success']
+
+  if error_hint && !result.fetch('error', '').include?(error_hint)
+    raise "#{name}: expected error to include #{error_hint.inspect}, got #{result}"
+  end
+
+  result
+end
+
+def step(label)
+  print "#{label} ... "
+  result = yield
+  puts 'OK'
+  result
+rescue StandardError => e
+  puts 'NG'
+  warn e.message
+  exit 1
+end
+
+def record(tool_name, kind)
+  @coverage[tool_name] ||= []
+  @coverage[tool_name] << kind
+end
+
+def assert!(message)
+  raise message unless yield
+end
+
+def detail(endpoint, api_key, bearer_token, issue_id, include_sections = [])
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'get_issue_detail_tool',
+    issue_id: issue_id,
+    include: include_sections
+  )
+end
+
+def create_version(endpoint, api_key, bearer_token, project_id, stamp, label, date)
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_version_tool',
+    project_id: project_id,
+    name: "[MCP MATRIX TEST #{stamp}] #{label}",
+    effective_date: date,
+    description: "MCP matrix test version #{label}"
+  )
+  version_id = result.fetch('version_id')
+  @created_version_ids << version_id
+  record('create_version_tool', :normal)
+  version_id
+end
+
+stamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
+project_id = ENV.fetch('MCP_TEST_PROJECT', 'ai-recommend')
+
+puts "MCP tool matrix test: #{endpoint}"
+puts "Project: #{project_id}"
+
+tools = step('tools/list exposes expected tool schemas') do
+  outer = rpc(endpoint, api_key, bearer_token, 'tools/list')
+  raise "tools/list: #{outer.fetch('error')}" if outer['error']
+
+  listed = outer.dig('result', 'tools')
+  raise "tools/list did not return tools: #{outer}" unless listed.is_a?(Array)
+
+  names = listed.map { |tool| tool.fetch('name') }.sort
+  missing = EXPECTED_TOOLS - names
+  extra = names - EXPECTED_TOOLS
+  assert!("missing tools: #{missing.join(', ')}") { missing.empty? }
+  assert!("unexpected tools: #{extra.join(', ')}") { extra.empty? }
+
+  listed.each do |tool|
+    assert!("tool #{tool['name']} missing description") { tool['description'].to_s.strip != '' }
+    assert!("tool #{tool['name']} missing inputSchema") { tool['inputSchema'].is_a?(Hash) }
+  end
+  names
+end
+tools.each { |name| record(name, :schema) }
+
+members = step('list_project_members_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'list_project_members_tool', project_id: project_id, limit: 10)
+  assert!('members should not be empty') { result.fetch('members').any? }
+  record('list_project_members_tool', :normal)
+  result
+end
+assignee_id = members.fetch('members').first.fetch('user_id')
+
+step('list_statuses_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'list_statuses_tool', project_id: project_id)
+  assert!('statuses should include 進行中') { result.fetch('statuses').any? { |status| status['name'] == '進行中' } }
+  record('list_statuses_tool', :normal)
+end
+
+version1_id = step('create version 1') do
+  create_version(endpoint, api_key, bearer_token, project_id, stamp, 'V1', '2026-10-31')
+end
+version2_id = step('create version 2') do
+  create_version(endpoint, api_key, bearer_token, project_id, stamp, 'V2', '2026-11-30')
+end
+version3_id = step('create version 3') do
+  create_version(endpoint, api_key, bearer_token, project_id, stamp, 'V3', '2026-12-31')
+end
+
+step('list_versions_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'list_versions_tool', project_id: project_id, status: 'open')
+  ids = result.fetch('versions').map { |version| version.fetch('id') }
+  assert!('new versions not listed') { [version1_id, version2_id, version3_id].all? { |id| ids.include?(id.to_s) } }
+  record('list_versions_tool', :normal)
+end
+
+epic_id = step('create_epic_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_epic_tool',
+    project_id: project_id,
+    subject: "[MCP MATRIX TEST #{stamp}] Epic",
+    description: "MCP matrix test epic"
+  )
+  id = result.fetch('epic_id')
+  @created_issue_ids << id
+  record('create_epic_tool', :normal)
+  id
+end
+
+feature_id = step('create_feature_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_feature_tool',
+    project_id: project_id,
+    parent_epic_id: epic_id,
+    subject: "[MCP MATRIX TEST #{stamp}] Feature",
+    description: "MCP matrix test feature"
+  )
+  id = result.fetch('feature_id')
+  @created_issue_ids << id
+  record('create_feature_tool', :normal)
+  id
+end
+
+inquiry_feature_id = step('create inquiry feature fixture') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_feature_tool',
+    project_id: project_id,
+    parent_epic_id: epic_id,
+    subject: "[MCP MATRIX TEST #{stamp}] 問合せ Feature",
+    description: "MCP matrix test inquiry feature"
+  )
+  id = result.fetch('feature_id')
+  @created_issue_ids << id
+  record('create_feature_tool', :normal)
+  id
+end
+
+user_story_id = step('create_user_story_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_user_story_tool',
+    project_id: project_id,
+    parent_feature_id: feature_id,
+    subject: "[MCP MATRIX TEST #{stamp}] UserStory",
+    description: "MCP matrix test user story",
+    version_id: version1_id
+  )
+  id = result.fetch('user_story_id')
+  @created_issue_ids << id
+  record('create_user_story_tool', :normal)
+  id
+end
+
+task_id = step('create_task_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_task_tool',
+    project_id: project_id,
+    parent_user_story_id: user_story_id,
+    description: "[MCP MATRIX TEST #{stamp}] Task",
+    version_id: version1_id
+  )
+  id = result.fetch('task_id')
+  @created_issue_ids << id
+  record('create_task_tool', :normal)
+  id
+end
+
+bug_id = step('create_bug_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_bug_tool',
+    project_id: project_id,
+    parent_user_story_id: user_story_id,
+    description: "[MCP MATRIX TEST #{stamp}] Bug",
+    version_id: version1_id
+  )
+  id = result.fetch('bug_id')
+  @created_issue_ids << id
+  record('create_bug_tool', :normal)
+  id
+end
+
+test_id = step('create_test_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_test_tool',
+    project_id: project_id,
+    parent_user_story_id: user_story_id,
+    description: "[MCP MATRIX TEST #{stamp}] Test",
+    version_id: version1_id
+  )
+  id = result.fetch('test_id')
+  @created_issue_ids << id
+  record('create_test_tool', :normal)
+  id
+end
+
+inquiry_id = step('create_inquiry_tool normal by 問合せ feature auto-detect') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_inquiry_tool',
+    project_id: project_id,
+    subject: "[MCP MATRIX TEST #{stamp}] Inquiry",
+    description: 'Inquiry created by matrix test'
+  )
+  id = result.fetch('inquiry_id')
+  @created_issue_ids << id
+  assert!('inquiry was not created under an inquiry feature') do
+    result.dig('inquiry_feature', 'subject').to_s.include?('問合せ')
+  end
+  record('create_inquiry_tool', :normal)
+  id
+end
+
+step('list_epics_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'list_epics_tool', project_id: project_id, status: 'open')
+  assert!('created epic should be listed') { result.fetch('epics').any? { |epic| epic.fetch('id') == epic_id.to_s } }
+  record('list_epics_tool', :normal)
+end
+
+step('list_user_stories_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'list_user_stories_tool', project_id: project_id, version_id: version1_id)
+  ids = result.fetch('user_stories').map { |story| story.fetch('id') }
+  assert!('created user story should be listed') { ids.include?(user_story_id.to_s) }
+  record('list_user_stories_tool', :normal)
+end
+
+step('get_project_structure_tool normal with max_depth 4') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'get_project_structure_tool',
+    project_id: project_id,
+    max_depth: 4,
+    include_closed: true
+  )
+  assert!('project structure should include created epic') do
+    result.fetch('structure').any? { |epic| epic.fetch('id') == epic_id.to_s }
+  end
+  record('get_project_structure_tool', :normal)
+end
+
+step('get_issue_detail_tool normal with children/journals/relations') do
+  result = detail(endpoint, api_key, bearer_token, user_story_id, %w[children journals relations])
+  assert!('detail should include created children') { result.fetch('children_count') >= 3 }
+  record('get_issue_detail_tool', :normal)
+end
+
+step('list_recently_updated_issues_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'list_recently_updated_issues_tool', project_id: project_id, limit: 10)
+  assert!('recent issues should include created data') do
+    result.fetch('issues').any? { |issue| @created_issue_ids.include?(issue.fetch('id')) }
+  end
+  record('list_recently_updated_issues_tool', :normal)
+end
+
+step('add_issue_comment_tool normal') do
+  call_tool(endpoint, api_key, bearer_token, 'add_issue_comment_tool', issue_id: user_story_id, comment: "MCP matrix test comment #{stamp}")
+  record('add_issue_comment_tool', :normal)
+end
+
+step('update issue scalar fields normal') do
+  call_tool(endpoint, api_key, bearer_token, 'update_issue_subject_tool', issue_id: user_story_id, subject: "[MCP MATRIX TEST #{stamp}] UserStory updated")
+  record('update_issue_subject_tool', :normal)
+  call_tool(endpoint, api_key, bearer_token, 'update_issue_description_tool', issue_id: user_story_id, description: "Updated by matrix test #{stamp}")
+  record('update_issue_description_tool', :normal)
+  call_tool(endpoint, api_key, bearer_token, 'update_issue_progress_tool', issue_id: task_id, progress: 40)
+  record('update_issue_progress_tool', :normal)
+  call_tool(endpoint, api_key, bearer_token, 'update_issue_assignee_tool', issue_id: user_story_id, assigned_to_id: assignee_id)
+  record('update_issue_assignee_tool', :normal)
+end
+
+step('assign_to_version_tool normal') do
+  call_tool(endpoint, api_key, bearer_token, 'assign_to_version_tool', issue_id: user_story_id, version_id: version1_id, propagate_to_children: true)
+  record('assign_to_version_tool', :normal)
+end
+
+step('move_to_next_version_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'move_to_next_version_tool', issue_id: user_story_id, confirmed: true)
+  assert!('move_to_next_version should move away from V1') { result.dig('old_version', 'id') == version1_id.to_s }
+  assert!('move_to_next_version should select a different next version') { result.dig('new_version', 'id') != version1_id.to_s }
+  record('move_to_next_version_tool', :normal)
+end
+
+step('update_issue_status_tool normal') do
+  call_tool(endpoint, api_key, bearer_token, 'update_issue_status_tool', issue_id: user_story_id, status_name: '進行中', confirmed: true)
+  record('update_issue_status_tool', :normal)
+end
+
+step('bulk_update_issue_status_tool normal with partial failure') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'bulk_update_issue_status_tool',
+    issue_ids: [task_id, bug_id, test_id, '999999999'],
+    status_name: '進行中',
+    comment: "MCP matrix test bulk #{stamp}"
+  )
+  assert!('bulk should have three successes') { result.fetch('succeeded') == 3 }
+  assert!('bulk should have one failure') { result.fetch('failed') == 1 }
+  record('bulk_update_issue_status_tool', :normal)
+  record('bulk_update_issue_status_tool', :negative)
+end
+
+relation_id = step('add_related_issue_tool normal') do
+  result = call_tool(endpoint, api_key, bearer_token, 'add_related_issue_tool', issue_id: bug_id, related_issue_id: task_id, relation_type: 'blocks')
+  id = result.fetch('relation_id')
+  record('add_related_issue_tool', :normal)
+  id
+end
+
+step('remove_related_issue_tool normal') do
+  result = detail(endpoint, api_key, bearer_token, bug_id, %w[relations])
+  assert!('relation should be visible before removal') do
+    result.fetch('relations').any? { |relation| relation.fetch('id') == relation_id.to_s }
+  end
+  call_tool(endpoint, api_key, bearer_token, 'remove_related_issue_tool', issue_id: bug_id, related_issue_id: task_id)
+  record('remove_related_issue_tool', :normal)
+end
+
+copy_id = step('copy_issue_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'copy_issue_tool',
+    source_issue_id: task_id,
+    subject: "[MCP MATRIX TEST #{stamp}] Copied Task",
+    parent_issue_id: user_story_id,
+    version_id: version3_id
+  )
+  id = result.fetch('issue_id')
+  @created_issue_ids << id
+  record('copy_issue_tool', :normal)
+  id
+end
+
+step('update_issue_parent_tool normal remove and restore') do
+  call_tool(endpoint, api_key, bearer_token, 'update_issue_parent_tool', issue_id: copy_id, parent_issue_id: 'null')
+  call_tool(endpoint, api_key, bearer_token, 'update_issue_parent_tool', issue_id: copy_id, parent_issue_id: user_story_id, inherit_version_and_dates: true)
+  record('update_issue_parent_tool', :normal)
+end
+
+promoted_us_id = step('promote_to_us_tool normal') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'promote_to_us_tool',
+    issue_id: bug_id,
+    target_feature_id: feature_id,
+    us_subject: "[MCP MATRIX TEST #{stamp}] Promoted Bug US"
+  )
+  id = result.dig('new_user_story', 'id')
+  raise "promote_to_us_tool missing new_user_story id: #{result}" unless id
+  @created_issue_ids << id
+  record('promote_to_us_tool', :normal)
+  id
+end
+
+step('update_custom_fields_tool normal') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_custom_fields_tool',
+    issue_id: task_id,
+    custom_fields: { 'MCP Sandbox Text' => "matrix #{stamp}" }
+  )
+  record('update_custom_fields_tool', :normal)
+end
+
+step('update_custom_fields_tool negative no matching field') do
+  expect_failure(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_custom_fields_tool',
+    {
+      issue_id: promoted_us_id,
+      custom_fields: { "MCP Matrix Missing Field #{stamp}" => 'value' }
+    },
+    'カスタムフィールド'
+  )
+  record('update_custom_fields_tool', :negative)
+end
+
+step('representative negative cases') do
+  expect_failure(endpoint, api_key, bearer_token, 'get_issue_detail_tool', { issue_id: '999999999' }, 'チケットが見つかりません')
+  record('get_issue_detail_tool', :negative)
+  expect_failure(endpoint, api_key, bearer_token, 'update_issue_progress_tool', { issue_id: user_story_id, progress: 40 }, '子チケットから自動計算')
+  record('update_issue_progress_tool', :negative)
+  expect_failure(endpoint, api_key, bearer_token, 'list_versions_tool', { project_id: 'missing-project-for-matrix' }, 'プロジェクトが見つかりません')
+  record('list_versions_tool', :negative)
+  expect_failure(endpoint, api_key, bearer_token, 'add_related_issue_tool', { issue_id: task_id, related_issue_id: test_id, relation_type: 'not_a_relation' }, '無効な関連タイプ')
+  record('add_related_issue_tool', :negative)
+  expect_failure(endpoint, api_key, bearer_token, 'update_issue_parent_tool', { issue_id: epic_id, parent_issue_id: task_id }, '循環参照')
+  record('update_issue_parent_tool', :negative)
+end
+
+uncovered = EXPECTED_TOOLS.reject { |tool| @coverage.fetch(tool, []).any? { |kind| kind == :normal || kind == :negative } }
+raise "tools with schema only and no behavior coverage: #{uncovered.join(', ')}" unless uncovered.empty?
+
+puts
+puts 'MCP tool matrix test passed.'
+puts "Tool count: #{EXPECTED_TOOLS.size}"
+puts "Created issue IDs: #{@created_issue_ids.join(', ')}"
+puts "Created version IDs: #{@created_version_ids.join(', ')}"
+puts 'Coverage:'
+EXPECTED_TOOLS.each do |tool|
+  puts "  #{tool}: #{@coverage.fetch(tool, []).uniq.join(', ')}"
+end

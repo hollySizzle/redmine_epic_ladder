@@ -42,6 +42,18 @@ module EpicLadder
             return error_response("進捗率は0〜100の範囲で指定してください", { progress: progress })
           end
 
+          if issue.done_ratio_derived?
+            return error_response(
+              "このチケットの進捗率は子チケットから自動計算されるため直接更新できません",
+              {
+                issue_id: issue.id.to_s,
+                children_count: issue.children.count,
+                current_progress: issue.done_ratio,
+                hint: "配下のTask/Bug/Testなど、子チケットの進捗率を更新してください。"
+              }
+            )
+          end
+
           # 進捗率更新
           old_progress = issue.done_ratio
           issue.done_ratio = progress_int

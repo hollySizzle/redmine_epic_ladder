@@ -19,7 +19,7 @@ module EpicLadder
           project_id: { type: "string", description: "Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)" },
           subject: { type: "string", description: "UserStory subject/title" },
           parent_feature_id: { type: "string", description: "Parent Feature issue ID" },
-          version_id: { type: "string", description: "Target Version ID (release milestone)" },
+          version_id: { type: "string", description: "Target Version ID (release milestone). If omitted, inherits parent Feature's version, otherwise uses the earliest open project Version." },
           description: { type: "string", description: "UserStory description (optional)" },
           assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" }
         },

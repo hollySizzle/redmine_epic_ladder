@@ -71,12 +71,15 @@ module Mcp
       response.headers['Access-Control-Max-Age'] = '86400' # 24時間
     end
 
-    # Redmine APIキー認証
+    # Redmine APIキー認証 / OAuth Bearer token認証
     def authenticate_api_user
+      return true if authenticate_bearer_token
+      return false if performed?
+
       api_key = request.headers['X-Redmine-API-Key'] || params[:key]
 
       if api_key.blank?
-        render_auth_error('APIキーが必要です')
+        render_auth_error('APIキーまたはOAuth Bearer tokenが必要です', include_oauth_challenge: true)
         return false
       end
 
@@ -96,8 +99,45 @@ module Mcp
       false
     end
 
+    # OAuth Bearer token認証
+    def authenticate_bearer_token
+      return false unless bearer_token_request?
+
+      unless defined?(Doorkeeper)
+        render_auth_error('OAuth認証が利用できません')
+        return false
+      end
+
+      access_token = Doorkeeper.authenticate(request)
+      unless access_token&.accessible?
+        render_auth_error('無効なOAuth Bearer tokenです', include_oauth_challenge: true)
+        return false
+      end
+
+      user = User.active.find_by(id: access_token.resource_owner_id)
+      unless user
+        render_auth_error('OAuth tokenに対応する有効なユーザーが見つかりません')
+        return false
+      end
+
+      user.oauth_scope = access_token.scopes.all.map(&:to_sym) if user.respond_to?(:oauth_scope=)
+      User.current = user
+      Rails.logger.info "MCP OAuth authenticated: user=#{user.login} (id=#{user.id})"
+      true
+    rescue StandardError => e
+      Rails.logger.error "MCP OAuth authentication error: #{e.message}"
+      render_auth_error('OAuth認証エラー')
+      false
+    end
+
+    def bearer_token_request?
+      request.authorization.to_s.match?(/\ABearer /i)
+    end
+
     # 認証エラーレスポンス
-    def render_auth_error(message)
+    def render_auth_error(message, include_oauth_challenge: false)
+      response.headers['WWW-Authenticate'] = oauth_authenticate_header if include_oauth_challenge
+
       render json: {
         jsonrpc: "2.0",
         error: {
@@ -106,6 +146,10 @@ module Mcp
         },
         id: nil
       }, status: :unauthorized
+    end
+
+    def oauth_authenticate_header
+      %(Bearer resource_metadata="#{request.base_url}/.well-known/oauth-protected-resource/mcp/rpc")
     end
 
     # MCP::Serverインスタンス生成（Statelessモード）

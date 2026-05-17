@@ -67,8 +67,23 @@ RedmineApp::Application.routes.draw do
   # POST /mcp/rpc - JSON-RPC 2.0エンドポイント
   # OPTIONS /mcp/rpc - CORSプリフライト対応
   # OAuth Discovery: config/initializers/mcp_oauth_rejection.rb で処理
+  get '/.well-known/oauth-protected-resource', to: 'mcp/oauth#protected_resource', format: false
+  get '/.well-known/oauth-protected-resource/mcp/rpc', to: 'mcp/oauth#protected_resource', format: false
+  get '/.well-known/oauth-authorization-server', to: 'mcp/oauth#authorization_server', format: false
+
   namespace :mcp do
     post '/rpc', to: 'server#handle'
     options '/rpc', to: 'server#options'
   end
+
+  # Claude Web Custom Connector互換:
+  # 一部のClaude Web実装がmetadata内の /oauth/* ではなくroot直下を叩くため、
+  # Redmine本体のDoorkeeper endpointに収束させる。
+  get '/authorize', to: redirect { |_params, request|
+    query_params = request.query_parameters.dup
+    query_params['scope'] = Mcp::OauthController::MCP_SCOPES.join(' ') if query_params['scope'].blank?
+    query = query_params.to_query
+    query.present? ? "/oauth/authorize?#{query}" : '/oauth/authorize'
+  }
+  post '/token', to: 'doorkeeper/tokens#create'
 end

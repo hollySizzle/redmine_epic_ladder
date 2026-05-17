@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-05-18
+
+### Added
+
+- Claude Web Custom Connector 対応: Redmine OAuth2 Provider を使った MCP discovery / OAuth challenge / root `/authorize` `/token` alias / Bearer token 認証を追加。
+- Claude Web 向け OAuth scope 初期値を追加: `view_project`, `view_issues`, `add_issues`, `edit_issues`, `add_issue_notes`, `manage_versions`, `manage_issue_relations`。
+- `ai-recommend` MCP サンドボックス seed を追加。`MCP-SEED` 系 Version / Issue、`inquiry_feature_id`、`MCP Sandbox Text` custom field、`MCPテスター` role membership を再現可能にした。
+- MCP 実機確認用スクリプトを追加: OAuth smoke、書き込み smoke、複合シナリオ、31ツール matrix、Cloudflare Tunnel 補助。
+- Claude Web 実機E2E手順と調査記録を Vibes docs に追加。
+
+### Changed
+
+- `update_issue_progress_tool` は、Redmine設定で親チケットの進捗率が子チケットから自動計算される場合、親チケットへの直接更新を明示的に拒否する。
+- `create_epic_tool` / `create_user_story_tool` の schema description に、`version_id` 未指定時の自動Version選択ルールを明記。
+- `mcp_tool_matrix_test` は `MCP Sandbox Text` が存在する環境で `update_custom_fields_tool` の正常系と異常系を両方検証する。
+
+### Tested
+
+- RSpec request spec で、`tools/list` が31ツール全件と `inputSchema` を公開することを固定。
+- CLI/API key 経由で31ツールの schema・正常系・代表異常系を確認。
+- Claude Web Custom Connector 実機E2Eで、OAuth token取得、Bearer付き `/mcp/rpc`、参照、Version作成、Epic→Feature→UserStory→Task作成、コメント、進捗更新、存在しないIssueの業務エラーを確認。
+
 ## [1.5.0] - 2026-03-17
 
 ### create_inquiry_tool — 問合せ起票MCPツール新規実装

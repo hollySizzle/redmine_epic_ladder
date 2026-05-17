@@ -1,0 +1,114 @@
+#!/bin/bash
+
+set -euo pipefail
+
+BASE_URL="${1:-${MCP_BASE_URL:-http://localhost:8500}}"
+MCP_ENDPOINT="$BASE_URL/mcp/rpc"
+PROTECTED_RESOURCE="$BASE_URL/.well-known/oauth-protected-resource/mcp/rpc"
+AUTH_SERVER="$BASE_URL/.well-known/oauth-authorization-server"
+
+json_rpc='{"jsonrpc":"2.0","method":"tools/list","id":1}'
+
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Missing required command: $1" >&2
+    exit 1
+  fi
+}
+
+assert_contains() {
+  local haystack="$1"
+  local needle="$2"
+  local label="$3"
+
+  if [[ "$haystack" != *"$needle"* ]]; then
+    echo "FAIL: $label"
+    echo "Expected to contain: $needle"
+    echo "Actual:"
+    echo "$haystack"
+    exit 1
+  fi
+}
+
+assert_contains_ci() {
+  local haystack="$1"
+  local needle="$2"
+  local label="$3"
+
+  if ! printf '%s' "$haystack" | grep -qi -- "$needle"; then
+    echo "FAIL: $label"
+    echo "Expected to contain case-insensitively: $needle"
+    echo "Actual:"
+    echo "$haystack"
+    exit 1
+  fi
+}
+
+print_step() {
+  echo
+  echo "==> $1"
+}
+
+require_command curl
+
+print_step "Checking protected resource metadata"
+protected_resource_response="$(curl -fsS "$PROTECTED_RESOURCE")"
+assert_contains "$protected_resource_response" "\"resource\"" "protected resource metadata includes resource"
+assert_contains "$protected_resource_response" "/mcp/rpc" "protected resource metadata points to MCP endpoint"
+assert_contains "$protected_resource_response" "oauth-authorization-server" "protected resource metadata points to authorization server"
+echo "$protected_resource_response"
+
+print_step "Checking authorization server metadata"
+auth_server_response="$(curl -fsS "$AUTH_SERVER")"
+assert_contains "$auth_server_response" "\"authorization_endpoint\"" "authorization server metadata includes authorization endpoint"
+assert_contains "$auth_server_response" "\"token_endpoint\"" "authorization server metadata includes token endpoint"
+assert_contains "$auth_server_response" "/authorize" "authorization endpoint uses root alias"
+assert_contains "$auth_server_response" "/token" "token endpoint uses root alias"
+echo "$auth_server_response"
+
+print_step "Checking unauthenticated MCP challenge"
+challenge_response="$(curl -isS "$MCP_ENDPOINT" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d "$json_rpc")"
+assert_contains "$challenge_response" "401" "unauthenticated MCP request returns 401"
+assert_contains_ci "$challenge_response" "^www-authenticate:" "unauthenticated MCP request includes WWW-Authenticate"
+assert_contains "$challenge_response" "oauth-protected-resource/mcp/rpc" "challenge points to protected resource metadata"
+echo "$challenge_response" | sed -n '1,20p'
+
+print_step "Checking root /authorize alias"
+authorize_response="$(curl -isS "$BASE_URL/authorize?client_id=dummy&redirect_uri=https%3A%2F%2Fclaude.ai%2Fapi%2Fmcp%2Fauth_callback&response_type=code")"
+assert_contains_ci "$authorize_response" "^location:" "authorize alias returns redirect"
+assert_contains "$authorize_response" "/oauth/authorize" "authorize alias redirects to Redmine Doorkeeper"
+echo "$authorize_response" | sed -n '1,20p'
+
+if [[ -n "${MCP_API_KEY:-}" ]]; then
+  print_step "Checking MCP tools/list with X-Redmine-API-Key"
+  api_key_response="$(curl -fsS "$MCP_ENDPOINT" \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -H "X-Redmine-API-Key: $MCP_API_KEY" \
+    -d "$json_rpc")"
+  assert_contains "$api_key_response" "\"tools\"" "API key authenticated MCP response includes tools"
+  echo "$api_key_response" | sed -n '1,20p'
+else
+  echo
+  echo "Skipping API key MCP check. Set MCP_API_KEY to enable it."
+fi
+
+if [[ -n "${MCP_BEARER_TOKEN:-}" ]]; then
+  print_step "Checking MCP tools/list with OAuth Bearer token"
+  bearer_response="$(curl -fsS "$MCP_ENDPOINT" \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $MCP_BEARER_TOKEN" \
+    -d "$json_rpc")"
+  assert_contains "$bearer_response" "\"tools\"" "Bearer authenticated MCP response includes tools"
+  echo "$bearer_response" | sed -n '1,20p'
+else
+  echo
+  echo "Skipping Bearer token MCP check. Set MCP_BEARER_TOKEN to enable it."
+fi
+
+echo
+echo "MCP OAuth smoke test passed for $BASE_URL"

@@ -38,5 +38,33 @@ else
   puts "  ❌ 桜商店ECサイトプロジェクトが見つかりません"
 end
 
+ai_recommend = Project.find_by(identifier: 'ai-recommend')
+if ai_recommend
+  puts "\n📅 AIレコメンドMCPサンドボックス用バージョンを投入中..."
+
+  versions_data = [
+    { name: 'MCP-SEED Alpha', description: 'MCP検証用Alphaバージョン', effective_date: '2026-10-31', status: 'open' },
+    { name: 'MCP-SEED Beta', description: 'MCP検証用Betaバージョン', effective_date: '2026-11-30', status: 'open' },
+    { name: 'MCP-SEED Gamma', description: 'MCP検証用Gammaバージョン', effective_date: '2026-12-31', status: 'open' }
+  ]
+
+  versions_data.each do |data|
+    version = ai_recommend.versions.find_or_initialize_by(name: data[:name])
+    version.assign_attributes(
+      description: data[:description],
+      effective_date: Date.parse(data[:effective_date]),
+      status: data[:status]
+    )
+
+    if version.save
+      puts "  ✅ #{version.name} (#{version.effective_date}) - #{version.status}"
+    else
+      puts "  ❌ #{data[:name]} の作成に失敗: #{version.errors.full_messages.join(', ')}"
+    end
+  end
+else
+  puts "  ⚠️  AIレコメンド機能開発プロジェクトが見つかりません"
+end
+
 puts "\n✅ [3/5] バージョン投入完了 (全てopen状態)"
 puts "    ※ Issue投入後、05_finalize_versions.rbでclosed/lockedに変更されます"

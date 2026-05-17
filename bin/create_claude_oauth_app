@@ -1,0 +1,40 @@
+#!/bin/bash
+
+set -euo pipefail
+
+PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REDMINE_ROOT="$(cd "$PLUGIN_DIR/../.." && pwd)"
+
+APP_NAME="${CLAUDE_MCP_APP_NAME:-Claude Web MCP $(date -u +%Y%m%d%H%M%S)}"
+REDIRECT_URI="${CLAUDE_MCP_REDIRECT_URI:-https://claude.ai/api/mcp/auth_callback}"
+SCOPES="${CLAUDE_MCP_SCOPES:-view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations}"
+RAILS_ENV_NAME="${RAILS_ENV:-development}"
+
+cd "$REDMINE_ROOT"
+
+RAILS_ENV="$RAILS_ENV_NAME" \
+CLAUDE_MCP_APP_NAME="$APP_NAME" \
+CLAUDE_MCP_REDIRECT_URI="$REDIRECT_URI" \
+CLAUDE_MCP_SCOPES="$SCOPES" \
+bundle exec rails runner - <<'RUBY'
+Setting.rest_api_enabled = '1'
+
+app = Doorkeeper::Application.create!(
+  name: ENV.fetch('CLAUDE_MCP_APP_NAME'),
+  redirect_uri: ENV.fetch('CLAUDE_MCP_REDIRECT_URI'),
+  scopes: ENV.fetch('CLAUDE_MCP_SCOPES'),
+  confidential: true
+)
+
+puts "Created Redmine OAuth application for Claude Web MCP"
+puts
+puts "Name: #{app.name}"
+puts "Redirect URI: #{app.redirect_uri}"
+puts "Scopes: #{app.scopes}"
+puts
+puts "Use these values in Claude Web Custom Connector advanced settings:"
+puts "OAuth Client ID: #{app.uid}"
+puts "OAuth Client Secret: #{app.plaintext_secret}"
+puts
+puts "Secret is only available at creation time because Redmine hashes application secrets."
+RUBY

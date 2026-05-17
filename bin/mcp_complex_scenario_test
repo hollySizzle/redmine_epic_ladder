@@ -1,0 +1,392 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'net/http'
+require 'uri'
+
+base_url = ARGV[0] || ENV.fetch('MCP_BASE_URL', 'http://localhost:8500')
+endpoint = URI.join(base_url, '/mcp/rpc')
+api_key = ENV['MCP_API_KEY']
+bearer_token = ENV['MCP_BEARER_TOKEN']
+
+if api_key.to_s.empty? && bearer_token.to_s.empty?
+  warn 'Set MCP_API_KEY or MCP_BEARER_TOKEN.'
+  exit 1
+end
+
+@request_id = 0
+@created_issue_ids = []
+@created_version_ids = []
+
+def rpc_call(endpoint, api_key, bearer_token, name, arguments)
+  @request_id += 1
+  request = Net::HTTP::Post.new(endpoint)
+  request['Content-Type'] = 'application/json'
+  request['X-Redmine-API-Key'] = api_key if api_key && !api_key.empty?
+  request['Authorization'] = "Bearer #{bearer_token}" if bearer_token && !bearer_token.empty?
+  request.body = JSON.generate(
+    jsonrpc: '2.0',
+    id: @request_id,
+    method: 'tools/call',
+    params: {
+      name: name,
+      arguments: arguments
+    }
+  )
+
+  response = Net::HTTP.start(endpoint.host, endpoint.port, use_ssl: endpoint.scheme == 'https') do |http|
+    http.request(request)
+  end
+
+  raise "#{name}: HTTP #{response.code} #{response.body}" unless response.is_a?(Net::HTTPSuccess)
+
+  outer = JSON.parse(response.body)
+  raise "#{name}: JSON-RPC error #{outer.fetch('error')}" if outer['error']
+
+  text = outer.dig('result', 'content', 0, 'text')
+  raise "#{name}: missing text content #{outer}" unless text
+
+  JSON.parse(text)
+end
+
+def call_tool(endpoint, api_key, bearer_token, name, arguments)
+  result = rpc_call(endpoint, api_key, bearer_token, name, arguments)
+  raise "#{name}: #{result}" unless result['success']
+
+  result
+end
+
+def expect_tool_failure(endpoint, api_key, bearer_token, name, arguments)
+  result = rpc_call(endpoint, api_key, bearer_token, name, arguments)
+  raise "#{name}: expected failure but succeeded: #{result}" if result['success']
+
+  result
+end
+
+def run_step(label)
+  print "#{label} ... "
+  result = yield
+  puts 'OK'
+  result
+rescue StandardError => e
+  puts 'NG'
+  warn e.message
+  exit 1
+end
+
+def assert!(message)
+  raise message unless yield
+end
+
+def issue_detail(endpoint, api_key, bearer_token, issue_id, include_sections = %w[children journals relations])
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'get_issue_detail_tool',
+    issue_id: issue_id,
+    include: include_sections
+  )
+end
+
+def create_version(endpoint, api_key, bearer_token, project_id, stamp, suffix, effective_date)
+  version = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_version_tool',
+    project_id: project_id,
+    name: "[MCP COMPLEX TEST #{stamp}] #{suffix}",
+    effective_date: effective_date,
+    description: "Version for MCP complex scenario test #{stamp}"
+  )
+  version_id = version.fetch('version_id')
+  @created_version_ids << version_id
+  version_id
+end
+
+def create_branch(endpoint, api_key, bearer_token, project_id, stamp, branch_name, epic_id)
+  feature = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_feature_tool',
+    project_id: project_id,
+    parent_epic_id: epic_id,
+    subject: "[MCP COMPLEX TEST #{stamp}] #{branch_name} Feature",
+    description: "Feature branch #{branch_name}"
+  )
+  feature_id = feature.fetch('feature_id')
+  @created_issue_ids << feature_id
+
+  user_story = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_user_story_tool',
+    project_id: project_id,
+    parent_feature_id: feature_id,
+    subject: "[MCP COMPLEX TEST #{stamp}] #{branch_name} UserStory",
+    description: "UserStory branch #{branch_name}"
+  )
+  user_story_id = user_story.fetch('user_story_id')
+  @created_issue_ids << user_story_id
+
+  {
+    feature_id: feature_id,
+    user_story_id: user_story_id
+  }
+end
+
+stamp = Time.now.utc.strftime('%Y%m%d%H%M%S')
+project_id = ENV.fetch('MCP_TEST_PROJECT', 'ai-recommend')
+
+puts "MCP complex scenario test: #{endpoint}"
+puts "Project: #{project_id}"
+
+alpha_version_id = run_step('create alpha version') do
+  create_version(endpoint, api_key, bearer_token, project_id, stamp, 'Alpha Version', '2026-11-30')
+end
+
+beta_version_id = run_step('create beta version') do
+  create_version(endpoint, api_key, bearer_token, project_id, stamp, 'Beta Version', '2027-01-31')
+end
+
+epic_id = run_step('create epic') do
+  epic = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_epic_tool',
+    project_id: project_id,
+    subject: "[MCP COMPLEX TEST #{stamp}] Epic",
+    description: "Epic for MCP complex scenario test #{stamp}"
+  )
+  epic.fetch('epic_id')
+end
+@created_issue_ids << epic_id
+
+branch_a = run_step('create branch A') do
+  create_branch(endpoint, api_key, bearer_token, project_id, stamp, 'A', epic_id)
+end
+
+branch_b = run_step('create branch B') do
+  create_branch(endpoint, api_key, bearer_token, project_id, stamp, 'B', epic_id)
+end
+
+task_a_id = run_step('create task under A') do
+  task = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_task_tool',
+    project_id: project_id,
+    parent_user_story_id: branch_a.fetch(:user_story_id),
+    description: "[MCP COMPLEX TEST #{stamp}] Task A"
+  )
+  task.fetch('task_id')
+end
+@created_issue_ids << task_a_id
+
+bug_a_id = run_step('create bug under A') do
+  bug = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_bug_tool',
+    project_id: project_id,
+    parent_user_story_id: branch_a.fetch(:user_story_id),
+    description: "[MCP COMPLEX TEST #{stamp}] Bug A"
+  )
+  bug.fetch('bug_id')
+end
+@created_issue_ids << bug_a_id
+
+test_a_id = run_step('create test under A') do
+  test_issue = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'create_test_tool',
+    project_id: project_id,
+    parent_user_story_id: branch_a.fetch(:user_story_id),
+    description: "[MCP COMPLEX TEST #{stamp}] Test A"
+  )
+  test_issue.fetch('test_id')
+end
+@created_issue_ids << test_a_id
+
+run_step('assign alpha version to A and propagate') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'assign_to_version_tool',
+    issue_id: branch_a.fetch(:user_story_id),
+    version_id: alpha_version_id,
+    update_parent: false,
+    propagate_to_children: true
+  )
+end
+
+run_step('assign beta version to B') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'assign_to_version_tool',
+    issue_id: branch_b.fetch(:user_story_id),
+    version_id: beta_version_id,
+    update_parent: false,
+    propagate_to_children: true
+  )
+end
+
+run_step('verify alpha propagated to A children') do
+  [branch_a.fetch(:user_story_id), task_a_id, bug_a_id, test_a_id].each do |issue_id|
+    detail = issue_detail(endpoint, api_key, bearer_token, issue_id, [])
+    version_id = detail.dig('issue', 'fixed_version', 'id')
+    assert!("issue ##{issue_id} did not inherit alpha version") { version_id == alpha_version_id.to_s }
+  end
+end
+
+run_step('move task A under B with inheritance') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_parent_tool',
+    issue_id: task_a_id,
+    parent_issue_id: branch_b.fetch(:user_story_id),
+    inherit_version_and_dates: true
+  )
+  assert!('expected inherited version data') { result.dig('inherited', 'version', 'id') == beta_version_id.to_s }
+  result
+end
+
+run_step('verify moved task parent and beta version') do
+  detail = issue_detail(endpoint, api_key, bearer_token, task_a_id, [])
+  assert!('task parent was not changed to branch B') do
+    detail.dig('issue', 'parent', 'id') == branch_b.fetch(:user_story_id).to_s
+  end
+  assert!('task did not inherit beta version') do
+    detail.dig('issue', 'fixed_version', 'id') == beta_version_id.to_s
+  end
+end
+
+run_step('reject cyclic parent update') do
+  result = expect_tool_failure(
+    endpoint,
+    api_key,
+    bearer_token,
+    'update_issue_parent_tool',
+    issue_id: epic_id,
+    parent_issue_id: task_a_id
+  )
+  assert!('expected cyclic reference error') { result.fetch('error').include?('循環参照') }
+  result
+end
+
+relation_id = run_step('add blocks relation') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'add_related_issue_tool',
+    issue_id: bug_a_id,
+    related_issue_id: task_a_id,
+    relation_type: 'blocks'
+  )
+  result.fetch('relation_id')
+end
+
+run_step('verify relation exists') do
+  detail = issue_detail(endpoint, api_key, bearer_token, bug_a_id, %w[relations])
+  relation_ids = detail.fetch('relations').map { |relation| relation.fetch('id') }
+  assert!('relation was not returned by detail') { relation_ids.include?(relation_id.to_s) }
+end
+
+run_step('remove relation') do
+  call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'remove_related_issue_tool',
+    issue_id: bug_a_id,
+    related_issue_id: task_a_id
+  )
+end
+
+copy_id = run_step('copy moved task back under A with alpha override') do
+  copy = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'copy_issue_tool',
+    source_issue_id: task_a_id,
+    subject: "[MCP COMPLEX TEST #{stamp}] Copied Task A",
+    parent_issue_id: branch_a.fetch(:user_story_id),
+    version_id: alpha_version_id
+  )
+  copy.fetch('issue_id')
+end
+@created_issue_ids << copy_id
+
+run_step('verify copied task parent and version') do
+  detail = issue_detail(endpoint, api_key, bearer_token, copy_id, [])
+  assert!('copy parent was not branch A') do
+    detail.dig('issue', 'parent', 'id') == branch_a.fetch(:user_story_id).to_s
+  end
+  assert!('copy version was not alpha') do
+    detail.dig('issue', 'fixed_version', 'id') == alpha_version_id.to_s
+  end
+end
+
+run_step('bulk status partial failure') do
+  result = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'bulk_update_issue_status_tool',
+    issue_ids: [copy_id, '999999999'],
+    status_name: '進行中',
+    comment: "MCP complex scenario bulk partial failure #{stamp}"
+  )
+  assert!('expected one successful bulk update') { result.fetch('succeeded') == 1 }
+  assert!('expected one failed bulk update') { result.fetch('failed') == 1 }
+  result
+end
+
+run_step('verify alpha version project structure filter') do
+  structure = call_tool(
+    endpoint,
+    api_key,
+    bearer_token,
+    'get_project_structure_tool',
+    project_id: project_id,
+    version_id: alpha_version_id,
+    max_depth: 4,
+    include_closed: true
+  )
+
+  story_ids = structure.fetch('structure').flat_map do |epic|
+    epic.fetch('features').flat_map do |feature|
+      feature.fetch('user_stories').map { |story| story.fetch('id') }
+    end
+  end
+
+  assert!('alpha-filtered structure should include branch A') do
+    story_ids.include?(branch_a.fetch(:user_story_id).to_s)
+  end
+  assert!('alpha-filtered structure should not include branch B') do
+    !story_ids.include?(branch_b.fetch(:user_story_id).to_s)
+  end
+end
+
+puts
+puts 'MCP complex scenario test passed.'
+puts "Created issue IDs: #{@created_issue_ids.join(', ')}"
+puts "Created version IDs: #{@created_version_ids.join(', ')}"
+puts "Branch A user story: ##{branch_a.fetch(:user_story_id)}"
+puts "Branch B user story: ##{branch_b.fetch(:user_story_id)}"

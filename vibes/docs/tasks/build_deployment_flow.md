@@ -188,8 +188,8 @@ assets/build/                        # 正規ビルド出力先
 
 ## 関連ドキュメント
 
-- **技術アーキテクチャ**: @vibes/docs/rules/technical_architecture_quickstart.md
-- **AIエージェント協働規約**: @vibes/docs/rules/ai_collaboration_redmine.md
+- **技術アーキテクチャ**: @vibes/rules/technical_architecture_quickstart.md
+- **AIエージェント協働規約**: @vibes/rules/ai_collaboration_redmine.md
 - **webpack公式**: https://webpack.js.org/configuration/
 
 ---

@@ -1,0 +1,176 @@
+#!/bin/bash
+
+set -euo pipefail
+
+TUNNEL_NAME="${TUNNEL_NAME:-redmine-epic-ladder-mcp}"
+ORIGIN_URL="${ORIGIN_URL:-http://localhost:8500}"
+ORIGIN_HOST_HEADER="${ORIGIN_HOST_HEADER:-${TUNNEL_HOSTNAME:-}}"
+CONFIG_FILE="${CONFIG_FILE:-/tmp/${TUNNEL_NAME}.cloudflared.yml}"
+COMMAND="${1:-run}"
+
+usage() {
+  cat <<USAGE
+Usage:
+  TUNNEL_HOSTNAME=mcp-test.example.com bin/cloudflare_tunnel_mcp setup
+  TUNNEL_HOSTNAME=mcp-test.example.com bin/cloudflare_tunnel_mcp run
+  TUNNEL_HOSTNAME=mcp-test.example.com bin/cloudflare_tunnel_mcp smoke
+
+Commands:
+  setup   Create the named tunnel if needed, route DNS, and write a local config file.
+  run     Run setup, then start cloudflared in the foreground.
+  smoke   Run MCP OAuth smoke test against https://\$TUNNEL_HOSTNAME.
+  help    Show this help.
+
+Environment:
+  TUNNEL_HOSTNAME  Required. Public hostname managed by Cloudflare, for example mcp-test.example.com.
+  TUNNEL_NAME      Optional. Default: redmine-epic-ladder-mcp
+  ORIGIN_URL       Optional. Default: http://localhost:8500
+  ORIGIN_HOST_HEADER
+                  Optional. Default: \$TUNNEL_HOSTNAME. Use localhost only if Rails rejects the public Host.
+  CONFIG_FILE      Optional. Default: /tmp/\$TUNNEL_NAME.cloudflared.yml
+
+Prerequisites:
+  1. Install cloudflared.
+  2. Run "cloudflared tunnel login" once on this host.
+  3. Start Redmine locally, usually with "bin/dev".
+USAGE
+}
+
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "Missing required command: $1" >&2
+    exit 1
+  fi
+}
+
+require_hostname() {
+  if [[ -z "${TUNNEL_HOSTNAME:-}" ]]; then
+    echo "TUNNEL_HOSTNAME is required." >&2
+    echo >&2
+    usage >&2
+    exit 1
+  fi
+}
+
+tunnel_id_from_json() {
+  ruby -rjson -e '
+    name = ARGV.fetch(0)
+    tunnels = JSON.parse(STDIN.read)
+    tunnel = tunnels.find do |item|
+      item["name"] == name &&
+        (item["deleted_at"].nil? || item["deleted_at"] == "0001-01-01T00:00:00Z")
+    end
+    puts tunnel["id"] if tunnel
+  ' "$TUNNEL_NAME"
+}
+
+lookup_tunnel_id() {
+  local tunnel_list
+
+  if ! tunnel_list="$(cloudflared tunnel list --output json 2>&1)"; then
+    echo "$tunnel_list" >&2
+    echo >&2
+    echo "Cloudflare Tunnel is not authenticated yet." >&2
+    echo "Run: cloudflared tunnel login" >&2
+    return 1
+  fi
+
+  printf '%s' "$tunnel_list" | tunnel_id_from_json
+}
+
+create_tunnel_if_needed() {
+  local tunnel_id
+  tunnel_id="$(lookup_tunnel_id)"
+
+  if [[ -n "$tunnel_id" ]]; then
+    echo "Using existing Cloudflare Tunnel: $TUNNEL_NAME ($tunnel_id)"
+    return
+  fi
+
+  echo "Creating Cloudflare Tunnel: $TUNNEL_NAME"
+  cloudflared tunnel create "$TUNNEL_NAME"
+}
+
+write_config() {
+  local tunnel_id
+  local credentials_file
+
+  tunnel_id="$(lookup_tunnel_id)"
+  if [[ -z "$tunnel_id" ]]; then
+    echo "Cloudflare Tunnel was not found after create: $TUNNEL_NAME" >&2
+    exit 1
+  fi
+
+  credentials_file="${HOME}/.cloudflared/${tunnel_id}.json"
+  if [[ ! -f "$credentials_file" ]]; then
+    echo "Missing tunnel credentials file: $credentials_file" >&2
+    echo "Run: cloudflared tunnel login" >&2
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "$CONFIG_FILE")"
+  cat >"$CONFIG_FILE" <<YAML
+tunnel: ${tunnel_id}
+credentials-file: ${credentials_file}
+
+ingress:
+  - hostname: ${TUNNEL_HOSTNAME}
+    service: ${ORIGIN_URL}
+    originRequest:
+      httpHostHeader: ${ORIGIN_HOST_HEADER}
+  - service: http_status:404
+YAML
+
+  echo "Wrote cloudflared config: $CONFIG_FILE"
+}
+
+route_dns() {
+  echo "Routing DNS: $TUNNEL_HOSTNAME -> $TUNNEL_NAME"
+  cloudflared tunnel route dns "$TUNNEL_NAME" "$TUNNEL_HOSTNAME"
+}
+
+setup_tunnel() {
+  require_command cloudflared
+  require_command ruby
+  require_hostname
+
+  create_tunnel_if_needed
+  route_dns
+  write_config
+}
+
+run_tunnel() {
+  setup_tunnel
+  echo
+  echo "Starting Cloudflare Tunnel:"
+  echo "  public: https://$TUNNEL_HOSTNAME"
+  echo "  origin: $ORIGIN_URL"
+  echo
+  cloudflared tunnel --config "$CONFIG_FILE" run "$TUNNEL_NAME"
+}
+
+smoke_test() {
+  require_hostname
+  "$(dirname "$0")/mcp_oauth_smoke_test" "https://$TUNNEL_HOSTNAME"
+}
+
+case "$COMMAND" in
+  setup)
+    setup_tunnel
+    ;;
+  run)
+    run_tunnel
+    ;;
+  smoke)
+    smoke_test
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $COMMAND" >&2
+    echo >&2
+    usage >&2
+    exit 1
+    ;;
+esac

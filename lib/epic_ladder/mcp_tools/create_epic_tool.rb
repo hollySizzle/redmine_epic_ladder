@@ -20,7 +20,7 @@ module EpicLadder
           subject: { type: "string", description: "Epic subject/title" },
           description: { type: "string", description: "Epic description (optional)" },
           assigned_to_id: { type: "string", description: "Assignee user ID (defaults to current user)" },
-          version_id: { type: "string", description: "Version ID (release milestone)" }
+          version_id: { type: "string", description: "Version ID (release milestone). If omitted, uses the earliest open project Version." }
         },
         required: ["subject"]
       )

@@ -113,6 +113,42 @@ if created_projects['sakura-ec']
   end
 end
 
+if created_projects['ai-recommend']
+  ai_recommend = created_projects['ai-recommend']
+
+  enabled_modules = [
+    'issue_tracking',
+    'time_tracking',
+    'news',
+    'documents',
+    'files',
+    'wiki',
+    'repository',
+    'boards',
+    'calendar',
+    'gantt',
+    'epic_ladder'
+  ]
+
+  ai_recommend.enabled_module_names = enabled_modules
+
+  if ai_recommend.save
+    puts "  ✅ AIレコメンド機能開発: #{enabled_modules.size}個のモジュールを有効化"
+    puts "    - epic_ladder モジュールを含む"
+  else
+    puts "  ❌ AIレコメンド機能開発のモジュール有効化に失敗: #{ai_recommend.errors.full_messages.join(', ')}"
+  end
+
+  kanban_trackers = Tracker.where(name: ['エピック', '機能', 'ユーザストーリ', '作業', '評価', '不具合'])
+  new_trackers = kanban_trackers.reject { |t| ai_recommend.trackers.include?(t) }
+  if new_trackers.any?
+    ai_recommend.trackers << new_trackers
+    puts "  ✅ AIレコメンド機能開発: カンバン用トラッカー #{new_trackers.count}個を有効化"
+  else
+    puts "  ℹ️  AIレコメンド機能開発: カンバン用トラッカーは既に有効化済み"
+  end
+end
+
 # ===== 優先度設定投入 =====
 puts "\n⭐ 優先度（Enumeration）を投入中..."
 
@@ -166,6 +202,67 @@ if sakura_ec
     else
       puts "  ❌ #{user.lastname} #{user.firstname} の追加に失敗: #{member.errors.full_messages.join(', ')}"
     end
+  end
+end
+
+ai_recommend = created_projects['ai-recommend']
+if ai_recommend
+  mcp_role = Role.find_or_initialize_by(name: 'MCPテスター')
+  mcp_role.assign_attributes(
+    permissions: %i[
+      view_issues
+      add_issues
+      edit_issues
+      add_issue_notes
+      manage_versions
+      manage_issue_relations
+    ],
+    issues_visibility: 'all',
+    position: 4
+  )
+
+  if mcp_role.save
+    puts "  ✅ MCPテスターロールを設定"
+
+    workflow_count = 0
+    Tracker.where(name: ['エピック', '機能', 'ユーザストーリ', '作業', '評価', '不具合']).each do |tracker|
+      IssueStatus.all.each do |old_status|
+        IssueStatus.all.each do |new_status|
+          next if old_status.id == new_status.id
+
+          workflow = WorkflowTransition.find_or_initialize_by(
+            tracker_id: tracker.id,
+            role_id: mcp_role.id,
+            old_status_id: old_status.id,
+            new_status_id: new_status.id
+          )
+          workflow.author = true
+          workflow.assignee = true
+          if workflow.new_record?
+            workflow.save
+            workflow_count += 1
+          else
+            workflow.save if workflow.changed?
+          end
+        end
+      end
+    end
+    puts "  ✅ MCPテスター用ワークフロー遷移 #{workflow_count}件を作成"
+  else
+    puts "  ❌ MCPテスターロールの保存に失敗: #{mcp_role.errors.full_messages.join(', ')}"
+  end
+
+  admin_user = User.find_by(login: 'admin') || User.find_by(login: 'admin_kanban')
+  if admin_user
+    member = Member.find_or_initialize_by(project: ai_recommend, user: admin_user)
+    member.roles = [mcp_role]
+    if member.save
+      puts "  ✅ #{admin_user.login} をAIレコメンド機能開発のMCPテスターに追加"
+    else
+      puts "  ❌ #{admin_user.login} のAIレコメンド機能開発メンバー追加に失敗: #{member.errors.full_messages.join(', ')}"
+    end
+  else
+    puts "  ⚠️  MCPテスターに追加するadminユーザーが見つかりません"
   end
 end
 
