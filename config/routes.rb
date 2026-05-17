@@ -54,6 +54,13 @@ RedmineApp::Application.routes.draw do
   # プロジェクト設定タブ用（Epic Ladderタブからのフォーム送信）
   patch 'projects/:project_id/epic_ladder/settings', to: 'epic_ladder/project_settings#update', as: 'project_epic_ladder_settings'
 
+  # 管理者向け Claude Web MCP OAuth application 設定
+  get 'admin/epic_ladder/claude_mcp', to: 'epic_ladder/claude_mcp_settings#show', as: 'epic_ladder_claude_mcp_settings'
+  post 'admin/epic_ladder/claude_mcp', to: 'epic_ladder/claude_mcp_settings#create'
+  post 'admin/epic_ladder/claude_mcp/recreate', to: 'epic_ladder/claude_mcp_settings#recreate', as: 'epic_ladder_claude_mcp_settings_recreate'
+  delete 'admin/epic_ladder/claude_mcp', to: 'epic_ladder/claude_mcp_settings#destroy'
+  post 'admin/epic_ladder/claude_mcp/check', to: 'epic_ladder/claude_mcp_settings#check', as: 'epic_ladder_claude_mcp_settings_check'
+
   # MCPツールヒント設定用
   patch 'projects/:project_id/epic_ladder/mcp_tool_hints', to: 'epic_ladder/mcp_tool_hints#update', as: 'project_epic_ladder_mcp_tool_hints'
 

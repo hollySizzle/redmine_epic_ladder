@@ -302,6 +302,17 @@ bin/cloudflare_tunnel_mcp run
 
 ## Claude Web 用 OAuth application 作成
 
+Redmine管理者でログインできる場合は、管理画面から作成する。
+
+1. Redmine管理画面を開く。
+2. `Claude Web MCP接続` を開く。
+3. 未作成なら `作成` を押す。
+4. 表示された `MCP endpoint`、`OAuth Client ID`、`OAuth Client Secret` を Claude Web Custom Connector の Advanced settings に入力する。
+
+`OAuth Client Secret` は作成直後しか表示されない。既存applicationのSecretが不明な場合は、同画面の `作り直し` で新しいClient ID/Secretを発行し、Claude Web側も再設定する。
+
+CLIで作成する場合:
+
 開発環境に作る場合:
 
 ```bash
@@ -312,11 +323,7 @@ RAILS_ENV=development bin/create_claude_oauth_app
 本番環境に作る場合:
 
 ```bash
-RAILS_ENV=production \
-CLAUDE_MCP_APP_NAME="Claude Web MCP" \
-CLAUDE_MCP_REDIRECT_URI="https://claude.ai/api/mcp/auth_callback" \
-CLAUDE_MCP_SCOPES="view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations" \
-bin/create_claude_oauth_app
+RAILS_ENV=production bin/create_claude_oauth_app
 ```
 
 出力される値を Claude Web Custom Connector の Advanced settings に入力する。

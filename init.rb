@@ -76,6 +76,13 @@ Redmine::Plugin.register :redmine_epic_ladder do
        param: :project_id,
        if: Proc.new { |p| User.current.allowed_to?(:view_epic_ladder, p) }
 
+  menu :admin_menu,
+       :epic_ladder_claude_mcp,
+       { controller: 'epic_ladder/claude_mcp_settings', action: 'show' },
+       caption: :label_epic_ladder_claude_mcp_settings,
+       icon: 'apps',
+       html: { class: 'icon icon-applications' }
+
   # プラグイン設定画面
   settings default: {
     'epic_tracker' => 'Epic',

@@ -65,6 +65,30 @@ en:
   notice_epic_ladder_mcp_tool_hints_saved: "MCP Tool hint settings saved"
   error_epic_ladder_mcp_tool_hints_save_failed: "Failed to save MCP Tool hint settings: %{errors}"
 
+  # Claude Web MCP Connection Settings
+  label_epic_ladder_claude_mcp_settings: "Claude Web MCP Connection"
+  label_epic_ladder_claude_mcp_connector_values: "Claude Web Custom Connector Values"
+  label_epic_ladder_claude_mcp_endpoint: "MCP endpoint"
+  label_epic_ladder_claude_mcp_redirect_uri: "Redirect URI"
+  label_epic_ladder_claude_mcp_scopes: "Scopes"
+  label_epic_ladder_claude_mcp_confidential: "Confidential"
+  label_epic_ladder_claude_mcp_oauth_application: "OAuth application"
+  label_epic_ladder_claude_mcp_client_id: "OAuth Client ID"
+  label_epic_ladder_claude_mcp_client_secret: "OAuth Client Secret"
+  label_epic_ladder_claude_mcp_application_id: "Application ID"
+  label_epic_ladder_claude_mcp_connection_check: "Connection check"
+  label_epic_ladder_claude_mcp_check_ok: "OK"
+  label_epic_ladder_claude_mcp_check_ng: "NG"
+  button_epic_ladder_claude_mcp_recreate: "Recreate"
+  button_epic_ladder_claude_mcp_check: "Check connection"
+  notice_epic_ladder_claude_mcp_already_exists: "The Claude Web MCP OAuth application already exists."
+  text_epic_ladder_claude_mcp_scopes_readonly: "Scopes are fixed and cannot be edited in the normal UI."
+  text_epic_ladder_claude_mcp_copy_secret_now: "This secret is shown only immediately after creation. Copy it to a safe place now."
+  text_epic_ladder_claude_mcp_secret_unavailable: "The secret cannot be shown again. Recreate the OAuth application if needed."
+  text_epic_ladder_claude_mcp_not_created: "The Claude Web MCP OAuth application has not been created yet."
+  text_epic_ladder_claude_mcp_recreate_confirm: "This will delete and recreate the OAuth application. Existing Claude Web connections must be reconfigured. Continue?"
+  warning_epic_ladder_claude_mcp_configuration_mismatch: "The existing OAuth application does not match the fixed configuration. Consider recreating it."
+
   # MCP Tool Names and Categories
   epic_ladder:
     mcp_tool_categories:

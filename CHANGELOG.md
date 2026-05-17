@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-05-18
+
+### Added
+
+- Redmine管理画面に Claude Web MCP 接続用OAuth application作成UIを追加。固定scope・固定redirect URIで重複作成を避け、作成直後のみClient Secretを表示する。
+- Claude Web MCP接続確認ボタンを追加。OAuth protected resource metadata、authorization server metadata、未認証 `/mcp/rpc` challenge を管理画面から確認できる。
+
+### Changed
+
+- `bin/create_claude_oauth_app` のデフォルト名を `Claude Web MCP` に固定し、既存applicationがある場合は重複作成せずClient IDと設定を表示する。
+
 ## [1.6.0] - 2026-05-18
 
 ### Added

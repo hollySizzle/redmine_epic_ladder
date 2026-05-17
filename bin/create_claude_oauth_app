@@ -5,7 +5,7 @@ set -euo pipefail
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REDMINE_ROOT="$(cd "$PLUGIN_DIR/../.." && pwd)"
 
-APP_NAME="${CLAUDE_MCP_APP_NAME:-Claude Web MCP $(date -u +%Y%m%d%H%M%S)}"
+APP_NAME="${CLAUDE_MCP_APP_NAME:-Claude Web MCP}"
 REDIRECT_URI="${CLAUDE_MCP_REDIRECT_URI:-https://claude.ai/api/mcp/auth_callback}"
 SCOPES="${CLAUDE_MCP_SCOPES:-view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations}"
 RAILS_ENV_NAME="${RAILS_ENV:-development}"
@@ -18,6 +18,21 @@ CLAUDE_MCP_REDIRECT_URI="$REDIRECT_URI" \
 CLAUDE_MCP_SCOPES="$SCOPES" \
 bundle exec rails runner - <<'RUBY'
 Setting.rest_api_enabled = '1'
+
+app = Doorkeeper::Application.find_by(name: ENV.fetch('CLAUDE_MCP_APP_NAME'))
+
+if app
+  puts "Redmine OAuth application for Claude Web MCP already exists"
+  puts
+  puts "Name: #{app.name}"
+  puts "Redirect URI: #{app.redirect_uri}"
+  puts "Scopes: #{app.scopes}"
+  puts
+  puts "Use these values in Claude Web Custom Connector advanced settings:"
+  puts "OAuth Client ID: #{app.uid}"
+  puts "OAuth Client Secret: unavailable (Redmine hashes application secrets; recreate the application to view a new secret)"
+  exit
+end
 
 app = Doorkeeper::Application.create!(
   name: ENV.fetch('CLAUDE_MCP_APP_NAME'),

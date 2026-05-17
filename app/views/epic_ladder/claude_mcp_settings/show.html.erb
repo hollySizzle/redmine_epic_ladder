@@ -1,0 +1,118 @@
+<div class="contextual">
+  <% if @application %>
+    <%= link_to sprite_icon('reload', t(:button_epic_ladder_claude_mcp_recreate)),
+                epic_ladder_claude_mcp_settings_recreate_path,
+                method: :post,
+                data: { confirm: t(:text_epic_ladder_claude_mcp_recreate_confirm) },
+                class: 'icon icon-reload' %>
+    <%= link_to sprite_icon('del', t(:button_delete)),
+                epic_ladder_claude_mcp_settings_path,
+                method: :delete,
+                data: { confirm: t(:text_are_you_sure) },
+                class: 'icon icon-del' %>
+  <% else %>
+    <%= link_to sprite_icon('add', t(:button_create)),
+                epic_ladder_claude_mcp_settings_path,
+                method: :post,
+                class: 'icon icon-add' %>
+  <% end %>
+  <%= link_to sprite_icon('reload', t(:button_epic_ladder_claude_mcp_check)),
+              epic_ladder_claude_mcp_settings_check_path,
+              method: :post,
+              class: 'icon icon-test' %>
+</div>
+
+<%= title [t(:label_administration), admin_path], t(:label_epic_ladder_claude_mcp_settings) %>
+
+<div class="box">
+  <h3><%= t(:label_epic_ladder_claude_mcp_connector_values) %></h3>
+
+  <p>
+    <span class="label"><%= t(:label_epic_ladder_claude_mcp_endpoint) %>:</span>
+    <code><%= h @mcp_endpoint %></code>
+  </p>
+
+  <p>
+    <span class="label"><%= t(:field_name) %>:</span>
+    <code><%= EpicLadder::ClaudeMcpOauthApplication::APP_NAME %></code>
+  </p>
+
+  <p>
+    <span class="label"><%= t(:label_epic_ladder_claude_mcp_redirect_uri) %>:</span>
+    <code><%= EpicLadder::ClaudeMcpOauthApplication::REDIRECT_URI %></code>
+  </p>
+
+  <p>
+    <span class="label"><%= t(:label_epic_ladder_claude_mcp_scopes) %>:</span>
+    <code><%= h @fixed_scopes %></code>
+    <em><%= t(:text_epic_ladder_claude_mcp_scopes_readonly) %></em>
+  </p>
+
+  <p>
+    <span class="label"><%= t(:label_epic_ladder_claude_mcp_confidential) %>:</span>
+    <code>true</code>
+  </p>
+</div>
+
+<% if @application %>
+  <div class="box">
+    <h3><%= t(:label_epic_ladder_claude_mcp_oauth_application) %></h3>
+
+    <% unless @configuration_matches %>
+      <p class="warning"><%= t(:warning_epic_ladder_claude_mcp_configuration_mismatch) %></p>
+    <% end %>
+
+    <p>
+      <span class="label"><%= t(:label_epic_ladder_claude_mcp_client_id) %>:</span>
+      <code><%= h @application.uid %></code>
+    </p>
+
+    <p>
+      <span class="label"><%= t(:label_epic_ladder_claude_mcp_client_secret) %>:</span>
+      <% if @client_secret.present? %>
+        <code><%= h @client_secret %></code>
+        <strong><%= t(:text_epic_ladder_claude_mcp_copy_secret_now) %></strong>
+      <% else %>
+        <em><%= t(:text_epic_ladder_claude_mcp_secret_unavailable) %></em>
+      <% end %>
+    </p>
+
+    <p>
+      <span class="label"><%= t(:label_epic_ladder_claude_mcp_application_id) %>:</span>
+      <code><%= h @application.id %></code>
+    </p>
+  </div>
+<% else %>
+  <p class="nodata"><%= t(:text_epic_ladder_claude_mcp_not_created) %></p>
+<% end %>
+
+<% if @connection_checks %>
+  <h3><%= t(:label_epic_ladder_claude_mcp_connection_check) %></h3>
+  <table class="list">
+    <thead>
+      <tr>
+        <th><%= t(:field_name) %></th>
+        <th>Status</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @connection_checks.each do |check| %>
+        <tr class="<%= cycle('odd', 'even') %>">
+          <td><code><%= h check[:name] %></code></td>
+          <td><%= h check[:status] %></td>
+          <td>
+            <% if check[:ok] %>
+              <span class="icon icon-checked"><%= t(:label_epic_ladder_claude_mcp_check_ok) %></span>
+            <% else %>
+              <span class="icon icon-warning"><%= t(:label_epic_ladder_claude_mcp_check_ng) %></span>
+            <% end %>
+            <% if check[:www_authenticate].present? %>
+              <br><code><%= h check[:www_authenticate] %></code>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

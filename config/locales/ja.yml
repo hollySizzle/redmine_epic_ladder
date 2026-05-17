@@ -65,6 +65,30 @@ ja:
   notice_epic_ladder_mcp_tool_hints_saved: "MCPツールヒント設定を保存しました"
   error_epic_ladder_mcp_tool_hints_save_failed: "MCPツールヒント設定の保存に失敗しました: %{errors}"
 
+  # Claude Web MCP接続設定
+  label_epic_ladder_claude_mcp_settings: "Claude Web MCP接続"
+  label_epic_ladder_claude_mcp_connector_values: "Claude Web Custom Connector 入力値"
+  label_epic_ladder_claude_mcp_endpoint: "MCP endpoint"
+  label_epic_ladder_claude_mcp_redirect_uri: "Redirect URI"
+  label_epic_ladder_claude_mcp_scopes: "Scopes"
+  label_epic_ladder_claude_mcp_confidential: "Confidential"
+  label_epic_ladder_claude_mcp_oauth_application: "OAuth application"
+  label_epic_ladder_claude_mcp_client_id: "OAuth Client ID"
+  label_epic_ladder_claude_mcp_client_secret: "OAuth Client Secret"
+  label_epic_ladder_claude_mcp_application_id: "Application ID"
+  label_epic_ladder_claude_mcp_connection_check: "接続確認"
+  label_epic_ladder_claude_mcp_check_ok: "OK"
+  label_epic_ladder_claude_mcp_check_ng: "NG"
+  button_epic_ladder_claude_mcp_recreate: "作り直し"
+  button_epic_ladder_claude_mcp_check: "接続確認"
+  notice_epic_ladder_claude_mcp_already_exists: "Claude Web MCP用OAuth applicationは既に存在します。"
+  text_epic_ladder_claude_mcp_scopes_readonly: "scopeは固定です。通常UIでは編集できません。"
+  text_epic_ladder_claude_mcp_copy_secret_now: "このSecretは作成直後のみ表示されます。今すぐ安全な場所にコピーしてください。"
+  text_epic_ladder_claude_mcp_secret_unavailable: "Secretは再表示できません。必要な場合はOAuth applicationを作り直してください。"
+  text_epic_ladder_claude_mcp_not_created: "Claude Web MCP用OAuth applicationはまだ作成されていません。"
+  text_epic_ladder_claude_mcp_recreate_confirm: "既存のOAuth applicationを削除して作り直します。既存のClaude Web接続は再設定が必要になります。続行しますか？"
+  warning_epic_ladder_claude_mcp_configuration_mismatch: "既存のOAuth applicationの設定が固定値と一致しません。作り直しを検討してください。"
+
   # MCPツール名・カテゴリ
   epic_ladder:
     mcp_tool_categories:
