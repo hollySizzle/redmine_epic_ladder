@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-05-18
+
+### Fixed
+
+- Claude Web MCP接続画面で、作成直後のOAuth Client Secret欄にSecretではなくFlashHashオブジェクトが表示される問題を修正。Secretはsessionから一度だけ取り出して表示する。
+
 ## [1.6.1] - 2026-05-18
 
 ### Added

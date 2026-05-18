@@ -58,7 +58,7 @@ RSpec.describe EpicLadder::ClaudeMcpSettingsController, type: :controller do
       post :create
 
       expect(EpicLadder::ClaudeMcpOauthApplication).to have_received(:create!)
-      expect(flash[:claude_mcp_client_secret]).to be_present
+      expect(session[:claude_mcp_client_secret]).to eq('client-secret')
       expect(response).to redirect_to(epic_ladder_claude_mcp_settings_path)
     end
 
@@ -69,7 +69,7 @@ RSpec.describe EpicLadder::ClaudeMcpSettingsController, type: :controller do
       post :create
 
       expect(EpicLadder::ClaudeMcpOauthApplication).not_to have_received(:create!)
-      expect(flash[:claude_mcp_client_secret]).to be_blank
+      expect(session[:claude_mcp_client_secret]).to be_blank
     end
   end
 
@@ -80,8 +80,21 @@ RSpec.describe EpicLadder::ClaudeMcpSettingsController, type: :controller do
       post :recreate
 
       expect(EpicLadder::ClaudeMcpOauthApplication).to have_received(:recreate!)
-      expect(flash[:claude_mcp_client_secret]).to be_present
+      expect(session[:claude_mcp_client_secret]).to eq('client-secret')
       expect(response).to redirect_to(epic_ladder_claude_mcp_settings_path)
+    end
+  end
+
+  describe 'one-time client secret display' do
+    it 'loads the secret from session once without exposing the flash object' do
+      allow(EpicLadder::ClaudeMcpOauthApplication).to receive(:application).and_return(application)
+      session[:claude_mcp_client_secret] = 'client-secret'
+
+      get :show
+
+      expect(controller.instance_variable_get(:@client_secret)).to eq('client-secret')
+      expect(controller.instance_variable_get(:@client_secret)).not_to be_a(ActionDispatch::Flash::FlashHash)
+      expect(session[:claude_mcp_client_secret]).to be_nil
     end
   end
 
