@@ -58,7 +58,7 @@ module EpicLadder
         # カテゴリの順序（表示用）
         # @return [Array<Symbol>] カテゴリシンボルの配列
         def category_order
-          %i[create_issues version_management issue_operations query_tools]
+          %i[project_management create_issues version_management issue_operations query_tools]
         end
 
         # 順序付きでカテゴリ別ツールを返す
@@ -101,10 +101,12 @@ module EpicLadder
         # @return [Symbol] カテゴリシンボル
         def categorize_tool(key)
           case key
+          when /^(list_|get_|search_)/
+            :query_tools
+          when /^create_project$/
+            :project_management
           when /^create_(?!version)/
             :create_issues
-          when /^(list_|get_)/
-            :query_tools
           when /version/
             :version_management
           else

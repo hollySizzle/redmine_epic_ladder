@@ -92,11 +92,14 @@ ja:
   # MCPツール名・カテゴリ
   epic_ladder:
     mcp_tool_categories:
+      project_management: "プロジェクト管理"
       create_issues: "📝 チケット作成"
       version_management: "📅 Version管理"
       issue_operations: "⚙️ チケット操作"
       query_tools: "🔍 検索・参照"
     mcp_tools:
+      search_projects: "プロジェクト検索"
+      create_project: "プロジェクト作成"
       create_epic: "Epic作成"
       create_feature: "Feature作成"
       create_user_story: "UserStory作成"

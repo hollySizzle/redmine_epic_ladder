@@ -92,11 +92,14 @@ en:
   # MCP Tool Names and Categories
   epic_ladder:
     mcp_tool_categories:
+      project_management: "Project Management"
       create_issues: "📝 Create Issues"
       version_management: "📅 Version Management"
       issue_operations: "⚙️ Issue Operations"
       query_tools: "🔍 Query & View"
     mcp_tools:
+      search_projects: "Search Projects"
+      create_project: "Create Project"
       create_epic: "Create Epic"
       create_feature: "Create Feature"
       create_user_story: "Create User Story"

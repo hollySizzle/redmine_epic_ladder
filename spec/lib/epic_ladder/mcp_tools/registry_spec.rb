@@ -15,6 +15,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
       tool_names = described_class.tool_names
 
       # 作成系ツール
+      expect(tool_names).to include('CreateProjectTool')
       expect(tool_names).to include('CreateEpicTool')
       expect(tool_names).to include('CreateFeatureTool')
       expect(tool_names).to include('CreateUserStoryTool')
@@ -46,6 +47,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
       expect(tool_names).to include('CopyIssueTool')
 
       # 検索・参照ツール
+      expect(tool_names).to include('SearchProjectsTool')
       expect(tool_names).to include('ListUserStoriesTool')
       expect(tool_names).to include('ListEpicsTool')
       expect(tool_names).to include('GetProjectStructureTool')
@@ -53,7 +55,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
     end
 
     it 'returns current count of tools' do
-      expect(described_class.count).to eq(31)
+      expect(described_class.count).to eq(33)
     end
   end
 
@@ -78,9 +80,17 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
 
       expect(by_category).to be_a(Hash)
       expect(by_category.keys).to include(:create_issues)
+      expect(by_category.keys).to include(:project_management)
       expect(by_category.keys).to include(:version_management)
       expect(by_category.keys).to include(:issue_operations)
       expect(by_category.keys).to include(:query_tools)
+    end
+
+    it 'categorizes project creation separately and project search as query' do
+      by_category = described_class.tools_by_category
+
+      expect(by_category[:project_management]).to include('create_project')
+      expect(by_category[:query_tools]).to include('search_projects')
     end
 
     it 'categorizes create_* tools (except version) as create_issues' do
@@ -138,7 +148,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
       expect(ordered).to be_an(Array)
       categories = ordered.map(&:first)
 
-      expect(categories).to eq(%i[create_issues version_management issue_operations query_tools])
+      expect(categories).to eq(%i[project_management create_issues version_management issue_operations query_tools])
     end
 
     it 'returns [category, tools] pairs' do
@@ -154,7 +164,7 @@ RSpec.describe EpicLadder::McpTools::Registry, type: :model do
 
   describe '.category_order' do
     it 'defines the display order of categories' do
-      expect(described_class.category_order).to eq(%i[create_issues version_management issue_operations query_tools])
+      expect(described_class.category_order).to eq(%i[project_management create_issues version_management issue_operations query_tools])
     end
   end
 

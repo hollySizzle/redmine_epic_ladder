@@ -33,6 +33,63 @@ module EpicLadder
         settings['mcp_enabled'] == '1'
       end
 
+      def project_creation_enabled?
+        settings = Setting.plugin_redmine_epic_ladder || {}
+        settings['mcp_project_creation_enabled'] == '1'
+      end
+
+      def project_creation_scope
+        settings = Setting.plugin_redmine_epic_ladder || {}
+        scope = settings['mcp_project_creation_scope'].presence || 'disabled'
+        %w[disabled allowed_parents_only redmine_permissions].include?(scope) ? scope : 'disabled'
+      end
+
+      def project_creation_allowed_parent_ids
+        settings = Setting.plugin_redmine_epic_ladder || {}
+        raw_value = settings['mcp_project_creation_allowed_parent_ids']
+        Array(raw_value).flat_map { |value| value.to_s.split(',') }.map(&:strip).reject(&:blank?).map(&:to_i).uniq
+      end
+
+      def project_creation_allow_root?
+        settings = Setting.plugin_redmine_epic_ladder || {}
+        settings['mcp_project_creation_allow_root'] == '1'
+      end
+
+      def project_creation_allowed_parent?(parent_project, user)
+        return false unless mcp_enabled?
+        return false unless project_creation_enabled?
+
+        scope = project_creation_scope
+        return false if scope == 'disabled'
+
+        if parent_project.nil?
+          return false unless project_creation_allow_root?
+
+          return user.allowed_to?(:add_project, nil, global: true)
+        end
+
+        return false unless user.allowed_to?(:add_subprojects, parent_project)
+
+        case scope
+        when 'allowed_parents_only'
+          project_creation_allowed_parent_ids.include?(parent_project.id)
+        when 'redmine_permissions'
+          true
+        else
+          false
+        end
+      end
+
+      def project_creation_disabled_response
+        MCP::Tool::Response.new([{
+          type: "text",
+          text: JSON.generate({
+            success: false,
+            error: "MCP経由のプロジェクト作成が無効です。管理画面で許可範囲を設定してください。"
+          })
+        }])
+      end
+
       # プロジェクトでMCPが許可されているかチェック
       # @param project [Project] Projectオブジェクト
       # @return [Boolean] 許可されている場合true

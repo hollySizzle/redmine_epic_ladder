@@ -188,6 +188,59 @@ document.addEventListener('DOMContentLoaded', function() {
   </fieldset>
 
   <fieldset class="box">
+    <legend>MCPプロジェクト作成</legend>
+    <p class="warning" style="color: #8a4b00; font-weight: bold;">
+      プロジェクト作成は影響範囲が大きいため、通常は「指定した親プロジェクト配下のみ」を使用してください。
+      「Redmine権限で許可される全プロジェクト」は運用上必要な場合だけ有効にしてください。
+    </p>
+    <p>
+      <label for="settings_mcp_project_creation_enabled">
+        <%= hidden_field_tag 'settings[mcp_project_creation_enabled]', '0' %>
+        <%= check_box_tag 'settings[mcp_project_creation_enabled]', '1',
+            @settings['mcp_project_creation_enabled'] == '1',
+            id: 'settings_mcp_project_creation_enabled' %>
+        MCP経由のプロジェクト作成を有効にする
+      </label>
+      <em class="info">無効時、create_project ツールは常に拒否されます</em>
+    </p>
+
+    <p>
+      <label for="settings_mcp_project_creation_scope">作成許可範囲</label>
+      <%= select_tag 'settings[mcp_project_creation_scope]',
+          options_for_select([
+            ['無効', 'disabled'],
+            ['指定した親プロジェクト配下のみ', 'allowed_parents_only'],
+            ['Redmine権限で許可される全プロジェクト', 'redmine_permissions']
+          ], @settings['mcp_project_creation_scope'].presence || 'disabled'),
+          id: 'settings_mcp_project_creation_scope' %>
+      <em class="info">どの範囲でも Redmine の add_project / add_subprojects 権限は必ず確認されます</em>
+    </p>
+
+    <p>
+      <label for="settings_mcp_project_creation_allowed_parent_ids">許可する親プロジェクト</label>
+      <% allowed_parent_ids = Array(@settings['mcp_project_creation_allowed_parent_ids']).map(&:to_s) %>
+      <%= hidden_field_tag 'settings[mcp_project_creation_allowed_parent_ids][]', '' %>
+      <%= select_tag 'settings[mcp_project_creation_allowed_parent_ids][]',
+          options_from_collection_for_select(Project.active.order(:lft, :name), :id, :name, allowed_parent_ids),
+          multiple: true,
+          size: 8,
+          id: 'settings_mcp_project_creation_allowed_parent_ids' %>
+      <em class="info">「指定した親プロジェクト配下のみ」を選んだ場合に使用されます</em>
+    </p>
+
+    <p>
+      <label for="settings_mcp_project_creation_allow_root">
+        <%= hidden_field_tag 'settings[mcp_project_creation_allow_root]', '0' %>
+        <%= check_box_tag 'settings[mcp_project_creation_allow_root]', '1',
+            @settings['mcp_project_creation_allow_root'] == '1',
+            id: 'settings_mcp_project_creation_allow_root' %>
+        ルートプロジェクト作成を許可する
+      </label>
+      <em class="info">Redmine のグローバル add_project 権限を持つユーザーにのみ有効です</em>
+    </p>
+  </fieldset>
+
+  <fieldset class="box">
     <legend>MCPツールヒント（グローバルデフォルト）</legend>
     <p class="description">
       各MCPツール使用時にAIに伝えるルールを設定します。<br>

@@ -147,6 +147,7 @@ RSpec.describe EpicLadder::McpTools::ProjectValidator, type: :model do
 
     context 'プロジェクト設定がない場合' do
       it 'グローバル設定にフォールバック（デフォルトはfalse）' do
+        Setting.plugin_redmine_epic_ladder = { 'mcp_enabled' => '0' }
         expect(described_class.project_allowed?(project)).to be false
       end
     end

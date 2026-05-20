@@ -18,6 +18,7 @@ RSpec.describe EpicLadder::McpTools::BaseHelper, type: :model do
 
   before do
     member # ensure member exists
+    Setting.plugin_redmine_epic_ladder = { 'mcp_enabled' => '1' }
     # MCP APIを有効化
     EpicLadder::ProjectSetting.create!(project: project, mcp_enabled: true)
   end
@@ -158,6 +159,15 @@ RSpec.describe EpicLadder::McpTools::BaseHelper, type: :model do
         expect(result[:project]).to be_nil
         expect(result[:error]).to include('MCP APIが許可されていません')
         expect(result[:details]).to include(:hint)
+      end
+    end
+
+    context 'グローバルMCPが無効な場合' do
+      it 'エラーを返す' do
+        Setting.plugin_redmine_epic_ladder = { 'mcp_enabled' => '0' }
+        result = helper.resolve_and_validate_project(project.identifier)
+        expect(result[:project]).to be_nil
+        expect(result[:error]).to include('MCP APIが無効')
       end
     end
   end

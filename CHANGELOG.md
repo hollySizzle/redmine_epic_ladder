@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-05-20
+
+### Added
+
+- `search_projects_tool` を追加。AIエージェントが `project_id` を知らない場合に、可視プロジェクトを name / identifier で検索できるようにした。
+- `create_project_tool` を追加。MCP経由でRedmineプロジェクトを作成できるようにした。
+- MCPプロジェクト作成の全体設定を追加。
+  - デフォルト無効
+  - 指定した親プロジェクト配下のみ許可
+  - Redmine権限で許可される範囲を許可
+  - ルートプロジェクト作成の個別許可
+  - 許可する親プロジェクトの複数選択
+- MCPツールカテゴリに `project_management` を追加し、プロジェクト作成系ツールをチケット作成系ツールから分離。
+
+### Changed
+
+- `BaseHelper#resolve_and_validate_project` と MCP HTTP入口でグローバルMCP無効時の拒否を明示し、グローバル設定の「すべてのMCPツール呼び出しを拒否する」というUI説明と実装を一致させた。
+- プラグイン全体設定画面に、MCPプロジェクト作成は通常「指定した親プロジェクト配下のみ」を使うべきであることを明記する警告を追加。
+
+### Tested
+
+- `create_project_tool` / `search_projects_tool` の model spec を追加。
+- MCP `tools/call` 経由でのプロジェクト検索、許可親配下でのプロジェクト作成、allowlist外親配下への作成拒否を request spec で検証。
+- Redmine標準 `SettingsController#plugin` 経由で MCP プロジェクト作成設定が保存されることを controller spec で検証。
+- プラグイン設定画面の system spec に、MCPプロジェクト作成オプションの表示とブラウザ経由の保存確認を追加。
+
 ## [1.6.2] - 2026-05-18
 
 ### Fixed

@@ -46,7 +46,7 @@ Redmine::Plugin.register :redmine_epic_ladder do
   name 'Redmine Epic Ladder Plugin'
   author 'holly'
   description 'Epic→Feature→UserStory→Task/Test階層制約とVersion管理を統合したEpic Ladderシステム'
-  version '1.6.0'
+  version '1.7.0'
   url 'https://github.com/your-repo/redmine_epic_ladder'
   author_url 'https://github.com/your-team'
 
@@ -93,6 +93,10 @@ Redmine::Plugin.register :redmine_epic_ladder do
     'bug_tracker' => 'Bug',
     # MCP API設定（グローバル有効/無効のみ）
     'mcp_enabled' => '1',
+    'mcp_project_creation_enabled' => '0',
+    'mcp_project_creation_scope' => 'disabled',
+    'mcp_project_creation_allowed_parent_ids' => [],
+    'mcp_project_creation_allow_root' => '0',
     # MCPツールヒント（グローバルデフォルト）
     # 例: { 'create_task' => { 'enabled' => true, 'hint_text' => 'PR必須' } }
     'mcp_tool_hints' => {},

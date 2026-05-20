@@ -3,7 +3,7 @@
 This document is **auto-generated** from Ruby source code.
 Do not edit manually. Run `rake mcp:generate_docs` to regenerate.
 
-**Total Tools**: 24
+**Total Tools**: 33
 
 ---
 
@@ -30,6 +30,33 @@ AI: AddIssueCommentToolを呼び出し
 
 - `issue_id` (string, **required**): Issue ID
 - `comment` (string, **required**): Comment content
+
+---
+
+## AddRelatedIssueTool
+
+**Description**: Adds a relation between two issues. Supported relation types: relates, duplicates, duplicated, blocks, blocked, precedes, follows, copied_to, copied_from.
+
+**Class**: `EpicLadder::McpTools::AddRelatedIssueTool`
+
+**Overview**:
+
+チケット間関連付け設定MCPツール
+チケット間の関連（relates, blocks, precedes 等）を追加する
+
+**Examples**:
+
+```
+ユーザー: 「Bug #1234 は Feature #5678 をブロックしている」
+AI: AddRelatedIssueToolを呼び出し（relation_type: "blocks"）
+結果: Bug #1234 → Feature #5678 の blocks 関連が作成される
+```
+
+**Parameters**:
+
+- `issue_id` (string, **required**): Source issue ID
+- `related_issue_id` (string, **required**): Target issue ID
+- `relation_type` (string, optional): Relation type (default: relates). One of: relates, duplicates, duplicated, blocks, blocked, precedes, follows, copied_to, copied_from
 
 ---
 
@@ -60,6 +87,64 @@ AI: AssignToVersionToolを呼び出し
 - `version_id` (string, **required**): Target Version ID
 - `update_parent` (boolean, optional): Also update parent issue (default: false)
 - `propagate_to_children` (boolean, optional): Propagate version and dates to children (default: true)
+
+---
+
+## BulkUpdateIssueStatusTool
+
+**Description**: Updates status of multiple issues at once. Partial failures are reported individually without rollback.
+
+**Class**: `EpicLadder::McpTools::BulkUpdateIssueStatusTool`
+
+**Overview**:
+
+複数チケットステータス一括更新MCPツール
+複数チケットのステータスを一括更新する
+
+**Examples**:
+
+```
+ユーザー: 「Task #101, #102, #103をクローズして」
+AI: BulkUpdateIssueStatusToolを呼び出し
+結果: 3チケットが一括クローズされる
+```
+
+**Parameters**:
+
+- `issue_ids` (array, **required**): Array of Issue IDs (max 50)
+- `status_name` (string, **required**): Status name (e.g., 'Closed', 'In Progress')
+- `comment` (string, optional): Optional comment to add to each issue
+
+---
+
+## CopyIssueTool
+
+**Description**: Copies an existing issue with optional overrides. Creates a new issue with the same tracker, parent, version, description, and priority as the source issue.
+
+**Class**: `EpicLadder::McpTools::CopyIssueTool`
+
+**Overview**:
+
+チケットコピーMCPツール
+既存チケットを元に属性をコピーした新規チケットを作成する
+
+**Examples**:
+
+```
+ユーザー: 「Task #123をコピーして新しいチケットを作って」
+AI: CopyIssueToolを呼び出し
+結果: 元チケットと同じトラッカー・親・バージョン等を持つ新チケットが作成される
+```
+
+**Parameters**:
+
+- `source_issue_id` (string, **required**): Source issue ID to copy from
+- `project_id` (string, optional): Project ID (identifier or numeric, uses source issue's project if omitted)
+- `subject` (string, optional): Override subject (uses source if omitted)
+- `description` (string, optional): Override description (uses source if omitted)
+- `parent_issue_id` (string, optional): Override parent issue ID (uses source if omitted)
+- `version_id` (string, optional): Override version ID (uses source if omitted)
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
 ---
 
@@ -117,6 +202,7 @@ AI: CreateEpicToolを呼び出し
 - `subject` (string, **required**): Epic subject/title
 - `description` (string, optional): Epic description (optional)
 - `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
+- `version_id` (string, optional): Version ID (release milestone). If omitted, uses the earliest open project Version.
 
 ---
 
@@ -146,6 +232,59 @@ AI: CreateFeatureToolを呼び出し
 - `parent_epic_id` (string, **required**): Parent Epic issue ID
 - `description` (string, optional): Feature description (optional)
 - `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
+
+---
+
+## CreateInquiryTool
+
+**Description**: Creates an inquiry (問合せ) UserStory under the project's inquiry Feature.
+
+**Class**: `EpicLadder::McpTools::CreateInquiryTool`
+
+**Overview**:
+
+問合せ起票MCPツール
+プロジェクト内の「問合せ」Featureを自動検出し、配下にUserStoryを作成する
+PMO相談時にFeature IDを知らなくても起票できるようにするためのツール
+
+**Examples**:
+
+```
+ユーザー: 「本番環境のログが消えている件をPMOに相談したい」
+AI: CreateInquiryToolを呼び出し
+結果: 問合せFeature配下にUserStory #1234が作成される
+```
+
+**Parameters**:
+
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `subject` (string, **required**): Inquiry subject/title (what you want to ask or consult about)
+- `description` (string, optional): Detailed description of the inquiry
+- `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
+
+---
+
+## CreateProjectTool
+
+**Description**: Creates a Redmine project only when MCP project creation is explicitly enabled and the requested parent is allowed.
+
+**Class**: `EpicLadder::McpTools::CreateProjectTool`
+
+**Overview**:
+
+Redmineプロジェクト作成MCPツール
+
+**Parameters**:
+
+- `name` (string, **required**): Project name
+- `identifier` (string, optional): Project identifier. Lowercase letters, numbers, dashes and underscores. Generated from name if omitted.
+- `description` (string, optional): Project description (optional)
+- `parent_project_id` (string, optional): Parent project ID or identifier. Required unless root project creation is enabled.
+- `is_public` (boolean, optional): Whether the project is public (default: false)
+- `inherit_members` (boolean, optional): Inherit members from parent project (default: true when parent is set)
+- `enabled_module_names` (array, optional): Enabled Redmine module names. Defaults to Redmine's default project modules.
+- `tracker_ids` (array, optional): Tracker IDs to enable. Defaults to Redmine's default tracker behavior.
+- `mcp_enabled` (boolean, optional): Enable Epic Ladder MCP access on the created project (default: true)
 
 ---
 
@@ -231,7 +370,7 @@ AI: CreateUserStoryToolを呼び出し
 - `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
 - `subject` (string, **required**): UserStory subject/title
 - `parent_feature_id` (string, **required**): Parent Feature issue ID
-- `version_id` (string, optional): Target Version ID (release milestone)
+- `version_id` (string, optional): Target Version ID (release milestone). If omitted, inherits parent Feature's version, otherwise uses the earliest open project Version.
 - `description` (string, optional): UserStory description (optional)
 - `assigned_to_id` (string, optional): Assignee user ID (defaults to current user)
 
@@ -288,6 +427,7 @@ AI: GetIssueDetailToolを呼び出し
 **Parameters**:
 
 - `issue_id` (string, **required**): Issue ID
+- `include` (array, optional): Sections to include in response. Default: all sections (children, journals, relations) for backward compatibility.
 
 ---
 
@@ -379,6 +519,32 @@ AI: ListProjectMembersToolを呼び出し
 - `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
 - `role_name` (string, optional): Filter by role name (optional)
 - `limit` (number, optional): Max results (default: 100)
+
+---
+
+## ListRecentlyUpdatedIssuesTool
+
+**Description**: Lists recently updated issues in a project, sorted by update time (newest first). Useful for tracking recent activity.
+
+**Class**: `EpicLadder::McpTools::ListRecentlyUpdatedIssuesTool`
+
+**Overview**:
+
+最近更新されたチケット一覧取得MCPツール
+プロジェクト内のチケットを更新日時降順で取得する
+
+**Examples**:
+
+```
+ユーザー: 「最近更新されたチケットを見せて」
+AI: ListRecentlyUpdatedIssuesTool を呼び出し
+結果: 更新日時降順でチケット一覧が返却される
+```
+
+**Parameters**:
+
+- `project_id` (string, optional): Project ID (identifier or numeric, uses DEFAULT_PROJECT if omitted)
+- `limit` (number, optional): Max results (default: 20, max: 50)
 
 ---
 
@@ -494,6 +660,77 @@ AI: MoveToNextVersionToolを呼び出し
 
 - `issue_id` (string, **required**): Issue ID
 - `confirmed` (boolean, optional): Confirmation flag (required for dangerous operations)
+
+---
+
+## PromoteToUsTool
+
+**Description**: Promotes a Bug/Test/Task to UserStory by creating a new US under the Feature, moving the original issue as its child, and linking to the original parent US.
+
+**Class**: `EpicLadder::McpTools::PromoteToUsTool`
+
+**Overview**:
+
+Bug/Test/TaskをUserStoryに昇格させるMCPツール
+新しいUserStoryをFeature配下に作成し、元issueをその子に、元親USとrelates関連で紐づける
+
+**Examples**:
+
+```
+ユーザー: 「Bug #123 をUSに昇格させて」
+AI: PromoteToUsToolを呼び出し
+結果: 新USが作成され、Bug #123はその子チケットに、元親USとrelates関連で紐づく
+```
+
+**Parameters**:
+
+- `issue_id` (string, **required**): Issue ID of the Bug/Test/Task to promote
+- `target_feature_id` (string, optional): Feature ID for the new US (default: parent US's parent Feature)
+- `us_subject` (string, optional): Subject for the new US (default: original issue's subject)
+
+---
+
+## RemoveRelatedIssueTool
+
+**Description**: Removes a relation between two issues.
+
+**Class**: `EpicLadder::McpTools::RemoveRelatedIssueTool`
+
+**Overview**:
+
+チケット間関連付け解除MCPツール
+チケット間の関連（relates, blocks, precedes 等）を削除する
+
+**Examples**:
+
+```
+ユーザー: 「Bug #1234 と Feature #5678 の関連を解除して」
+AI: RemoveRelatedIssueToolを呼び出し
+結果: Bug #1234 と Feature #5678 の関連が削除される
+```
+
+**Parameters**:
+
+- `issue_id` (string, **required**): Issue ID
+- `related_issue_id` (string, **required**): Related issue ID
+
+---
+
+## SearchProjectsTool
+
+**Description**: Searches visible Redmine projects by name or identifier. Use before creating issues when the project_id is unknown.
+
+**Class**: `EpicLadder::McpTools::SearchProjectsTool`
+
+**Overview**:
+
+Redmineプロジェクト検索MCPツール
+
+**Parameters**:
+
+- `query` (string, optional): Project name or identifier keyword. Omit to list visible projects.
+- `limit` (number, optional): Max results (default: 20, max: 100)
+- `include_archived` (boolean, optional): Include archived/closed projects (default: false)
 
 ---
 

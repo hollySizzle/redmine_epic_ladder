@@ -25,6 +25,7 @@ RSpec.describe 'Plugin Settings E2E', type: :system, js: true do
     @task_tracker = create(:task_tracker)
     @test_tracker = create(:test_tracker)
     @bug_tracker = create(:bug_tracker)
+    @allowed_parent_project = create(:project, name: 'Allowed MCP Parent', identifier: 'allowed-mcp-parent')
 
     # プラグイン設定を初期化
     Setting.plugin_redmine_epic_ladder = {
@@ -33,7 +34,12 @@ RSpec.describe 'Plugin Settings E2E', type: :system, js: true do
       'user_story_tracker' => EpicLadderTestConfig::TRACKER_NAMES[:user_story],
       'task_tracker' => EpicLadderTestConfig::TRACKER_NAMES[:task],
       'test_tracker' => EpicLadderTestConfig::TRACKER_NAMES[:test],
-      'bug_tracker' => EpicLadderTestConfig::TRACKER_NAMES[:bug]
+      'bug_tracker' => EpicLadderTestConfig::TRACKER_NAMES[:bug],
+      'mcp_enabled' => '1',
+      'mcp_project_creation_enabled' => '0',
+      'mcp_project_creation_scope' => 'disabled',
+      'mcp_project_creation_allowed_parent_ids' => [],
+      'mcp_project_creation_allow_root' => '0'
     }
   end
 
@@ -75,6 +81,21 @@ RSpec.describe 'Plugin Settings E2E', type: :system, js: true do
       bug_select = @playwright_page.query_selector('select[name="settings[bug_tracker]"]')
       expect(bug_select).not_to be_nil
 
+      # MCPプロジェクト作成設定
+      mcp_project_creation_enabled = @playwright_page.query_selector('input[name="settings[mcp_project_creation_enabled]"][type="checkbox"]')
+      expect(mcp_project_creation_enabled).not_to be_nil
+
+      mcp_project_creation_scope = @playwright_page.query_selector('select[name="settings[mcp_project_creation_scope]"]')
+      expect(mcp_project_creation_scope).not_to be_nil
+
+      allowed_parent_select = @playwright_page.query_selector('select[name="settings[mcp_project_creation_allowed_parent_ids][]"]')
+      expect(allowed_parent_select).not_to be_nil
+
+      allow_root_checkbox = @playwright_page.query_selector('input[name="settings[mcp_project_creation_allow_root]"][type="checkbox"]')
+      expect(allow_root_checkbox).not_to be_nil
+
+      expect(@playwright_page.text_content('body')).to include('プロジェクト作成は影響範囲が大きいため')
+
       # Step 5: 階層構造プレビュー確認
       hierarchy_preview = @playwright_page.query_selector('.hierarchy-preview')
       expect(hierarchy_preview).not_to be_nil
@@ -105,6 +126,40 @@ RSpec.describe 'Plugin Settings E2E', type: :system, js: true do
       expect(bug_preview.text_content).to eq(EpicLadderTestConfig::TRACKER_NAMES[:bug])
 
       puts "\n✅ Plugin Settings E2E Test Passed: All tracker settings displayed correctly"
+    end
+
+    it 'should persist MCP project creation settings from plugin settings page' do
+      login_as(user)
+
+      @playwright_page.goto('/settings/plugin/redmine_epic_ladder', timeout: 30000)
+      @playwright_page.wait_for_load_state('networkidle', timeout: 10000) rescue nil
+
+      @playwright_page.check('input[name="settings[mcp_project_creation_enabled]"][type="checkbox"]')
+      @playwright_page.select_option('select[name="settings[mcp_project_creation_scope]"]', value: 'allowed_parents_only')
+      @playwright_page.evaluate(<<~JS)
+        (() => {
+          const projectId = #{@allowed_parent_project.id.to_s.to_json};
+          const select = document.querySelector('select[name="settings[mcp_project_creation_allowed_parent_ids][]"]');
+          for (const option of select.options) {
+            option.selected = option.value === projectId;
+          }
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        })()
+      JS
+      @playwright_page.uncheck('input[name="settings[mcp_project_creation_allow_root]"][type="checkbox"]')
+
+      submit_button = @playwright_page.query_selector('input[type="submit"]')
+      expect(submit_button).not_to be_nil
+      submit_button.click
+      @playwright_page.wait_for_load_state('networkidle', timeout: 10000) rescue nil
+
+      settings = Setting.plugin_redmine_epic_ladder
+      expect(settings['mcp_project_creation_enabled']).to eq('1')
+      expect(settings['mcp_project_creation_scope']).to eq('allowed_parents_only')
+      expect(settings['mcp_project_creation_allowed_parent_ids']).to include(@allowed_parent_project.id.to_s)
+      expect(settings['mcp_project_creation_allow_root']).to eq('0')
+
+      expect(EpicLadder::McpTools::ProjectValidator.project_creation_allowed_parent_ids).to include(@allowed_parent_project.id)
     end
 
     it 'should display tracker options in select elements' do

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'project_validator'
+
 module EpicLadder
   module McpTools
     # MCP Tools共通ヘルパーモジュール
@@ -51,6 +53,13 @@ module EpicLadder
       # @param server_context [Hash, nil] サーバーコンテキスト（X-Default-Projectヘッダー値を含む）
       # @return [Hash] { project: Project, error: String/nil }
       def resolve_and_validate_project(project_id, server_context: nil)
+        unless EpicLadder::McpTools::ProjectValidator.mcp_enabled?
+          return {
+            project: nil,
+            error: "MCP APIが無効になっています。管理画面でMCP APIを有効にしてください。"
+          }
+        end
+
         resolved_id = resolve_project_id(project_id, server_context: server_context)
 
         unless resolved_id

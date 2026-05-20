@@ -28,6 +28,11 @@ module Mcp
       # リクエストIDを事前にパース（エラーハンドリング用）
       @request_id = parse_request_id(rpc_request)
 
+      if globally_disabled_tool_call?(rpc_request)
+        render json: disabled_tool_call_response, status: :ok
+        return
+      end
+
       # MCP::Serverでリクエスト処理
       response_json = mcp_server.handle_json(rpc_request)
       Rails.logger.info "MCP RPC Response: #{response_json}"
@@ -229,6 +234,31 @@ module Mcp
       parsed["id"]
     rescue StandardError
       nil
+    end
+
+    def globally_disabled_tool_call?(rpc_request)
+      return false if EpicLadder::McpTools::ProjectValidator.mcp_enabled?
+
+      parsed = JSON.parse(rpc_request)
+      parsed["method"] == "tools/call"
+    rescue StandardError
+      false
+    end
+
+    def disabled_tool_call_response
+      {
+        jsonrpc: "2.0",
+        result: {
+          content: [{
+            type: "text",
+            text: JSON.generate({
+              success: false,
+              error: "MCP APIが無効になっています。管理画面でMCP APIを有効にしてください。"
+            })
+          }]
+        },
+        id: @request_id
+      }
     end
   end
 end

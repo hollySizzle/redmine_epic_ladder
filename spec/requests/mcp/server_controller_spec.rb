@@ -45,6 +45,7 @@ RSpec.describe 'Mcp::ServerController', type: :request do
           create_epic_tool
           create_feature_tool
           create_inquiry_tool
+          create_project_tool
           create_task_tool
           create_test_tool
           create_user_story_tool
@@ -60,6 +61,7 @@ RSpec.describe 'Mcp::ServerController', type: :request do
           move_to_next_version_tool
           promote_to_us_tool
           remove_related_issue_tool
+          search_projects_tool
           update_custom_fields_tool
           update_issue_assignee_tool
           update_issue_description_tool
@@ -87,7 +89,7 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         tool_names = tools.map { |tool| tool.fetch('name') }.sort
 
         expect(tool_names).to eq(expected_tool_names)
-        expect(tools.size).to eq(31)
+        expect(tools.size).to eq(33)
         tools.each do |tool|
           expect(tool.fetch('description')).to be_present
           expect(tool.fetch('inputSchema')).to include('type' => 'object')
@@ -222,6 +224,108 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         result_data = JSON.parse(json['result']['content'].first['text'])
         expect(result_data['success']).to be false
         expect(result_data['error']).to include('権限')
+      end
+    end
+
+    context 'project management tools' do
+      let(:parent_project) { FactoryBot.create(:project, identifier: 'mcp-parent-project', name: 'MCP Parent Project') }
+      let(:project_admin_role) { FactoryBot.create(:role, permissions: [:view_project, :view_issues, :add_subprojects]) }
+
+      before do
+        FactoryBot.create(:member, project: parent_project, user: user, roles: [project_admin_role])
+        EpicLadder::ProjectSetting.create!(project: parent_project, mcp_enabled: true)
+        Setting.plugin_redmine_epic_ladder = {
+          'mcp_enabled' => '1',
+          'mcp_project_creation_enabled' => '1',
+          'mcp_project_creation_scope' => 'allowed_parents_only',
+          'mcp_project_creation_allowed_parent_ids' => [parent_project.id.to_s],
+          'mcp_project_creation_allow_root' => '0'
+        }
+      end
+
+      it 'searches projects through MCP tools/call' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'search_projects_tool',
+              arguments: {
+                query: 'MCP Parent'
+              }
+            },
+            id: 30
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        result_data = JSON.parse(JSON.parse(response.body)['result']['content'].first['text'])
+        expect(result_data['success']).to be true
+        expect(result_data['projects'].map { |p| p['identifier'] }).to include(parent_project.identifier)
+      end
+
+      it 'creates a project through MCP tools/call under an allowed parent' do
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_project_tool',
+              arguments: {
+                name: 'MCP Child Project',
+                identifier: 'mcp-child-project',
+                parent_project_id: parent_project.identifier,
+                description: 'Created from request spec'
+              }
+            },
+            id: 31
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        result_data = JSON.parse(JSON.parse(response.body)['result']['content'].first['text'])
+        expect(result_data['success']).to be true
+        expect(result_data['project']['identifier']).to eq('mcp-child-project')
+
+        created_project = Project.find_by!(identifier: 'mcp-child-project')
+        expect(created_project.parent).to eq(parent_project)
+        expect(EpicLadder::ProjectSetting.mcp_enabled?(created_project)).to be true
+      end
+
+      it 'rejects project creation through MCP tools/call outside the configured parent allowlist' do
+        blocked_parent = FactoryBot.create(:project, identifier: 'blocked-parent-project', name: 'Blocked Parent')
+        FactoryBot.create(:member, project: blocked_parent, user: user, roles: [project_admin_role])
+
+        post '/mcp/rpc',
+          params: {
+            jsonrpc: '2.0',
+            method: 'tools/call',
+            params: {
+              name: 'create_project_tool',
+              arguments: {
+                name: 'Blocked MCP Child',
+                identifier: 'blocked-mcp-child',
+                parent_project_id: blocked_parent.identifier
+              }
+            },
+            id: 32
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json',
+            'X-Redmine-API-Key' => api_key
+          }
+
+        expect(response).to have_http_status(:ok)
+        result_data = JSON.parse(JSON.parse(response.body)['result']['content'].first['text'])
+        expect(result_data['success']).to be false
+        expect(result_data['error']).to include('許可されていません')
+        expect(Project.find_by(identifier: 'blocked-mcp-child')).to be_nil
       end
     end
 
@@ -533,6 +637,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
       end
 
       it 'returns error when tool name does not exist' do
+        Setting.plugin_redmine_epic_ladder = { 'mcp_enabled' => '1' }
+
         post '/mcp/rpc',
           params: {
             jsonrpc: '2.0',
