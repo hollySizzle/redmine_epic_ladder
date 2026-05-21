@@ -7,6 +7,7 @@ rules:
   - CLAUDE.md
   - .mozyo-bridge/rules/**
   - .mozyo-bridge/docs/catalog.yaml
+  - .mozyo-bridge/docs/file_conventions.generated.yaml
   - .claude/skills/**
   - .codex/skills/**
   severity: block
@@ -16,12 +17,66 @@ rules:
     作業を続けるためには､上記ドキュメントを確認したことを示してください
 
     '
-- name: Rails plugin source
+- name: Epic Ladder core domain logic
   patterns:
-  - app/**/*.rb
+  - app/models/epic_ladder/version_date_manager.rb
+  - app/models/epic_ladder/tracker_hierarchy.rb
+  - app/models/epic_ladder/issue_promoter.rb
+  - app/models/epic_ladder/project_setting.rb
+  - app/models/epic_ladder/mcp_tool_hint.rb
+  - spec/models/epic_ladder/version_date_manager_spec.rb
+  - spec/models/epic_ladder/tracker_hierarchy_spec.rb
+  - spec/models/epic_ladder/issue_promoter_spec.rb
+  - spec/models/epic_ladder/project_setting_spec.rb
+  - spec/models/epic_ladder/mcp_tool_hint_spec.rb
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Epic Ladder MCP tools and endpoints
+  patterns:
+  - lib/epic_ladder/mcp_tools/**/*.rb
+  - app/controllers/mcp/**/*.rb
+  - app/controllers/epic_ladder/claude_mcp_settings_controller.rb
+  - app/views/epic_ladder/claude_mcp_settings/**/*.erb
+  - lib/epic_ladder/claude_mcp_oauth_application.rb
+  - spec/lib/epic_ladder/mcp_tools/**/*.rb
+  - spec/controllers/mcp/**/*.rb
+  - spec/requests/mcp/**/*.rb
+  - spec/lib/epic_ladder/claude_mcp_oauth_application_spec.rb
+  - spec/support/mcp_test_helpers.rb
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Issue detail quick actions
+  patterns:
+  - lib/epic_ladder/hooks/**/*.rb
+  - app/views/hooks/**/*.erb
+  - spec/lib/epic_ladder/hooks/**/*.rb
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Rails and Redmine integration source
+  patterns:
+  - app/controllers/**/*.rb
+  - app/helpers/**/*.rb
+  - app/models/concerns/**/*.rb
+  - app/views/**/*.erb
   - config/**/*.rb
   - config/**/*.yml
-  - lib/**/*.rb
+  - lib/redmine_epic_ladder.rb
+  - lib/epic_ladder/asset_deployer.rb
+  - lib/epic_ladder/projects_helper_patch.rb
+  - lib/kanban/**/*.rb
+  - lib/tasks/**/*.rake
   severity: warn
   message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md をよく確認し従うこと
 
@@ -37,17 +92,53 @@ rules:
     作業を続けるためには､上記ドキュメントを確認したことを示してください
 
     '
-- name: Epic Ladder frontend
+- name: Epic Ladder TypeScript type SSoT
   patterns:
-  - assets/javascripts/epic_ladder/src/**
-  - assets/javascripts/epic_ladder/*.json
-  - assets/javascripts/epic_ladder/*.ts
-  - assets/javascripts/epic_ladder/*.tsx
-  - package.json
-  - package-lock.json
-  - webpack.config.js
-  - webpack.production.config.js
-  - vitest.config.ts
+  - assets/javascripts/epic_ladder/src/types/**
+  - app/assets/javascripts/types/**/*.ts
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md と @assets/javascripts/epic_ladder/README.md
+    をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Epic Ladder React view
+  patterns:
+  - assets/javascripts/epic_ladder/src/App.tsx
+  - assets/javascripts/epic_ladder/src/App.test.tsx
+  - assets/javascripts/epic_ladder/src/index.tsx
+  - assets/javascripts/epic_ladder/src/index.production.tsx
+  - assets/javascripts/epic_ladder/src/api/**
+  - assets/javascripts/epic_ladder/src/components/**
+  - assets/javascripts/epic_ladder/src/hooks/**
+  - assets/javascripts/epic_ladder/src/integration/**
+  - assets/javascripts/epic_ladder/src/mocks/**
+  - assets/javascripts/epic_ladder/src/store/**
+  - assets/javascripts/epic_ladder/src/test/**
+  - assets/javascripts/epic_ladder/src/utils/**
+  - assets/javascripts/epic_ladder/src/setupTests.ts
+  - assets/javascripts/epic_ladder/src/test-setup.ts
+  - assets/javascripts/epic_ladder/src/styles.scss
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md と @assets/javascripts/epic_ladder/README.md
+    をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Epic Ladder frontend tooling
+  patterns:
+  - assets/javascripts/epic_ladder/README.md
+  - assets/javascripts/epic_ladder/nested_grid_test_template.html
+  - assets/javascripts/epic_ladder/public/**
+  - assets/javascripts/epic_ladder/coverage-report.json
+  - assets/javascripts/epic_ladder/package-lock.json
+  - assets/javascripts/epic_ladder/package.json
+  - assets/javascripts/epic_ladder/tsconfig.json
+  - assets/javascripts/epic_ladder/tsconfig.production.json
+  - assets/javascripts/epic_ladder/vitest.config.ts
+  - assets/javascripts/epic_ladder/webpack.config.js
   severity: warn
   message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md と @assets/javascripts/epic_ladder/README.md
     をよく確認し従うこと
