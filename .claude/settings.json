@@ -1,0 +1,59 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/others/statusline.js"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/domain/hooks/session_startup_hook.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|mcp__.*__write.*|mcp__.*replace.*|mcp__.*insert.*|mcp__.*create.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|mcp__serena__execute_shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/domain/hooks/implementation_design_hook.py"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"📢 Claude Code から通知があります\\\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /usr/src/redmine/plugins/redmine_release_kanban/vibes/scripts/src/infrastructure/notifiers/discord_notifier.py \\\"🛑 Claude Code セッションが停止されました\\\""
+          }
+        ]
+      }
+    ]
+  }
+}
