@@ -226,6 +226,7 @@ Redmine 本体の REST API と同じ認証モデルに寄せる。
   - `add_issue_notes`
   - `manage_versions`
   - `manage_issue_relations`
+  - `add_subprojects`
 
 主な実装ファイル:
 
@@ -287,6 +288,7 @@ Redmine は Bearer token 認証時に `user.oauth_scope` を設定し、`User#al
   - `add_issue_notes`
   - `manage_versions`
   - `manage_issue_relations`
+  - `add_subprojects`
 - `sakura-ec` と `ai-recommend` に対象ユーザーをメンバー追加した。
 - 既存 token は revoke した。Claude Web 側では再接続が必要。
 

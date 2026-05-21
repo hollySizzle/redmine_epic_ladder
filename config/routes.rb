@@ -57,6 +57,7 @@ RedmineApp::Application.routes.draw do
   # 管理者向け Claude Web MCP OAuth application 設定
   get 'admin/epic_ladder/claude_mcp', to: 'epic_ladder/claude_mcp_settings#show', as: 'epic_ladder_claude_mcp_settings'
   post 'admin/epic_ladder/claude_mcp', to: 'epic_ladder/claude_mcp_settings#create'
+  patch 'admin/epic_ladder/claude_mcp', to: 'epic_ladder/claude_mcp_settings#update'
   post 'admin/epic_ladder/claude_mcp/recreate', to: 'epic_ladder/claude_mcp_settings#recreate', as: 'epic_ladder_claude_mcp_settings_recreate'
   delete 'admin/epic_ladder/claude_mcp', to: 'epic_ladder/claude_mcp_settings#destroy'
   post 'admin/epic_ladder/claude_mcp/check', to: 'epic_ladder/claude_mcp_settings#check', as: 'epic_ladder_claude_mcp_settings_check'

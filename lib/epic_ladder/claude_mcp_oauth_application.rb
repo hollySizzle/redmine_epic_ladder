@@ -16,6 +16,7 @@ module EpicLadder
       add_issue_notes
       manage_versions
       manage_issue_relations
+      add_subprojects
     ].freeze
 
     class << self
@@ -41,6 +42,19 @@ module EpicLadder
       def recreate!
         destroy!
         create!
+      end
+
+      def update_configuration!
+        app = application
+        return create! unless app
+
+        Setting.rest_api_enabled = '1'
+        app.update!(
+          redirect_uri: REDIRECT_URI,
+          scopes: scope_string,
+          confidential: true
+        )
+        app
       end
 
       def scope_string

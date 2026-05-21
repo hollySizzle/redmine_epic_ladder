@@ -31,6 +31,13 @@ module EpicLadder
       redirect_to epic_ladder_claude_mcp_settings_path
     end
 
+    def update
+      @application = ClaudeMcpOauthApplication.update_configuration!
+      flash[:notice] = l(:notice_successful_update)
+
+      redirect_to epic_ladder_claude_mcp_settings_path
+    end
+
     def destroy
       ClaudeMcpOauthApplication.destroy!
       flash[:notice] = l(:notice_successful_delete)

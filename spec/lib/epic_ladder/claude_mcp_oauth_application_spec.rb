@@ -17,6 +17,7 @@ RSpec.describe EpicLadder::ClaudeMcpOauthApplication do
     end
 
     before do
+      stub_const('Doorkeeper::Application', double('Doorkeeper::Application'))
       allow(Doorkeeper::Application).to receive(:create!).and_return(application)
     end
 
@@ -26,7 +27,7 @@ RSpec.describe EpicLadder::ClaudeMcpOauthApplication do
       expect(Doorkeeper::Application).to have_received(:create!).with(
         name: 'Claude Web MCP',
         redirect_uri: 'https://claude.ai/api/mcp/auth_callback',
-        scopes: 'view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations',
+        scopes: 'view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations add_subprojects',
         confidential: true
       )
       expect(app).to eq(application)
@@ -45,6 +46,7 @@ RSpec.describe EpicLadder::ClaudeMcpOauthApplication do
 
   describe '.recreate!' do
     it 'replaces the existing application and returns a new secret' do
+      stub_const('Doorkeeper::Application', double('Doorkeeper::Application'))
       existing = double("Doorkeeper::Application")
       new_app = double('Doorkeeper::Application', plaintext_secret: 'new-secret')
 
@@ -55,6 +57,22 @@ RSpec.describe EpicLadder::ClaudeMcpOauthApplication do
       expect(described_class.recreate!).to eq(new_app)
       expect(existing).to have_received(:destroy!)
       expect(new_app.plaintext_secret).to be_present
+    end
+  end
+
+  describe '.update_configuration!' do
+    it 'updates the existing application in place' do
+      existing = double('Doorkeeper::Application')
+
+      allow(described_class).to receive(:application).and_return(existing)
+      allow(existing).to receive(:update!).and_return(true)
+
+      expect(described_class.update_configuration!).to eq(existing)
+      expect(existing).to have_received(:update!).with(
+        redirect_uri: described_class::REDIRECT_URI,
+        scopes: described_class.scope_string,
+        confidential: true
+      )
     end
   end
 
@@ -75,6 +93,17 @@ RSpec.describe EpicLadder::ClaudeMcpOauthApplication do
         name: described_class::APP_NAME,
         redirect_uri: 'https://example.com/callback',
         scopes: described_class.scope_string,
+        confidential?: true
+      )
+
+      expect(described_class.configuration_matches?(app)).to be false
+    end
+
+    it 'returns false when the add_subprojects scope is missing' do
+      app = double(
+        name: described_class::APP_NAME,
+        redirect_uri: described_class::REDIRECT_URI,
+        scopes: 'view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations',
         confidential?: true
       )
 

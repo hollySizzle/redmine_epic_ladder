@@ -21,6 +21,7 @@ Claude Web Custom Connector が、実際に `redmine_epic_ladder` MCP に接続�
   - `add_issue_notes`
   - `manage_versions`
   - `manage_issue_relations`
+  - `add_subprojects`
 
 ## サーバ側監視
 

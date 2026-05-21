@@ -46,7 +46,7 @@ Redmine::Plugin.register :redmine_epic_ladder do
   name 'Redmine Epic Ladder Plugin'
   author 'holly'
   description 'Epic→Feature→UserStory→Task/Test階層制約とVersion管理を統合したEpic Ladderシステム'
-  version '1.7.0'
+  version '1.7.1'
   url 'https://github.com/your-repo/redmine_epic_ladder'
   author_url 'https://github.com/your-team'
 

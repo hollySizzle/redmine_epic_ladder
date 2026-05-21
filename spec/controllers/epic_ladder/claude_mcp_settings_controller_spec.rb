@@ -85,6 +85,18 @@ RSpec.describe EpicLadder::ClaudeMcpSettingsController, type: :controller do
     end
   end
 
+  describe 'PATCH #update' do
+    it 'updates the existing OAuth application settings without recreating the secret' do
+      allow(EpicLadder::ClaudeMcpOauthApplication).to receive(:update_configuration!).and_return(application)
+
+      patch :update
+
+      expect(EpicLadder::ClaudeMcpOauthApplication).to have_received(:update_configuration!)
+      expect(session[:claude_mcp_client_secret]).to be_blank
+      expect(response).to redirect_to(epic_ladder_claude_mcp_settings_path)
+    end
+  end
+
   describe 'one-time client secret display' do
     it 'loads the secret from session once without exposing the flash object' do
       allow(EpicLadder::ClaudeMcpOauthApplication).to receive(:application).and_return(application)

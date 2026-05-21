@@ -1,5 +1,11 @@
 <div class="contextual">
   <% if @application %>
+    <% unless @configuration_matches %>
+      <%= link_to sprite_icon('save', t(:button_epic_ladder_claude_mcp_update)),
+                  epic_ladder_claude_mcp_settings_path,
+                  method: :patch,
+                  class: 'icon icon-save' %>
+    <% end %>
     <%= link_to sprite_icon('reload', t(:button_epic_ladder_claude_mcp_recreate)),
                 epic_ladder_claude_mcp_settings_recreate_path,
                 method: :post,

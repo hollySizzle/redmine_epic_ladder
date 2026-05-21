@@ -704,7 +704,8 @@ RSpec.describe 'Mcp::ServerController', type: :request do
         'edit_issues',
         'add_issue_notes',
         'manage_versions',
-        'manage_issue_relations'
+        'manage_issue_relations',
+        'add_subprojects'
       )
     end
 
@@ -725,7 +726,7 @@ RSpec.describe 'Mcp::ServerController', type: :request do
       expect(query['redirect_uri']).to eq('https://claude.ai/api/mcp/auth_callback')
       expect(query['response_type']).to eq('code')
       expect(query['scope']).to eq(
-        'view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations'
+        'view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations add_subprojects'
       )
     end
 

@@ -79,6 +79,7 @@ en:
   label_epic_ladder_claude_mcp_connection_check: "Connection check"
   label_epic_ladder_claude_mcp_check_ok: "OK"
   label_epic_ladder_claude_mcp_check_ng: "NG"
+  button_epic_ladder_claude_mcp_update: "Update settings"
   button_epic_ladder_claude_mcp_recreate: "Recreate"
   button_epic_ladder_claude_mcp_check: "Check connection"
   notice_epic_ladder_claude_mcp_already_exists: "The Claude Web MCP OAuth application already exists."

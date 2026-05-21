@@ -7,7 +7,7 @@ REDMINE_ROOT="$(cd "$PLUGIN_DIR/../.." && pwd)"
 
 APP_NAME="${CLAUDE_MCP_APP_NAME:-Claude Web MCP}"
 REDIRECT_URI="${CLAUDE_MCP_REDIRECT_URI:-https://claude.ai/api/mcp/auth_callback}"
-SCOPES="${CLAUDE_MCP_SCOPES:-view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations}"
+SCOPES="${CLAUDE_MCP_SCOPES:-view_project view_issues add_issues edit_issues add_issue_notes manage_versions manage_issue_relations add_subprojects}"
 RAILS_ENV_NAME="${RAILS_ENV:-development}"
 
 cd "$REDMINE_ROOT"
@@ -22,7 +22,25 @@ Setting.rest_api_enabled = '1'
 app = Doorkeeper::Application.find_by(name: ENV.fetch('CLAUDE_MCP_APP_NAME'))
 
 if app
+  expected_scopes = ENV.fetch('CLAUDE_MCP_SCOPES')
+  expected_redirect_uri = ENV.fetch('CLAUDE_MCP_REDIRECT_URI')
+  expected_scope_list = expected_scopes.split.sort
+  actual_scope_list = app.scopes.to_s.split.sort
+  updated = false
+
+  if app.redirect_uri != expected_redirect_uri ||
+     actual_scope_list != expected_scope_list ||
+     !app.confidential?
+    app.update!(
+      redirect_uri: expected_redirect_uri,
+      scopes: expected_scopes,
+      confidential: true
+    )
+    updated = true
+  end
+
   puts "Redmine OAuth application for Claude Web MCP already exists"
+  puts updated ? "Updated existing application settings in place" : "Existing application settings already match"
   puts
   puts "Name: #{app.name}"
   puts "Redirect URI: #{app.redirect_uri}"

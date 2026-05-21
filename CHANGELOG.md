@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-05-21
+
+### Fixed
+
+- Claude Web MCP OAuth scope に `add_subprojects` を追加し、Bearer token 認証時でも `create_project_tool` が親プロジェクト配下の作成権限を正しく通過できるようにした。
+- 既存の `Claude Web MCP` OAuth application を作り直さず、固定 redirect URI / scope / confidential 設定へ更新できるようにした。
+
 ## [1.7.0] - 2026-05-20
 
 ### Added

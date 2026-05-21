@@ -79,6 +79,7 @@ ja:
   label_epic_ladder_claude_mcp_connection_check: "接続確認"
   label_epic_ladder_claude_mcp_check_ok: "OK"
   label_epic_ladder_claude_mcp_check_ng: "NG"
+  button_epic_ladder_claude_mcp_update: "設定を更新"
   button_epic_ladder_claude_mcp_recreate: "作り直し"
   button_epic_ladder_claude_mcp_check: "接続確認"
   notice_epic_ladder_claude_mcp_already_exists: "Claude Web MCP用OAuth applicationは既に存在します。"

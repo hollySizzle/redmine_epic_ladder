@@ -11,6 +11,7 @@ module Mcp
       add_issue_notes
       manage_versions
       manage_issue_relations
+      add_subprojects
     ].freeze
 
     skip_before_action :verify_authenticity_token
