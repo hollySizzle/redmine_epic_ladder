@@ -1,5 +1,7 @@
-# ランタイム生成ファイル（自動生成: claude-nagger install-hooks）
-state.db
-state.db-wal
-state.db-shm
-suggested_rules/
+# Generated artifacts and runtime cache live next to the config files
+# but should never be committed. The catalog is the source of truth;
+# any `file_conventions.generated.yaml` here is derived output, and
+# any `vault/` content is local runtime state.
+file_conventions.generated.yaml
+vault/
+*.log

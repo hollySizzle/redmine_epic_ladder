@@ -1,0 +1,44 @@
+{
+  "files": {
+    ".claude-nagger/.gitignore": {
+      "sha256": "19d56605cf7f92cfd442b5475944b93f7071f171675405e9a1a4f5003068a33e"
+    },
+    ".claude-nagger/command_conventions.yaml.example": {
+      "sha256": "a88052af5effaa155cf3636f94472c812ff42ca35ad1a61a4a2b79b824624b69"
+    },
+    ".claude-nagger/config.yaml.example": {
+      "sha256": "850bf0ecc391e90813d4cd99f7682e6c3c74eb78e10d3822bd8976f28e6611a3"
+    },
+    ".claude-nagger/mcp_conventions.yaml.example": {
+      "sha256": "75d559e0fcdf0e4828ac9c02e70dacef250538eb685d40409118b77d2f8383e3"
+    },
+    ".mozyo-bridge/docs/catalog.yaml.example": {
+      "sha256": "04e2e8616f98eb4d50f957bb7de5c07fccf478d39878ab01109c194532dfdc6c"
+    },
+    ".mozyo-bridge/rules/development_flow.md": {
+      "sha256": "fa4438dce5f500d2e50c2ff72ec64c9b2d592a3ba80b50e344bf55a36f8c86b7"
+    },
+    ".mozyo-bridge/rules/docs_catalog_governance.yaml": {
+      "sha256": "98accf147f73769934c4c7c4d54b449c50945cfe3449d62320af593b69087542"
+    },
+    ".mozyo-bridge/rules/llm_rule_authoring.md": {
+      "sha256": "89f64cb9bab73fdd411ba781a4397921e030e9d14d32e69b63d2f6768d456023"
+    },
+    ".mozyo-bridge/tmux/agent-ui.conf": {
+      "sha256": "99185d40b287ddf800939137abf42f74af0cfddbe985be6eb92abe70b24d0f91"
+    },
+    "AGENTS.md": {
+      "sha256": "e6a73bbf56bbd29952a018985bed8e86d5a9e94249ab0a878ca37c6b16b74a4c"
+    },
+    "CLAUDE.md": {
+      "sha256": "36bdfc5081a5812f0f8df5bfeff81defec52a4d5729ff193c008b25d67fbd4bd"
+    }
+  },
+  "generated_by": "mozyo-bridge 0.4.0",
+  "mode": "repo-local",
+  "preset": "redmine-rails-governed",
+  "preset_hash": "1cfa55a6b8a23ff5816090d4022eb5fa6b78df788f0153780825ed1191e8e03a",
+  "preset_version": "2026.05.20.1",
+  "rule_path": ".mozyo-bridge/rules/presets/redmine-rails-governed/agent-workflow.md",
+  "schema_version": 2
+}

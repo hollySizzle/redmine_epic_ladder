@@ -1,0 +1,57 @@
+# This file is generated from .mozyo-bridge/docs/catalog.yaml.
+# Do not edit manually.
+rules:
+- name: agent guardrail docs
+  patterns:
+  - AGENTS.md
+  - CLAUDE.md
+  - .mozyo-bridge/rules/**
+  - .mozyo-bridge/docs/catalog.yaml
+  - .claude/skills/**
+  - .codex/skills/**
+  severity: block
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @.mozyo-bridge/rules/llm_rule_authoring.md と @.mozyo-bridge/rules/docs_catalog_governance.yaml
+    をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Rails plugin source
+  patterns:
+  - app/**/*.rb
+  - config/**/*.rb
+  - config/**/*.yml
+  - lib/**/*.rb
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Rails plugin tests
+  patterns:
+  - spec/**/*.rb
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Epic Ladder frontend
+  patterns:
+  - assets/javascripts/epic_ladder/src/**
+  - assets/javascripts/epic_ladder/*.json
+  - assets/javascripts/epic_ladder/*.ts
+  - assets/javascripts/epic_ladder/*.tsx
+  - package.json
+  - package-lock.json
+  - webpack.config.js
+  - webpack.production.config.js
+  - vitest.config.ts
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @README.md と @assets/javascripts/epic_ladder/README.md
+    をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
