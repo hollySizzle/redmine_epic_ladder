@@ -5,3 +5,5 @@
 file_conventions.generated.yaml
 vault/
 *.log
+state.db
+secrets.yaml
