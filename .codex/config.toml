@@ -1,2 +1,63 @@
+model = "gpt-5.5"
+model_context_window = 1000000
+model_auto_compact_token_limit = 800000
+
 sandbox_mode = "danger-full-access"
 approval_policy = "never"
+
+[projects."/myapp"]
+trust_level = "trusted"
+
+[mcp_servers.serena]
+command = "uvx"
+args = ["--from", "git+https://github.com/oraios/serena", "serena", "start-mcp-server"]
+env = {}
+disabled = false
+
+[profiles.full-access]
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+ask_for_approval = "never"
+
+[mcp_servers.playwright]
+command = "npx"
+args    = ["@playwright/mcp@latest", "--isolated", "--headless" , "--no-sandbox"]
+env = { NPM_CONFIG_CACHE = "/tmp/rovoice-npm-cache" }
+
+[sandbox_workspace_write]
+network_access = true
+
+[mcp_servers.serena.tools.create_text_file]
+approval_mode = "approve"
+
+[mcp_servers.serena.tools.replace_content]
+approval_mode = "approve"
+
+[mcp_servers.serena.tools.execute_shell_command]
+approval_mode = "auto"
+
+[mcp_servers.serena.execute_shell_command]
+approval_mode = "auto"
+
+[mcp_servers.serena.tools.read_file]
+approval_mode = "auto"
+
+[mcp_servers.serena.search_for_pattern]
+approval_mode = "auto"
+
+[mcp_servers.redmine_epic_grid]
+url = "https://redmine.giken.or.jp/mcp/rpc"
+http_headers = { X-Default-Project = "epic_ladder" }
+env_http_headers = { X-Redmine-API-Key = "REDMINE_API_KEY" }
+
+[mcp_servers.redmine_epic_grid.tools.get_issue_detail_tool]
+approval_mode = "approve"
+
+[mcp_servers.redmine_epic_grid.tools.list_statuses_tool]
+approval_mode = "auto"
+
+[mcp_servers.redmine_epic_grid.tools.list_recently_updated_issues_tool]
+approval_mode = "approve"
+
+[mcp_servers.redmine_epic_grid.tools.list_user_stories_tool]
+approval_mode = "approve"
