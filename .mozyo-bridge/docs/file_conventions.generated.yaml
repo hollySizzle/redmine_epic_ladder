@@ -1,0 +1,52 @@
+# This file is generated from .mozyo-bridge/docs/catalog.yaml.
+# Do not edit manually.
+rules:
+- name: agent guardrail docs
+  patterns:
+  - AGENTS.md
+  - CLAUDE.md
+  - .mozyo-bridge/rules/**
+  - .mozyo-bridge/docs/catalog.yaml
+  - .claude/skills/**
+  - .codex/skills/**
+  severity: block
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md と @.mozyo-bridge/rules/llm_rule_authoring.md と @.mozyo-bridge/rules/docs_catalog_governance.yaml
+    をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Rails app source
+  patterns:
+  - app/**/*.rb
+  - app/**/*.erb
+  - config/**/*.rb
+  - config/**/*.yml
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: React frontend assets
+  patterns:
+  - assets/**/*.js
+  - assets/**/*.jsx
+  - assets/**/*.css
+  - assets/**/*.scss
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '
+- name: Rails tests
+  patterns:
+  - spec/**/*.rb
+  - test/**/*.rb
+  severity: warn
+  message: 'このファイルを変更する場合は､ @.mozyo-bridge/rules/development_flow.md をよく確認し従うこと
+
+    作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+    '

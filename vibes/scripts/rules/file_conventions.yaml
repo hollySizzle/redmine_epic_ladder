@@ -3,9 +3,6 @@
 # ClaudeCodeがこれらのファイルを編集する際に、規約確認を促します
 
 rules:
-  # ===========================================
-  # ドキュメント規約
-  # ===========================================
   - name: "Vibesドキュメント規約"
     patterns:
       - "**/docs/**/*.md"
@@ -15,390 +12,159 @@ rules:
       - "docs/**/*.md"
     severity: "block" # block: 完全ブロック, warn: 警告のみ
     token_threshold: 15000 # 重要なドキュメント規約は低い閾値
+    # 基本メッセージ（簡潔版）
     message: |
-      📋 このファイルを変更する場合は、以下のドキュメント規約を確認してください
-      必読: @vibes/docs/rules/vibes_documentation_standards.md
-      必読: @vibes/docs/rules/INDEX.md (規約インデックス)
-      Code as Document原則に従い、作業を続けてください
+      このファイルを変更する場合は､  @vibes/docs/rules/vibes_documentation_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
 
-  # ===========================================
-  # バックエンド実装規約 (Fat Model, Skinny Controller)
-  # ===========================================
-
-  # epic_ladder専用Model規約 (最優先)
-  - name: "epic_ladderModel実装規約 (Fat Model)"
+  # 実装設計書関連
+  - name: "実装設計書編集規約"
     patterns:
-      - "**/app/models/epic_ladder/**/*.rb"
-      - "**/app/models/concerns/epic_ladder/**/*.rb"
-      - "**/app/models/issue.rb"
-      - "**/app/models/project.rb"
-      - "**/app/models/tracker_hierarchy.rb"
+      - "**/実装設計書.pu"
+      - "**/実装設計.pu"
+      - "**/実装設計書*.pu"
+    severity: "block" # block: 完全ブロック, warn: 警告のみ
+    token_threshold: 18000
+    # 基本メッセージ（簡潔版）
+    message: |
+      このファイルを変更する場合は､  @vibes/docs/rules/detailed_spec_docs/implementation_design_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  - name: "機能設計書規約"
+    patterns:
+      - "**/機能設計書.pu"
+      - "**/機能設計書.pu"
+      - "**/機能設計書*.pu"
+    severity: "block" # block: 完全ブロック, warn: 警告のみ
+    token_threshold: 18000
+    # 基本メッセージ（簡潔版）
+    message: |
+      このファイルを変更する場合は､  @/myapp/Source/rails/vibes/docs/rules/detailed_spec_docs/functional_design_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  # 外部設計書関連
+  - name: "外部設計書編集規約"
+    patterns:
+      - "Doc/100_外部設計/**/*"
+      - "**/機能リスト.json"
+      - "**/_機能リスト.json"
+      - "**/画面定義書.json"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 10000 # 最重要規約は最低閾値
+    # 基本メッセージ（簡潔版）
     message: |
-      📋 epic_ladderModel実装前に規約とFat Model原則を確認してください
-      必読: @vibes/rules/backend_standards.md (Fat Model原則)
-      必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
-      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
+      🚫 外部設計書はプロジェクトオーナー管轄
+      📋 参照: @vibes/docs/rules/ai_collaboration_standards.md
 
-      ✅ Modelに実装すべきもの:
-      - ビジネスロジック (Epic作成、カード移動、統計計算など)
-      - バリデーション・データ整合性保証
-      - トランザクション制御・N+1対策
-
-      ❌ Modelに書いてはいけないもの:
-      - HTTP処理・JSON変換 (Controller責務)
-
-  # epic_ladder専用Controller規約
-  - name: "epic_ladderController実装規約 (Skinny Controller)"
+  # テスト仕様書関連
+  - name: "E2Eテスト編集規約"
     patterns:
-      - "**/app/controllers/epic_ladder/**/*.rb"
-      - "**/app/controllers/concerns/epic_ladder_api_concern.rb"
+      - "spec/system/**/*.rb"
+      - "spec/system/workflow/**/*.rb"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 35000
     message: |
-      📋 epic_ladderController実装前に規約とSkinny Controller原則を確認してください
-      必読: @vibes/rules/backend_standards.md (Skinny Controller原則)
-      必読: @vibes/rules/technical_architecture_quickstart.md (レイヤー責務)
-      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
+      E2Eテストは実行可能なドキュメントです
+      BDD原則に従い、日本語DSLで記述してください
 
-      ✅ Controllerに実装すべきもの:
-      - HTTP要求/応答制御・権限検証
-      - **Modelメソッド呼び出し** (Serviceではない)
-      - JSON変換・Strong Parameters
-
-      ❌ Controllerに書いてはいけないもの:
-      - ビジネスロジック (Model責務)
-      - 直接DB操作 (Model責務)
-
-      目標: 10-30行程度に収める
-
-  # epic_ladder専用Service規約 (原則禁止)
-  - name: "epic_ladderService実装規約 (外部API連携のみ)"
+  # DB設計関連
+  - name: "DB設計編集規約"
     patterns:
-      - "**/app/services/epic_ladder/**/*.rb"
+      - "db/migrate/**/*.rb"
+      - "db/schema.rb"
+      - "Doc/500_DB設計/**/*.pu"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 10000
     message: |
-      ⚠️ CRITICAL: Service層は原則として作成禁止です
-      必読: @vibes/rules/backend_standards.md (Service最小限原則)
+      このファイルを変更する場合は､ @vibes/docs/rules/migration_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+      
 
-      ❌ Serviceに書いてはいけないもの:
-      - ビジネスロジック → Modelに書く
-      - データ操作 → Modelに書く
-      - 統計計算 → Modelに書く
-
-      ✅ 例外的に許可される場合 (稀):
-      - 外部API連携のみ (OpenAI、Slack等)
-      - その場合もModelから呼び出す設計にする
-
-      既存Service削除対象:
-      - CardMoveService → Issue#move_to_cell
-      - EpicCreationService → Issue.create_epic
-      - StatisticsCalculator → Project#epic_ladder_statistics
-      - GridDataBuilder → Project#epic_ladder_grid_data
-
-  # ===========================================
-  # フロントエンド実装規約
-  # ===========================================
-
-  # CSS/SCSS実装規約
-  - name: "CSS/SCSS実装規約"
+  - name: "routes編集規約"
     patterns:
-      - "**/assets/javascripts/epic_ladder/src/**/*.css"
-      - "**/assets/javascripts/epic_ladder/src/**/*.scss"
-      - "**/assets/stylesheets/**/*.css"
-      - "**/assets/stylesheets/**/*.scss"
+      - "config/routes.rb"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 10000
     message: |
-      📋 CSS/SCSS実装前にCSS規約を確認してください
-      必読: @vibes/rules/css_standards.md (CSS規約)
-
-      ✅ CSS規約の要点:
-      - px指定非推奨 → 相対単位またはCSS変数を使用
-      - ネスト構造推奨 → 影響範囲を明確にする
-      - margin非推奨 → paddingを優先して使用
-
-      ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_ladder
-      2. npm test  # 全テスト実行（168 tests）
-      3. テスト全通過を確認してから完了報告
-
-  # フロントエンド全体（包括的テスト要求）
-  - name: "フロントエンド実装規約（包括的）"
+      このファイルを変更する場合は､ @/myapp/Doc/400_画面設計/_機能リスト.json に準拠すること
+  # Rails設定関連
+  - name: "Rails設定編集規約"
     patterns:
-      - "**/assets/javascripts/epic_ladder/src/**/*.ts"
-      - "**/assets/javascripts/epic_ladder/src/**/*.tsx"
-      - "**/assets/javascripts/epic_ladder/src/**/*.js"
-      - "**/assets/javascripts/epic_ladder/src/**/*.jsx"
+      - "config/**/*.yml"
+      - "config/**/*.yaml"
+      - "config/initializers/**/*.rb"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 10000
     message: |
-      ⚠️ フロントエンドファイル変更検出
+      Rails設定YAMLはプロジェクトオーナー管轄です
+      微調整レベルの変更のみ許可されています
 
-      フロントエンドコード変更後は、必ず単体テストを実行してください。
-      テストなしでの完了報告は禁止です。
-
-      ✅ 必須作業（変更完了後すぐに実行）:
-      1. cd assets/javascripts/epic_ladder
-      2. npm test  # 全テスト実行（38 tests）
-      3. テスト全通過を確認
-      4. 失敗がある場合は修正してから完了報告
-
-      📋 関連規約:
-      - @vibes/rules/testing_strategy.md (テスト戦略)
-      - @vibes/docs/INDEX.md (Code as Document原則)
-
-  # TypeScript型定義（SSoT）
-  - name: "TypeScript型定義（SSoT）"
+  # View層関連
+  - name: "View層編集規約"
     patterns:
-      - "**/assets/javascripts/epic_ladder/src/types/**/*.ts"
-      - "**/assets/javascripts/epic_ladder/src/types/normalized-api.ts"
-      - "**/assets/javascripts/epic_ladder/src/types/api-endpoints.ts"
+      - "**/app/views/**.erb"
+      - "app/views/**.erb"
+      - "app/views/**/*.erb"
+      - "**/app/views/**.html.erb"
+      - "app/views/**.html.erb"
     severity: "block"
-    token_threshold: 12000
+    token_threshold: 35000
     message: |
-      ⚠️ CRITICAL: このファイルは Single Source of Truth (SSoT) です
-      必読: @vibes/rules/technical_architecture_quickstart.md (API仕様管理)
-      必読: @vibes/rules/ai_collaboration_redmine.md (SSoT厳守原則)
-      必読: @vibes/docs/INDEX.md (Code as Document原則)
+      このファイルを変更する場合は､ @vibes/docs/rules/view_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
 
-      型定義変更は全システムに影響します。必ずプロジェクトオーナーに確認してから作業を続けてください
-
-      ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_ladder
-      2. npm test  # 全テスト実行（38 tests）
-      3. テスト全通過を確認してから完了報告
-
-  # Reactコンポーネント実装
-  - name: "Reactコンポーネント実装規約"
+  # Controller層関連
+  - name: "Controller層編集規約"
     patterns:
-      - "**/assets/javascripts/epic_ladder/src/components/**/*.tsx"
-      - "**/assets/javascripts/epic_ladder/src/components/**/*.jsx"
+      - "**/app/controllers/**.rb"
+      - "app/controllers/**.rb"
+      - "app/controllers/**/*.rb"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 35000
     message: |
-      📋 Reactコンポーネント実装前にSSoTを確認してください
-      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
-      必読: @vibes/rules/technical_architecture_quickstart.md (技術スタック)
-      参考: @vibes/specs/ui/epic_ladder_ui_design_spec.md (UI設計)
+      このファイルを変更する場合は､ @vibes/docs/rules/controller_standards.mdをよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
 
-      React 18、Zustand、Pragmatic D&Dの使用を推奨します
-
-      ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_ladder
-      2. npm test  # 全テスト実行（38 tests）
-      3. テスト全通過を確認してから完了報告
-
-  # Zustandストア実装
-  - name: "Zustandストア実装規約"
+  # Presenter層関連
+  - name: "Presenter層編集規約"
     patterns:
-      - "**/assets/javascripts/epic_ladder/src/store/**/*.ts"
-      - "**/assets/javascripts/epic_ladder/src/store/useStore.ts"
+      - "**/app/presenters/**.rb"
+      - "app/presenters/**.rb"
+      - "app/presenters/**/**.rb"
+      - "app/presenters/concerns/**/**.rb"
+    severity: "stop"
+    token_threshold: 35000
+    message: |
+      このファイルを変更する場合は､@vibes/docs/rules/presenter_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
+
+  - name: "seed編集規約"
+    patterns:
+      - "**/db/**.rb"
+      - "**/db/**/**.rb"
+      - "/db/**.rb"
+      - "/db/**/**.rb"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 35000
     message: |
-      📋 Zustandストア実装前にSSoTを確認してください
-      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
-      必読: @vibes/rules/technical_architecture_quickstart.md (State管理)
+      このファイルを変更する場合は､ @vibes/docs/rules/seeds_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
 
-      Normalized State構造（entities + grid index）を維持してから作業を続けてください
-
-      ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_ladder
-      2. npm test  # 全テスト実行（38 tests）
-      3. テスト全通過を確認してから完了報告
-
-  # MSWモックハンドラ
-  - name: "MSWモックハンドラ実装規約"
+  # 環境変数関連
+  - name: "環境変数編集規約"
     patterns:
-      - "**/assets/javascripts/epic_ladder/src/mocks/**/*.ts"
-      - "**/assets/javascripts/epic_ladder/src/mocks/handlers.ts"
+      - "**/.env"
+      - "**/.env.*"
+      - ".env"
+      - ".env.*"
     severity: "block"
-    token_threshold: 15000
+    token_threshold: 35000
     message: |
-      📋 MSWモックハンドラ実装前にSSoTを確認してください
-      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
-      必読: @epic_ladder/src/types/api-endpoints.ts (エンドポイント定義 SSoT)
-      必読: @vibes/rules/testing_strategy.md (MSW + Vitest戦略)
+      このファイルを変更する場合は､ @vibes/docs/rules/docker_environment_management_standards.md をよく確認し従うこと
+      作業を続けるためには､上記ドキュメントを確認したことを示してください
 
-      モックレスポンスは型定義に完全準拠させてください
-
-      ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_ladder
-      2. npm test  # 全テスト実行（38 tests）
-      3. テスト全通過を確認してから完了報告
-
-  # ===========================================
-  # テスト実装規約
-  # ===========================================
-
-  # フロントエンドテスト（Vitest）
-  - name: "フロントエンドテスト実装規約（Vitest）"
-    patterns:
-      - "**/assets/javascripts/epic_ladder/src/**/*.test.tsx"
-      - "**/assets/javascripts/epic_ladder/src/**/*.test.ts"
-      - "**/assets/javascripts/epic_ladder/vitest.config.ts"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 フロントエンドテスト実装前に規約を確認してください
-      必読: @vibes/rules/testing_strategy.md (Vitest + MSW戦略)
-      必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
-      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
-
-      テストコードが仕様書です。カバレッジ要件（Critical 100%, 全体85%）を維持してください
-
-      ✅ 変更後の必須作業:
-      1. cd assets/javascripts/epic_ladder
-      2. npm test  # 全テスト実行（38 tests）
-      3. テスト全通過を確認してから完了報告
-
-  # バックエンドテスト（RSpec）
-  - name: "バックエンドテスト実装規約（RSpec）"
-    patterns:
-      - "**/spec/**/*_spec.rb"
-      - "**/spec/models/epic_ladder/**/*.rb"
-      - "**/spec/services/epic_ladder/**/*.rb"
-      - "**/spec/requests/epic_ladder/**/*.rb"
-      - "**/spec/integration/epic_ladder/**/*.rb"
-      - "**/spec/system/epic_ladder/**/*.rb"
-      - "**/spec/rails_helper.rb"
-      - "**/spec/spec_helper.rb"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 バックエンドテスト実装前に規約を確認してください
-      必読: @vibes/rules/testing_strategy.md (Pure Playwright + RSpec戦略)
-      必読: @vibes/docs/INDEX.md (Code as Document - テストが仕様)
-      必読: @epic_ladder/src/types/normalized-api.ts (API型定義 SSoT)
-      Pure Playwright方式（Capybara不使用）、FactoryBot、DatabaseCleanerの使用を徹底してください
-
-  # E2Eテスト（Playwright）
-  - name: "E2Eテスト実装規約（Playwright）"
-    patterns:
-      - "**/spec/system/**/*_spec.rb"
-      - "**/playwright/**/*.spec.js"
-      - "**/playwright.config.js"
-    severity: "block"
-    token_threshold: 15000
-    message: |
-      📋 E2Eテスト実装前に規約とReference Testを確認してください
-      必読: @vibes/docs/rules/backend_testing.md (E2Eテスト詳細ガイド)
-      必読: @vibes/rules/testing_strategy.md (Pure Playwright戦略)
-      参考: @vibes/specs/technical/grid_measurement_strategy.md (Grid測定)
-      参考: spec/system/epic_ladder/simple_e2e_spec.rb (Reference Test)
-
-      🎯 新規テスト作成: simple_e2e_spec.rb をコピーして編集
-      🔍 テスト失敗時: backend_testing.md の「デバッグ手順」参照
-
-      Pure Playwright方式（Capybara不使用）でi18nエラーを回避してください
-
-  # FactoryBot定義
-  - name: "FactoryBot定義規約"
-    patterns:
-      - "**/spec/factories/**/*.rb"
-    severity: "warn"
-    token_threshold: 15000
-    message: |
-      📋 FactoryBot定義実装前に規約を確認してください
-      参考: @vibes/rules/testing_strategy.md (テストデータ管理)
-      参考: @vibes/rules/technical_architecture_quickstart.md (4層階層)
-      TrackerHierarchy（Epic→Feature→UserStory→Task/Test）に準拠した定義を推奨します
-
-  # ===========================================
-  # AI協働規約
-  # ===========================================
-
-  # AI協働規約ドキュメント
-  - name: "AI協働規約ドキュメント"
-    patterns:
-      - "**/vibes/docs/rules/ai_collaboration_redmine.md"
-      - "**/vibes/scripts/rules/file_conventions.yaml"
-    severity: "block"
-    token_threshold: 12000
-    message: |
-      📋 AI協働規約編集前に関連規約を確認してください
-      必読: @vibes/docs/rules/vibes_documentation_standards.md
-      必読: @vibes/docs/rules/INDEX.md (規約インデックス)
-      権限規定（自立実行可/要相談/絶対禁止）の整合性を保ってください
-
-  # ===========================================
-  # アーキテクチャ規約ドキュメント
-  # ===========================================
-
-  # アーキテクチャ規約
-  - name: "アーキテクチャ規約ドキュメント"
-    patterns:
-      - "**/vibes/docs/rules/technical_architecture_quickstart.md"
-      - "**/vibes/docs/rules/backend_standards.md"
-      - "**/vibes/docs/rules/testing_strategy.md"
-    severity: "block"
-    token_threshold: 12000
-    message: |
-      📋 アーキテクチャ規約編集前に関連規約を確認してください
-      必読: @vibes/docs/rules/vibes_documentation_standards.md
-      必読: @vibes/docs/rules/INDEX.md (規約インデックス)
-      必読: @vibes/docs/rules/ai_collaboration_redmine.md (協働規約)
-      Code as Document原則に従い、規約は最小限に保ってください
-
-  # ===========================================
-  # 廃止された規約（参考用コメント）
-  # ===========================================
-
-  # 以下の規約は Code as Document 移行により廃止されました：
-  # - logics/ 配下のAPI仕様書 → @epic_ladder/src/types/normalized-api.ts (SSoT) に統合
-  # - logics/ 配下の機能設計書 → テストコード (*.test.tsx, *_spec.rb) に統合
-  # - 個別機能のドキュメント規約 → backend_standards.md に統合
-
-# ===========================================
 # メタ情報
-# ===========================================
 meta:
-  version: "2.1.0"
-  updated_at: "2025-10-02"
-  description: "Code as Document移行後の新規約構成対応（SSoT強化、規約統合、89%ドキュメント削減） + フロントエンド変更後の強制テスト実行規約"
-  migration_notes: |
-    ## 主な変更点（v1.3.0 → v2.1.0）
-
-    ### v2.1.0 新機能（2025-10-02）
-    - **フロントエンド変更後の強制テスト実行規約** 追加
-      - 全フロントエンドファイル (*.ts, *.tsx, *.js, *.jsx) 変更時に `npm test` 実行を必須化
-      - TypeScript型定義、React、Zustand、MSW、テストファイル全てに適用
-      - テスト失敗時は修正してから完了報告を強制
-      - severity: "block" で徹底（warn → block に変更）
-
-    ### v2.0.0 主要変更（2025-10-02）
-
-    ### 削除された規約
-    - TrackerHierarchy実装規約 → backend_standards.md (Model原則) に統合
-    - データ構造統計システム → backend_standards.md (Service原則) に統合
-    - VersionManagement実装規約 → backend_standards.md (Service原則) に統合
-    - AutoGeneration実装規約 → backend_standards.md (Service原則) に統合
-    - epic_ladderUI実装規約 → 削除（実装済みコード参照）
-    - StateTransition実装規約 → backend_standards.md (Service原則) に統合
-    - ValidationGuard実装規約 → backend_standards.md (Service原則) に統合
-    - APIIntegration実装規約 → backend_standards.md (Controller原則) に統合
-    - epic_ladderHook実装規約 → 削除（実装済みコード参照）
-    - Feature Card関連 → 削除（実装済みコード参照）
-    - epic_ladder Grid関連 → 削除（実装済みコード参照）
-    - 共通コンポーネント関連 → 削除（実装済みコード参照）
-    - ハイブリッド詳細設計書 → 削除（logics/ ディレクトリ廃止）
-
-    ### 新規追加された規約
-    - TypeScript型定義（SSoT） - API仕様の唯一の真実
-    - Zustandストア実装規約 - Normalized State構造
-    - MSWモックハンドラ実装規約 - API型定義準拠
-    - フロントエンドテスト規約（Vitest） - Code as Document
-    - バックエンドテスト規約（RSpec） - Code as Document
-
-    ### 統合された規約
-    - Controller + Service → backend_standards.md (170行)
-    - 全テスト戦略 → testing_strategy.md (180行)
-    - AI協働規約 → ai_collaboration_redmine.md (120行)
-
-    ### 結果
-    - 規約ドキュメント: 1,856行 → 1,028行 (44%削減)
-    - 全体（規約+API仕様）: 9,477行 → 1,496行 (84%削減)
-    - Code as Document化により、型定義とテストコードが仕様書として機能
+  version: "1.0.0"
+  updated_at: "2025-01-21"
+  description: "ファイルパターンと編集規約の紐付け定義"
