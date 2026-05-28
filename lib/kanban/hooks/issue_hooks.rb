@@ -35,8 +35,11 @@ module Kanban
       end
 
       def trigger_user_story_creation(user_story)
-        # Test自動生成をバックグラウンドで実行
-        TestGenerationJob.perform_later(user_story)
+        # TestGenerationJob was removed with the old Kanban implementation.
+        # Keep automatic Test generation disabled until it is rebuilt for the
+        # current EpicLadder tracker/status settings; otherwise issue creation
+        # succeeds but the API response becomes HTTP 500 from this post-save hook.
+        # TestGenerationJob.perform_later(user_story)
 
         Rails.logger.info "UserStory作成Hook実行: ##{user_story.id}"
       end
